@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Documenten.DataModel</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Documenten.DataModel</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.DataAccess\ZGW.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

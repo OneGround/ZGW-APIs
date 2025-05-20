@@ -1,0 +1,9 @@
+using Newtonsoft.Json;
+
+namespace OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject;
+
+public class OverigeZaakObjectRequestDto : ZaakObjectRequestDto, IRelatieZaakObjectDto<OverigeZaakObjectDto>
+{
+    [JsonProperty("objectIdentificatie", Order = 1000)]
+    public OverigeZaakObjectDto ObjectIdentificatie { get; set; }
+}

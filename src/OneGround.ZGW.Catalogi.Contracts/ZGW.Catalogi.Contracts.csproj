@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Catalogi.Contracts</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Catalogi.Contracts</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.Contracts\ZGW.Common.Contracts.csproj" />
+  </ItemGroup>
+</Project>

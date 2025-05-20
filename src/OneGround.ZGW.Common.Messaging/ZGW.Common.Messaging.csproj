@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Common.Messaging</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Common.Messaging</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.AspNetCore" />
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+  </ItemGroup>
+</Project>

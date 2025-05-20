@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>OneGround.ZGW.Notificaties.DataModel</RootNamespace>
+    <AssemblyName>OneGround.ZGW.Notificaties.DataModel</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.DataAccess\ZGW.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

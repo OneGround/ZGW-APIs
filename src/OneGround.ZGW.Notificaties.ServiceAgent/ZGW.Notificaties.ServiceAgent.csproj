@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Notificaties.ServiceAgent</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Notificaties.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Contracts\ZGW.Notificaties.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "ZGW.all.sln",
+    "projects": [
+      "Tests\\OneGround.ZGW.Autorisaties.WebApi.UnitTests\\ZGW.Autorisaties.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Besluiten.WebApi.UnitTests\\ZGW.Besluiten.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Catalogi.WebApi.UnitTests\\ZGW.Catalogi.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Common.Web.UnitTests\\ZGW.Common.Web.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Documenten.WebApi.UnitTests\\ZGW.Documenten.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Notificaties.Messaging.Listener.UnitTests\\ZGW.Notificaties.Messaging.Listener.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Notificaties.WebApi.UnitTests\\ZGW.Notificaties.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Zaken.WebApi.UnitTests\\ZGW.Zaken.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Common.UnitTests\\ZGW.Common.UnitTests.csproj"
+    ]
+  }
+}

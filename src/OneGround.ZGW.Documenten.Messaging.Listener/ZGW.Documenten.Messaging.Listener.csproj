@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AssemblyName>OneGround.ZGW.Documenten.Messaging.Listener</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Documenten.Messaging.Listener</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="..\appsettings.Shared.json">
+      <Link>appsettings.Shared.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging\ZGW.Documenten.Messaging.csproj" />
+  </ItemGroup>
+</Project>

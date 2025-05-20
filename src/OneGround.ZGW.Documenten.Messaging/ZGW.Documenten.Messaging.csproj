@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Documenten.Messaging</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Documenten.Messaging</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging.Contracts\ZGW.Documenten.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

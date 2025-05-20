@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Zaken.Contracts</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Zaken.Contracts</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite.IO.GeoJson" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.Contracts\ZGW.Common.Contracts.csproj" />
+  </ItemGroup>
+</Project>

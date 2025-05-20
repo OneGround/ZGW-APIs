@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Autorisaties.ServiceAgent</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Autorisaties.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Autorisaties.Contracts\ZGW.Autorisaties.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+  </ItemGroup>
+</Project>

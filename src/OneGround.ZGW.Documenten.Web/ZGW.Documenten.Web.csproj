@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Documenten.Web</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Documenten.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>OneGround.ZGW.Documenten.WebApi.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Besluiten.ServiceAgent\ZGW.Besluiten.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.MimeTypes\ZGW.Common.MimeTypes.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Contracts\ZGW.Documenten.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.DataModel\ZGW.Documenten.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Services.Ceph\ZGW.Documenten.Services.Ceph.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Services.FileSystem\ZGW.Documenten.Services.FileSystem.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Services\ZGW.Documenten.Services.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

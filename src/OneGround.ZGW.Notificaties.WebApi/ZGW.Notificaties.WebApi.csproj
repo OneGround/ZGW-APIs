@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Notificaties.WebApi</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Notificaties.WebApi</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="..\appsettings.Shared.json">
+      <Link>appsettings.Shared.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging\ZGW.Documenten.Messaging.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

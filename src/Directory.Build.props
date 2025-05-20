@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <!-- Assembly and product identification -->
+    <Authors>OneGround</Authors>
+    <Product>OneGround ZGW-APIs</Product>
+    <Description>OneGround's implementation of ZGW-APIs, providing API components and related modules for a standardized Dutch approach to case management (Zaakgericht Werken).</Description>
+    
+    <!-- Copyright and company information -->
+    <Copyright>Visma Roxit B.V. © 2025</Copyright>
+    <Company>Visma Roxit</Company>
+    
+    <!-- Repository and project information -->
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/OneGround/ZGW_APIs</RepositoryUrl>
+    
+    <!-- Application configuration -->
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarningsAsErrors>MSB9008</WarningsAsErrors>
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="CSharpier.MsBuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' == 'false'">
+    <PackageReference Include="CSharpier.MsBuild" Version="1.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

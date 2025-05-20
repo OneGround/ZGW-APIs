@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Common.DataModel</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Common.DataModel</RootNamespace>
+  </PropertyGroup>
+</Project>

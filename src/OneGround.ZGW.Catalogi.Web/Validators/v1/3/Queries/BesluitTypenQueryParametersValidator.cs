@@ -1,0 +1,18 @@
+using FluentValidation;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
+using OneGround.ZGW.Catalogi.DataModel;
+using OneGround.ZGW.Common.Web.Validations;
+
+namespace OneGround.ZGW.Catalogi.Web.Validators.v1._3.Queries;
+
+public class BesluitTypenQueryParametersValidator : ZGWValidator<GetAllBesluitTypenQueryParameters>
+{
+    public BesluitTypenQueryParametersValidator()
+    {
+        CascadeRuleFor(p => p.Catalogus).IsUri();
+        CascadeRuleFor(p => p.ZaakType).IsNotUri();
+        CascadeRuleFor(p => p.InformatieObjectType).IsUri();
+        CascadeRuleFor(p => p.Status).IsEnumName(typeof(ConceptStatus));
+        CascadeRuleFor(p => p.DatumGeldigheid).IsDate(required: false);
+    }
+}

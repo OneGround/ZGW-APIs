@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Catalogi.Web</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Catalogi.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Referentielijsten.ServiceAgent\ZGW.Referentielijsten.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Catalogi.Contracts\ZGW.Catalogi.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Catalogi.DataModel\ZGW.Catalogi.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

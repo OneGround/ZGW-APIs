@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>OneGround.ZGW.Notificaties.Messaging</RootNamespace>
+    <AssemblyName>OneGround.ZGW.Notificaties.Messaging</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hangfire" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="MassTransit.Hangfire" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Contracts\ZGW.Notificaties.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.DataModel\ZGW.Notificaties.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

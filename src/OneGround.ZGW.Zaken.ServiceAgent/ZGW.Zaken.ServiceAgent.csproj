@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Zaken.ServiceAgent</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Zaken.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Zaken.Contracts\ZGW.Zaken.Contracts.csproj" />
+  </ItemGroup>
+</Project>

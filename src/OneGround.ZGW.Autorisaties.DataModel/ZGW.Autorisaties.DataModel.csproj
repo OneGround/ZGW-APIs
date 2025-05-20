@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Autorisaties.DataModel</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Autorisaties.DataModel</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.DataAccess\ZGW.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

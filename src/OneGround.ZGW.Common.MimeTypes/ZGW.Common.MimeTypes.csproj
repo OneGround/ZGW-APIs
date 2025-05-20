@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Common.MimeTypes</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Common.MimeTypes</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Resources\application.csv" />
+    <None Remove="Resources\audio.csv" />
+    <None Remove="Resources\custom.csv" />
+    <None Remove="Resources\font.csv" />
+    <None Remove="Resources\haptics.csv" />
+    <None Remove="Resources\image.csv" />
+    <None Remove="Resources\message.csv" />
+    <None Remove="Resources\model.csv" />
+    <None Remove="Resources\multipart.csv" />
+    <None Remove="Resources\text.csv" />
+    <None Remove="Resources\video.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\application.csv" />
+    <EmbeddedResource Include="Resources\audio.csv" />
+    <EmbeddedResource Include="Resources\font.csv" />
+    <EmbeddedResource Include="Resources\haptics.csv" />
+    <EmbeddedResource Include="Resources\image.csv" />
+    <EmbeddedResource Include="Resources\message.csv" />
+    <EmbeddedResource Include="Resources\model.csv" />
+    <EmbeddedResource Include="Resources\multipart.csv" />
+    <EmbeddedResource Include="Resources\text.csv" />
+    <EmbeddedResource Include="Resources\video.csv" />
+    <EmbeddedResource Include="Resources\custom.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" />
+  </ItemGroup>
+</Project>

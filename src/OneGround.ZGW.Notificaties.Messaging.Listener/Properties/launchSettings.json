@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "ZGW.Notificaties.Messaging.Listener": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Local"
+      }
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

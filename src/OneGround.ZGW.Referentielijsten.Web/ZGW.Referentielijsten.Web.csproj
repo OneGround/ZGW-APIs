@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Referentielijsten.Web</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Referentielijsten.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Referentielijsten.Contracts\ZGW.Referentielijsten.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data\Communicatie_kanalen_data.json" />
+    <EmbeddedResource Include="Data\Proces_typen_data.json" />
+    <EmbeddedResource Include="Data\Resultaat_type_omschrijvingen_data.json" />
+    <EmbeddedResource Include="Data\Resultaten_data.json" />
+  </ItemGroup>
+</Project>
