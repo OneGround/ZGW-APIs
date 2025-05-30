@@ -4,7 +4,6 @@
 
 [![C#](https://img.shields.io/badge/c%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![.NET](https://img.shields.io/badge/.NET-%235C2D91.svg?style=for-the-badge&logo=.net&logoColor=white)](https://dotnet.microsoft.com/)
-![Build Status](https://img.shields.io/github/actions/workflow/status/OneGround/ZGW-APIs/build.yml?style=for-the-badge)
 
 ## About OneGround ZGW-APIs
 
