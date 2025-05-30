@@ -40,7 +40,7 @@ Supporting APIs:
 * **Audit Trail** - Complete logging of all changes
 * **Archiving Support** - Built-in support for archiving according to Dutch standards
 * **Ceph Support** - Built-in support for storage of document contents on Ceph
-* **Multi tenant** - One installation can serve multiple instances or organisations
+* **Multi-tenant** - One installation can serve multiple instances or organisations
 
 ## Getting Started
 
