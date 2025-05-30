@@ -73,7 +73,7 @@ Supporting APIs:
 
 ### Docker Deployment
 
-> [!Note]TODO
+> [!Note]
 > Localdev folder is not yet ready for local development.
 
 ## Configuration
