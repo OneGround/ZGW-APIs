@@ -44,12 +44,3 @@ jobs:
     - name: Test
       run: dotnet test ${{ env.SOLUTION_UNIT_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"Code coverage" --logger trx --results-directory ${{ runner.temp }}
       working-directory: ${{ env.SOLUTION_ROOT }}
-    
-    - name: Publish test results
-      uses: dorny/test-reporter@v1
-      if: always()
-      with:
-        name: .NET Test Results
-        path: '${{ runner.temp }}/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: true
