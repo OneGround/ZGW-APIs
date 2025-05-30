@@ -1,9 +1,3 @@
----
-lastUpdated: 2025-05-30 09:18:32 UTC
-author: johannesbattjes
-version: 1.0.0
----
-
 # OneGround ZGW-APIs
 
 *Production-ready APIs for Case Management (Zaakgericht Werken) in C#*
@@ -14,7 +8,7 @@ version: 1.0.0
 
 ## About OneGround ZGW-APIs
 
-This repository contains the source code and documentation for production-ready APIs implementing the VNG Standards for Case Management (Zaakgericht Werken). 
+This repository contains the source code and documentation for production-ready APIs implementing the VNG Standards for Case Management (Zaakgericht Werken).
 This is a C# implementation of the ZGW-APIs standard.
 
 ## Case Management (Zaakgericht Werken)
@@ -31,10 +25,10 @@ This implementation follows the VNG Realisatie standard "APIs for Zaakgericht We
 * **Besluiten API** - For registration of decisions made in the context of case management
 
 Supporting APIs:
+
 * **Notifications API** - For managing subscriptions and notifications of data changes
 * **Authorization API** - For managing application access to data
 * **Reference API** - Process types and result types for archiving based on selection lists
-
 
 ## Technical Features
 
@@ -48,47 +42,44 @@ Supporting APIs:
 * **Ceph Support** - Built-in support for storage of document contents on Ceph
 * **Multi tenant** - One installation can serve multiple instances or organisations
 
-
 ## Getting Started
 
 ### Prerequisites
 
-* .NET 8.0 or higher
-* Docker (optional, for containerized deployment)
-* PostgreSQL 15 or higher
+* **.NET**: 8.0
+* **Docker**: Version 24.0.0 or higher
+* **Docker Compose**: Version 2.20.0 or higher
 
 ### Installation
 
 1. Clone the repository:
-        ```bash
-        git clone https://github.com/OneGround/ZGW-APIs.git
-        cd ZGW-APIs
-        ```
 
-2. Build the solution:
-        ```bash
-        dotnet build
-        ```
+   ```bash
+   git clone https://github.com/OneGround/ZGW-APIs.git
+   cd ZGW-APIs
+   ```
 
-3. Run the tests:
-        ```bash
-        dotnet test
-        ```
+1. Build the solution:
 
-4. Start the services:
-        ```bash
-        dotnet run --project src/Roxit.ZGW.Api
-        ```
+   ```bash
+   dotnet build ./src/ZGW.all.sln
+   ```
+
+1. Run the tests:
+
+   ```bash
+   dotnet test ./src/ZGW.UnitTests.slnf
+   ```
 
 ### Docker Deployment
 
-        ```bash
-        docker-compose up -d
-        ```
+> [!Note]TODO
+> Localdev folder is not yet ready for local development.
 
 ## Configuration
 
 Configuration can be done through:
+
 * appsettings.json files
 * Environment variables
 * Docker environment files
@@ -96,7 +87,6 @@ Configuration can be done through:
 For more information, visit our [documentation portal](https://dev.oneground.nl).
 
 ## Project Structure
-
 
 ## Documentation
 
@@ -115,14 +105,9 @@ We welcome contributions to the OneGround ZGW-APIs. Please read our [contributio
 ## Support
 
 For support questions, please contact:
-* Email: support@roxit.nl
+
+* Email: <support@roxit.nl>
 * [Create an issue](https://github.com/OneGround/ZGW-APIs/issues)
-
-## License
-
-Copyright © 2025 Roxit
-
-All rights reserved. This source code is proprietary and confidential. No part of this source code may be reproduced, distributed, or transmitted in any form or by any means, without the prior written permission of Roxit.
 
 ## Acknowledgments
 
