@@ -1,0 +1,54 @@
+name: .NET Build & Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'builds/dotnet-build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'builds/tests/dotnet-build.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      SOLUTION_ROOT: '${{ github.workspace }}/src'
+      SOLUTION_FILE: 'ZGW.Backend.slnf'
+      SOLUTION_UNIT_TESTS: 'ZGW.UnitTests.slnf'
+      BUILD_CONFIGURATION: 'Release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_FILE }}
+      working-directory: ${{ env.SOLUTION_ROOT }}
+
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+      working-directory: ${{ env.SOLUTION_ROOT }}
+
+    - name: Test
+      run: dotnet test ${{ env.SOLUTION_UNIT_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"Code coverage" --logger trx --results-directory ${{ runner.temp }}
+      working-directory: ${{ env.SOLUTION_ROOT }}
+    
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: .NET Test Results
+        path: '${{ runner.temp }}/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
