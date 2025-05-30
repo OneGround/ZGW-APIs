@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <UserSecretsId>b683de0c-1413-4054-90d2-4afe23796c95</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AssemblyName>Roxit.ZGW.Referentielijsten.WebApi</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Referentielijsten.WebApi</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Referentielijsten.Web\ZGW.Referentielijsten.Web.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\appsettings.Shared.json">
+      <Link>appsettings.Shared.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

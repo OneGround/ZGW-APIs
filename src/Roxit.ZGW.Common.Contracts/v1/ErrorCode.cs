@@ -1,0 +1,69 @@
+namespace Roxit.ZGW.Common.Contracts.v1;
+
+public static class ErrorCode
+{
+    public const string ArchiefActieDatumError = "archiefactiedatum-error";
+    public const string ArchiefNominatieNotSet = "archiefnominatie-not-set";
+    public const string ArchiefActieDatumNotSet = "archiefactiedatum-not-set";
+    public const string ConceptRelation = "concept-relation";
+    public const string PreconditionFailed = "precondition_failed";
+    public const string NotFound = "not_found";
+    public const string MethodNotAllowed = "method_not_allowed";
+    public const string NotAcceptable = "not_acceptable";
+    public const string Required = "required";
+    public const string Blank = "blank";
+    public const string Invalid = "invalid";
+    public const string InvalidLength = "invalid-length";
+    public const string IncorrectBase64Padding = "incorrect-base64-padding";
+    public const string IdentificationNotUnique = "identificatie-niet-uniek";
+    public const string OnlyDigits = "only-digits";
+    public const string InvalidChoice = "invalid_choice";
+    public const string InvalidExpandField = "invalid-expand-field";
+    public const string DisabledExpand = "disabled-expand";
+    public const string InvalidResource = "invalid-resource";
+    public const string BadUrl = "bad-url";
+    public const string Unique = "unique";
+    public const string UpdateNotAllowed = "wijzigen-niet-toegelaten";
+    public const string MaxLength = "max_length";
+    public const string ExistingLock = "existing-lock";
+    public const string IncorrectLockId = "incorrect-lock-id";
+    public const string Unlocked = "unlocked";
+    public const string MissingLockId = "missing-lock-id";
+    public const string NonConceptObject = "non-concept-object";
+    public const string NonConceptZaakType = "non-concept-zaaktype";
+    public const string NonConceptRelation = "non-concept-relation";
+    public const string NotPublished = "not-published";
+    public const string ClientIdExists = "clientId-exists";
+    public const string ModuleLabelExists = "moduleLabel-exists";
+    public const string ClientIdNotExists = "clientId-not-exists";
+    public const string MissingAuthorizations = "missing-authorizations";
+    public const string AmbiguousAuthorizationsSpecified = "ambiguous-authorizations-specified";
+    public const string DoesNotExist = "does_not_exist";
+    public const string MissingGebruiksRechten = "missing-gebruiksrechten";
+    public const string MustBeEmpty = "must-be-empty";
+    public const string InvalidForReceived = "invalid_for_received";
+    public const string ObjectDoesNotExist = "object-does-not-exist";
+    public const string InconsistentRelation = "inconsistent-relation";
+    public const string ProcessTypeMismatch = "procestype-mismatch";
+    public const string UnsupportedMediaType = "unsupported_media_type";
+    public const string RelationsIncorrectCatalogus = "relations-incorrect-catalogus";
+    public const string InvalidAfleidingswijzeForProcesTermijn = "invalid-afleidingswijze-for-procestermijn";
+    public const string IndicatieGebruiksrechtUnset = "indicatiegebruiksrecht-unset";
+    public const string PermissionDenied = "permission_denied";
+    public const string AuthenticationDenied = "authentication_denied";
+    public const string ZaakTypeMismatch = "zaaktype-mismatch";
+    public const string DocumentsNotArchived = "documents-not-archived";
+    public const string NoMatch = "no_match";
+    public const string DeelZaakSame = "deelzaak-als-hoofdzaak";
+    public const string MissingBesluitTypeInformatieObjectTypeRelation = "missing-besluittype-informatieobjecttype-relation";
+    public const string MissingZaakTypeInformatieObjectTypeRelation = "missing-zaaktype-informatieobjecttype-relation";
+    public const string PendingRelations = "pending-relations";
+    public const string BetalingNvt = "betaling-nvt";
+    public const string InvalidProductsServices = "invalid-products-services";
+    public const string FuturenotAllowed = "future_not_allowed";
+    public const string SelfForbidden = "self-forbidden";
+    public const string AmbiguousCatalogi = "ambiguous-catalogi";
+    public const string FileSize = "file-size";
+
+    public const string Other = "other"; // TODO: In some cases I don't know the exact code to use. Where can we find them?
+}

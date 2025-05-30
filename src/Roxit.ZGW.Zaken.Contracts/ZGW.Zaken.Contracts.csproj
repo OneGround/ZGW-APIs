@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Zaken.Contracts</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Zaken.Contracts</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite.IO.GeoJson" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.Contracts\ZGW.Common.Contracts.csproj" />
+  </ItemGroup>
+</Project>

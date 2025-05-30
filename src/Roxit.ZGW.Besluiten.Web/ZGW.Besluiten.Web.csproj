@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Besluiten.Web</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Besluiten.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Besluiten.Contracts\ZGW.Besluiten.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Besluiten.DataModel\ZGW.Besluiten.DataModel.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Documenten.Messaging.Contracts\ZGW.Documenten.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

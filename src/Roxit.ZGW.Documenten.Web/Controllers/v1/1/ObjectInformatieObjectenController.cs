@@ -1,0 +1,99 @@
+﻿using System;
+using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Roxit.ZGW.Common.Handlers;
+using Roxit.ZGW.Common.Web.Authorization;
+using Roxit.ZGW.Common.Web.Controllers;
+using Roxit.ZGW.Common.Web.Filters;
+using Roxit.ZGW.Common.Web.Services;
+using Roxit.ZGW.Common.Web.Versioning;
+using Roxit.ZGW.Documenten.Contracts.v1.Responses;
+using Roxit.ZGW.Documenten.Web.Authorization;
+using Roxit.ZGW.Documenten.Web.Contracts.v1;
+using Roxit.ZGW.Documenten.Web.Handlers.v1;
+using Swashbuckle.AspNetCore.Annotations;
+
+namespace Roxit.ZGW.Documenten.Web.Controllers.v1._1;
+
+[ApiController]
+[Authorize]
+[Consumes("application/json")]
+[Produces("application/json")]
+public class ObjectInformatieObjectenController : ZGWControllerBase
+{
+    public ObjectInformatieObjectenController(
+        ILogger<ObjectInformatieObjectenController> logger,
+        IMediator mediator,
+        IMapper mapper,
+        IRequestMerger requestMerger,
+        IErrorResponseBuilder errorResponseBuilder
+    )
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
+
+    /// <summary>
+    /// Een specifieke OBJECT-INFORMATIEOBJECT relatie opvragen.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpGet(ApiRoutes.ObjectInformatieObjecten.Get, Name = Operations.ObjectInformatieObjecten.Read)]
+    [Scope(AuthorizationScopes.Documenten.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
+    [ZgwApiVersion(Api.LatestVersion_1_1)]
+    [ETagFilter]
+    public async Task<IActionResult> GetAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
+
+        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id });
+
+        if (result.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+
+        // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
+        //await _mediator.Send(new LogAuditTrailGetObjectCommand
+        //{
+        //    RetrieveCatagory = RetrieveCatagory.All,
+        //    BaseEntity = result.Result.InformatieObject,
+        //    SubEntity = result.Result,
+        //    AuditTrailOptions = new AuditTrailOptions { Bron = "DRC", Resource = "objectinformatieobject" }
+        //});
+
+        return Ok(objectInformatieObjectResponse);
+    }
+
+    /// <summary>
+    /// De headers van een specifieke OBJECT-INFORMATIEOBJECT relatie opvragen.
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="304">Not Modified</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpHead(ApiRoutes.ObjectInformatieObjecten.Get, Name = Operations.ObjectInformatieObjecten.ReadHead)]
+    [Scope(AuthorizationScopes.Documenten.Read)]
+    [ZgwApiVersion(Api.LatestVersion_1_1)]
+    [ETagFilter]
+    public Task<IActionResult> HeadAsync(Guid id)
+    {
+        return GetAsync(id);
+    }
+}

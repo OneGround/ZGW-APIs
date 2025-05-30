@@ -1,0 +1,63 @@
+﻿using System.IO;
+using FluentValidation;
+using Roxit.ZGW.Common.Contracts.v1;
+using Roxit.ZGW.Common.DataModel;
+using Roxit.ZGW.Common.MimeTypes;
+using Roxit.ZGW.Common.Web.Validations;
+using Roxit.ZGW.Documenten.Contracts.v1._5.Requests;
+using Roxit.ZGW.Documenten.DataModel;
+using Roxit.ZGW.Documenten.Web.Extensions;
+
+namespace Roxit.ZGW.Documenten.Web.Validators.v1._5;
+
+public class EnkelvoudigInformatieObjectRequestValidator : ZGWValidator<EnkelvoudigInformatieObjectBaseRequestDto>
+{
+    public EnkelvoudigInformatieObjectRequestValidator()
+    {
+        CascadeRuleFor(r => r.Identificatie).MaximumLength(40);
+        CascadeRuleFor(r => r.Bronorganisatie).IsRsin(required: true);
+        CascadeRuleFor(r => r.CreatieDatum).IsDate(true);
+        CascadeRuleFor(r => r.Titel).NotNull().NotEmpty().MaximumLength(200);
+        CascadeRuleFor(r => r.Vertrouwelijkheidaanduiding).IsEnumName(typeof(VertrouwelijkheidAanduiding));
+        CascadeRuleFor(r => r.Auteur).NotNull().NotEmpty().MaximumLength(200);
+        CascadeRuleFor(r => r.Status).IsEnumName(typeof(Status)).When(r => !string.IsNullOrEmpty(r.Status));
+        CascadeRuleFor(r => r.Formaat).IsValidMimeType(v => MimeTypeHelper.IsValidMimeType(v), maxLength: 255, allowEmpty: true);
+        CascadeRuleFor(r => r.Taal).NotNull().NotEmpty().MaximumLength(3);
+        CascadeRuleFor(r => r.Bestandsnaam).MaximumLength(255);
+
+        CascadeRuleFor(r => r.Inhoud)
+            .NotNull()
+            .NotEmpty()
+            .Must(_ => false) // Fails always when there is an error file!
+            .WithMessage("Incorrect base64 data is specified.")
+            .WithErrorCode(ErrorCode.IncorrectBase64Padding)
+            .When(r => r.Inhoud != null && File.Exists(r.Inhoud + ".error")); // Note: this dummy error-file is created by Middleware when base64 decoding has failed!
+
+        CascadeRuleFor(r => r.Inhoud)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("No base64 data is specified.")
+            .WithErrorCode(ErrorCode.Required)
+            .Must(inhoud => inhoud.IsAnyDocumentUrn() || File.Exists(inhoud)) // Note: inhoud is intercepted by Middleware which writes a file with base64 encoded data
+            .When(r => !string.IsNullOrEmpty(r.Inhoud)); // For base64-document (so not for multi-part or document-meta-only documents)
+
+        CascadeRuleFor(r => r.Link).MaximumLength(200);
+        CascadeRuleFor(r => r.Beschrijving).MaximumLength(1000);
+        CascadeRuleFor(r => r.OntvangstDatum).IsDate(false);
+        CascadeRuleFor(r => r.VerzendDatum).IsDate(false);
+        CascadeRuleFor(r => r.Ondertekening)
+            .ChildRules(v =>
+            {
+                v.CascadeRuleFor(r => r.Soort).NotNull().NotEmpty().IsEnumName(typeof(Soort));
+                v.CascadeRuleFor(r => r.Datum).IsDate(true);
+            });
+        CascadeRuleFor(r => r.Integriteit)
+            .ChildRules(v =>
+            {
+                v.CascadeRuleFor(r => r.Algoritme).NotNull().NotEmpty().IsEnumName(typeof(Algoritme));
+                v.CascadeRuleFor(r => r.Waarde).NotNull().NotEmpty().MaximumLength(128);
+                v.CascadeRuleFor(r => r.Datum).IsDate(true);
+            });
+        CascadeRuleFor(r => r.InformatieObjectType).NotNull().NotEmpty().IsUri().MaximumLength(200);
+    }
+}

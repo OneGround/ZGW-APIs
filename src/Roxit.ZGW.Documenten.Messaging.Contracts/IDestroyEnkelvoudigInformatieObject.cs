@@ -1,0 +1,11 @@
+using System;
+using Roxit.ZGW.Common.Messaging;
+
+namespace Roxit.ZGW.Documenten.Messaging.Contracts;
+
+public interface IDestroyEnkelvoudigInformatieObject : IRsinContract
+{
+    string EnkelvoudigInformatieObjectUrl { get; set; }
+    string ObjectUrl { get; set; }
+    Guid CorrelationId { get; set; }
+}

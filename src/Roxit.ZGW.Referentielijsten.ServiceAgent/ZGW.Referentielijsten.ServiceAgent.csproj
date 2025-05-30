@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Referentielijsten.ServiceAgent</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Referentielijsten.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Referentielijsten.Contracts\ZGW.Referentielijsten.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,148 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Roxit.ZGW.Besluiten.Contracts.v1.Responses;
+using Roxit.ZGW.Besluiten.DataModel;
+using Roxit.ZGW.Besluiten.Web.Authorization;
+using Roxit.ZGW.Besluiten.Web.BusinessRules;
+using Roxit.ZGW.Besluiten.Web.Notificaties;
+using Roxit.ZGW.Common.Constants;
+using Roxit.ZGW.Common.Contracts;
+using Roxit.ZGW.Common.Contracts.v1;
+using Roxit.ZGW.Common.Handlers;
+using Roxit.ZGW.Common.Web.Authorization;
+using Roxit.ZGW.Common.Web.Services;
+using Roxit.ZGW.Common.Web.Services.AuditTrail;
+using Roxit.ZGW.Common.Web.Services.UriServices;
+using Roxit.ZGW.Zaken.ServiceAgent.v1;
+
+namespace Roxit.ZGW.Besluiten.Web.Handlers.v1;
+
+class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHandler>, IRequestHandler<CreateBesluitCommand, CommandResult<Besluit>>
+{
+    private readonly BrcDbContext _context;
+    private readonly INummerGenerator _nummerGenerator;
+    private readonly IBesluitBusinessRuleService _besluitBusinessRuleService;
+    private readonly IAuditTrailFactory _auditTrailFactory;
+    private readonly IZakenServiceAgent _zakenServiceAgent;
+
+    public CreateBesluitCommandHandler(
+        ILogger<CreateBesluitCommandHandler> logger,
+        IConfiguration configuration,
+        BrcDbContext context,
+        IEntityUriService uriService,
+        INummerGenerator nummerGenerator,
+        IBesluitBusinessRuleService besluitBusinessRuleService,
+        INotificatieService notificatieService,
+        IAuditTrailFactory auditTrailFactory,
+        IZakenServiceAgent zakenServiceAgent,
+        IAuthorizationContextAccessor authorizationContextAccessor
+    )
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+    {
+        _context = context;
+        _nummerGenerator = nummerGenerator;
+        _besluitBusinessRuleService = besluitBusinessRuleService;
+        _auditTrailFactory = auditTrailFactory;
+        _zakenServiceAgent = zakenServiceAgent;
+    }
+
+    public async Task<CommandResult<Besluit>> Handle(CreateBesluitCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Creating Besluit and validating....");
+
+        var besluit = request.Besluit;
+
+        if (!_authorizationContext.IsAuthorized(besluit))
+        {
+            return new CommandResult<Besluit>(null, CommandStatus.Forbidden);
+        }
+
+        var errors = new List<ValidationError>();
+
+        if (
+            !await _besluitBusinessRuleService.ValidateAsync(
+                besluit,
+                _applicationConfiguration.IgnoreBesluitTypeValidation,
+                _applicationConfiguration.IgnoreZaakValidation,
+                errors
+            )
+        )
+        {
+            return new CommandResult<Besluit>(null, CommandStatus.ValidationError, errors.ToArray());
+        }
+
+        if (string.IsNullOrEmpty(besluit.Identificatie))
+        {
+            var organisatie = request.Besluit.VerantwoordelijkeOrganisatie;
+
+            var besluitnummer = await _nummerGenerator.GenerateAsync(
+                organisatie,
+                "besluiten",
+                id => IsBesluitIdentificatieUnique(organisatie, id),
+                cancellationToken
+            );
+
+            besluit.Identificatie = besluitnummer;
+        }
+
+        await _context.Besluiten.AddAsync(besluit, cancellationToken); // Note: Sequential Guid for Id is generated here by EF
+
+        besluit.Owner = _rsin;
+
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        {
+            audittrail.SetNew<BesluitResponseDto>(besluit);
+
+            await audittrail.CreatedAsync(besluit, besluit, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        _logger.LogDebug("Besluit successfully created. Url={Id}; Identification={Identificatie}", besluit.Id, besluit.Identificatie);
+
+        if (besluit.Zaak != null)
+        {
+            var zaakBesluit = await _zakenServiceAgent.AddZaakBesluitByUrlAsync(_uriService.GetId(besluit.Zaak), _uriService.GetUri(besluit));
+
+            if (!zaakBesluit.Success)
+            {
+                _logger.LogError(
+                    "Could not add zaak-besluit to ZRC. Zaak url={zaak}; Besluit={besluit.Url}. Status={status}. Error={detail}.",
+                    besluit.Zaak,
+                    besluit.Url,
+                    zaakBesluit.Error.Status,
+                    zaakBesluit.Error.Detail
+                );
+                // Note: Because we have saved the zaak already the notification will be sent
+            }
+            else
+            {
+                besluit.ZaakBesluitUrl = zaakBesluit.Response.Url;
+
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        await SendNotificationAsync(Actie.create, besluit, cancellationToken);
+
+        return new CommandResult<Besluit>(besluit, CommandStatus.OK);
+    }
+
+    private bool IsBesluitIdentificatieUnique(string organisatie, string identificatie)
+    {
+        return !_context.Besluiten.AsNoTracking().Any(b => b.Identificatie == identificatie && organisatie == b.VerantwoordelijkeOrganisatie);
+    }
+
+    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.BRC, Resource = "besluit" };
+}
+
+class CreateBesluitCommand : IRequest<CommandResult<Besluit>>
+{
+    public Besluit Besluit { get; internal set; }
+}

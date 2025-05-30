@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Documenten.Messaging.Contracts</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Documenten.Messaging.Contracts</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />
+  </ItemGroup>
+</Project>

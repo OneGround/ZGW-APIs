@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Catalogi.Web</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Catalogi.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Referentielijsten.ServiceAgent\ZGW.Referentielijsten.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Catalogi.Contracts\ZGW.Catalogi.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Catalogi.DataModel\ZGW.Catalogi.DataModel.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

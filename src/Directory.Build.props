@@ -1,0 +1,26 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Visma Roxit</Authors>
+    <Description>OneGround</Description>
+    <Copyright>Visma Roxit 2025</Copyright>
+    <Product>OneGround</Product>
+    <Company>Visma Roxit</Company>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarningsAsErrors>MSB9008</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="CSharpier.MsBuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' == 'false'">
+    <PackageReference Include="CSharpier.MsBuild" Version="1.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

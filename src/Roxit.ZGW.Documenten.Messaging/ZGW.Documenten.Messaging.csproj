@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Documenten.Messaging</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Documenten.Messaging</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Documenten.Messaging.Contracts\ZGW.Documenten.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

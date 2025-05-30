@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Autorisaties.Web</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Autorisaties.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.Common\ZGW.Autorisaties.Common.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.Contracts\ZGW.Autorisaties.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.DataModel\ZGW.Autorisaties.DataModel.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

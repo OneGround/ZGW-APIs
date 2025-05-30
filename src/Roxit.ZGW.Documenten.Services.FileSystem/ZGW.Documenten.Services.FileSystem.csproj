@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Documenten.Services.FileSystem</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Documenten.Services.FileSystem</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Documenten.Services\ZGW.Documenten.Services.csproj" />
+  </ItemGroup>
+</Project>

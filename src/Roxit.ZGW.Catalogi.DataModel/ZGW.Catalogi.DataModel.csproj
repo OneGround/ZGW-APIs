@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Catalogi.DataModel</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Catalogi.DataModel</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Migrations\20201110134108_add-catalog.cs" />
+    <Compile Remove="Migrations\20201110134108_add-catalog.Designer.cs" />
+    <Compile Remove="Migrations\20201110140233_add-catalog.cs" />
+    <Compile Remove="Migrations\20201110140233_add-catalog.Designer.cs" />
+    <Compile Remove="Migrations\20201110143817_add-catalog.cs" />
+    <Compile Remove="Migrations\20201110143817_add-catalog.Designer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.DataAccess\ZGW.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

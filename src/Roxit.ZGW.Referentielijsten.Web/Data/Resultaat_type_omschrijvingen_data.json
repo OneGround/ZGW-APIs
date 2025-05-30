@@ -1,0 +1,92 @@
+[
+  {
+    "id": "bae947e7-02b5-44f9-ab76-28c7a0ed01c0",
+    "omschrijving": "Afgebroken",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "cad65ef5-6db5-404f-8c6b-8b76d7af40f5",
+    "omschrijving": "Afgehandeld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "2f6e52c7-968f-4aa9-beee-d6b31365e981",
+    "omschrijving": "Afgewezen",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "b0fe96c6-3c87-4bfb-bd19-c831bae6100b",
+    "omschrijving": "Beëindigd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "4a6b5072-e44f-4826-9546-e8074499654e",
+    "omschrijving": "Geweigerd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "c0e4358c-e5d0-4926-90f1-f9ee12da43e1",
+    "omschrijving": "Handhaving uitgevrd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "6765b367-f361-4d3b-bd3e-cc351136311d",
+    "omschrijving": "Ingetrokken",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "1b1f933b-b0ab-4245-bbbc-ffa22ff4e0c1",
+    "omschrijving": "Ingewilligd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "3c803257-76f3-47f5-a2a4-6fbba4bbfbfd",
+    "omschrijving": "Niet toegekend",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "d99c42de-2217-4091-aa8b-a413818b10ad",
+    "omschrijving": "Niet uitgevoerd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "00f64e43-bdf3-4195-ad9e-e5520db99723",
+    "omschrijving": "Toegekend",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "e006fc17-7216-400e-b6e3-28ca9f81587f",
+    "omschrijving": "Toezicht uitgevoerd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "11201ecb-184c-4942-9cb6-c07d2ac27a1a",
+    "omschrijving": "Uitgevoerd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "10e2ee07-84de-4972-a1d8-dfa6605e0520",
+    "omschrijving": "Verleend",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "a422ce0c-75a5-4e3c-b527-54dd33584bb7",
+    "omschrijving": "Verstrekt",
+    "definitie": "",
+    "opmerking": ""
+  }
+]

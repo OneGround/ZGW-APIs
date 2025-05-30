@@ -1,0 +1,262 @@
+services:
+  rabbit_mq:
+    image: rabbitmq:3.8-management
+    restart: always
+    ports:
+      - ${EVENTBUS_MANAGING_PORT}:15672
+      - ${EVENTBUS_MESSAGING_PORT}:5672
+    environment:
+      RABBITMQ_DEFAULT_VHOST: "${EVENTBUS_VIRTUAL_HOST}"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - oneground
+
+  postgres_docker_db:
+    build:
+      context: postgresql/.
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./postgresql/init-database.sh:/docker-entrypoint-initdb.d
+    restart: always
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      POSTGRES_USER: "${POSTGRES_ADMIN}"
+      POSTGRES_PASSWORD: "${POSTGRES_ADMIN_PASSWORD}"
+      TZ: "Europe/Amsterdam"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_ADMIN}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - oneground
+
+  redis:
+    image: redis:6.0.10-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+    networks:
+      - oneground
+
+  ceph:
+    image: ceph/daemon:latest-octopus
+    command: demo
+    environment:
+      MON_IP: 127.0.0.1
+      CEPH_PUBLIC_NETWORK: 0.0.0.0/0
+      CEPH_DEMO_UID: demo
+      CEPH_DEMO_ACCESS_KEY: demo
+      CEPH_DEMO_SECRET_KEY: demo
+      CEPH_DEMO_BUCKET: "${CEPH_DEMO_BUCKET}"
+      CEPH_DEMO_DASHBOARD_USER: "${CEPH_DEMO_DASHBOARD_USER}"
+      CEPH_DEMO_DASHBOARD_PASSWORD: "${CEPH_DEMO_DASHBOARD_PASSWORD}"
+    volumes:
+      - ./ceph/demo.sh:/opt/ceph-container/bin/demo.sh
+      - ceph-etc:/etc/ceph
+      - ceph-lib:/var/lib/ceph/
+    ports:
+      - 8443:8443
+      - 5000:5000
+      - 8888:8888
+    networks:
+      - oneground
+
+  zgw.autorisaties.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Autorisaties.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${AC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.besluiten.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Besluiten.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${BRC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.catalogi.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Catalogi.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${ZTC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.documenten.messaging.listener:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Documenten.Messaging.Listener/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.documenten.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Documenten.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${DRC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+      FileSystemDocumentServiceSettings__DocumentRootPath: "drc_dms"
+    networks:
+      - oneground
+
+  zgw.notificaties.messaging.listener:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Notificaties.Messaging.Listener/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+      ConnectionStrings__HangfireConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.notificaties.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Notificaties.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${NRC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+  zgw.referentielijsten.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Referentielijsten.WebApi/Dockerfile
+    ports:
+      - ${RC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+    networks:
+      - oneground
+
+  zgw.zaken.webapi:
+    build:
+      context: ../
+      dockerfile: src/Roxit.ZGW.Zaken.WebApi/Dockerfile
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+      rabbit_mq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${ZRC_PORT}:5000
+    env_file: "default.env"
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
+      ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+    networks:
+      - oneground
+
+volumes:
+  postgres:
+  ceph-etc:
+  ceph-lib:
+
+networks:
+  oneground:
+    driver: bridge

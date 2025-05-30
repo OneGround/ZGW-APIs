@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Common.ServiceAgent</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Common.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.Contracts\ZGW.Common.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common\ZGW.Common.csproj" />
+  </ItemGroup>
+</Project>

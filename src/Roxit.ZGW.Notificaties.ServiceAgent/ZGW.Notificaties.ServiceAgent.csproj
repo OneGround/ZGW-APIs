@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Notificaties.ServiceAgent</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Notificaties.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Notificaties.Contracts\ZGW.Notificaties.Contracts.csproj" />
+  </ItemGroup>
+</Project>

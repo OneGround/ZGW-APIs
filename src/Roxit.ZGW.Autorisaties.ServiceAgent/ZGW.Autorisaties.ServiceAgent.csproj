@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Roxit.ZGW.Autorisaties.ServiceAgent</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Autorisaties.ServiceAgent</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roxit.ZGW.Autorisaties.Contracts\ZGW.Autorisaties.Contracts.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.ServiceAgent\ZGW.Common.ServiceAgent.csproj" />
+    <ProjectReference Include="..\Roxit.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+  </ItemGroup>
+</Project>

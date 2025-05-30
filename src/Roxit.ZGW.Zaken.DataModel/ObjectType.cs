@@ -1,0 +1,31 @@
+namespace Roxit.ZGW.Zaken.DataModel;
+
+public enum ObjectType
+{
+    adres,
+    besluit,
+    buurt,
+    enkelvoudig_document,
+    gemeente,
+    gemeentelijke_openbare_ruimte,
+    huishouden,
+    inrichtingselement,
+    kadastrale_onroerende_zaak,
+    kunstwerkdeel,
+    maatschappelijke_activiteit,
+    openbare_ruimte,
+    pand,
+    spoorbaandeel,
+    status,
+    terreindeel,
+    terrein_gebouwd_object,
+    waterdeel,
+    wegdeel,
+    wijk,
+    woonplaats,
+    woz_deelobject,
+    woz_object,
+    woz_waarde,
+    zakelijk_recht,
+    overige,
+}
