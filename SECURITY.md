@@ -5,7 +5,7 @@
 If you discover a security vulnerability in this project, please report it as soon as possible.
 
 - **Do not** create a public issue for security bugs.
-- Instead, please email us at <support@roxit.nl> with details of the vulnerability.
+- Instead, please email us at <security@oneground.nl> with details of the vulnerability.
 - Provide as much information as possible to help us resolve the issue quickly (e.g., steps to reproduce, affected versions, potential impact).
 
 We take security seriously and will respond promptly to your report.
