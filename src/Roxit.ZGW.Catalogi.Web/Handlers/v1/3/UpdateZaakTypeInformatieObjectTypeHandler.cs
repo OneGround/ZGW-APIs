@@ -81,6 +81,7 @@ class UpdateZaakTypeInformatieObjectTypeHandler
 
         if (
             !await _businessRuleService.ValidateExistsAsync(
+                zaakTypeInformatieObjectType.Id,
                 zaakTypeInformatieObjectType.ZaakType.Id,
                 request.ZaakTypeInformatieObjectType.InformatieObjectTypeOmschrijving,
                 request.ZaakTypeInformatieObjectType.VolgNummer,
