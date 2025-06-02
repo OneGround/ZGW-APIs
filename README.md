@@ -105,7 +105,7 @@ We welcome contributions to the OneGround ZGW-APIs. Please read our [contributio
 
 For support questions, please contact:
 
-* Email: <support@roxit.nl>
+* Email: <support@oneground.nl>
 * [Create an issue](https://github.com/OneGround/ZGW-APIs/issues)
 
 ## Acknowledgments
@@ -116,4 +116,4 @@ For support questions, please contact:
 
 ---
 
-*Built with ❤️ by Roxit*
+*Built with love by Roxit*
