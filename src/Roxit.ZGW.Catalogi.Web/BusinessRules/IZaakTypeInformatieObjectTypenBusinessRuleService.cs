@@ -31,4 +31,13 @@ public interface IZaakTypeInformatieObjectTypenBusinessRuleService
         Richting richting,
         List<ValidationError> errors
     );
+
+    Task<bool> ValidateExistsAsync(
+        Guid? existingZaaktypeInformatieobjectTypeId,
+        Guid zaakTypeId,
+        string informatieObjectTypeOmschrijving,
+        int volgnummer,
+        Richting richting,
+        List<ValidationError> errors
+    );
 }

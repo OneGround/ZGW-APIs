@@ -27,7 +27,26 @@ public class ZaakTypeInformatieObjectTypenBusinessRuleService : IZaakTypeInforma
         _conceptBusinessRule = conceptBusinessRule;
     }
 
+    public Task<bool> ValidateExistsAsync(
+        Guid zaakTypeId,
+        string informatieObjectTypeOmschrijving,
+        int volgnummer,
+        Richting richting,
+        List<ValidationError> errors
+    )
+    {
+        return ValidateExistsAsync(
+            existingZaaktypeInformatieobjectTypeId: null,
+            zaakTypeId,
+            informatieObjectTypeOmschrijving,
+            volgnummer,
+            richting,
+            errors
+        );
+    }
+
     public async Task<bool> ValidateExistsAsync(
+        Guid? existingZaaktypeInformatieobjectTypeId,
         Guid zaakTypeId,
         string informatieObjectTypeOmschrijving,
         int volgnummer,
@@ -38,7 +57,8 @@ public class ZaakTypeInformatieObjectTypenBusinessRuleService : IZaakTypeInforma
         var recordExists = await _context
             .ZaakTypeInformatieObjectTypen.AsNoTracking()
             .AnyAsync(i =>
-                i.ZaakTypeId == zaakTypeId
+                (!existingZaaktypeInformatieobjectTypeId.HasValue || existingZaaktypeInformatieobjectTypeId.Value != i.Id)
+                && i.ZaakTypeId == zaakTypeId
                 && i.InformatieObjectTypeOmschrijving == informatieObjectTypeOmschrijving
                 && i.VolgNummer == volgnummer
                 && i.Richting == richting
