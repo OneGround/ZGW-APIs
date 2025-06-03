@@ -239,36 +239,54 @@ public class ZaakTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        ZaakTypeRequestDto mergedZaakTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDto, ZaakType>(
-            resultGet.Result,
-            partialZaakTypeRequest
-        );
+        ZaakType result;
 
-        if (!_validatorService.IsValid(mergedZaakTypeRequest, out var validationResult))
+        if (_requestMerger.TryMergeValidity(resultGet.Result, partialZaakTypeRequest))
         {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
+            var updateEindeGeldigheidResult = await _mediator.Send(new UpdateEindeGeldigheidCommand { Entity = resultGet.Result });
 
-        ZaakType mergedZaakType = _mapper.Map<ZaakType>(mergedZaakTypeRequest);
-
-        var resultUpd = await _mediator.Send(
-            new UpdateZaakTypeCommand
+            if (updateEindeGeldigheidResult.Status == CommandStatus.ValidationError)
             {
-                ZaakType = mergedZaakType,
-                Id = id,
-                Catalogus = mergedZaakTypeRequest.Catalogus,
-                BesluitTypen = mergedZaakTypeRequest.BesluitTypen,
-                DeelZaakTypen = mergedZaakTypeRequest.DeelZaakTypen,
-                IsPartialUpdate = true,
+                return _errorResponseBuilder.BadRequest(updateEindeGeldigheidResult.Errors);
             }
-        );
 
-        if (resultUpd.Status == CommandStatus.ValidationError)
+            result = resultGet.Result;
+        }
+        else
         {
-            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            ZaakTypeRequestDto mergedZaakTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDto, ZaakType>(
+                resultGet.Result,
+                partialZaakTypeRequest
+            );
+
+            if (!_validatorService.IsValid(mergedZaakTypeRequest, out var validationResult))
+            {
+                return _errorResponseBuilder.BadRequest(validationResult);
+            }
+
+            ZaakType mergedZaakType = _mapper.Map<ZaakType>(mergedZaakTypeRequest);
+
+            var resultUpd = await _mediator.Send(
+                new UpdateZaakTypeCommand
+                {
+                    ZaakType = mergedZaakType,
+                    Id = id,
+                    Catalogus = mergedZaakTypeRequest.Catalogus,
+                    BesluitTypen = mergedZaakTypeRequest.BesluitTypen,
+                    DeelZaakTypen = mergedZaakTypeRequest.DeelZaakTypen,
+                    IsPartialUpdate = true,
+                }
+            );
+
+            if (resultUpd.Status == CommandStatus.ValidationError)
+            {
+                return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            }
+
+            result = resultUpd.Result;
         }
 
-        var response = _mapper.Map<ZaakTypeResponseDto>(resultUpd.Result);
+        var response = _mapper.Map<ZaakTypeResponseDto>(result);
 
         return Ok(response);
     }

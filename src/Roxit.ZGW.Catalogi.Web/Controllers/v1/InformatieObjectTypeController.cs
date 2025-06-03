@@ -226,34 +226,52 @@ public class InformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        InformatieObjectTypeRequestDto mergedInformatieObjectTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<
-            InformatieObjectTypeRequestDto,
-            InformatieObjectType
-        >(resultGet.Result, partialInformatieObjectTypeRequest);
+        InformatieObjectType result;
 
-        if (!_validatorService.IsValid(mergedInformatieObjectTypeRequest, out var validationResult))
+        if (_requestMerger.TryMergeValidity(resultGet.Result, partialInformatieObjectTypeRequest))
         {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
+            var updateEindeGeldigheidResult = await _mediator.Send(new UpdateEindeGeldigheidCommand { Entity = resultGet.Result });
 
-        InformatieObjectType mergedInformatieObjectType = _mapper.Map<InformatieObjectType>(mergedInformatieObjectTypeRequest);
-
-        var resultUpd = await _mediator.Send(
-            new UpdateInformatieObjectTypeCommand()
+            if (updateEindeGeldigheidResult.Status == CommandStatus.ValidationError)
             {
-                InformatieObjectType = mergedInformatieObjectType,
-                Id = id,
-                Catalogus = mergedInformatieObjectTypeRequest.Catalogus,
-                IsPartialUpdate = true,
+                return _errorResponseBuilder.BadRequest(updateEindeGeldigheidResult.Errors);
             }
-        );
 
-        if (resultUpd.Status == CommandStatus.ValidationError)
+            result = resultGet.Result;
+        }
+        else
         {
-            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            InformatieObjectTypeRequestDto mergedInformatieObjectTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                InformatieObjectTypeRequestDto,
+                InformatieObjectType
+            >(resultGet.Result, partialInformatieObjectTypeRequest);
+
+            if (!_validatorService.IsValid(mergedInformatieObjectTypeRequest, out var validationResult))
+            {
+                return _errorResponseBuilder.BadRequest(validationResult);
+            }
+
+            InformatieObjectType mergedInformatieObjectType = _mapper.Map<InformatieObjectType>(mergedInformatieObjectTypeRequest);
+
+            var resultUpd = await _mediator.Send(
+                new UpdateInformatieObjectTypeCommand()
+                {
+                    InformatieObjectType = mergedInformatieObjectType,
+                    Id = id,
+                    Catalogus = mergedInformatieObjectTypeRequest.Catalogus,
+                    IsPartialUpdate = true,
+                }
+            );
+
+            if (resultUpd.Status == CommandStatus.ValidationError)
+            {
+                return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            }
+
+            result = resultUpd.Result;
         }
 
-        var informatieObjectTypeResponseDto = _mapper.Map<InformatieObjectTypeResponseDto>(resultUpd.Result);
+        var informatieObjectTypeResponseDto = _mapper.Map<InformatieObjectTypeResponseDto>(result);
 
         return Ok(informatieObjectTypeResponseDto);
     }
