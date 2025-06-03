@@ -1,9 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -75,11 +75,36 @@ internal static class ETagService
 {
     public static string ComputeWithHashFunction(object value)
     {
-        // Note: Set ReferenceLoopHandling to Ignore: Serializing Geometrie throws an exception when this is not set:
-        //         Newtonsoft.Json.JsonSerializationException: Self referencing loop detected for property 'CoordinateValue' with type 'NetTopologySuite.Geometries.Coordinate'. Path 'Value.Zaakgeometrie.Coordinates[0]'
-        var serialized = JsonConvert.SerializeObject(value, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(serialized));
+        const int BufferSize = 16_384;
 
-        return Convert.ToBase64String(hash);
+        var tempFilePath = Path.GetTempFileName();
+
+        using (var rwstream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: BufferSize))
+        {
+            using var writer = new StreamWriter(rwstream);
+
+            using var jsonWriter = new JsonTextWriter(writer);
+
+            var serializer = new JsonSerializer() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+            serializer.Serialize(jsonWriter, value);
+        }
+
+        using (
+            var rstream = new FileStream(
+                tempFilePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.None,
+                bufferSize: BufferSize,
+                FileOptions.DeleteOnClose
+            )
+        )
+        {
+            using var sha256 = SHA256.Create();
+
+            byte[] hash = sha256.ComputeHash(rstream);
+
+            return Convert.ToBase64String(hash);
+        }
     }
 }
