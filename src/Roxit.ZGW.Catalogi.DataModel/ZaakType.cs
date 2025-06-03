@@ -107,7 +107,7 @@ public class ZaakType : OwnedEntity, IAuditableEntity, IConceptEntity, IValidity
 
     [Required]
     [Column("productenofdiensten")]
-    public string[] ProductenOfDiensten { get; set; }
+    public string[] ProductenOfDiensten { get; set; } = [];
 
     [Column("selectielijstprocestype")]
     public string SelectielijstProcestype { get; set; }

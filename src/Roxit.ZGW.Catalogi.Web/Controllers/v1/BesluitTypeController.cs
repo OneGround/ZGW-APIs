@@ -239,36 +239,54 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        BesluitTypeRequestDto mergedBesluitTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
-            resultGet.Result,
-            partialBesluitTypeRequest
-        );
+        BesluitType result;
 
-        if (!_validatorService.IsValid(mergedBesluitTypeRequest, out var validationResult))
+        if (_requestMerger.TryMergeValidity(resultGet.Result, partialBesluitTypeRequest))
         {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
+            var updateEindeGeldigheidResult = await _mediator.Send(new UpdateEindeGeldigheidCommand { Entity = resultGet.Result });
 
-        BesluitType mergedBesluitType = _mapper.Map<BesluitType>(mergedBesluitTypeRequest);
-
-        var besluitTypeUpdate = await _mediator.Send(
-            new UpdateBesluitTypeCommand
+            if (updateEindeGeldigheidResult.Status == CommandStatus.ValidationError)
             {
-                BesluitType = mergedBesluitType,
-                Id = id,
-                Catalogus = mergedBesluitTypeRequest.Catalogus,
-                ZaakTypen = mergedBesluitTypeRequest.ZaakTypen,
-                InformatieObjectTypen = mergedBesluitTypeRequest.InformatieObjectTypen,
-                IsPartialUpdate = true,
+                return _errorResponseBuilder.BadRequest(updateEindeGeldigheidResult.Errors);
             }
-        );
 
-        if (besluitTypeUpdate.Status == CommandStatus.ValidationError)
+            result = resultGet.Result;
+        }
+        else
         {
-            return _errorResponseBuilder.BadRequest(besluitTypeUpdate.Errors);
+            BesluitTypeRequestDto mergedBesluitTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
+                resultGet.Result,
+                partialBesluitTypeRequest
+            );
+
+            if (!_validatorService.IsValid(mergedBesluitTypeRequest, out var validationResult))
+            {
+                return _errorResponseBuilder.BadRequest(validationResult);
+            }
+
+            BesluitType mergedBesluitType = _mapper.Map<BesluitType>(mergedBesluitTypeRequest);
+
+            var besluitTypeUpdate = await _mediator.Send(
+                new UpdateBesluitTypeCommand
+                {
+                    BesluitType = mergedBesluitType,
+                    Id = id,
+                    Catalogus = mergedBesluitTypeRequest.Catalogus,
+                    ZaakTypen = mergedBesluitTypeRequest.ZaakTypen,
+                    InformatieObjectTypen = mergedBesluitTypeRequest.InformatieObjectTypen,
+                    IsPartialUpdate = true,
+                }
+            );
+
+            if (besluitTypeUpdate.Status == CommandStatus.ValidationError)
+            {
+                return _errorResponseBuilder.BadRequest(besluitTypeUpdate.Errors);
+            }
+
+            result = besluitTypeUpdate.Result;
         }
 
-        var response = _mapper.Map<BesluitTypeResponseDto>(besluitTypeUpdate.Result);
+        var response = _mapper.Map<BesluitTypeResponseDto>(result);
 
         return Ok(response);
     }
