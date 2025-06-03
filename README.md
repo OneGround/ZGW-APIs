@@ -17,7 +17,7 @@ Case Management (Zaakgericht Werken) is a process-oriented work method used by D
 * process logic (not in this project)
 * middle ware (not in this project)
 * APIs including business rules (in this project)
-* Storage (in this project)
+* storage (in this project)
 
 ## API Standards Implementation
 
@@ -40,7 +40,7 @@ Supporting APIs:
 * **Microservices Architecture** - Each API is designed as an independent microservice
 * **Docker Support** - Containerized deployment ready
 * **Swagger/OpenAPI** - Complete API documentation using Swagger/OpenAPI
-* **Authentication & Authorization** - Security implementation accoriding to the standard (machine to machine)
+* **Authentication & Authorization** - Security implementation according to the standard (machine to machine)
 * **Audit Trail** - Logging of changes according to the standard
 * **Archiving Support** - Built-in support for archiving according to Dutch standards
 * **Ceph Support** - Built-in support for storage of document contents on Ceph
@@ -92,7 +92,7 @@ For more information, visit our [documentation portal](https://dev.oneground.nl)
 
 ## Project Structure
 * src: source code
-* localdev: everything needed to set up your own develoepment environment inclusing Ceph and Databases
+* localdev: everything needed to set up your own development environment inclusing Ceph and Databases
 
 ## Documentation
 
