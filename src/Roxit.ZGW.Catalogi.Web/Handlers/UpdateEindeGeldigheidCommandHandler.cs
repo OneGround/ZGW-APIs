@@ -199,7 +199,17 @@ public class UpdateEindeGeldigheidCommandHandler
     private void UpdateEindeGeldigheid<T>(T entity)
         where T : class, IValidityEntity, new()
     {
-        _context.Attach(new T { Id = entity.Id, EindeGeldigheid = entity.EindeGeldigheid }).Property(o => o.EindeGeldigheid).IsModified = true;
+        var trackedEntity = _context.ChangeTracker.Entries<T>().FirstOrDefault(e => e.Entity.Id == entity.Id)?.Entity;
+        if (trackedEntity != null)
+        {
+            // Entity is already tracked, update its property directly
+            trackedEntity.EindeGeldigheid = entity.EindeGeldigheid;
+        }
+        else
+        {
+            // Entity is not tracked, attach a new instance and mark the property as modified
+            _context.Attach(new T { Id = entity.Id, EindeGeldigheid = entity.EindeGeldigheid }).Property(o => o.EindeGeldigheid).IsModified = true;
+        }
     }
 }
 
