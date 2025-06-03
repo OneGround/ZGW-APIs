@@ -86,7 +86,7 @@ internal static class ETagService
             using var jsonWriter = new JsonTextWriter(writer);
 
             // Note: Set ReferenceLoopHandling to Ignore: Serializing Geometrie throws an exception when this is not set:
-            //         Newtonsoft.Json.JsonSerializationException: Self referencing loop detected for property 'CoordinateValue' with type 
+            //         Newtonsoft.Json.JsonSerializationException: Self referencing loop detected for property 'CoordinateValue' with type
             var serializer = new JsonSerializer() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             serializer.Serialize(jsonWriter, value);
         }
