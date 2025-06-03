@@ -12,7 +12,12 @@ This is a C# implementation of the ZGW-APIs standard.
 
 ## Case Management (Zaakgericht Werken)
 
-Case Management (Zaakgericht Werken) is a process-oriented work method used by Dutch municipalities and increasingly by national government bodies to handle requests from citizens and businesses. This implementation provides the necessary APIs to support this way of working in a modern, microservices-based architecture.
+Case Management (Zaakgericht Werken) is a process-oriented work method used by Dutch municipalities and increasingly by national government bodies to handle requests from citizens and businesses. This implementation provides the necessary APIs to support this way of working in a common ground architecture. Common ground architecture originally consisted of 5 layers:  
+* UI (not in this project)
+* process logic (not in this project)
+* middle ware (not in this project)
+* APIs including business rules (in this project)
+* Storage (in this project)
 
 ## API Standards Implementation
 
@@ -35,8 +40,8 @@ Supporting APIs:
 * **Microservices Architecture** - Each API is designed as an independent microservice
 * **Docker Support** - Containerized deployment ready
 * **Swagger/OpenAPI** - Complete API documentation using Swagger/OpenAPI
-* **Authentication & Authorization** - Robust security implementation
-* **Audit Trail** - Complete logging of all changes
+* **Authentication & Authorization** - Security implementation accoriding to the standard (machine to machine)
+* **Audit Trail** - Logging of changes according to the standard
 * **Archiving Support** - Built-in support for archiving according to Dutch standards
 * **Ceph Support** - Built-in support for storage of document contents on Ceph
 * **Multi-tenant** - One installation can serve multiple instances or organisations
@@ -86,6 +91,8 @@ Configuration can be done through:
 For more information, visit our [documentation portal](https://dev.oneground.nl).
 
 ## Project Structure
+* src: source code
+* localdev: everything needed to set up your own develoepment environment inclusing Ceph and Databases
 
 ## Documentation
 
@@ -116,4 +123,4 @@ For support questions, please contact:
 
 ---
 
-*Built with love by Roxit*
+*Built with pleasure by Roxit*
