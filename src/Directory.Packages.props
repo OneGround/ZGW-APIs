@@ -15,7 +15,6 @@
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.20.10" />
     <PackageVersion Include="IdentityModel.AspNetCore.OAuth2Introspection" Version="6.2.0" />
     <PackageVersion Include="MassTransit" Version="8.4.1" />
-    <PackageVersion Include="MassTransit.Extensions.DependencyInjection" Version="7.3.1" />
     <PackageVersion Include="MassTransit.Hangfire" Version="8.4.1" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.4.1" />
     <PackageVersion Include="MediatR" Version="12.5.0" />
