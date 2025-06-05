@@ -107,6 +107,10 @@ internal class GeometryFormatter : IMessagePackFormatter<Geometry>
 
     public Geometry Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
+        if (reader.TryReadNil())
+        {
+            return null;
+        }
         var wkt = reader.ReadString();
         var readerWkt = new WKTReader();
         return string.IsNullOrEmpty(wkt) ? null : readerWkt.Read(wkt);
