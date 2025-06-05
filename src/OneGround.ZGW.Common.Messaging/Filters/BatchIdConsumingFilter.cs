@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GreenPipes;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Batching;

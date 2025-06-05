@@ -19,7 +19,6 @@ using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Extensions;
 using Polly;
 using Polly.Retry;
-using RabbitMQ.Client;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
 
@@ -114,17 +113,21 @@ public class ServiceConfiguration
                 }
             );
 
-        services.AddMassTransitHostedService(waitUntilStarted: true);
+        services.Configure<MassTransitHostOptions>(options =>
+        {
+            options.WaitUntilStarted = true;
+        });
+
         services.AddMassTransit(x =>
         {
             var eventbusConfiguration =
                 _configuration.GetSection("Eventbus").Get<NotificatiesEventBusConfiguration>() ?? new NotificatiesEventBusConfiguration();
 
-            x.AddConsumer<SendNotificatiesConsumer>();
-
-            x.AddConsumer<NotifySubscriberConsumer>();
-
+            x.DisableUsageTelemetry();
             x.SetKebabCaseEndpointNameFormatter();
+
+            x.AddConsumer<SendNotificatiesConsumer>();
+            x.AddConsumer<NotifySubscriberConsumer>();
 
             x.UsingRabbitMq(
                 (context, cfg) =>
@@ -171,9 +174,9 @@ public class ServiceConfiguration
                     cfg.ConfigureEndpoints(context);
                 }
             );
-
-            EnsureFailedQueueExists(eventbusConfiguration, "notificatie-subscriber-dlq");
         });
+
+        services.AddHostedService<FailedQueueInitializationService>();
 
         services.AddHangfireNotificatieReQueuer();
 
@@ -233,28 +236,6 @@ public class ServiceConfiguration
                 arg.RetryDelay.TotalSeconds
             );
         }
-    }
-
-    private static void EnsureFailedQueueExists(NotificatiesEventBusConfiguration eventbusConfiguration, string queueAndExchangeName)
-    {
-        // Note: If you execute QueueDeclare or QueueBind with exactly the same parameters, then RabbitMQ will not recreate the existing objects or throw an error.
-        var factory = new ConnectionFactory
-        {
-            HostName = eventbusConfiguration.HostName,
-            VirtualHost = eventbusConfiguration.VirtualHost,
-            UserName = eventbusConfiguration.UserName,
-            Password = eventbusConfiguration.Password,
-        };
-
-        using var connection = factory.CreateConnection();
-
-        using var channel = connection.CreateModel();
-
-        channel.ExchangeDeclare(exchange: queueAndExchangeName, durable: true, autoDelete: false, arguments: null, type: "fanout");
-
-        channel.QueueDeclare(queue: queueAndExchangeName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-
-        channel.QueueBind(queue: queueAndExchangeName, exchange: queueAndExchangeName, routingKey: "");
     }
 
     private static IEnumerable<HttpStatusCode> DefaultRetryOnHttpStatusCodes =>

@@ -13,7 +13,6 @@
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="IdentityModel.AspNetCore.OAuth2Introspection" />
-    <PackageReference Include="MassTransit.AspNetCore" />
     <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />

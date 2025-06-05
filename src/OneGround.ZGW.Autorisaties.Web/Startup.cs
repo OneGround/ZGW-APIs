@@ -70,6 +70,8 @@ public class Startup
 
         services.AddMassTransit(x =>
         {
+            x.DisableUsageTelemetry();
+
             x.UsingRabbitMq(
                 (bus, conf) =>
                 {
@@ -111,7 +113,10 @@ public class Startup
         services.AddScoped<IDbUserContext, DbUserContext>();
 
         services.AddDatabaseInitializerService<AcDbContext, AcDbContextFactory, AcDbSeeder>();
-        services.AddMassTransitHostedService(waitUntilStarted: true);
+        services.Configure<MassTransitHostOptions>(options =>
+        {
+            options.WaitUntilStarted = true;
+        });
 
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());

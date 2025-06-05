@@ -1,4 +1,3 @@
-using GreenPipes;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,7 +38,10 @@ public class ServiceConfiguration
 
         services.AddAppSettingsServiceEndpoints(_configuration);
 
-        services.AddMassTransitHostedService(waitUntilStarted: true);
+        services.Configure<MassTransitHostOptions>(options =>
+        {
+            options.WaitUntilStarted = true;
+        });
 
         services.AddSingleton<IEnkelvoudigInformatieObjectDeletionService, EnkelvoudigInformatieObjectDeletionService>();
 
@@ -48,14 +50,15 @@ public class ServiceConfiguration
 
         services.AddMassTransit(x =>
         {
+            x.DisableUsageTelemetry();
+            x.SetKebabCaseEndpointNameFormatter();
+
             x.AddConsumer<AddObjectInformatieObjectConsumer>();
             x.AddConsumer<DeleteObjectInformatieObjectConsumer>();
             x.AddConsumer<DestroyEnkelvoudigInformatieObjectConsumer>();
 
             x.AddRequestClient<IAddObjectInformatieObject>();
             x.AddRequestClient<IDeleteObjectInformatieObject>();
-
-            x.SetKebabCaseEndpointNameFormatter();
 
             x.UsingRabbitMq(
                 (context, cfg) =>
