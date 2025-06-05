@@ -62,7 +62,7 @@ public class ETagFilter : ActionFilterAttribute
                 {
                     executedContext.Result = new StatusCodeResult((int)HttpStatusCode.NotModified);
 
-                    response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ContentLength] = new[] { "0" };
+                    response.ContentLength = 0;
                 }
             }
 
