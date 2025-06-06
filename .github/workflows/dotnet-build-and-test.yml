@@ -6,17 +6,18 @@ on:
       - main
     paths:
       - 'src/**'
-      - 'builds/dotnet-build.yml'
+      - '.github/workflows/dotnet-build-and-test.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'src/**'
-      - 'builds/tests/dotnet-build.yml'
+      - '.github/workflows/dotnet-build-and-test.yml'
   workflow_dispatch:
 
 jobs:
   build-and-test:
+    name: Build and Test .NET Project
     runs-on: ubuntu-latest
 
     env:
