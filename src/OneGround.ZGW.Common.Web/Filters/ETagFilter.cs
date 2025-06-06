@@ -67,7 +67,7 @@ public class ETagFilter : ActionFilterAttribute
             }
 
             // Add ETag response header
-            response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ETag] = new[] { $"\"{etag}\"" };
+            response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ETag] = $"\"{etag}\"";
         }
     }
 }
