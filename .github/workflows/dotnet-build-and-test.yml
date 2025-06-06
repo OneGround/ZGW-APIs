@@ -6,13 +6,13 @@ on:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/dotnet-build.yml'
+      - '.github/workflows/dotnet-build-and-test.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/dotnet-build.yml'
+      - '.github/workflows/dotnet-build-and-test.yml'
   workflow_dispatch:
 
 jobs:
