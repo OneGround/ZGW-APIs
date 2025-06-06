@@ -3,21 +3,15 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
-using MessagePack;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using NetTopologySuite.Geometries;
-using NetTopologySuite.IO;
+using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 
 namespace OneGround.ZGW.Common.Web.Filters;
 
-//
-// Based on the ideas described in: https://referbruv.com/blog/how-to-build-a-simple-etag-in-aspnet-core/
-
-// Prevents the action filter methods to be invoked twice
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
 public class ETagFilter : ActionFilterAttribute
 {
@@ -49,70 +43,39 @@ public class ETagFilter : ActionFilterAttribute
 
         if (executedContext.Result is ObjectResult objectResult && objectResult.Value is not null)
         {
-            // Generates ETag from the entire response Content
-            var etag = ETagService.ComputeWithHashFunction(objectResult.Value);
+            var etag = GetResponseEtag(objectResult.Value);
 
-            if (request.Headers.TryGetValue(Microsoft.Net.Http.Headers.HeaderNames.IfNoneMatch, out var ifNoneMatchValue))
+            var ifNoneMatchValues = executedContext.HttpContext.Request.Headers.IfNoneMatch;
+
+            if (ifNoneMatchValues.Count > 0)
             {
-                // Fetch etag from the incoming request header
-                var incomingEtag = ifNoneMatchValue.ToString();
-
-                // If both the etags are equal raise a 304 Not Modified Response
-                if (incomingEtag.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Any(e => e == $"\"{etag}\""))
+                foreach (var headerValue in ifNoneMatchValues)
                 {
-                    executedContext.Result = new StatusCodeResult((int)HttpStatusCode.NotModified);
-
-                    response.ContentLength = 0;
+                    if (EntityTagHeaderValue.TryParse(headerValue, out var requestEtag))
+                    {
+                        if (requestEtag.Compare(etag, false))
+                        {
+                            executedContext.Result = new StatusCodeResult((int)HttpStatusCode.NotModified);
+                            response.ContentLength = 0;
+                        }
+                    }
                 }
             }
-
-            // Add ETag response header
-            response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ETag] = $"\"{etag}\"";
+            executedContext.HttpContext.Response.Headers.ETag = etag.Tag.ToString();
         }
     }
-}
 
-internal static class ETagService
-{
-    public static string ComputeWithHashFunction(object value)
+    private static EntityTagHeaderValue GetResponseEtag(object value)
     {
-        var options = MessagePackSerializerOptions.Standard.WithResolver(
-            CompositeResolver.Create(
-                new IMessagePackFormatter[]
-                {
-                    /* Note: Solves this issue:
-                        ---> MessagePack.FormatterNotRegisteredException: NetTopologySuite.Geometries.Geometry is not registered in resolver: MessagePack.Resolvers.ContractlessStandardResolver
-                     */
-                    new GeometryFormatter(), // Specific formatter for Geometry
-                },
-                new IFormatterResolver[]
-                {
-                    ContractlessStandardResolver.Instance, // Generic fallback resolver for all DTOs
-                }
-            )
-        );
-        var bytes = MessagePackSerializer.Serialize(value, options);
-        var hashData = SHA256.HashData(bytes);
+        var zgwJsonSerializerSettings = new ZGWJsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
-        return Convert.ToBase64String(hashData);
-    }
-}
+        var serialized = JsonConvert.SerializeObject(value, zgwJsonSerializerSettings);
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serialized));
 
-internal class GeometryFormatter : IMessagePackFormatter<Geometry>
-{
-    public void Serialize(ref MessagePackWriter writer, Geometry value, MessagePackSerializerOptions options)
-    {
-        writer.Write(value?.IsEmpty == true ? null : value.AsText());
-    }
+        var base64 = Convert.ToBase64String(bytes);
 
-    public Geometry Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-    {
-        if (reader.TryReadNil())
-        {
-            return null;
-        }
-        var wkt = reader.ReadString();
-        var readerWkt = new WKTReader();
-        return string.IsNullOrEmpty(wkt) ? null : readerWkt.Read(wkt);
+        var etag = new EntityTagHeaderValue($"\"{base64}\"");
+
+        return etag;
     }
 }
