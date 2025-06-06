@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using GreenPipes;
 using MassTransit;
 using OneGround.ZGW.Common.Authentication;
 

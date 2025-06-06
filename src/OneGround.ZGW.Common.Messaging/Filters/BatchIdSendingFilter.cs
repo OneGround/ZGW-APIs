@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Threading.Tasks;
-using GreenPipes;
 using MassTransit;
 using OneGround.ZGW.Common.Batching;
 using Headers = OneGround.ZGW.Common.Constants.Headers;

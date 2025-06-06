@@ -76,6 +76,8 @@ public class Startup
 
         services.AddMassTransit(x =>
         {
+            x.DisableUsageTelemetry();
+
             x.UsingRabbitMq(
                 (bus, conf) =>
                 {
@@ -107,9 +109,12 @@ public class Startup
         services.AddSingleton<IApiMetaData, ApiMetaData>();
 
         services.AddScoped<IDbUserContext, DbUserContext>();
-
         services.AddDatabaseInitializerService<NrcDbContext, NrcDbContextFactory, NrcDbSeeder>();
-        services.AddMassTransitHostedService(waitUntilStarted: true);
+
+        services.Configure<MassTransitHostOptions>(options =>
+        {
+            options.WaitUntilStarted = true;
+        });
 
         services.AddHangfire(
             (_, options) =>
