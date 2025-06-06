@@ -15,7 +15,6 @@
     <PackageReference Include="IdentityModel.AspNetCore.OAuth2Introspection" />
     <PackageReference Include="MassTransit.AspNetCore" />
     <PackageReference Include="MassTransit.RabbitMQ" />
-    <PackageReference Include="MessagePack" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
