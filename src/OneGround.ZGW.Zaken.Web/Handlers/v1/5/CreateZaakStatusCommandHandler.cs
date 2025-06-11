@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper.Internal;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -225,7 +224,6 @@ class CreateZaakStatusCommandHandler
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Reset (all) previous zaakstatus IndicatieLaatstGezetteStatus
-            zaakStatus.IndicatieLaatstGezetteStatus = true;
             oldstatussen.ToList().ForEach(s => s.IndicatieLaatstGezetteStatus = false);
 
             // Create new zaakstatus and set IndicatieLaatstGezetteStatus to true
