@@ -101,6 +101,12 @@ class CreateZaakStatusCommandHandler
 
         var errors = new List<ValidationError>();
 
+        var oldstatussen = _context.ZaakStatussen.Where(s => s.ZaakId == zaak.Id);
+        if (oldstatussen.Any(s => s.DatumStatusGezet == request.ZaakStatus.DatumStatusGezet))
+        {
+            errors.Add(new ValidationError("nonFieldErrors", ErrorCode.Unique, "De velden zaak, datumStatusGezet moeten een unieke set zijn."));
+        }
+
         var zaakType = await GetZaakTypeAsync(zaak.Zaaktype, errors);
 
         if (errors.Count != 0)
@@ -208,11 +214,16 @@ class CreateZaakStatusCommandHandler
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
+            // Reset (all) previous zaakstatus IndicatieLaatstGezetteStatus
+            oldstatussen.ToList().ForEach(s => s.IndicatieLaatstGezetteStatus = false);
+
+            // Create new zaakstatus and set IndicatieLaatstGezetteStatus to true
             await _context.ZaakStatussen.AddAsync(zaakStatus, cancellationToken);
 
             zaakStatus.ZaakId = zaak.Id;
             zaakStatus.Zaak = zaak;
             zaakStatus.Owner = zaak.Owner;
+            zaakStatus.IndicatieLaatstGezetteStatus = true;
 
             audittrail.SetNew<ZaakStatusResponseDto>(zaakStatus);
 
