@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace OneGround.ZGW.Common.Caching;
 
@@ -22,7 +22,7 @@ public class CacheEntity
     private CacheEntity(string service, string entity)
     {
         Service = service;
-        Pattern = new Regex($@"/(?<entity>{entity})/(?<uuid>[a-z0-9\-]{{36}})", RegexOptions.IgnoreCase);
+        Pattern = new Regex($@"/(?<entity>{entity})/(?<uuid>[a-z0-9\-]{{36}})$", RegexOptions.IgnoreCase);
         Entity = entity;
     }
 

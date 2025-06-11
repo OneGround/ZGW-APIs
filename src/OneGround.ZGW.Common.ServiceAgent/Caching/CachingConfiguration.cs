@@ -27,7 +27,7 @@ public class CachingConfiguration<T>
         foreach (var cachedUri in _cacheEntities)
         {
             // match the pattern
-            var match = cachedUri.Pattern.Match(requestUri.AbsolutePath);
+            var match = cachedUri.Pattern.Match(requestUri.AbsolutePath.TrimEnd('/'));
             if (match.Success)
             {
                 // match the service endpoint
