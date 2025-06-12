@@ -86,10 +86,10 @@ class PublishBesluitTypeCommandHandler
 
             var errors = new List<ValidationError>();
 
-            var catalogusRsinFilter = GetRsinFilterPredicate<BesluitType>(b => b.Catalogus.Owner == _rsin);
             var besluitTypen = await _context
                 .BesluitTypen.Include(c => c.Catalogus)
-                .Where(catalogusRsinFilter)
+                .Where(rsinFilter)
+                .Where(z => z.CatalogusId == besluitType.CatalogusId)
                 .Where(z => z.Id != besluitType.Id && z.Omschrijving == besluitType.Omschrijving)
                 .ToListAsync(cancellationToken);
             if (!_conceptBusinessRule.ValidateGeldigheid(besluitTypen.OfType<IConceptEntity>().ToList(), besluitType, errors))
