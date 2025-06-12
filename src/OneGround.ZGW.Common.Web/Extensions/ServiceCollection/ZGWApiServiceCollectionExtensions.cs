@@ -70,7 +70,14 @@ public static class ZGWApiServiceCollectionExtensions
                 foreach (var network in knownNetworks)
                 {
                     var parts = network.Split('/');
-                    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse(parts[0]), int.Parse(parts[1])));
+                    if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var ipAddress) && int.TryParse(parts[1], out var prefixLength))
+                    {
+                        options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(ipAddress, prefixLength));
+                    }
+                    else
+                    {
+                        throw new FormatException($"Invalid network format in 'ForwardedHeaders:KnownNetworks': '{network}'. Expected format is '[IPAddress]/[PrefixLength]'.");
+                    }
                 }
             }
 
