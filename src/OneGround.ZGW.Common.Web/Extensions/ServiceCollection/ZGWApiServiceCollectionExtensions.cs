@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using Asp.Versioning;
@@ -59,6 +60,28 @@ public static class ZGWApiServiceCollectionExtensions
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+
+            var knownNetworks = configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [];
+            if (knownNetworks.Length != 0)
+            {
+                foreach (var network in knownNetworks)
+                {
+                    var parts = network.Split('/');
+                    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse(parts[0]), int.Parse(parts[1])));
+                }
+            }
+
+            var knownProxies = configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
+            if (knownProxies.Length != 0)
+            {
+                foreach (var proxy in knownProxies)
+                {
+                    options.KnownProxies.Add(IPAddress.Parse(proxy));
+                }
+            }
 
             bool resolverForwardedHeader = configuration.GetValue("Application:ResolveForwardedHost", false);
             if (resolverForwardedHeader)
