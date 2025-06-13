@@ -75,6 +75,7 @@ class PublishZaakTypeCommandHandler
         var zaakTypeBesluitTypen = await _context
             .BesluitTypen.Include(b => b.Catalogus)
             .Where(GetRsinFilterPredicate<BesluitType>(o => o.Catalogus.Owner == _rsin))
+            .Where(z => z.CatalogusId == zaakType.CatalogusId)
             .Where(b => zaakType.ZaakTypeBesluitTypen.Select(b => b.BesluitTypeOmschrijving).Any(o => b.Omschrijving == o))
             .ToListAsync(cancellationToken);
 
@@ -89,6 +90,7 @@ class PublishZaakTypeCommandHandler
         var zaakTypeInformatieObjectTypen = await _context
             .InformatieObjectTypen.Include(i => i.Catalogus)
             .Where(GetRsinFilterPredicate<InformatieObjectType>(o => o.Catalogus.Owner == _rsin))
+            .Where(z => z.CatalogusId == zaakType.CatalogusId)
             .Where(i => zaakType.ZaakTypeInformatieObjectTypen.Select(i => i.InformatieObjectTypeOmschrijving).Any(o => i.Omschrijving == o))
             .ToListAsync(cancellationToken);
 
@@ -108,10 +110,10 @@ class PublishZaakTypeCommandHandler
 
             zaakType.Concept = false;
 
-            var catalogusRsinFilter = GetRsinFilterPredicate<ZaakType>(b => b.Catalogus.Owner == _rsin);
             var zaakTypen = await _context
                 .ZaakTypen.Include(c => c.Catalogus)
-                .Where(catalogusRsinFilter)
+                .Where(GetRsinFilterPredicate<ZaakType>(b => b.Catalogus.Owner == _rsin))
+                .Where(z => z.CatalogusId == zaakType.CatalogusId)
                 .Where(z => z.Id != zaakType.Id && z.Identificatie == zaakType.Identificatie)
                 .ToListAsync(cancellationToken);
             if (!_conceptBusinessRule.ValidateGeldigheid(zaakTypen.OfType<IConceptEntity>().ToList(), zaakType, errors))

@@ -94,10 +94,10 @@ class PublishZaakTypeCommandHandler
 
             var errors = new List<ValidationError>();
 
-            var catalogusRsinFilter = GetRsinFilterPredicate<ZaakType>(b => b.Catalogus.Owner == _rsin);
             var zaakTypen = await _context
                 .ZaakTypen.Include(c => c.Catalogus)
-                .Where(catalogusRsinFilter)
+                .Where(rsinFilter)
+                .Where(z => z.CatalogusId == zaakType.CatalogusId)
                 .Where(z => z.Id != zaakType.Id && z.Identificatie == zaakType.Identificatie)
                 .ToListAsync(cancellationToken);
             if (!_conceptBusinessRule.ValidateGeldigheid(zaakTypen.OfType<IConceptEntity>().ToList(), zaakType, errors))

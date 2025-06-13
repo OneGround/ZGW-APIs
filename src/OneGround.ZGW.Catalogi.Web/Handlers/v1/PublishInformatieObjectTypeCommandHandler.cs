@@ -76,10 +76,10 @@ class PublishInformatieObjectTypeCommandHandler
 
             var errors = new List<ValidationError>();
 
-            var catalogusRsinFilter = GetRsinFilterPredicate<InformatieObjectType>(b => b.Catalogus.Owner == _rsin);
             var informatieObjectTypen = await _context
                 .InformatieObjectTypen.Include(c => c.Catalogus)
-                .Where(catalogusRsinFilter)
+                .Where(rsinFilter)
+                .Where(z => z.CatalogusId == informatieObjectType.CatalogusId)
                 .Where(z => z.Id != informatieObjectType.Id && z.Omschrijving == informatieObjectType.Omschrijving)
                 .ToListAsync(cancellationToken);
             if (!_conceptBusinessRule.ValidateGeldigheid(informatieObjectTypen.OfType<IConceptEntity>().ToList(), informatieObjectType, errors))
