@@ -88,5 +88,143 @@
     "omschrijving": "Verstrekt",
     "definitie": "",
     "opmerking": ""
+  },
+  {
+    "id": "fd17ea85-2505-46a6-84dd-2d7aff22a256",
+    "omschrijving": "Aangesteld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "53779531-71a9-4505-8076-4113f47dc385",
+    "omschrijving": "Betaald",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "8fc27a76-2252-4897-9276-48ee5dee99fb",
+    "omschrijving": "Geïnd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "a9011a5a-4c9a-4436-8d7f-af3016acd7a9",
+    "omschrijving": "Geleverd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "4e2a7f7a-0a70-4011-bad5-64432436cb35",
+    "omschrijving": "Gewijzigd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "080fde47-7524-43e8-a40e-2bbfbe5cbb2e",
+    "omschrijving": "Ingericht",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "de8f5e10-553a-4a41-a333-b4799d377c6a",
+    "omschrijving": "Ingesteld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "09465f56-fdd3-4ebf-b58e-7e576b4c4af3",
+    "omschrijving": "Niet aangesteld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "58d08c40-816d-4d02-b01f-45e575d96dd2",
+    "omschrijving": "Niet betaald",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "21c4921f-1ea0-4e10-a713-9e757c203705",
+    "omschrijving": "Niet doorgegaan",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "f8e4b8db-1f11-41c8-bc36-35322fdd5c80",
+    "omschrijving": "Niet geïnd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "aa9e2ddf-5668-4cb8-86da-064e60ac25d0",
+    "omschrijving": "Niet geleverd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "eaac2a8f-3cb8-470a-99fc-7b563cbb73fd",
+    "omschrijving": "Niet gewijzigd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "c323a29a-d664-4535-8015-3d49d0973c15",
+    "omschrijving": "Niet opgelegd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "d878fd1e-4e9a-420d-baf9-507bb68c0673",
+    "omschrijving": "Niet vastgesteld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "fd9b14bb-3ab0-48d3-a4d8-175cb6b93abc",
+    "omschrijving": "Niet verkregen",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "462a9dd5-c1a0-40c1-90a1-39a65d0b7ccf",
+    "omschrijving": "Niet verstrekt",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "9cfaa6b5-9b6f-451b-a37a-75adb8b222eb",
+    "omschrijving": "Niet verwerkt",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "49965654-018a-4575-9a82-178f64a163d2",
+    "omschrijving": "Opgeheven",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "44484e09-d741-4884-8d29-60e9de334bdf",
+    "omschrijving": "Opgelegd",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "41d2babd-a9a5-4790-9245-acce8ce857b4",
+    "omschrijving": "Vastgesteld",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "71ca9772-7838-4388-af3f-737dc95deddd",
+    "omschrijving": "Verkregen",
+    "definitie": "",
+    "opmerking": ""
+  },
+  {
+    "id": "8ea4c4d0-aac6-42a9-af15-fcba563de55b",
+    "omschrijving": "Verwerkt",
+    "definitie": "",
+    "opmerking": ""
   }
 ]
