@@ -6,7 +6,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._5;
 
-public static class ServiceCollectionExtensions
+public static class DocumentExpanderV15Extensions
 {
     public static void AddExpandables(this IServiceCollection services)
     {

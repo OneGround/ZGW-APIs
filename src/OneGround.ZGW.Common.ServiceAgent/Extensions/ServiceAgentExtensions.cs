@@ -20,7 +20,7 @@ public enum AuthorizationType
     AnonymousClient,
 }
 
-public static class ServiceCollectionExtensions
+public static class ServiceAgentExtensions
 {
     public static void AddServiceAgent<TClient, TImplementation>(
         this IServiceCollection services,

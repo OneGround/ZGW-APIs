@@ -5,7 +5,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Referentielijsten.ServiceAgent.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class ReferentielijstenServiceAgentExtensions
 {
     public static void AddReferentielijstenServiceAgent(this IServiceCollection services, IConfiguration configuration)
     {

@@ -6,7 +6,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class AutorisatiesServiceAgentExtensions
 {
     public static void AddAutorisatiesServiceAgent(this IServiceCollection services, IConfiguration configuration)
     {

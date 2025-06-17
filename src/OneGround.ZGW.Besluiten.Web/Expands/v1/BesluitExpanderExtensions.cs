@@ -6,7 +6,7 @@ using OneGround.ZGW.Common.Web.Expands;
 
 namespace OneGround.ZGW.Besluiten.Web.Expands.v1;
 
-public static class ServiceCollectionExtensions
+public static class BesluitExpanderExtensions
 {
     public static void AddExpandables(this IServiceCollection services)
     {

@@ -36,7 +36,7 @@ public class ServiceConfiguration
         services.AddScoped<BatchIdHandler>();
         services.AddBatchId();
 
-        services.AddAppSettingsServiceEndpoints(_configuration);
+        services.AddServiceEndpoints(_configuration);
 
         services.Configure<MassTransitHostOptions>(options =>
         {

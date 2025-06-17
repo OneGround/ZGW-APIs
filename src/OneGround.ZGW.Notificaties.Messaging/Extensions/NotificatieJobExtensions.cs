@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class NotificatieJobExtensions
 {
     public static void AddHangfireNotificatieReQueuer(this IServiceCollection services)
     {

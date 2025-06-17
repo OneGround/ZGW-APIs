@@ -103,7 +103,7 @@ public class Startup
         services.AddScoped<INotificatieService, NotificatieService>();
         services.AddScoped<IApplicatieBusinessRuleService, ApplicatieBusinessRuleService>();
 
-        services.AddAppSettingsServiceEndpoints(Configuration);
+        services.AddServiceEndpoints(Configuration);
 
         services.AddRedisCacheInvalidation();
 

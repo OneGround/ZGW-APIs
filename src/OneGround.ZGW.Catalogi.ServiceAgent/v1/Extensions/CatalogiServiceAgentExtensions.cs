@@ -6,7 +6,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 
-public static class CatalogiServiceAgentServiceCollectionExtensions
+public static class CatalogiServiceAgentExtensions
 {
     public static void AddCatalogiServiceAgent(this IServiceCollection services, IConfiguration configuration)
     {

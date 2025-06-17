@@ -6,7 +6,7 @@ using MediatR;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._5;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 

@@ -1,27 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.ServiceAgent;
-using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 
-namespace OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
-
-public static class ServiceCollectionExtensions
-{
-    public static void AddDocumentenServiceAgent(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddServiceAgent<IDocumentenServiceAgent, DocumentenServiceAgent>(ServiceRoleName.DRC, configuration);
-        services.AddScoped<ICachedDocumentenServiceAgent, CachedDocumentServiceAgent>();
-    }
-}
-
-public interface ICachedDocumentenServiceAgent : IDocumentenServiceAgent { }
+namespace OneGround.ZGW.Documenten.ServiceAgent.v1;
 
 class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
 {
