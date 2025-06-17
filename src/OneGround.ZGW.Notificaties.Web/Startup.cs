@@ -105,7 +105,7 @@ public class Startup
         services.AddCorrelationId();
         services.AddBatchId();
 
-        services.AddAppSettingsServiceEndpoints(Configuration);
+        services.AddServiceEndpoints(Configuration);
         services.AddSingleton<IApiMetaData, ApiMetaData>();
 
         services.AddScoped<IDbUserContext, DbUserContext>();

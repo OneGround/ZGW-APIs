@@ -1,36 +1,15 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Common.Caching;
-using OneGround.ZGW.Common.Configuration;
-using OneGround.ZGW.Common.Services;
 using StackExchange.Redis;
 
 namespace OneGround.ZGW.Common.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class RedisCacheExtensions
 {
-    public static void AddAppSettingsServiceEndpoints(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddMemoryCache();
-        services.AddSingleton<IServiceDiscovery, EndpointsAppSettingsServiceDiscovery>();
-        services.Configure<EndpointConfiguration>(configuration.GetSection("Services"));
-    }
-
-    public static IServiceCollection AddZGWSecretManager(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.Configure<ZgwServiceAccountConfiguration>(configuration.GetSection("ZgwServiceAccountCredentials"));
-        return services.AddSingleton<ICachedZGWSecrets, CachedZGWSecrets>();
-    }
-
-    public static IServiceCollection AddRedisCacheInvalidation(this IServiceCollection services)
-    {
-        return services.AddSingleton<ICacheInvalidator, CacheInvalidator>().AddRedisCache();
-    }
-
     public static IServiceCollection AddRedisCache(this IServiceCollection services)
     {
         services.AddSingleton(GetRedisConfiguration);
@@ -51,13 +30,6 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddOrganisationContext(this IServiceCollection services)
-    {
-        return services
-            .AddSingleton<IOrganisationContextAccessor, OrganisationContextAccessor>()
-            .AddSingleton<IOrganisationContextFactory, OrganisationContextFactory>();
-    }
-
     public static ConfigurationOptions GetRedisConfiguration(IServiceProvider sp)
     {
         var configuration = sp.GetRequiredService<IConfiguration>();
@@ -67,5 +39,10 @@ public static class ServiceCollectionExtensions
         redisOptions.ClientName = "ZGW";
 
         return redisOptions;
+    }
+
+    public static IServiceCollection AddRedisCacheInvalidation(this IServiceCollection services)
+    {
+        return services.AddSingleton<ICacheInvalidator, CacheInvalidator>().AddRedisCache();
     }
 }

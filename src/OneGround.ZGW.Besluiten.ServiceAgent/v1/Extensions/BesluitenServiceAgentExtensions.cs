@@ -5,7 +5,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class BesluitenServiceAgentExtensions
 {
     public static void AddBesluitenServiceAgent(this IServiceCollection services, IConfiguration configuration)
     {

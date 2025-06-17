@@ -5,7 +5,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class NotificatiesServiceAgentExtensions
 {
     public static void AddNotificatiesServiceAgent(this IServiceCollection services, IConfiguration configuration)
     {

@@ -7,7 +7,7 @@ using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
 
-public static class ServiceCollectionExtensions
+public static class ZaakExpanderExtensions
 {
     public static void AddExpandables(this IServiceCollection services)
     {

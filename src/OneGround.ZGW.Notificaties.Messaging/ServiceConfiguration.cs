@@ -44,7 +44,7 @@ public class ServiceConfiguration
         services.AddOrganisationContext();
         services.AddCorrelationId();
 
-        services.AddAppSettingsServiceEndpoints(_configuration);
+        services.AddServiceEndpoints(_configuration);
 
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();

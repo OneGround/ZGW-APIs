@@ -9,7 +9,7 @@ using OneGround.ZGW.Besluiten.Web.Models.v1;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._5;
 
 namespace OneGround.ZGW.Besluiten.Web.Expands.v1;
 

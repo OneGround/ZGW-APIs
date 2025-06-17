@@ -22,7 +22,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.Messaging.Contracts;
-using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Authorization;

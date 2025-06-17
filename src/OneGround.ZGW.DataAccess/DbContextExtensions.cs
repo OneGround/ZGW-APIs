@@ -9,7 +9,7 @@ using OneGround.ZGW.Common.Configuration;
 
 namespace OneGround.ZGW.DataAccess;
 
-public static class ServiceCollectionExtensions
+public static class DbContextExtensions
 {
     public static void AddZGWDbContext<TDbContext>(this IServiceCollection services, IConfiguration configuration, string connectionStringName = null)
         where TDbContext : DbContext

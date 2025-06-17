@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1;
 using OneGround.ZGW.Zaken.DataModel;
 
 namespace OneGround.ZGW.Zaken.Web.BusinessRules;

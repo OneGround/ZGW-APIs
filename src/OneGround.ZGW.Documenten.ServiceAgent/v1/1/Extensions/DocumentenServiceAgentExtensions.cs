@@ -5,7 +5,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Documenten.ServiceAgent.v1._1.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class DocumentenServiceAgentExtensions
 {
     public static void AddDocumentenServiceAgent_v1_1(this IServiceCollection services, IConfiguration configuration)
     {
