@@ -20,7 +20,6 @@ using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Versioning;
-using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
@@ -142,7 +141,7 @@ public static class ZGWApiServiceCollectionExtensions
             .AddMvcCore(options =>
             {
                 options.Filters.Add<ApiExceptionFilter>();
-                options.Filters.Add<ValidationResultFilter>();
+                options.Filters.Add<OneGroundFluentValidationActionFilter>();
 
                 // asp.net core model binding validation and NetTopologySuite geometry does not like each other,
                 // so we ignore validation on Geometry type
@@ -163,7 +162,6 @@ public static class ZGWApiServiceCollectionExtensions
             });
 
         services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
-        services.AddFluentValidationAutoValidation();
 
         services
             .AddApiVersioning(options =>
