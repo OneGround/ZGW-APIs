@@ -19,6 +19,7 @@ using OneGround.ZGW.Common.Web.ErrorHandling;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -161,6 +162,7 @@ public static class ZGWApiServiceCollectionExtensions
                 options.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.Create;
             });
 
+        ValidatorOptions.Global.PropertyNameResolver = PropertyNameResolver.Default;
         services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
 
         services
