@@ -1,8 +1,8 @@
 ﻿using FluentValidation;
-using FluentValidation.AspNetCore;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using OneGround.ZGW.Common.Web.Filters;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Interceptors;
 
 namespace OneGround.ZGW.Common.Web.Validations;
 
@@ -12,26 +12,30 @@ namespace OneGround.ZGW.Common.Web.Validations;
 /// </summary>
 public class ValidatorInterceptor : IValidatorInterceptor
 {
-    public ValidationResult AfterAspNetValidation(ActionContext actionContext, IValidationContext validationContext, ValidationResult result)
+    public IValidationContext BeforeValidation(ActionExecutingContext actionExecutingContext, IValidationContext validationContext)
     {
-        if (!result.IsValid)
-        {
-            if (actionContext.HttpContext.Items.ContainsKey("ValidationResult"))
-            {
-                var existingValidationResult = actionContext.HttpContext.Items["ValidationResult"] as ValidationResult;
-
-                existingValidationResult.Errors.AddRange(result.Errors);
-            }
-            else
-            {
-                actionContext.HttpContext.Items.Add("ValidationResult", result);
-            }
-        }
-        return result;
+        return validationContext;
     }
 
-    public IValidationContext BeforeAspNetValidation(ActionContext actionContext, IValidationContext commonContext)
+    public ValidationResult AfterValidation(ActionExecutingContext actionExecutingContext, IValidationContext validationContext)
     {
-        return commonContext;
+        var result = new ValidationResult();
+
+        if (actionExecutingContext.ModelState.IsValid)
+        {
+            return result;
+        }
+
+        if (actionExecutingContext.HttpContext.Items.TryGetValue("ValidationResult", out var item))
+        {
+            var existingValidationResult = item as ValidationResult;
+            existingValidationResult?.Errors.AddRange(result.Errors);
+        }
+        else
+        {
+            actionExecutingContext.HttpContext.Items.Add("ValidationResult", result);
+        }
+
+        return result;
     }
 }

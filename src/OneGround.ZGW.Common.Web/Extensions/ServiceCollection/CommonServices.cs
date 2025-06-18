@@ -1,9 +1,9 @@
-﻿using FluentValidation.AspNetCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Common.Web.Validations;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Interceptors;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 

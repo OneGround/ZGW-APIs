@@ -1,10 +1,9 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using Asp.Versioning;
 using AutoMapper.Internal;
-using FluentValidation.AspNetCore;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -20,8 +19,8 @@ using OneGround.ZGW.Common.Web.ErrorHandling;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
-using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
@@ -161,12 +160,10 @@ public static class ZGWApiServiceCollectionExtensions
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.Create;
-            })
-            .AddFluentValidation(options =>
-            {
-                options.RegisterValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
-                options.ValidatorOptions.PropertyNameResolver = PropertyNameResolver.Default;
             });
+
+        services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
+        services.AddFluentValidationAutoValidation();
 
         services
             .AddApiVersioning(options =>
