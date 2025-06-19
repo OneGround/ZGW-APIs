@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace OneGround.ZGW.DataAccess;
 
@@ -48,16 +47,16 @@ public class DatabaseInitializer<TDbContext> : IDatabaseInitializer<TDbContext>
         using var context = _contextFactory.CreateDbContext([]);
 
         // verify admin db context connection
-        _databaseVerifier.VerifyConnection(context);
+        await _databaseVerifier.VerifyAsync(context);
 
-        Migrate(context);
-        await Seed(context);
+        await MigrateAsync(context);
+        await SeedAsync(context);
 
         // verify user db context connection
-        _databaseVerifier.VerifyConnection<TDbContext>();
+        await _databaseVerifier.VerifyAsync<TDbContext>();
     }
 
-    private void Migrate(TDbContext context)
+    private async Task MigrateAsync(TDbContext context)
     {
         var contextName = context.GetType().Name;
 
@@ -82,12 +81,7 @@ public class DatabaseInitializer<TDbContext> : IDatabaseInitializer<TDbContext>
             }
 
             context.Database.SetCommandTimeout(TimeSpan.FromMinutes(60));
-            context.Database.Migrate();
-
-            //// https://github.com/npgsql/efcore.pg/issues/292#issuecomment-388608426
-            using var connection = (NpgsqlConnection)context.Database.GetDbConnection();
-            connection.Open();
-            connection.ReloadTypes();
+            await context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {
@@ -96,7 +90,7 @@ public class DatabaseInitializer<TDbContext> : IDatabaseInitializer<TDbContext>
         }
     }
 
-    private async Task Seed(TDbContext context)
+    private async Task SeedAsync(TDbContext context)
     {
         var contextName = context.GetType().Name;
 
