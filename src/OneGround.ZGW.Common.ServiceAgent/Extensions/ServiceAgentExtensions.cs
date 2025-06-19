@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -116,6 +117,22 @@ public static class ServiceAgentExtensions
         services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
+
+        services.AddSingleton<IDiscoveryCache>(provider =>
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            var authenticationConfiguration = provider.GetRequiredService<ZgwAuthConfiguration>();
+
+            var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
+            var discoveryCache = new DiscoveryCache(
+                authenticationConfiguration.ZgwLegacyAuthProviderUrl,
+                () => httpClientFactory.CreateClient(),
+                discoveryPolicy
+            );
+
+            return discoveryCache;
+        });
+
         services
             .AddHttpClient<IZgwTokenServiceAgent, ZgwTokenServiceAgent>()
             .AddHttpMessageHandler<CorrelationIdHandler>()

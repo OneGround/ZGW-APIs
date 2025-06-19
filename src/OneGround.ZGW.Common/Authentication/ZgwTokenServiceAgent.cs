@@ -3,19 +3,18 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.Client;
-using Microsoft.Extensions.Options;
 
 namespace OneGround.ZGW.Common.Authentication;
 
 public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 {
     private readonly HttpClient _httpClient;
-    private readonly IOptions<ZgwAuthConfiguration> _options;
+    private readonly IDiscoveryCache _discoveryCache;
 
-    public ZgwTokenServiceAgent(HttpClient httpClient, IOptions<ZgwAuthConfiguration> options)
+    public ZgwTokenServiceAgent(HttpClient httpClient, IDiscoveryCache discoveryCache)
     {
         _httpClient = httpClient;
-        _options = options;
+        _discoveryCache = discoveryCache;
     }
 
     public async Task<TokenResponse> GetTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken)
@@ -39,13 +38,10 @@ public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 
     private async Task<string> GetTokenEndpointAsync()
     {
-        var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
-        var discoveryCache = new DiscoveryCache(_options.Value.ZgwLegacyAuthProviderUrl, discoveryPolicy);
+        var discoveryDocumentResponse = await _discoveryCache.GetAsync();
+        if (discoveryDocumentResponse.IsError)
+            throw new Exception(discoveryDocumentResponse.Error);
 
-        var response = await discoveryCache.GetAsync();
-        if (response.IsError)
-            throw new Exception(response.Error);
-
-        return response.TokenEndpoint;
+        return discoveryDocumentResponse.TokenEndpoint;
     }
 }
