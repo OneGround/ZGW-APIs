@@ -30,13 +30,14 @@ public class OneGroundFluentValidationActionFilter : IAsyncActionFilter
             if (argument == null)
                 continue;
 
-            var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
+            var argumentType = argument.GetType();
+            var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
             var validator = (IValidator)_serviceProvider.GetService(validatorType);
 
             if (validator is null)
                 continue;
 
-            var validationContextType = typeof(ValidationContext<>).MakeGenericType(argument.GetType());
+            var validationContextType = typeof(ValidationContext<>).MakeGenericType(argumentType);
             var validationContext = (IValidationContext)Activator.CreateInstance(validationContextType, argument);
 
             var result = await validator.ValidateAsync(validationContext);
