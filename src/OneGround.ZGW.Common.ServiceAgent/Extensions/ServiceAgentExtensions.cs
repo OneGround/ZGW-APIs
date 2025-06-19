@@ -122,7 +122,10 @@ public static class ServiceAgentExtensions
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             var authenticationConfiguration = provider.GetRequiredService<ZgwAuthConfiguration>();
-            var discoveryCache = new DiscoveryCache(authenticationConfiguration.ZgwLegacyAuthProviderUrl, () => httpClientFactory.CreateClient(nameof(IZgwAuthDiscoveryCache)));
+            var discoveryCache = new DiscoveryCache(
+                authenticationConfiguration.ZgwLegacyAuthProviderUrl,
+                () => httpClientFactory.CreateClient(nameof(IZgwAuthDiscoveryCache))
+            );
 
             return new ZgwAuthDiscoveryCache(discoveryCache);
         });
