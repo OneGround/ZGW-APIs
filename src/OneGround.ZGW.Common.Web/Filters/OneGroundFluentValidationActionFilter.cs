@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Services;
 
 namespace OneGround.ZGW.Common.Web.Filters;
@@ -10,10 +9,12 @@ namespace OneGround.ZGW.Common.Web.Filters;
 public class OneGroundFluentValidationActionFilter : IAsyncActionFilter
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IErrorResponseBuilder _errorResponseBuilder;
 
-    public OneGroundFluentValidationActionFilter(IServiceProvider serviceProvider)
+    public OneGroundFluentValidationActionFilter(IServiceProvider serviceProvider, IErrorResponseBuilder errorResponseBuilder)
     {
         _serviceProvider = serviceProvider;
+        _errorResponseBuilder = errorResponseBuilder;
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -43,9 +44,7 @@ public class OneGroundFluentValidationActionFilter : IAsyncActionFilter
             if (result is not { IsValid: false })
                 continue;
 
-            var errorResponseBuilder = _serviceProvider.GetRequiredService<IErrorResponseBuilder>();
-
-            context.Result = errorResponseBuilder.BadRequest(result);
+            context.Result = _errorResponseBuilder.BadRequest(result);
 
             return;
         }
