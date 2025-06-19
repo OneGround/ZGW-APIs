@@ -1,10 +1,9 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using Asp.Versioning;
 using AutoMapper.Internal;
-using FluentValidation.AspNetCore;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -143,7 +142,7 @@ public static class ZGWApiServiceCollectionExtensions
             .AddMvcCore(options =>
             {
                 options.Filters.Add<ApiExceptionFilter>();
-                options.Filters.Add<ValidationResultFilter>();
+                options.Filters.Add<OneGroundFluentValidationActionFilter>();
 
                 // asp.net core model binding validation and NetTopologySuite geometry does not like each other,
                 // so we ignore validation on Geometry type
@@ -161,12 +160,10 @@ public static class ZGWApiServiceCollectionExtensions
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.Create;
-            })
-            .AddFluentValidation(options =>
-            {
-                options.RegisterValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
-                options.ValidatorOptions.PropertyNameResolver = PropertyNameResolver.Default;
             });
+
+        ValidatorOptions.Global.PropertyNameResolver = PropertyNameResolver.Default;
+        services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
 
         services
             .AddApiVersioning(options =>
