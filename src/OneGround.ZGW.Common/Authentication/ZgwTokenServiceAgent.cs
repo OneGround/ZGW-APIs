@@ -9,12 +9,12 @@ namespace OneGround.ZGW.Common.Authentication;
 public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 {
     private readonly HttpClient _httpClient;
-    private readonly IDiscoveryCache _discoveryCache;
+    private readonly IZgwAuthDiscoveryCache _zgwAuthDiscoveryCache;
 
-    public ZgwTokenServiceAgent(HttpClient httpClient, IDiscoveryCache discoveryCache)
+    public ZgwTokenServiceAgent(HttpClient httpClient, IZgwAuthDiscoveryCache zgwAuthDiscoveryCache)
     {
         _httpClient = httpClient;
-        _discoveryCache = discoveryCache;
+        _zgwAuthDiscoveryCache = zgwAuthDiscoveryCache;
     }
 
     public async Task<TokenResponse> GetTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken)
@@ -31,16 +31,16 @@ public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 
         var response = await _httpClient.RequestClientCredentialsTokenAsync(request, cancellationToken);
         if (response.IsError)
-            throw new Exception(response.Error);
+            throw new Exception(response.Error, response.Exception);
 
         return response;
     }
 
     private async Task<string> GetTokenEndpointAsync()
     {
-        var discoveryDocumentResponse = await _discoveryCache.GetAsync();
+        var discoveryDocumentResponse = await _zgwAuthDiscoveryCache.DiscoveryCache.GetAsync();
         if (discoveryDocumentResponse.IsError)
-            throw new Exception(discoveryDocumentResponse.Error);
+            throw new Exception(discoveryDocumentResponse.Error, discoveryDocumentResponse.Exception);
 
         return discoveryDocumentResponse.TokenEndpoint;
     }

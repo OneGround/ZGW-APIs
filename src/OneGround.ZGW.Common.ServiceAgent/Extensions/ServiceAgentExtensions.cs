@@ -118,19 +118,13 @@ public static class ServiceAgentExtensions
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
 
-        services.AddSingleton<IDiscoveryCache>(provider =>
+        services.AddSingleton<IZgwAuthDiscoveryCache, ZgwAuthDiscoveryCache>(provider =>
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             var authenticationConfiguration = provider.GetRequiredService<ZgwAuthConfiguration>();
+            var discoveryCache = new DiscoveryCache(authenticationConfiguration.ZgwLegacyAuthProviderUrl, () => httpClientFactory.CreateClient());
 
-            var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
-            var discoveryCache = new DiscoveryCache(
-                authenticationConfiguration.ZgwLegacyAuthProviderUrl,
-                () => httpClientFactory.CreateClient(),
-                discoveryPolicy
-            );
-
-            return discoveryCache;
+            return new ZgwAuthDiscoveryCache(discoveryCache);
         });
 
         services
