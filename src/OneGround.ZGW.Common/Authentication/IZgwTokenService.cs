@@ -4,7 +4,7 @@ using Duende.IdentityModel.Client;
 
 namespace OneGround.ZGW.Common.Authentication;
 
-public interface IZgwTokenServiceAgent
+public interface IZgwTokenService
 {
     Task<TokenResponse> GetTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken);
 }

@@ -9,6 +9,8 @@ namespace OneGround.ZGW.Common.Constants
         public const string BRC = "BRC";
         public const string AC = "AC";
         public const string RL = "RL";
+        public const string IDP = "IDP";
+        public const string ADFS = "ADFS";
 
         // RabbitMQ Listeners
         public const string DRC_LISTENER = "DRC_LISTENER";

@@ -1,19 +1,20 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.Client;
+using OneGround.ZGW.Common.Constants;
+using OneGround.ZGW.Common.Exceptions;
 
 namespace OneGround.ZGW.Common.Authentication;
 
-public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
+public class ZgwTokenService : IZgwTokenService
 {
     private readonly HttpClient _httpClient;
     private readonly IZgwAuthDiscoveryCache _zgwAuthDiscoveryCache;
 
-    public ZgwTokenServiceAgent(HttpClient httpClient, IZgwAuthDiscoveryCache zgwAuthDiscoveryCache)
+    public ZgwTokenService(IHttpClientFactory httpClientFactory, IZgwAuthDiscoveryCache zgwAuthDiscoveryCache)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient(ServiceRoleName.IDP);
         _zgwAuthDiscoveryCache = zgwAuthDiscoveryCache;
     }
 
@@ -31,7 +32,7 @@ public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 
         var response = await _httpClient.RequestClientCredentialsTokenAsync(request, cancellationToken);
         if (response.IsError)
-            throw new Exception(response.Error, response.Exception);
+            throw new OneGroundException(response.Error, response.Exception);
 
         return response;
     }
@@ -40,7 +41,7 @@ public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
     {
         var discoveryDocumentResponse = await _zgwAuthDiscoveryCache.DiscoveryCache.GetAsync();
         if (discoveryDocumentResponse.IsError)
-            throw new Exception(discoveryDocumentResponse.Error, discoveryDocumentResponse.Exception);
+            throw new OneGroundException(discoveryDocumentResponse.Error, discoveryDocumentResponse.Exception);
 
         return discoveryDocumentResponse.TokenEndpoint;
     }
