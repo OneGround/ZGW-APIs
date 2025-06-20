@@ -2,6 +2,7 @@ using System;
 
 namespace OneGround.ZGW.Common.Exceptions;
 
+[Serializable]
 public class OneGroundException : Exception
 {
     public OneGroundException() { }
