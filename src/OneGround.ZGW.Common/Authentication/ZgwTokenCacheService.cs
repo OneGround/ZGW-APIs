@@ -7,12 +7,12 @@ namespace OneGround.ZGW.Common.Authentication;
 
 public class ZgwTokenCacheService : IZgwTokenCacheService
 {
-    private readonly IZgwTokenServiceAgent _zgwTokenServiceAgent;
+    private readonly IZgwTokenService _zgwTokenService;
     private readonly IMemoryCache _memoryCache;
 
-    public ZgwTokenCacheService(IZgwTokenServiceAgent zgwTokenServiceAgent, IMemoryCache memoryCache)
+    public ZgwTokenCacheService(IZgwTokenService zgwTokenService, IMemoryCache memoryCache)
     {
-        _zgwTokenServiceAgent = zgwTokenServiceAgent;
+        _zgwTokenService = zgwTokenService;
         _memoryCache = memoryCache;
     }
 
@@ -24,9 +24,10 @@ public class ZgwTokenCacheService : IZgwTokenCacheService
             cacheKey,
             async entry =>
             {
-                var tokenResponse = await _zgwTokenServiceAgent.GetTokenAsync(clientId, clientSecret, cancellationToken);
+                var tokenResponse = await _zgwTokenService.GetTokenAsync(clientId, clientSecret, cancellationToken);
+                var safeExpiresIn = Math.Max(tokenResponse.ExpiresIn - 60, 1);
+                var expiration = TimeSpan.FromSeconds(safeExpiresIn);
 
-                var expiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn - 60);
                 entry.AbsoluteExpirationRelativeToNow = expiration;
 
                 return tokenResponse.AccessToken;

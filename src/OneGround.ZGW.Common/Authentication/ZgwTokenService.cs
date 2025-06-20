@@ -1,21 +1,21 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.Client;
-using Microsoft.Extensions.Options;
+using OneGround.ZGW.Common.Constants;
+using OneGround.ZGW.Common.Exceptions;
 
 namespace OneGround.ZGW.Common.Authentication;
 
-public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
+public class ZgwTokenService : IZgwTokenService
 {
     private readonly HttpClient _httpClient;
-    private readonly IOptions<ZgwAuthConfiguration> _options;
+    private readonly IZgwAuthDiscoveryCache _zgwAuthDiscoveryCache;
 
-    public ZgwTokenServiceAgent(HttpClient httpClient, IOptions<ZgwAuthConfiguration> options)
+    public ZgwTokenService(IHttpClientFactory httpClientFactory, IZgwAuthDiscoveryCache zgwAuthDiscoveryCache)
     {
-        _httpClient = httpClient;
-        _options = options;
+        _httpClient = httpClientFactory.CreateClient(ServiceRoleName.IDP);
+        _zgwAuthDiscoveryCache = zgwAuthDiscoveryCache;
     }
 
     public async Task<TokenResponse> GetTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken)
@@ -32,20 +32,17 @@ public class ZgwTokenServiceAgent : IZgwTokenServiceAgent
 
         var response = await _httpClient.RequestClientCredentialsTokenAsync(request, cancellationToken);
         if (response.IsError)
-            throw new Exception(response.Error);
+            throw new OneGroundException(response.Error, response.Exception);
 
         return response;
     }
 
     private async Task<string> GetTokenEndpointAsync()
     {
-        var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
-        var discoveryCache = new DiscoveryCache(_options.Value.ZgwLegacyAuthProviderUrl, discoveryPolicy);
+        var discoveryDocumentResponse = await _zgwAuthDiscoveryCache.DiscoveryCache.GetAsync();
+        if (discoveryDocumentResponse.IsError)
+            throw new OneGroundException(discoveryDocumentResponse.Error, discoveryDocumentResponse.Exception);
 
-        var response = await discoveryCache.GetAsync();
-        if (response.IsError)
-            throw new Exception(response.Error);
-
-        return response.TokenEndpoint;
+        return discoveryDocumentResponse.TokenEndpoint;
     }
 }

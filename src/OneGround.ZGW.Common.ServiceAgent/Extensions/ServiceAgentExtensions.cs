@@ -1,9 +1,12 @@
 using System;
 using System.Net.Http;
+using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.ServiceAgent.Authentication;
 using OneGround.ZGW.Common.ServiceAgent.Caching;
@@ -116,8 +119,16 @@ public static class ServiceAgentExtensions
         services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
+
         services
-            .AddHttpClient<IZgwTokenServiceAgent, ZgwTokenServiceAgent>()
+            .AddHttpClient(
+                ServiceRoleName.IDP,
+                (provider, client) =>
+                {
+                    var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
+                    client.BaseAddress = new Uri(authenticationOptions.Value.ZgwLegacyAuthProviderUrl);
+                }
+            )
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddResilienceHandler(
                 "ZGW-IDP-Token-Resilience",
@@ -134,5 +145,20 @@ public static class ServiceAgentExtensions
                     );
                 }
             );
+
+        services.AddSingleton<IZgwAuthDiscoveryCache, ZgwAuthDiscoveryCache>(provider =>
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
+
+            var discoveryCache = new DiscoveryCache(
+                authenticationOptions.Value.ZgwLegacyAuthProviderUrl,
+                () => httpClientFactory.CreateClient(ServiceRoleName.IDP)
+            );
+
+            return new ZgwAuthDiscoveryCache(discoveryCache);
+        });
+
+        services.AddTransient<IZgwTokenService, ZgwTokenService>();
     }
 }
