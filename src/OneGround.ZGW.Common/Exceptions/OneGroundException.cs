@@ -12,7 +12,4 @@ public class OneGroundException : Exception
 
     public OneGroundException(string message, Exception exception)
         : base(message, exception) { }
-
-    protected OneGroundException(SerializationInfo info, StreamingContext context)
-        : base(info, context) { }
 }
