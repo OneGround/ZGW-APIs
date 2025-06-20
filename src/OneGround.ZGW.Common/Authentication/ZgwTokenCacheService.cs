@@ -25,8 +25,9 @@ public class ZgwTokenCacheService : IZgwTokenCacheService
             async entry =>
             {
                 var tokenResponse = await _zgwTokenService.GetTokenAsync(clientId, clientSecret, cancellationToken);
+                var safeExpiresIn = Math.Max(tokenResponse.ExpiresIn - 60, 1);
+                var expiration = TimeSpan.FromSeconds(safeExpiresIn);
 
-                var expiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn - 60);
                 entry.AbsoluteExpirationRelativeToNow = expiration;
 
                 return tokenResponse.AccessToken;
