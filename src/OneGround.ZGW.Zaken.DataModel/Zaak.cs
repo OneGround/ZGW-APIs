@@ -161,4 +161,7 @@ public class Zaak : OwnedEntity, IAuditableEntity, IUrlEntity
     public DateOnly? StartdatumBewaartermijn { get; set; }
 
     public ZaakProcessobject Processobject { get; set; }
+
+    [Column("catalogus_id")]
+    public Guid? CatalogusId { get; set; }
 }
