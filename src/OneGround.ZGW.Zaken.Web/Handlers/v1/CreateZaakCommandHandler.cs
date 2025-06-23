@@ -73,10 +73,18 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
             return new CommandResult<Zaak>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
+        var zaaktype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
+        if (!zaaktype.Success)
+        {
+            return new CommandResult<Zaak>(
+                null,
+                CommandStatus.ValidationError,
+                new ValidationError("zaaktype", zaaktype.Error.Code, zaaktype.Error.Title)
+            );
+        }
+
         if (string.IsNullOrEmpty(zaak.Identificatie))
         {
-            var zaaktype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
-
             var organisatie = request.Zaak.Bronorganisatie;
 
             _nummerGenerator.SetTemplateKeyValue("{ztc}", zaaktype.Response.Identificatie);
@@ -106,7 +114,10 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
             zaak.HoofdzaakId = hoofdzaak?.Id;
         }
 
+        var catalogusId = _uriService.GetId(zaaktype.Response.Catalogus);
+
         zaak.Owner = _rsin;
+        zaak.CatalogusId = catalogusId;
         if (zaak.Verlenging != null)
             zaak.Verlenging.Owner = _rsin;
         zaak.Kenmerken.ForEach(k => k.Owner = _rsin);

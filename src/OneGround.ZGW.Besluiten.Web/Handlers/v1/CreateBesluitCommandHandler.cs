@@ -11,6 +11,7 @@ using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Besluiten.Web.BusinessRules;
 using OneGround.ZGW.Besluiten.Web.Notificaties;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -30,6 +31,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
     private readonly IBesluitBusinessRuleService _besluitBusinessRuleService;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly IZakenServiceAgent _zakenServiceAgent;
+    private readonly ICatalogiServiceAgent _catalogiServiceAgent;
 
     public CreateBesluitCommandHandler(
         ILogger<CreateBesluitCommandHandler> logger,
@@ -41,6 +43,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         INotificatieService notificatieService,
         IAuditTrailFactory auditTrailFactory,
         IZakenServiceAgent zakenServiceAgent,
+        ICatalogiServiceAgent catalogiServiceAgent,
         IAuthorizationContextAccessor authorizationContextAccessor
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
@@ -50,6 +53,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         _besluitBusinessRuleService = besluitBusinessRuleService;
         _auditTrailFactory = auditTrailFactory;
         _zakenServiceAgent = zakenServiceAgent;
+        _catalogiServiceAgent = catalogiServiceAgent;
     }
 
     public async Task<CommandResult<Besluit>> Handle(CreateBesluitCommand request, CancellationToken cancellationToken)
@@ -77,6 +81,17 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
             return new CommandResult<Besluit>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
+        var besluittype = await _catalogiServiceAgent.GetBesluitTypeByUrlAsync(besluit.BesluitType);
+        if (!besluittype.Success)
+        {
+            return new CommandResult<Besluit>(
+                null,
+                CommandStatus.ValidationError,
+                new ValidationError("besluittype", besluittype.Error.Code, besluittype.Error.Title)
+            );
+        }
+        var catalogusId = _uriService.GetId(besluittype.Response.Catalogus);
+
         if (string.IsNullOrEmpty(besluit.Identificatie))
         {
             var organisatie = request.Besluit.VerantwoordelijkeOrganisatie;
@@ -94,6 +109,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         await _context.Besluiten.AddAsync(besluit, cancellationToken); // Note: Sequential Guid for Id is generated here by EF
 
         besluit.Owner = _rsin;
+        besluit.CatalogusId = catalogusId;
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {

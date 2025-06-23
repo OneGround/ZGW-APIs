@@ -150,10 +150,12 @@ public static class ServiceAgentExtensions
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
+            var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
 
             var discoveryCache = new DiscoveryCache(
                 authenticationOptions.Value.ZgwLegacyAuthProviderUrl,
-                () => httpClientFactory.CreateClient(ServiceRoleName.IDP)
+                () => httpClientFactory.CreateClient(ServiceRoleName.IDP),
+                discoveryPolicy
             );
 
             return new ZgwAuthDiscoveryCache(discoveryCache);
