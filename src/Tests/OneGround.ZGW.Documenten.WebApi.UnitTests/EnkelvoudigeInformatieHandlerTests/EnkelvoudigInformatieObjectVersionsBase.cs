@@ -8,8 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts;
+using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
@@ -101,6 +103,10 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
 
         // 10.
         _mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
+
+        var informatieobjecttype = _mockCatalogiServiceAgent
+            .Setup(m => m.GetInformatieObjectTypeByUrlAsync(It.IsAny<string>()))
+            .ReturnsAsync(new ServiceAgentResponse<InformatieObjectTypeResponseDto>(new InformatieObjectTypeResponseDto()));
 
         // 11.
         _mockedAuditTrailService = new Mock<IAuditTrailService>();

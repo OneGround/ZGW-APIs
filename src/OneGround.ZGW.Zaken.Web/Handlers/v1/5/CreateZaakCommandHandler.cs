@@ -8,14 +8,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
@@ -76,20 +74,18 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
             return new CommandResult<Zaak>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        ServiceAgentResponse<ZaakTypeResponseDto> zaaktype = default;
+        var zaaktype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
+        if (!zaaktype.Success)
+        {
+            return new CommandResult<Zaak>(
+                null,
+                CommandStatus.ValidationError,
+                new ValidationError("zaaktype", zaaktype.Error.Code, zaaktype.Error.Title)
+            );
+        }
 
         if (string.IsNullOrEmpty(zaak.Identificatie))
         {
-            zaaktype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
-            if (!zaaktype.Success)
-            {
-                return new CommandResult<Zaak>(
-                    null,
-                    CommandStatus.ValidationError,
-                    new ValidationError("zaaktype", zaaktype.Error.Code, zaaktype.Error.Title)
-                );
-            }
-
             var organisatie = request.Zaak.Bronorganisatie;
 
             _nummerGenerator.SetTemplateKeyValue("{ztc}", zaaktype.Response.Identificatie);
@@ -112,16 +108,6 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
         if (zaak.VertrouwelijkheidAanduiding == VertrouwelijkheidAanduiding.nullvalue)
         {
             // If vertrouwelijkheidAanduiding in request is not specified, than fallback on the VertrouwelijkheidAanduiding specified in the zaak.zaaktype
-            zaaktype ??= await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
-            if (!zaaktype.Success)
-            {
-                return new CommandResult<Zaak>(
-                    null,
-                    CommandStatus.ValidationError,
-                    new ValidationError("zaaktype", zaaktype.Error.Code, zaaktype.Error.Title)
-                );
-            }
-
             zaak.VertrouwelijkheidAanduiding = Enum.Parse<VertrouwelijkheidAanduiding>(zaaktype.Response.VertrouwelijkheidAanduiding);
         }
 
@@ -135,7 +121,10 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
             zaak.HoofdzaakId = hoofdzaak?.Id;
         }
 
+        var catalogusId = _uriService.GetId(zaaktype.Response.Catalogus);
+
         zaak.Owner = _rsin;
+        zaak.CatalogusId = catalogusId;
         if (zaak.Verlenging != null)
             zaak.Verlenging.Owner = _rsin;
         zaak.Kenmerken.ForEach(k => k.Owner = _rsin);

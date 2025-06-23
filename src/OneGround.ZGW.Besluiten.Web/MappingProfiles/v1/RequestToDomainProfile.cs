@@ -30,7 +30,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.ModificationTime, opt => opt.Ignore())
             .ForMember(dest => dest.BesluitInformatieObjecten, opt => opt.Ignore())
             .ForMember(dest => dest.ZaakBesluitUrl, opt => opt.Ignore())
-            .ForMember(dest => dest.Owner, opt => opt.Ignore());
+            .ForMember(dest => dest.Owner, opt => opt.Ignore())
+            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore());
 
         CreateMap<GetAllBesluitInformatieObjectenQueryParameters, GetAllBesluitInformatieObjectenFilter>();
 

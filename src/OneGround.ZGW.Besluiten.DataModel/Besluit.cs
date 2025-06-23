@@ -83,4 +83,7 @@ public class Besluit : OwnedEntity, IAuditableEntity, IUrlEntity
     public DateOnly? UiterlijkeReactieDatum { get; set; }
 
     public List<BesluitInformatieObject> BesluitInformatieObjecten { get; set; }
+
+    [Column("catalogus_id")]
+    public Guid? CatalogusId { get; set; }
 }

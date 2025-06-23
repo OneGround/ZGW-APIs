@@ -105,6 +105,19 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
+        var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
+            request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+        );
+        if (!informatieobjecttype.Success)
+        {
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(
+                null,
+                CommandStatus.ValidationError,
+                new ValidationError("enkelvoudiginformatieobjecttype", informatieobjecttype.Error.Code, informatieobjecttype.Error.Title)
+            );
+        }
+        var catalogusId = _uriService.GetId(informatieobjecttype.Response.Catalogus);
+
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
         await SetVertrouwelijkheidAanduidingAsync(request.EnkelvoudigInformatieObjectVersie);
 
@@ -178,6 +191,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
                 // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
                 versie.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+                versie.EnkelvoudigInformatieObject.CatalogusId = catalogusId;
 
                 // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
                 audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);

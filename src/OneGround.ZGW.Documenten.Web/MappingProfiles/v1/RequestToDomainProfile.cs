@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
@@ -29,7 +29,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.Verzendingen, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
+            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -84,7 +85,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.Verzendingen, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
+            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

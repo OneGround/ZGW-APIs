@@ -135,7 +135,21 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
             }
 
+            var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
+                request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+            );
+            if (!informatieobjecttype.Success)
+            {
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(
+                    null,
+                    CommandStatus.ValidationError,
+                    new ValidationError("enkelvoudiginformatieobjecttype", informatieobjecttype.Error.Code, informatieobjecttype.Error.Title)
+                );
+            }
+            var catalogusId = _uriService.GetId(informatieobjecttype.Response.Catalogus);
+
             versie.Versie = 1;
+            versie.EnkelvoudigInformatieObject.CatalogusId = catalogusId;
         }
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
