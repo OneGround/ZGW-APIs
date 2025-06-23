@@ -94,7 +94,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.OpdrachtgevendeOrganisatie, opt => opt.Ignore())
             .ForMember(dest => dest.Processobjectaard, opt => opt.Ignore())
             .ForMember(dest => dest.StartdatumBewaartermijn, opt => opt.Ignore())
-            .ForMember(dest => dest.Processobject, opt => opt.Ignore());
+            .ForMember(dest => dest.Processobject, opt => opt.Ignore())
+            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore());
 
         CreateMap<RelevanteAndereZaakDto, RelevanteAndereZaak>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
