@@ -107,16 +107,6 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
 
         if (zaak.VertrouwelijkheidAanduiding == VertrouwelijkheidAanduiding.nullvalue)
         {
-            //zaaktype ??= await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaak.Zaaktype);
-            //if (!zaaktype.Success)
-            //{
-            //    return new CommandResult<Zaak>(
-            //        null,
-            //        CommandStatus.ValidationError,
-            //        new ValidationError("zaaktype", zaaktype.Error.Code, zaaktype.Error.Title)
-            //    );
-            //}
-
             // If vertrouwelijkheidAanduiding in request is not specified, than fallback on the VertrouwelijkheidAanduiding specified in the zaak.zaaktype
             zaak.VertrouwelijkheidAanduiding = Enum.Parse<VertrouwelijkheidAanduiding>(zaaktype.Response.VertrouwelijkheidAanduiding);
         }
