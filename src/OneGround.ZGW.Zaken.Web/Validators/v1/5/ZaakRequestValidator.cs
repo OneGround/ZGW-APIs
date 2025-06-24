@@ -14,7 +14,7 @@ public class ZaakRequestValidator : ZGWValidator<ZaakRequestDto>
         CascadeRuleFor(z => z.Bronorganisatie).IsRsin(true);
         CascadeRuleFor(z => z.Omschrijving).MaximumLength(80);
         CascadeRuleFor(z => z.Toelichting).MaximumLength(1000);
-        CascadeRuleFor(z => z.Zaaktype).NotNull().NotEmpty().IsUri().MaximumLength(1000);
+        CascadeRuleFor(z => z.Zaaktype).NotNull().NotEmpty().IsUri(isIdResourceUri: true).MaximumLength(1000);
         CascadeRuleFor(z => z.Registratiedatum).IsDate(false);
         CascadeRuleFor(z => z.VerantwoordelijkeOrganisatie).IsRsin(true);
         CascadeRuleFor(z => z.Startdatum).IsDate(true);
