@@ -234,7 +234,7 @@ class UpdateInformatieObjectTypeCommandHandler
         }
 
         // Be sure only additions in collection trefwoord is allowed
-        if (!informatieObjectType.Trefwoord.All(t => request.InformatieObjectType.Trefwoord.Contains(t)))
+        if (informatieObjectType.Trefwoord != null && !informatieObjectType.Trefwoord.All(t => request.InformatieObjectType.Trefwoord.Contains(t)))
         {
             var error = new ValidationError(
                 "trefwoord",
