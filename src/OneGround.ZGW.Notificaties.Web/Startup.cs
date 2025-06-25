@@ -118,7 +118,7 @@ public class Startup
 #if DEBUG
         services.AddHangfire(_ =>
         {
-            /** Adding for Hangfire Dashboard only */
+            //Note: Adding Hangfire for Dashboard only
         });
         services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
 #endif
