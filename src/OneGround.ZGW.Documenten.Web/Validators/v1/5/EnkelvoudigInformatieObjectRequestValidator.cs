@@ -58,6 +58,6 @@ public class EnkelvoudigInformatieObjectRequestValidator : ZGWValidator<Enkelvou
                 v.CascadeRuleFor(r => r.Waarde).NotNull().NotEmpty().MaximumLength(128);
                 v.CascadeRuleFor(r => r.Datum).IsDate(true);
             });
-        CascadeRuleFor(r => r.InformatieObjectType).NotNull().NotEmpty().IsUri(isIdResourceUri: true).MaximumLength(200);
+        CascadeRuleFor(r => r.InformatieObjectType).NotNull().NotEmpty().IsUri().MaximumLength(200);
     }
 }

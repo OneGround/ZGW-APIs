@@ -194,24 +194,12 @@ public static class IRuleBuilderExtensions
     /// <summary>
     /// Validates if value is well formed uri string.
     /// </summary>
-    public static IRuleBuilderOptions<T, string> IsUri<T>(this IRuleBuilder<T, string> ruleBuilder, bool isIdResourceUri = false)
+    public static IRuleBuilderOptions<T, string> IsUri<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
-        if (isIdResourceUri)
-        {
-            return ruleBuilder
-                .Must(value =>
-                    string.IsNullOrEmpty(value) || (Uri.IsWellFormedUriString(value, UriKind.Absolute) && Guid.TryParse(value[^36..], out _))
-                )
-                .WithMessage("Veld heeft het verkeerde formaat, gebruik een geldige resource uri (geïdentificeerd via id).")
-                .WithErrorCode(ErrorCode.InvalidResource);
-        }
-        else
-        {
-            return ruleBuilder
-                .Must(value => string.IsNullOrEmpty(value) || Uri.IsWellFormedUriString(value, UriKind.Absolute))
-                .WithMessage("Veld heeft het verkeerde formaat, gebruik een geldige uri.")
-                .WithErrorCode(ErrorCode.InvalidResource);
-        }
+        return ruleBuilder
+            .Must(value => string.IsNullOrEmpty(value) || Uri.IsWellFormedUriString(value, UriKind.Absolute))
+            .WithMessage("Veld heeft het verkeerde formaat, gebruik een geldige uri.")
+            .WithErrorCode(ErrorCode.InvalidResource);
     }
 
     /// <summary>
