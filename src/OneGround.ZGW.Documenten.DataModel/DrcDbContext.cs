@@ -67,7 +67,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 b.Versie,
                 b.Vertrouwelijkheidaanduiding,
             })
-        /*.IsDescending(false, false, true, false) We can use it starting from EF 7 so skip for now*/;
+            .IsDescending(false, false, true, false);
 
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.InformatieObjectId);
 
