@@ -17,6 +17,7 @@ using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using Polly;
 using Polly.Retry;
 

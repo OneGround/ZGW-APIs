@@ -23,7 +23,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
-using OneGround.ZGW.Notificaties.Messaging.Jobs;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Web.Controllers;
 using OneGround.ZGW.Notificaties.Web.Converters;
 using OneGround.ZGW.Notificaties.Web.Services;
@@ -116,10 +116,11 @@ public class Startup
         });
 
 #if DEBUG
-        services.AddHangfire(_ =>
-        {
-            //Note: Adding Hangfire for Dashboard only
-        });
+        services.AddHangfire(
+            (_s, _o) => {
+                //Note: Adding Hangfire for Dashboard only
+            }
+        );
         services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
 #endif
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
@@ -137,7 +138,7 @@ public class Startup
         app.ConfigureZGWSwagger();
 
 #if DEBUG
-        app.UseHangfireDashboard();
+        app.UseNotificatiesHangfireDashboard();
 #endif
     }
 }
