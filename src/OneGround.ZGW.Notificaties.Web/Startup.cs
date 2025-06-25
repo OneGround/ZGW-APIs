@@ -1,6 +1,5 @@
 using Dapper;
 using Hangfire;
-using Hangfire.PostgreSql;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -24,7 +23,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
-using OneGround.ZGW.Notificaties.Messaging;
+using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using OneGround.ZGW.Notificaties.Web.Controllers;
 using OneGround.ZGW.Notificaties.Web.Converters;
 using OneGround.ZGW.Notificaties.Web.Services;
@@ -116,16 +115,9 @@ public class Startup
             options.WaitUntilStarted = true;
         });
 
-        services.AddHangfire(
-            (_, options) =>
-                options.UsePostgreSqlStorage(
-                    o => o.UseNpgsqlConnection(Configuration.GetConnectionString("UserConnectionString")),
-                    new PostgreSqlStorageOptions
-                    {
-                        PrepareSchemaIfNecessary = false, // Schema will be prepared in OneGround.ZGW.Notificaties.Messaging.Listener project
-                    }
-                )
-        );
+
+        services.AddHangfire(_ => { });
+        services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
 

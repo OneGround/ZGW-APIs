@@ -16,7 +16,7 @@ using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
-using OneGround.ZGW.Notificaties.Messaging.Extensions;
+using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using Polly;
 using Polly.Retry;
 
@@ -178,16 +178,16 @@ public class ServiceConfiguration
 
         services.AddHostedService<FailedQueueInitializationService>();
 
-        services.AddHangfireNotificatieReQueuer();
+        services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
+        services.AddNotificatiesJobsAgent();
 
         services.AddHangfireServer();
-
         services.AddHangfire(
-            (_, options) =>
-                options.UsePostgreSqlStorage(o =>
-                {
-                    o.UseNpgsqlConnection(_configuration.GetConnectionString("HangfireConnectionString"));
-                })
+            (s, o) =>
+            {
+                var connectionFactory = s.GetRequiredService<NotificatiesHangfireConnectionFactory>();
+                o.UsePostgreSqlStorage(o => o.UseConnectionFactory(connectionFactory));
+            }
         );
     }
 
