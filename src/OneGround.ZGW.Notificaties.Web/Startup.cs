@@ -115,10 +115,13 @@ public class Startup
             options.WaitUntilStarted = true;
         });
 
-
-        services.AddHangfire(_ => { });
+#if DEBUG
+        services.AddHangfire(_ =>
+        {
+            /** Adding for Hangfire Dashboard only */
+        });
         services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
-
+#endif
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
 
         //Note: this should be AFTER all httpclients being added!
@@ -134,7 +137,6 @@ public class Startup
         app.ConfigureZGWSwagger();
 
 #if DEBUG
-        var _ = new NotificatieJob(null, null);
         app.UseHangfireDashboard();
 #endif
     }
