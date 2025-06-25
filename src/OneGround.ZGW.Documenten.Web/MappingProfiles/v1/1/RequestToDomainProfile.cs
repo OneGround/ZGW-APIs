@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AutoMapper;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
@@ -40,7 +40,7 @@ public class RequestToDomainProfile : Profile
                 opt =>
                     opt.MapFrom(src => new EnkelvoudigInformatieObject
                     {
-                        InformatieObjectType = src.InformatieObjectType,
+                        InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
                         IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                     })
             )

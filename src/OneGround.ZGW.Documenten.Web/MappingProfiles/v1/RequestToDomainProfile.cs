@@ -43,7 +43,7 @@ public class RequestToDomainProfile : Profile
                 opt =>
                     opt.MapFrom(src => new EnkelvoudigInformatieObject
                     {
-                        InformatieObjectType = src.InformatieObjectType,
+                        InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
                         IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                     })
             )

@@ -225,7 +225,8 @@ public class RequestToDomainProfile : Profile
                 dest => dest.VertrouwelijkheidAanduiding,
                 opt => opt.MapFrom(src => MapVertrouwelijkheidAanduiding(src.Vertrouwelijkheidaanduiding))
             )
-            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore());
+            .ForMember(dest => dest.CatalogusId, opt => opt.Ignore())
+            .ForMember(dest => dest.Zaaktype, opt => opt.MapFrom(src => src.Zaaktype.TrimEnd('/')));
 
         //
         // 2. ZaakStatus

@@ -11,7 +11,7 @@ public class BesluitRequestValidator : ZGWValidator<BesluitRequestDto>
     {
         CascadeRuleFor(z => z.Identificatie).MaximumLength(50);
         CascadeRuleFor(z => z.VerantwoordelijkeOrganisatie).IsRsin(true);
-        CascadeRuleFor(z => z.BesluitType).NotNull().NotEmpty().IsUri(isIdResourceUri: true).MaximumLength(200);
+        CascadeRuleFor(z => z.BesluitType).NotNull().NotEmpty().IsUri().MaximumLength(200);
         CascadeRuleFor(z => z.Zaak).IsUri().MaximumLength(200);
         CascadeRuleFor(z => z.Datum).IsDate(true);
         CascadeRuleFor(z => z.BestuursOrgaan).MaximumLength(50);
