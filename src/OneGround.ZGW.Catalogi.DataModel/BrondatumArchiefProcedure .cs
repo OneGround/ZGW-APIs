@@ -8,7 +8,7 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Catalogi.DataModel;
 
 [Table("brondatumarchiefproceduren")]
-public class BronDatumArchiefProcedure : IBaseEntity
+public class BronDatumArchiefProcedure : OwnedEntity, IBaseEntity
 {
     [Key, ForeignKey(nameof(ResultaatType))]
     [Column("resulttype_id")]

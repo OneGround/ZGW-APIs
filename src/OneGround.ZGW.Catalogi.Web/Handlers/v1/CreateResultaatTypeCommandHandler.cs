@@ -125,6 +125,10 @@ class CreateResultaatTypeCommandHandler
         resultType.OmschrijvingGeneriek = resultaatTypeOmschrijving.Response.Omschrijving;
         resultType.ZaakType = zaakType;
         resultType.Owner = resultType.ZaakType.Owner;
+        if (resultType.BronDatumArchiefProcedure != null)
+        {
+            resultType.BronDatumArchiefProcedure.Owner = resultType.ZaakType.Owner;
+        }
 
         await _cacheInvalidator.InvalidateAsync(resultType.ZaakType);
 

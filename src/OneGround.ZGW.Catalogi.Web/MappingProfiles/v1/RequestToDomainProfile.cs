@@ -65,6 +65,7 @@ public class RequestToDomainProfile : Profile
 
         CreateMap<ReferentieProcesDto, ReferentieProces>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.ZaakType, opt => opt.Ignore());
 
         CreateMap<GetAllStatusTypenQueryParameters, GetAllStatusTypenFilter>();
@@ -169,6 +170,7 @@ public class RequestToDomainProfile : Profile
         CreateMap<BronDatumArchiefProcedureDto, BronDatumArchiefProcedure>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.ResultaatType, opt => opt.Ignore())
+            .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.ProcesTermijn, opt => opt.MapFrom(src => PeriodPattern.NormalizingIso.Parse(src.ProcesTermijn).Value));
 
         CreateMap<GetAllResultaatTypenQueryParameters, GetAllResultaatTypenFilter>();
