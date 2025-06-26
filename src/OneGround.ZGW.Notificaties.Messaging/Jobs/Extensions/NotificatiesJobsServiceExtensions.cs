@@ -1,4 +1,3 @@
-using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
@@ -12,7 +11,7 @@ public static class NotificatiesJobsServiceExtensions
         services.AddSingleton<NotificatiesHangfireConnectionFactory>();
     }
 
-    public static void AddNotificatiesJobsAgent(this IServiceCollection services)
+    public static void AddNotificatiesServerJobs(this IServiceCollection services)
     {
         services.AddTransient<NotificatieJob>();
     }

@@ -180,7 +180,7 @@ public class ServiceConfiguration
         services.AddHostedService<FailedQueueInitializationService>();
 
         services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
-        services.AddNotificatiesJobsAgent();
+        services.AddNotificatiesServerJobs();
 
         services.AddHangfireServer();
         services.AddHangfire(
