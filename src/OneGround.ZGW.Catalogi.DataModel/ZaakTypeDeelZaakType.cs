@@ -1,11 +1,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Catalogi.DataModel;
 
 [Table("zaaktypedeelzaaktypen")]
-public class ZaakTypeDeelZaakType
+public class ZaakTypeDeelZaakType : OwnedEntity
 {
     [Column("id")]
     public Guid Id { get; set; }
