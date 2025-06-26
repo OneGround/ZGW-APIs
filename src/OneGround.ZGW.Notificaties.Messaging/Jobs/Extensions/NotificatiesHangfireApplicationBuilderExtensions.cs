@@ -15,7 +15,7 @@ public static class NotificatiesHangfireApplicationBuilderExtensions
     {
         var options = new DashboardOptions
         {
-            DashboardTitle = "DRC Hangfire Dashboard",
+            DashboardTitle = "NRC Hangfire Dashboard",
             DisplayStorageConnectionString = true,
             IgnoreAntiforgeryToken = true,
         };

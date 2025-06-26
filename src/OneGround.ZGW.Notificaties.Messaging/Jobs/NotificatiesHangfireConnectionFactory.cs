@@ -13,7 +13,7 @@ public class NotificatiesHangfireConnectionFactory : IConnectionFactory
         _options = options;
     }
 
-    NpgsqlConnection IConnectionFactory.GetOrCreateConnection()
+    public NpgsqlConnection GetOrCreateConnection()
     {
         var connection = new NpgsqlConnection(_options.Value.ConnectionString);
         connection.Open();
