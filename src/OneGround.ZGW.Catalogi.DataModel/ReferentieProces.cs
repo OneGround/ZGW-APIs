@@ -6,7 +6,7 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Catalogi.DataModel;
 
 [Table("referentieprocessen")]
-public class ReferentieProces : IBaseEntity
+public class ReferentieProces : OwnedEntity, IBaseEntity
 {
     [Key, ForeignKey(nameof(ZaakType))]
     [Column("zaaktype_id")]

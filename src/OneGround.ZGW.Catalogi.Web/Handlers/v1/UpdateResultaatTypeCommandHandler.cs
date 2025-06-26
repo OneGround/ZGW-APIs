@@ -157,6 +157,11 @@ public class UpdateResultaatTypeCommandHandler
 
             resultType.OmschrijvingGeneriek = resultaatTypeOmschrijving.Response.Omschrijving;
 
+            if (resultType.BronDatumArchiefProcedure != null)
+            {
+                resultType.BronDatumArchiefProcedure.Owner = resultType.ZaakType.Owner;
+            }
+
             audittrail.SetNew<ResultaatTypeResponseDto>(resultType);
 
             if (request.IsPartialUpdate)

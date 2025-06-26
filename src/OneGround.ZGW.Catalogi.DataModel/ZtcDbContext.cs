@@ -31,6 +31,7 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
     public DbSet<ZaakTypeInformatieObjectType> ZaakTypeInformatieObjectTypen { get; set; }
     public DbSet<BesluitTypeInformatieObjectType> BesluitTypeInformatieObjectTypen { get; set; }
     public DbSet<ResultaatTypeBesluitType> ResultaatTypeBesluitTypen { get; set; }
+    public DbSet<BronDatumArchiefProcedure> BronDatumArchiefProcedures { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
