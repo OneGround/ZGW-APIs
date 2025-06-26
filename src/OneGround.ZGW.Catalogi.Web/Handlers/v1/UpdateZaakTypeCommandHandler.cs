@@ -167,6 +167,10 @@ class UpdateZaakTypeCommandHandler
                 updatingZaakType.Catalogus = catalogus;
                 updatingZaakType.CatalogusId = catalogus.Id;
                 updatingZaakType.Owner = catalogus.Owner;
+                if (updatingZaakType.ReferentieProces != null)
+                {
+                    updatingZaakType.ReferentieProces.Owner = updatingZaakType.Owner;
+                }
             }
 
             if (request.ZaakType.SelectielijstProcestype != updatingZaakType.SelectielijstProcestype)
@@ -352,6 +356,7 @@ class UpdateZaakTypeCommandHandler
                         ZaakType = zaakType,
                         DeelZaakTypeIdentificatie = deelZaakType.Identificatie,
                         DeelZaakType = deelZaakType,
+                        Owner = zaakType.Owner,
                     },
                     (x, y) => x.DeelZaakTypeIdentificatie == y.DeelZaakTypeIdentificatie
                 );
