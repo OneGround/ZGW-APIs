@@ -6,7 +6,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Local"
       },
-      "applicationUrl": "http://*:5009"
+      "applicationUrl": "http://autorisaties"
     }
   }
 }

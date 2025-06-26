@@ -84,6 +84,8 @@ public class Startup
                             h.Password(_rabbitMqConfiguration.Password);
                         }
                     );
+                    // var connectionString = Configuration.GetConnectionString("oneground-rabbitmq");
+                    // conf.Host(connectionString);
                     conf.UseSendFilter(typeof(BatchIdSendingFilter<>), bus);
                     conf.UsePublishFilter(typeof(BatchIdPublishFilter<>), bus);
                 }
