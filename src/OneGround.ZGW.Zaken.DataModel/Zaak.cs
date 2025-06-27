@@ -163,5 +163,5 @@ public class Zaak : OwnedEntity, IAuditableEntity, IUrlEntity
     public ZaakProcessobject Processobject { get; set; }
 
     [Column("catalogus_id")]
-    public Guid? CatalogusId { get; set; }
+    public Guid CatalogusId { get; set; }
 }

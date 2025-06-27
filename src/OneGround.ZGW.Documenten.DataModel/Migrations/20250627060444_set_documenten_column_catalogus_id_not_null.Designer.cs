@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations
 {
     [DbContext(typeof(DrcDbContext))]
-    partial class DrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250627060444_set_documenten_column_catalogus_id_not_null")]
+    partial class set_documenten_column_catalogus_id_not_null
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -510,20 +513,9 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasIndex("Owner", "Id", "Vertrouwelijkheidaanduiding");
 
-                    b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding")
-                        .IsDescending(false, false, true);
-
                     b.HasIndex("Vertrouwelijkheidaanduiding", "Id", "Owner");
 
-                    b.HasIndex("Owner", "EnkelvoudigInformatieObjectId", "Versie", "Vertrouwelijkheidaanduiding")
-                        .IsDescending(false, false, true, false);
-
-                    b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding", "EnkelvoudigInformatieObjectId")
-                        .IsDescending(false, false, true, false)
-                        .HasDatabaseName("IX_enkelvoudiginformatieobjectversies_owner_inhoud_vertrouwel~1")
-                        .HasFilter("Bestandsomvang IS NOT NULL");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding", "EnkelvoudigInformatieObjectId"), new[] { "Bestandsomvang" });
+                    b.HasIndex("Owner", "EnkelvoudigInformatieObjectId", "Versie", "Vertrouwelijkheidaanduiding");
 
                     b.ToTable("enkelvoudiginformatieobjectversies");
                 });
