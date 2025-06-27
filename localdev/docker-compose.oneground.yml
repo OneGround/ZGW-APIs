@@ -1,4 +1,25 @@
 services:
+  haproxy:
+    image: haproxy:2.2-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./haproxy/haproxy-localstack.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./oneground-certificates/oneground.local.combined.pem:/etc/ssl/certs/oneground.local.combined.pem:ro
+    restart: unless-stopped
+    networks:
+      oneground:
+        aliases:
+          - ${EVENTBUS_HOST}
+          - ${NRC_HOST}
+          - ${ZTC_HOST}
+          - ${ZRC_HOST}
+          - ${DRC_HOST}
+          - ${BRC_HOST}
+          - ${RC_HOST}
+          - ${AC_HOST}
+
   rabbit_mq:
     image: rabbitmq:3.8-management
     restart: always
@@ -90,6 +111,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -111,6 +133,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -132,6 +155,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -151,6 +175,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -172,6 +197,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
       FileSystemDocumentServiceSettings__DocumentRootPath: "drc_dms"
@@ -192,6 +218,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
       ConnectionStrings__HangfireConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -214,6 +241,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -247,6 +275,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
+      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
