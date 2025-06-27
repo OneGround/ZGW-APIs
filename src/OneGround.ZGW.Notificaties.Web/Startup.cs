@@ -1,6 +1,5 @@
 using Dapper;
 using Hangfire;
-using Hangfire.PostgreSql;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Batching;
+using OneGround.ZGW.Common.Converters;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging;
@@ -24,9 +24,8 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
-using OneGround.ZGW.Notificaties.Messaging;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Web.Controllers;
-using OneGround.ZGW.Notificaties.Web.Converters;
 using OneGround.ZGW.Notificaties.Web.Services;
 
 namespace OneGround.ZGW.Notificaties.Web;
@@ -116,17 +115,14 @@ public class Startup
             options.WaitUntilStarted = true;
         });
 
+#if DEBUG
         services.AddHangfire(
-            (_, options) =>
-                options.UsePostgreSqlStorage(
-                    o => o.UseNpgsqlConnection(Configuration.GetConnectionString("UserConnectionString")),
-                    new PostgreSqlStorageOptions
-                    {
-                        PrepareSchemaIfNecessary = false, // Schema will be prepared in OneGround.ZGW.Notificaties.Messaging.Listener project
-                    }
-                )
+            (_s, _o) => {
+                //Note: Adding Hangfire for Dashboard only
+            }
         );
-
+        services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
+#endif
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
 
         //Note: this should be AFTER all httpclients being added!
@@ -142,8 +138,7 @@ public class Startup
         app.ConfigureZGWSwagger();
 
 #if DEBUG
-        var _ = new NotificatieJob(null, null);
-        app.UseHangfireDashboard();
+        app.UseNotificatiesHangfireDashboard();
 #endif
     }
 }

@@ -341,7 +341,8 @@ public partial class Initial : Migration
         migrationBuilder.CreateIndex(
             name: "IX_enkelvoudiginformatieobjectversies_owner_enkelvoudiginforma~",
             table: "enkelvoudiginformatieobjectversies",
-            columns: ["owner", "enkelvoudiginformatieobject_id", "versie", "vertrouwelijkheidaanduiding"]
+            columns: new[] { "owner", "enkelvoudiginformatieobject_id", "versie", "vertrouwelijkheidaanduiding" },
+            descending: new[] { false, false, true, false }
         );
 
         migrationBuilder.CreateIndex(
