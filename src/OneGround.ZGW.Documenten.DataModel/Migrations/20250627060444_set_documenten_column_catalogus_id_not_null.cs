@@ -1,0 +1,38 @@
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace OneGround.ZGW.Documenten.DataModel.Migrations
+{
+    /// <inheritdoc />
+    public partial class set_documenten_column_catalogus_id_not_null : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<Guid>(
+                name: "catalogus_id",
+                table: "enkelvoudiginformatieobjecten",
+                type: "uuid",
+                nullable: false,
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true
+            );
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<Guid>(
+                name: "catalogus_id",
+                table: "enkelvoudiginformatieobjecten",
+                type: "uuid",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uuid"
+            );
+        }
+    }
+}

@@ -85,5 +85,5 @@ public class Besluit : OwnedEntity, IAuditableEntity, IUrlEntity
     public List<BesluitInformatieObject> BesluitInformatieObjecten { get; set; }
 
     [Column("catalogus_id")]
-    public Guid? CatalogusId { get; set; }
+    public Guid CatalogusId { get; set; }
 }
