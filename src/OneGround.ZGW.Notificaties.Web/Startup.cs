@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Batching;
+using OneGround.ZGW.Common.Converters;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging;
@@ -26,7 +27,6 @@ using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Web.Controllers;
 using OneGround.ZGW.Notificaties.Web.Services;
-using OneGround.ZGW.Common.Converters;
 
 namespace OneGround.ZGW.Notificaties.Web;
 
