@@ -1,0 +1,24 @@
+# Use an official Ubuntu base image
+FROM ubuntu:latest
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package lists and install ca-certificates, which provides the 'update-ca-certificates' command
+RUN apt-get update && apt-get install -y ca-certificates
+
+# Set the working directory inside the container
+WORKDIR /app/scripts
+
+# Copy the script from the host's 'scripts' folder to the container's working directory
+COPY ./oneground-certificates-installer/install-oneground-certificate.sh .
+
+# Copy the certificates folder from the host to the container, preserving the relative path structure
+COPY ./oneground-certificates ../oneground-certificates
+
+# Make the script executable
+RUN chmod +x install-oneground-certificate.sh
+
+# Run the script as the root user to simulate sudo permissions
+USER root
+CMD ["./install-oneground-certificate.sh"]
