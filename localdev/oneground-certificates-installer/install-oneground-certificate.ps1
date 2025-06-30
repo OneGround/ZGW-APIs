@@ -9,7 +9,7 @@ Write-Host "This requires Administrator privileges."
 Write-Host ""
 
 if (-not (Test-Path $certPath)) {
-    Write-Error "Certificate file not found at '$certPath'. Please make sure you have generated the certificate using 'docker-compose TODO' first."
+    Write-Error "Certificate file not found at '$certPath'. Please make sure you have generated the certificate using 'docker-compose -f .\docker-compose.oneground-certificates.yml  up --build --remove-orphans' first."
 } else {
     try {       
         Import-Certificate -FilePath $certPath -CertStoreLocation Cert:\LocalMachine\Root -ErrorAction Stop
