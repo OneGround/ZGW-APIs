@@ -55,6 +55,29 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Inhoud); // Note: In Inhoud the DMS urn's are stored to the underlying documentservice providers (Ceph, MongoDB, etc). To count the organisation total storage size efficient an index is added therefore
 
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObjectVersie>()
+            .HasIndex(e => new
+            {
+                e.Owner,
+                e.Inhoud,
+                e.Vertrouwelijkheidaanduiding,
+            })
+            .IsDescending(false, false, true);
+
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObjectVersie>()
+            .HasIndex(e => new
+            {
+                e.Owner,
+                e.Inhoud,
+                e.Vertrouwelijkheidaanduiding,
+                e.EnkelvoudigInformatieObjectId,
+            })
+            .IsDescending(false, false, true, false)
+            .IncludeProperties(e => e.Bestandsomvang)
+            .HasFilter($"{nameof(EnkelvoudigInformatieObjectVersie.Bestandsomvang)} IS NOT NULL");
+
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(b => b.EnkelvoudigInformatieObjectId).IsUnique();
 
         // Note: We sould have versie DESC in the index but it is not possible in EF right now
@@ -67,7 +90,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 b.Versie,
                 b.Vertrouwelijkheidaanduiding,
             })
-        /*.IsDescending(false, false, true, false) We can use it starting from EF 7 so skip for now*/;
+            .IsDescending(false, false, true, false);
 
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.InformatieObjectId);
 

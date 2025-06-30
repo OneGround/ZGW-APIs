@@ -78,6 +78,10 @@ class CreateZaakTypeCommandHandler
 
         zaakType.Catalogus = catalogus;
         zaakType.Owner = zaakType.Catalogus.Owner;
+        if (zaakType.ReferentieProces != null)
+        {
+            zaakType.ReferentieProces.Owner = zaakType.Owner;
+        }
 
         if (request.ZaakType.SelectielijstProcestype != null)
         {
@@ -236,6 +240,7 @@ class CreateZaakTypeCommandHandler
                     ZaakType = zaakType,
                     DeelZaakTypeIdentificatie = z.Identificatie,
                     DeelZaakType = z,
+                    Owner = z.Owner,
                 }),
                 (x, y) => x.DeelZaakTypeIdentificatie == y.DeelZaakTypeIdentificatie
             );

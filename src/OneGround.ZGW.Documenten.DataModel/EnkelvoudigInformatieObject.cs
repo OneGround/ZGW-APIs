@@ -59,5 +59,5 @@ public class EnkelvoudigInformatieObject : OwnedEntity, IAuditableEntity, IUrlEn
     public List<Verzending> Verzendingen { get; set; } = [];
 
     [Column("catalogus_id")]
-    public Guid? CatalogusId { get; set; }
+    public Guid CatalogusId { get; set; }
 }

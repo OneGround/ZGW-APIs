@@ -5,6 +5,7 @@
     <RootNamespace>OneGround.ZGW.Common</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Dapper" />
     <PackageReference Include="Duende.IdentityModel" />
     <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />

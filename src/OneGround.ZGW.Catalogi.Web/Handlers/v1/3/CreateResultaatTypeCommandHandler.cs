@@ -124,6 +124,10 @@ class CreateResultaatTypeCommandHandler
         resultType.OmschrijvingGeneriek = resultaatTypeOmschrijving.Response.Omschrijving;
         resultType.ZaakType = zaakType;
         resultType.Owner = resultType.ZaakType.Owner;
+        if (resultType.BronDatumArchiefProcedure != null)
+        {
+            resultType.BronDatumArchiefProcedure.Owner = resultType.ZaakType.Owner;
+        }
         // Note: Derive from Zaaktype instead of getting from request (decided to do so)
         resultType.BeginGeldigheid = zaakType.BeginGeldigheid;
         resultType.EindeGeldigheid = zaakType.EindeGeldigheid;

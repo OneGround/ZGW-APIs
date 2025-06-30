@@ -2,7 +2,7 @@ using Hangfire;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
-namespace OneGround.ZGW.Notificaties.Messaging;
+namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieJob
 {
