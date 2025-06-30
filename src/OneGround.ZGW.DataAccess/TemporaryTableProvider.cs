@@ -12,7 +12,7 @@ public interface ITemporaryTableProvider
 
 public class TemporaryTableProvider : ITemporaryTableProvider
 {
-   public async Task CreateAsync(BaseDbContext context, string sql, CancellationToken cancellationToken = default)
+    public async Task CreateAsync(BaseDbContext context, string sql, CancellationToken cancellationToken = default)
     {
         var connection = context.Database.GetDbConnection();
         bool connectionWasClosed = connection.State == System.Data.ConnectionState.Closed;
