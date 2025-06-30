@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Consumers;
 

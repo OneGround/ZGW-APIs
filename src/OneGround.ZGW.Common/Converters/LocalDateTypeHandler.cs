@@ -2,9 +2,9 @@ using System;
 using System.Data;
 using Dapper;
 
-namespace OneGround.ZGW.Notificaties.Web.Converters;
+namespace OneGround.ZGW.Common.Converters;
 
-class LocalDateTypeHandler : SqlMapper.TypeHandler<DateTime>
+public class LocalDateTypeHandler : SqlMapper.TypeHandler<DateTime>
 {
     public override DateTime Parse(object value)
     {
