@@ -16,7 +16,7 @@ fi
 
 echo "Generating certificates for ${DOMAIN} and *.${DOMAIN}..."
 
-mkdir -p ${CERT_DIR}
+mkdir -p "$CERT_DIR"
 
 openssl req -x509 -newkey rsa:4096 \
   -keyout "${KEY_FILE}" \
