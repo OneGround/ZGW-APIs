@@ -9,7 +9,7 @@
         "Bronorganisatie": "111111111",
         "Omschrijving": "Dit is een test zaak",
         "Toelichting": "",
-        "Zaaktype": "http://catalogi.user.local:5011/api/v1/zaaktypen/7f81ba45-181d-423b-9015-8256fdfe64c7",
+        "Zaaktype": "https://catalogi.oneground.local/api/v1/zaaktypen/7f81ba45-181d-423b-9015-8256fdfe64c7",
         "Registratiedatum": "2025-01-02",
         "VerantwoordelijkeOrganisatie": "111111111",
         "Startdatum": "2025-01-02",

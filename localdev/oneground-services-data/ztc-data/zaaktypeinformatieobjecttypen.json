@@ -1,7 +1,7 @@
 [
     {
         "Id": "9BBB4596-C0E4-4853-BEF9-A0676CF97624",
-        "ZaakTypeId": "7f81ba45-181d-423b-9015-8256fdfe64c7",
+        "ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
         "InformatieObjectTypeOmschrijving": "Adviesaanvraag",
         "VolgNummer": 1,
         "Richting": 0,
@@ -11,7 +11,7 @@
     },
     {
         "Id": "F4998CE1-3146-49CC-9D41-9E3113189F77",
-        "ZaakTypeId": "7f81ba45-181d-423b-9015-8256fdfe64c7",
+        "ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
         "InformatieObjectTypeOmschrijving": "Ontvangstbevestiging",
         "VolgNummer": 2,
         "Richting": 2,
@@ -21,7 +21,7 @@
     },
     {
         "Id": "2BB21BCB-C2A3-45E8-9D1C-4FCC7CB5283E",
-        "ZaakTypeId": "7f81ba45-181d-423b-9015-8256fdfe64c7",
+        "ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
         "InformatieObjectTypeOmschrijving": "Aanvullende informatie",
         "VolgNummer": 4,
         "Richting": 0,
@@ -31,7 +31,7 @@
     },
     {
         "Id": "462516E8-0C10-4A12-88D1-AACDAC2793E5",
-        "ZaakTypeId": "7f81ba45-181d-423b-9015-8256fdfe64c7",
+        "ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
         "InformatieObjectTypeOmschrijving": "Adviesrapport",
         "VolgNummer": 5,
         "Richting": 1,
