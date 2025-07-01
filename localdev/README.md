@@ -112,7 +112,7 @@ To make your browser and system trust the generated certificate, you need to ins
 
 ### Verification
 
-After installation, is recommended restart your web browser.
+After installation, it is recommended to restart your web browser.
 
 ### Update hosts file with those lines
 
