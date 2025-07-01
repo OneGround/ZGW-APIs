@@ -1,11 +1,11 @@
 [
-	{
-		"Id": "AA6BB008-6F70-48A4-8883-1D61F8985193",
-		"Omschrijving": "Adviesaanvraag",
-		"CatalogusId": "7B9341CE-DBC3-460D-AE4B-D1CEE6B6604C",
-		"BeginGeldigheid": "2025-01-01",
-		"CreationTime": "2025-01-01T00:01:00Z",
-		"CreatedBy": "data-seed",
-		"Owner": "111111111"
-	}
+    {
+        "Id": "AA6BB008-6F70-48A4-8883-1D61F8985193",
+        "Omschrijving": "Adviesaanvraag",
+        "CatalogusId": "7B9341CE-DBC3-460D-AE4B-D1CEE6B6604C",
+        "BeginGeldigheid": "2025-01-01",
+        "CreationTime": "2025-01-01T00:01:00Z",
+        "CreatedBy": "data-seed",
+        "Owner": "111111111"
+    }
 ]

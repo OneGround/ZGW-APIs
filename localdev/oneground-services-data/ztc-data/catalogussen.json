@@ -1,13 +1,13 @@
 [
-	{
-		"Id": "7B9341CE-DBC3-460D-AE4B-D1CEE6B6604C",
-		"Domein": "OneGround",
-		"Rsin": "111111111",
-		"ContactpersoonBeheerNaam": "Roxit",
-		"ContactpersoonBeheerTelefoonnummer": "82828282612",
-		"ContactpersoonBeheerEmailadres": "email@example.nl",
-		"CreationTime": "2025-01-01T00:01:00Z",
-		"CreatedBy": "data-seed",
-		"Owner": "111111111"
-	}
+    {
+        "Id": "7B9341CE-DBC3-460D-AE4B-D1CEE6B6604C",
+        "Domein": "OneGround",
+        "Rsin": "111111111",
+        "ContactpersoonBeheerNaam": "Roxit",
+        "ContactpersoonBeheerTelefoonnummer": "82828282612",
+        "ContactpersoonBeheerEmailadres": "email@example.nl",
+        "CreationTime": "2025-01-01T00:01:00Z",
+        "CreatedBy": "data-seed",
+        "Owner": "111111111"
+    }
 ]
