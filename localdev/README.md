@@ -5,8 +5,15 @@
     - [Postgres](#postgres)
     - [RabbitMQ](#rabbitmq)
   - [Docker hosted ZGW APIs](#docker-hosted-zgw-apis)
+    - [Generate a new SSL certificate](#generate-a-new-ssl-certificate)
+    - [Install the SSL certificate](#install-the-ssl-certificate)
+    - [For Windows Users (PowerShell)](#for-windows-users-powershell)
+    - [For macOS and Linux Users (Bash)](#for-macos-and-linux-users-bash)
+    - [Verification](#verification)
+    - [Update hosts file with those lines](#update-hosts-file-with-those-lines)
     - [Start ZGW APIs](#start-zgw-apis)
     - [Stop ZGW APIs](#stop-zgw-apis)
+    - [HaProxy status page](#haproxy-status-page)
     - [Zaken Api](#zaken-api)
     - [Documenten Api](#documenten-api)
     - [Autorisaties Api](#autorisaties-api)
@@ -41,6 +48,87 @@ database(s): zrc_db
 
 ## Docker hosted ZGW APIs
 
+### Generate a new SSL certificate
+
+From localdev folder, run the following command to build the certificate generator and create the certificates:
+
+```txt
+docker-compose -f .\docker-compose.oneground-certificates.yml  up --build --remove-orphans
+```
+
+Upon successful completion, you will find a new folder named `oneground-certificates` inside `localdev` containing the following files:
+
+- `oneground.local.pem` - The public certificate
+- `oneground.local.key` - The private key
+- `oneground.local.combined.pem` - A combination of the key and certificate
+
+### Install the SSL certificate
+
+To make your browser and system trust the generated certificate, you need to install it into your system's trust store.
+
+### For Windows Users (PowerShell)
+
+1. **Open PowerShell with Administrator privileges.**
+    - Click the Start menu.
+    - Type "PowerShell".
+    - Right-click on "Windows PowerShell" and select "Run as administrator".
+
+2. **Navigate to the certificate installer directory.**
+
+    ```powershell
+    cd path/to/your/project/localdev/oneground-certificates-installer
+    ```
+
+3. **Run the installation script.**
+
+    ```powershell
+    .\install-oneground-certificate.ps1
+    ```
+
+    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
+
+### For macOS and Linux Users (Bash)
+
+1. **Open your terminal.**
+2. **Navigate to the certificate installer directory.**
+
+    ```bash
+    cd path/to/your/project/localdev/oneground-certificates-installer
+    ```
+
+3. **Make the script executable** (you only need to do this once).
+
+    ```bash
+    chmod +x ./install-oneground-certificate.sh
+    ```
+
+4. **Run the installation script.** You may be prompted for your password to authorize the changes.
+
+    ```bash
+    ./install-oneground-certificate.sh
+    ```
+
+    This script will install the certificate into your system's keychain or trust store.
+
+### Verification
+
+After installation, it is recommended to restart your web browser.
+
+### Update hosts file with those lines
+
+```txt
+127.0.0.1 zaken.oneground.local
+127.0.0.1 catalogi.oneground.local
+127.0.0.1 notificaties.oneground.local
+127.0.0.1 notificaties-receiver.oneground.local
+127.0.0.1 besluiten.oneground.local
+127.0.0.1 documenten.oneground.local
+127.0.0.1 autorisaties.oneground.local
+127.0.0.1 referentielijsten.oneground.local
+127.0.0.1 haproxy.oneground.local
+127.0.0.1 rabbitmq.oneground.local
+```
+
 ### Start ZGW APIs
 
 Run command from localdev folder
@@ -57,44 +145,48 @@ Run command from localdev folder
 docker compose --project-directory .\ -f docker-compose.oneground.yml down
 ```
 
+### HaProxy status page
+
+- **Status page:** <https://haproxy.oneground.local>
+
 ### Zaken Api
 
 - **Port:** 5005
-- **Swagger:** <http://localhost:5005/swagger>
-- **Health:** <http://localhost:5005/health>
+- **Swagger:** <https://zaken.oneground.local/swagger>
+- **Health:** <https://zaken.oneground.local/health>
 
 ### Documenten Api
 
 - **Port:** 5007
-- **Swagger:** <http://localhost:5007/swagger>
-- **Health:** <http://localhost:5007/health>
+- **Swagger:** <https://documenten.oneground.local/swagger>
+- **Health:** <https://documenten.oneground.local/health>
 
 ### Autorisaties Api
 
 - **Port:** 5009
-- **Swagger:** <http://localhost:5009/swagger>
-- **Health:** <http://localhost:5009/health>
+- **Swagger:** <https://autorisaties.oneground.local/swagger>
+- **Health:** <https://autorisaties.oneground.local/health>
 
 ### Catalogi Api
 
 - **Port:** 5010
-- **Swagger:** <http://localhost:5010/swagger>
-- **Health:** <http://localhost:5010/health>
+- **Swagger:** <https://catalogi.oneground.local/swagger>
+- **Health:** <https://catalogi.oneground.local/health>
 
 ### Besluiten Api
 
 - **Port:** 5013
-- **Swagger:** <http://localhost:5013/swagger>
-- **Health:** <http://localhost:5013/health>
+- **Swagger:** <https://besluiten.oneground.local/swagger>
+- **Health:** <https://besluiten.oneground.local/health>
 
 ### Notificaties Api
 
 - **Port:** 5015
-- **Swagger:** <http://localhost:5015/swagger>
-- **Health:** <http://localhost:5015/health>
+- **Swagger:** <https://notificaties.oneground.local/swagger>
+- **Health:** <https://notificaties.oneground.local/health>
 
 ### Referentielijsten Api
 
 - **Port:** 5018
-- **Swagger:** <http://localhost:5018/swagger>
-- **Health:** <http://localhost:5018/health>
+- **Swagger:** <https://referentielijsten.oneground.local/swagger>
+- **Health:** <https://referentielijsten.oneground.local/health>

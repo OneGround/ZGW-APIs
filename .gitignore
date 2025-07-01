@@ -386,3 +386,6 @@ exportImportCatalogi.zip
 **/.idea/**
 
 *.orig
+
+#exclude generated SSL certificates
+oneground-certificates/
