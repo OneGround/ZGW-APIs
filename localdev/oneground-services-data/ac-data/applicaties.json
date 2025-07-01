@@ -1,0 +1,19 @@
+[    
+    {
+        "Id": "9E21EF7A-205D-4397-B343-47DB1B33855A",
+        "Label": "OneGround DEV",
+        "HeeftAlleAutorisaties": true,
+        "CreationTime": "2025-01-01T08:00:00Z",
+        "CreatedBy": "data-seed",
+        "Owner": "111111111",
+        "ClientIds": [
+            {
+                "Id": "14AB4026-061C-4ED1-A9B1-969A97B4ADA5",
+                "ApplicatieId": "9E21EF7A-205D-4397-B343-47DB1B33855A",
+                "ClientId": "OneGround-dev-111111111",
+                "CreationTime": "2025-01-01T08:00:00Z",
+                "CreatedBy": "data-seed"
+            }
+        ]
+    }
+]

@@ -1,0 +1,57 @@
+[
+	{
+		"Id": "698C296D-53FF-4964-94C6-89FEBF13F308",
+		"Omschrijving": "Zaak gestart",
+		"StatusTekst": "Zaak gestart",
+		"ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
+		"VolgNummer": 1,
+		"Informeren": false,
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	},
+	{
+		"Id": "3D543E31-BD06-41E3-B3EB-D5A6E6619FBC",
+		"Omschrijving": "Intake afgerond",
+		"StatusTekst": "Intake afgerond",
+		"ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
+		"VolgNummer": 2,
+		"Informeren": true,
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	},
+	{
+		"Id": "09E310E8-43E4-4E1B-9AD1-0008346CB20E",
+		"Omschrijving": "Getoetst op behandelbaarheid",
+		"StatusTekst": "Getoetst op behandelbaarheid",
+		"ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
+		"VolgNummer": 3,
+		"Informeren": true,
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	},
+	{
+		"Id": "40038A38-68CB-4731-AF12-D06EB0DB49BD",
+		"Omschrijving": "Beoordeling uitgevoerd",
+		"StatusTekst": "Beoordeling uitgevoerd",
+		"ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
+		"VolgNummer": 4,
+		"Informeren": false,
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	},
+	{
+		"Id": "AC3E5A67-2F77-4F7C-8AEC-83B98959EC05",
+		"Omschrijving": "Adviesrapport vastgesteld",
+		"StatusTekst": "Adviesrapport vastgesteld",
+		"ZaakTypeId": "7A43C2F7-9DF0-4E53-AA89-DF691D6CD3DE",
+		"VolgNummer": 5,
+		"Informeren": false,
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	}
+]

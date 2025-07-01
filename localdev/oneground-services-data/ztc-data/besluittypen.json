@@ -1,0 +1,12 @@
+[
+	{
+		"Id": "80F6DEC2-84EE-4E23-BBAA-7442CEF2A5A8",
+		"Omschrijving": "Dit is een test besluittypen",
+		"OmschrijvingGeneriek": "Dit is een omschrijving generiek",
+		"CatalogusId": "7B9341CE-DBC3-460D-AE4B-D1CEE6B6604C",
+		"CreationTime": "2025-01-01T00:01:00Z",
+		"BeginGeldigheid": "2021-01-01",
+		"CreatedBy": "data-seed",
+		"Owner": "111111111"
+	}
+]
