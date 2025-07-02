@@ -38,15 +38,10 @@ public class ServiceConfiguration
             throw new InvalidOperationException("No valid UserConnectionString specified in appSettings.json section: ConnectionStrings.");
 
         services.AddZGWDbContext<NrcDbContext>(_configuration);
-
-        services.AddScoped<IServerCertificateValidator, ByPassServerCertificateValidator>();
-
         services.AddBatchId();
         services.AddOrganisationContext();
         services.AddCorrelationId();
-
         services.AddServiceEndpoints(_configuration);
-
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
 
