@@ -111,8 +111,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"
-      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
+      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -133,8 +132,7 @@ services:
       - ${BRC_PORT}:5000
     env_file: "default.env"
     environment:
-      ASPNETCORE_URLS: "http://*:5000"
-      Application__FixturesSource": "localdev/oneground-services-data/brc-data/besluiten.json"
+      ASPNETCORE_URLS: "http://*:5000"      
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -155,17 +153,7 @@ services:
       - ${ZTC_PORT}:5000
     env_file: "default.env"
     environment:
-      ASPNETCORE_URLS: "http://*:5000"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
-      SeedData__Catalogussen": "localdev/oneground-services-data/ztc-data/catalogussen.json"
-      SeedData__Zaaktypen": "localdev/oneground-services-data/ztc-data/zaaktypen.json"
-      SeedData__Statustypen": "localdev/oneground-services-data/ztc-data/statustypen.json"
-      SeedData__BesluitTypen": "localdev/oneground-services-data/ztc-data/besluittypen.json"
-      SeedData__InformatieObjectTypen": "localdev/oneground-services-data/ztc-data/informatieobjecttypen.json"
-      SeedData__RolTypen": "localdev/oneground-services-data/ztc-data/roltypen.json"
-      SeedData__ZaakTypeInformatieObjectTypen": "localdev/oneground-services-data/ztc-data/zaaktypeinformatieobjecttypen.json"
-      SeedData__Resultaattypen": "localdev/oneground-services-data/ztc-data/resultaattypen.json"
-      SeedData__ReferentieProcessen": "localdev/oneground-services-data/ztc-data/referentieprocessen.json" 
+      ASPNETCORE_URLS: "http://*:5000"     
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -280,8 +268,7 @@ services:
       - ${ZRC_PORT}:5000
     env_file: "default.env"
     environment:
-      ASPNETCORE_URLS: "http://*:5000"
-      Application__FixturesSource": "localdev/oneground-services-data/zrc-data/zaken.json"
+      ASPNETCORE_URLS: "http://*:5000"      
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
