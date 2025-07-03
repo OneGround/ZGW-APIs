@@ -12,12 +12,14 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_enkelvoudiginformatieobjectversies_enkelvoudiginformatieobj~",
-                table: "enkelvoudiginformatieobjectversies");
+                table: "enkelvoudiginformatieobjectversies"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_enkelvoudiginformatieobjectversies_enkelvoudiginformatieobj~",
                 table: "enkelvoudiginformatieobjectversies",
-                column: "enkelvoudiginformatieobject_id");
+                column: "enkelvoudiginformatieobject_id"
+            );
         }
 
         /// <inheritdoc />
@@ -25,13 +27,15 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_enkelvoudiginformatieobjectversies_enkelvoudiginformatieobj~",
-                table: "enkelvoudiginformatieobjectversies");
+                table: "enkelvoudiginformatieobjectversies"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_enkelvoudiginformatieobjectversies_enkelvoudiginformatieobj~",
                 table: "enkelvoudiginformatieobjectversies",
                 column: "enkelvoudiginformatieobject_id",
-                unique: true);
+                unique: true
+            );
         }
     }
 }
