@@ -78,7 +78,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             .IncludeProperties(e => e.Bestandsomvang)
             .HasFilter($"{nameof(EnkelvoudigInformatieObjectVersie.Bestandsomvang)} IS NOT NULL");
 
-        modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(b => b.EnkelvoudigInformatieObjectId).IsUnique();
+        modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(b => b.EnkelvoudigInformatieObjectId);
 
         // Note: We sould have versie DESC in the index but it is not possible in EF right now
         modelBuilder
