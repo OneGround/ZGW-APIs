@@ -54,15 +54,6 @@ public class ServiceConfiguration
         // Define the HTTP pipeline
         services
             .AddHttpClient<INotificationSender, NotificationSender>()
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var handler = new HttpClientHandler();
-
-                var serverCertificateValidator = sp.GetService<IServerCertificateValidator>();
-                handler.ServerCertificateCustomValidationCallback = serverCertificateValidator.ValidateCertificate;
-
-                return handler;
-            })
             .AddResilienceHandler(
                 "resilience-pipeline-notificaties",
                 (builder, context) =>
