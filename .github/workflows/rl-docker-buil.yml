@@ -1,0 +1,23 @@
+name: Create and publish Referentielijsten Docker image
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'src/OneGround.ZGW.Common/**'
+            - 'src/OneGround.ZGW.Common.*/**'
+            - 'src/OneGround.ZGW.DataAccess/**'
+            - 'src/OneGround.ZGW.Referentielijsten.*/**'
+    workflow_dispatch:
+
+jobs:
+    run_reusable_workflow:
+        uses: ./.github/workflows/docker-build-and-push.yml
+        with:
+            version: 1.0.${{ github.run_number }}
+            service_name: 'referentielijsten'
+            docker_file: './src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile'
+            context: '.'
+        secrets:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
