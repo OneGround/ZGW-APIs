@@ -25,11 +25,14 @@ public class ZaakAuthorizationTempTableService : IZaakAuthorizationTempTableServ
     {
         await CreateTempTableAsync(zrcDbContext, cancellationToken);
 
-        var informatieObjectTypeAuthorizations = authorizationContext.Authorization.Authorizations.Select(a => new TempZaakAuthorization
-        {
-            MaximumVertrouwelijkheidAanduiding = a.MaximumVertrouwelijkheidAanduiding.Value,
-            ZaakType = a.ZaakType,
-        });
+        var informatieObjectTypeAuthorizations = authorizationContext
+            .Authorization.Authorizations.Where(permission => permission.ZaakType != null && permission.MaximumVertrouwelijkheidAanduiding.HasValue)
+            .GroupBy(permission => permission.ZaakType)
+            .Select(g => new TempZaakAuthorization
+            {
+                MaximumVertrouwelijkheidAanduiding = g.Max(a => a.MaximumVertrouwelijkheidAanduiding!.Value),
+                ZaakType = g.Key,
+            });
 
         await zrcDbContext.TempZaakAuthorization.AddRangeAsync(informatieObjectTypeAuthorizations, cancellationToken);
 
@@ -39,12 +42,12 @@ public class ZaakAuthorizationTempTableService : IZaakAuthorizationTempTableServ
     private async Task CreateTempTableAsync(ZrcDbContext zrcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
-            CREATE TEMPORARY TABLE "{nameof(TempZaakAuthorization)}" 
+            CREATE TEMPORARY TABLE "{nameof(TempZaakAuthorization)}"
             (
                "{nameof(TempZaakAuthorization.ZaakType)}" text NOT NULL,
                "{nameof(TempZaakAuthorization.MaximumVertrouwelijkheidAanduiding)}" integer NOT NULL,
                PRIMARY KEY ("{nameof(TempZaakAuthorization.ZaakType)}")
-            ) 
+            )
             """;
         await _temporaryTableProvider.CreateAsync(zrcDbContext, sql, cancellationToken);
     }
