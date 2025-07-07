@@ -10,6 +10,9 @@ on:
       - 'src/OneGround.ZGW.Common.*/**'
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Autorisaties.*/**'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
