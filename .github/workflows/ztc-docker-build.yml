@@ -18,6 +18,4 @@ jobs:
             version: 1.3.${{ github.run_number }}
             service_name: 'catalogi'
             docker_file: './src/OneGround.ZGW.Catalogi.WebApi/Dockerfile'
-            context: '.'
-        secrets:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            context: '.'     

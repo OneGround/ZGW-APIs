@@ -18,10 +18,7 @@ on:
       context:
         required: true
         type: string
-        description: 'Docker build context'
-    secrets:
-      GITHUB_TOKEN:
-        required: true
+        description: 'Docker build context'   
 
 env:
   REGISTRY: localhost:6500

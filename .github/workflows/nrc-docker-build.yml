@@ -18,6 +18,4 @@ jobs:
             version: 1.0.${{ github.run_number }}
             service_name: 'notificaties'
             docker_file: './src/OneGround.ZGW.Notificaties.WebApi/Dockerfile'
-            context: '.'
-        secrets:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            context: '.'        

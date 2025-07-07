@@ -18,6 +18,4 @@ jobs:
             version: 1.5.${{ github.run_number }}
             service_name: 'zaken'
             docker_file: './src/OneGround.ZGW.Zaken.WebApi/Dockerfile'
-            context: '.'
-        secrets:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            context: '.'        
