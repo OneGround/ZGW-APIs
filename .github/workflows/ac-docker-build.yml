@@ -20,4 +20,4 @@ jobs:
             docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
             context: '.'
         secrets:
-            GITHUB_TOKEN: 'token' #${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
