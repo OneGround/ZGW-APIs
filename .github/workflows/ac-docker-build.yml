@@ -3,8 +3,8 @@ name: Create and publish Autorisaties Docker image
 on:
     push:
         branches:
+            - FUND-1852
             - main
-            - tree/FUND-1852
         paths:
             - 'src/OneGround.ZGW.Common/**'
             - 'src/OneGround.ZGW.Common.*/**'
