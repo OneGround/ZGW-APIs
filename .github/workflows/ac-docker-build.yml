@@ -4,7 +4,7 @@ on:
     push:
         branches:
             - main
-            - FUND-1852
+            - tree/FUND-1852
         paths:
             - 'src/OneGround.ZGW.Common/**'
             - 'src/OneGround.ZGW.Common.*/**'
