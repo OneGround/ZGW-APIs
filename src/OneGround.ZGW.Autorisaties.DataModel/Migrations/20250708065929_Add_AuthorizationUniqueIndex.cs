@@ -10,8 +10,6 @@ namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterDatabase().Annotation("Npgsql:PostgresExtension:postgis", ",,");
-
             migrationBuilder.CreateIndex(
                 name: "IX_autorisaties_component_max_vertrouwelijkheidaanduiding_scop~",
                 table: "autorisaties",
@@ -34,8 +32,6 @@ namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(name: "IX_autorisaties_component_max_vertrouwelijkheidaanduiding_scop~", table: "autorisaties");
-
-            migrationBuilder.AlterDatabase().OldAnnotation("Npgsql:PostgresExtension:postgis", ",,");
         }
     }
 }
