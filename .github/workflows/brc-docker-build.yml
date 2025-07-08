@@ -12,10 +12,10 @@ on:
     workflow_dispatch:
 
 jobs:
-    run_reusable_workflow:
+    build-and-publish-besluiten-image:
         uses: ./.github/workflows/docker-build-and-push.yml
         with:
             version: 1.0.${{ github.run_number }}
             service_name: 'besluiten'
             docker_file: './src/OneGround.ZGW.Besluiten.WebApi/Dockerfile'
-            context: '.'        
+            context: '.'

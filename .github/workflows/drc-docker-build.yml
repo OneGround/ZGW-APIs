@@ -1,21 +1,21 @@
 name: Create and publish Documenten Docker image
 
 on:
-    push:
-        branches:
-            - main
-        paths:
-            - 'src/OneGround.ZGW.Common/**'
-            - 'src/OneGround.ZGW.Common.*/**'
-            - 'src/OneGround.ZGW.DataAccess/**'
-            - 'src/OneGround.ZGW.Documenten.*/**'
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.Common.*/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Documenten.*/**'
+  workflow_dispatch:
 
 jobs:
-    run_reusable_workflow:
-        uses: ./.github/workflows/docker-build-and-push.yml
-        with:
-            version: 1.5.${{ github.run_number }}
-            service_name: 'documenten'
-            docker_file: './src/OneGround.ZGW.Documenten.WebApi/Dockerfile'
-            context: '.'       
+  build-and-publish-documenten-image:
+    uses: ./.github/workflows/docker-build-and-push.yml
+    with:
+      version: 1.5.${{ github.run_number }}
+      service_name: 'documenten'
+      docker_file: './src/OneGround.ZGW.Documenten.WebApi/Dockerfile'
+      context: '.'
