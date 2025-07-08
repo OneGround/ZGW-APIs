@@ -20,7 +20,7 @@ jobs:
   build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'x-oneground-autorisaties-api'
+      service_name: 'x-test-oneground-autorisaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
