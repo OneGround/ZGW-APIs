@@ -12,10 +12,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-notificaties-image:
+  build-and-publish-notificaties-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      version: 1.0.${{ github.run_number }}
-      service_name: 'notificaties'
+      service_name: 'oneground-notificaties-api'
+      major_version: 1
+      minor_version: 0
       docker_file: './src/OneGround.ZGW.Notificaties.WebApi/Dockerfile'
+      context: '.'
+
+  build-and-publish-notificaties-listener-image:
+    needs: build-and-publish-notificaties-api-image
+    uses: ./.github/workflows/docker-build-and-push.yml
+    with:
+      service_name: 'oneground-notificaties-listener'
+      major_version: 1
+      minor_version: 0
+      docker_file: './src/OneGround.ZGW.Notificaties.Messaging.Listener/Dockerfile'
       context: '.'

@@ -17,10 +17,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-autorisaties-image:
+  build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      version: 1.0.${{ github.run_number }}
-      service_name: 'autorisaties'
+      service_name: 'oneground-autorisaties-api'
+      major_version: 1
+      minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
       context: '.'

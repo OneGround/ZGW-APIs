@@ -12,10 +12,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-referentielijsten-image:
+  build-and-publish-referentielijsten-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      version: 1.0.${{ github.run_number }}
-      service_name: 'referentielijsten'
+      service_name: 'oneground-referentielijsten-api'
+      major_version: 1
+      minor_version: 0
       docker_file: './src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile'
       context: '.'

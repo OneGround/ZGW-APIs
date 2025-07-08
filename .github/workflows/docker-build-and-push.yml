@@ -2,15 +2,17 @@ name: Create and publish a Docker image
 
 on:
   workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
-        description: 'Version of the OneGround service'
+    inputs:      
       service_name:
         required: true
         type: string
-        description: 'Name of the OneGround service'
+        description: 'Name of the OneGround service'      
+      major_version:
+        required: true
+        type: string
+      minor_version:
+        required: true
+        type: string
       docker_file:
         required: true
         type: string
@@ -21,8 +23,7 @@ on:
         description: 'Docker build context'   
 
 env:
-  REGISTRY: localhost:6500
-  IMAGE_NAME: oneground-${{ inputs.service_name }}-api
+  REGISTRY: localhost:6500  
 
 jobs:
   docker-build-push:
@@ -31,21 +32,48 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
+      - name: Install PowerShell
+        uses: PSModule/install-powershell@v1
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          Version: 7.5.0
+
+      - name: Get next application version
+        id: get_application_version
+        shell: pwsh
+        run: >-
+          ./.github/scripts/get-next-application-version.ps1
+          -ServiceName "${{ inputs.service_name }}"
+          -MajorVersion "${{ inputs.major_version }}"
+          -MinorVersion "${{ inputs.minor_version }}"
+
+      - name: Print application version
+        run: |
+          echo "Application version: ${{ steps.get_application_version.outputs.version }}"
+
+      # - name: Log in to Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ env.REGISTRY }}
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ inputs.context }}
-          file: ${{ inputs.docker_file }}
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: ${{ inputs.context }}
+      #     file: ${{ inputs.docker_file }}
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
+
+      # - name: Create Git tag
+      #   run: |
+      #     git config user.name "GitHub Actions"
+      #     git config user.email "github-actions@github.com"
+      #     git tag "${{ inputs.service_name }}/v${{ steps.get_application_version.outputs.version }}" -m "Release version ${{ steps.get_application_version.outputs.version }} for ${{ inputs.service_name }}"
+      #     git push origin "${{ inputs.service_name }}/v${{ steps.get_application_version.outputs.version }}"

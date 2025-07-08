@@ -12,10 +12,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-zaken-image:
+  build-and-publish-zaken-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      version: 1.5.${{ github.run_number }}
-      service_name: 'zaken'
+      service_name: 'oneground-zaken-api'
+      major_version: 1
+      minor_version: 5
       docker_file: './src/OneGround.ZGW.Zaken.WebApi/Dockerfile'
       context: '.'

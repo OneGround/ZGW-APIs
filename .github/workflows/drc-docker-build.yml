@@ -12,10 +12,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-documenten-image:
+  build-and-publish-documenten-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      version: 1.5.${{ github.run_number }}
-      service_name: 'documenten'
+      service_name: 'oneground-documenten-api'
+      major_version: 1
+      minor_version: 5
       docker_file: './src/OneGround.ZGW.Documenten.WebApi/Dockerfile'
+      context: '.'
+
+  build-and-publish-documenten-listener-image:
+    needs: build-and-publish-documenten-api-image
+    uses: ./.github/workflows/docker-build-and-push.yml
+    with:
+      service_name: 'oneground-documenten-listener'
+      major_version: 1
+      minor_version: 5
+      docker_file: './src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile'
       context: '.'
