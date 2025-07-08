@@ -63,13 +63,13 @@ jobs:
       #     username: ${{ github.actor }}
       #     password: ${{ secrets.GITHUB_TOKEN }}
           
-      # - name: Build and push Docker image
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: ${{ inputs.context }}
-      #     file: ${{ inputs.docker_file }}
-      #     push: true
-      #     tags: ${{ env.REGISTRY }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.docker_file }}
+          push: false
+          # tags: ${{ env.REGISTRY }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
 
       # - name: Create Git tag
       #   run: |
