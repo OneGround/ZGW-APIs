@@ -19,6 +19,9 @@ on:
 jobs:
   build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
+    permissions:
+      contents: write
+      packages: write
     with:
       service_name: 'x-test-oneground-autorisaties-api'
       major_version: 1
