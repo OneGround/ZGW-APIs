@@ -25,3 +25,10 @@ jobs:
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
       context: '.'
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-update.yml
+    with:
+      repository_name: 'x-test-oneground-autorisaties-api'
+      description: 'Updated description for the Docker Hub repository'
+      readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'

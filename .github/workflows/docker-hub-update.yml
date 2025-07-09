@@ -1,0 +1,35 @@
+name: Update Docker Hub Repository
+on:
+  workflow_call:
+    inputs:
+      repository_name:
+        required: true
+        type: string
+        description: 'Name of the Docker Hub repository'
+      description:
+        required: true
+        type: string
+        description: 'Description of the Docker Hub repository'
+      readme_filepath:
+        required: true
+        type: string
+        description: 'Path to the README file for the Docker Hub repository'
+
+env:
+  NAMESPACE: oneground
+
+jobs:
+  update-docker-hub-repository:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Update Docker Hub repository
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ env.NAMESPACE }}/${{ inputs.repository_name }}
+          short-description: ${{ inputs.description }}
+          readme-filepath: ${{ inputs.readme_filepath }}
