@@ -16,6 +16,9 @@ on:
         - main
   workflow_dispatch:
 
+env:
+  SERVICE_NAME: 'x-test-oneground-autorisaties-api'
+
 jobs:
   build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
@@ -23,32 +26,15 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'x-test-oneground-autorisaties-api'
+      service_name: ${{ env.SERVICE_NAME }}
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
-      context: '.'
+      context: '.' 
  
-  check_for_readme_changes:
-    runs-on: ubuntu-latest
-    outputs:
-      readme_changed: ${{ steps.changed-files.outputs.any_changed }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check for changes in README
-        id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            src/OneGround.ZGW.Autorisaties.WebApi/README.md
-
-  update-docker-hub-repository:
-    needs: check_for_readme_changes
-    if: needs.check_for_readme_changes.outputs.readme_changed == 'true'
+  update-docker-hub-repository:   
     uses: ./.github/workflows/docker-hub-update.yml
     with:
-      repository_name: 'x-test-oneground-autorisaties-api'
-      description: 'Updated description for the Docker Hub repository'
+      repository_name: ${{ env.SERVICE_NAME }}
+      description: 'OneGround Autorisaties API'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'

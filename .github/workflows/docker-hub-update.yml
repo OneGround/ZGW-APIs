@@ -24,8 +24,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for README Changes
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            ${{ inputs.readme_filepath }}
       
       - name: Update Docker Hub repository
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
