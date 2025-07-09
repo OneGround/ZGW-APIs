@@ -16,9 +16,6 @@ on:
         - main
   workflow_dispatch:
 
-env:
-  SERVICE_NAME: 'x-test-oneground-autorisaties-api'
-
 jobs:
   build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
@@ -26,7 +23,7 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: ${{ env.SERVICE_NAME }}
+      service_name: 'x-test-oneground-autorisaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
@@ -35,6 +32,6 @@ jobs:
   update-docker-hub-repository:   
     uses: ./.github/workflows/docker-hub-update.yml
     with:
-      repository_name: ${{ env.SERVICE_NAME }}
+      repository_name: 'x-test-oneground-autorisaties-api'
       description: 'OneGround Autorisaties API'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
