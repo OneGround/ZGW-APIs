@@ -10,7 +10,7 @@ param(
     [string]$MinorVersion
 )
 
-$tagPrefix = "$($ServiceName)/v$($MajorVersion).$($MinorVersion)."
+$tagPrefix = "$($ServiceName)@$($MajorVersion).$($MinorVersion)."
 
 $latestTag = git tag --list "$($tagPrefix)*" --sort=-v:refname | Select-Object -First 1
 
