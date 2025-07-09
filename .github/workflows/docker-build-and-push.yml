@@ -28,10 +28,7 @@ env:
 
 jobs:
   docker-build-push:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
+    runs-on: ubuntu-latest   
 
     steps:
       - name: Checkout repository
