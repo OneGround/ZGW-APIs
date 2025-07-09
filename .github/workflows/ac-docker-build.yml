@@ -29,9 +29,10 @@ jobs:
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
       context: '.' 
  
-  update-docker-hub-repository:   
-    uses: ./.github/workflows/docker-hub-update.yml
-    with:
-      repository_name: 'x-test-oneground-autorisaties-api'
-      description: 'OneGround Autorisaties API'
-      readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
+  # Temporarary disabled until we have a working Docker Hub repository
+  # update-docker-hub-repository:   
+  #   uses: ./.github/workflows/docker-hub-update.yml
+  #   with:
+  #     repository_name: 'x-test-oneground-autorisaties-api'
+  #     description: 'OneGround Autorisaties API'
+  #     readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
