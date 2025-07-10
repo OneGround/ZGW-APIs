@@ -15,7 +15,7 @@ jobs:
   build-and-publish-notificaties-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'oneground-notificaties-api'
+      service_name: 'notificaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Notificaties.WebApi/Dockerfile'
@@ -25,7 +25,7 @@ jobs:
     needs: build-and-publish-notificaties-api-image
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'oneground-notificaties-listener'
+      service_name: 'notificaties-listener'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Notificaties.Messaging.Listener/Dockerfile'

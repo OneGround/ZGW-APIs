@@ -15,7 +15,7 @@ jobs:
   build-and-publish-catalogi-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'oneground-catalogi-api'
+      service_name: 'catalogi-api'
       major_version: 1
       minor_version: 3
       docker_file: './src/OneGround.ZGW.Catalogi.WebApi/Dockerfile'

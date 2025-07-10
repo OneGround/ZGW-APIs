@@ -15,7 +15,7 @@ jobs:
   build-and-publish-zaken-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'oneground-zaken-api'
+      service_name: 'zaken-api'
       major_version: 1
       minor_version: 5
       docker_file: './src/OneGround.ZGW.Zaken.WebApi/Dockerfile'

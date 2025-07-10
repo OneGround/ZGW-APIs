@@ -15,7 +15,7 @@ jobs:
   build-and-publish-referentielijsten-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
-      service_name: 'oneground-referentielijsten-api'
+      service_name: 'referentielijsten-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile'

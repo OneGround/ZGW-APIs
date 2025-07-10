@@ -15,7 +15,7 @@ jobs:
     build-and-publish-besluiten-api-image:
         uses: ./.github/workflows/docker-build-and-push.yml
         with:            
-            service_name: 'oneground-besluiten-api'
+            service_name: 'besluiten-api'
             major_version: 1
             minor_version: 0
             docker_file: './src/OneGround.ZGW.Besluiten.WebApi/Dockerfile'

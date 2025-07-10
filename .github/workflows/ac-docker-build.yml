@@ -10,20 +10,20 @@ on:
       - 'src/OneGround.ZGW.Common.*/**'
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Autorisaties.*/**'
-  pull_request:
-    branches:
-        - FUND-1852
-        - main
+  # pull_request:
+  #   branches:
+  #       - FUND-1852
+  #       - main
   workflow_dispatch:
 
 jobs:
   build-and-publish-autorisaties-api-image:   
     uses: ./.github/workflows/docker-build-and-push.yml
     permissions:
-      contents: write
+      contents: read
       packages: write
     with:
-      service_name: 'x-test-oneground-autorisaties-api'
+      service_name: 'x-test-autorisaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
