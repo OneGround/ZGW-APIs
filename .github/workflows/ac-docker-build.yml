@@ -23,7 +23,7 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'x-test-autorisaties-api'
+      service_name: 'x-test-2-autorisaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
