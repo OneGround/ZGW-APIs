@@ -86,9 +86,7 @@ public class DomainToResponseProfile : Profile
                 opt =>
                 {
                     opt.PreCondition(src => src.ZaakTypeDeelZaakTypen != null);
-                    opt.MapFrom(src =>
-                        src.ZaakTypeDeelZaakTypen.Where(z => z.DeelZaakType != null).Select(s => s.DeelZaakTypeIdentificatie).Distinct()
-                    );
+                    opt.MapFrom(src => src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct());
                 }
             )
             .ForMember(
@@ -96,7 +94,7 @@ public class DomainToResponseProfile : Profile
                 opt =>
                 {
                     opt.PreCondition(src => src.ZaakTypeBesluitTypen != null);
-                    opt.MapFrom(src => src.ZaakTypeBesluitTypen.Where(z => z.BesluitType != null).Select(s => s.BesluitTypeOmschrijving).Distinct());
+                    opt.MapFrom(src => src.ZaakTypeBesluitTypen.Select(s => s.BesluitTypeOmschrijving).Distinct());
                 }
             )
             .AfterMap<MapMergedGerelateerdeZaakTypen>();
@@ -434,7 +432,7 @@ class MapMergedGerelateerdeZaakTypen : IMappingAction<ZaakType, ZaakTypeRequestD
     {
         var gerelateerdeZaakTypen = new List<Catalogi.Contracts.v1.GerelateerdeZaaktypeDto>();
 
-        foreach (var gerelateerdeZaakType in src.ZaakTypeGerelateerdeZaakTypen.Where(z => z.GerelateerdeZaakType != null))
+        foreach (var gerelateerdeZaakType in src.ZaakTypeGerelateerdeZaakTypen)
         {
             var item = new Catalogi.Contracts.v1.GerelateerdeZaaktypeDto
             {
