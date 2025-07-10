@@ -70,6 +70,10 @@ jobs:
           file: ${{ inputs.docker_file }}
           push: true
           tags: ${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
+          labels: |
+            org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs"
+            org.opencontainers.image.description="ZGW Autorisaties Web API for OneGround, providing authorization services as part of the ZGW APIs suite."
+            org.opencontainers.image.licenses="BSD-3-Clause"
 
       - name: Create Git tag
         run: |
