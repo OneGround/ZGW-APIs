@@ -357,11 +357,7 @@ public class DomainToResponseProfile : Profile
                 opt =>
                 {
                     opt.PreCondition(src => src.BesluitTypeInformatieObjectTypen != null);
-                    opt.MapFrom(src =>
-                        src.BesluitTypeInformatieObjectTypen.Where(z => z.InformatieObjectType != null)
-                            .Select(s => s.InformatieObjectTypeOmschrijving)
-                            .Distinct()
-                    );
+                    opt.MapFrom(src => src.BesluitTypeInformatieObjectTypen.Select(s => s.InformatieObjectTypeOmschrijving).Distinct());
                 }
             )
             .ForMember(dest => dest.Catalogus, opt => opt.MapFrom<MemberUrlResolver, Catalogus>(src => src.Catalogus));
