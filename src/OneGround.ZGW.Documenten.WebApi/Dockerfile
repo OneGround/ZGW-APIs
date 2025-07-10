@@ -13,6 +13,10 @@ RUN dotnet publish src/OneGround.ZGW.Documenten.WebApi/ZGW.Documenten.WebApi.csp
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
+LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
+      org.opencontainers.image.description="ZGW Documenten Web API for OneGround, providing document services as part of the ZGW APIs suite." \
+      org.opencontainers.image.licenses="BSD-3-Clause"
+
 WORKDIR /app
 
 COPY --from=build /app/publish .

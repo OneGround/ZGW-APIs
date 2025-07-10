@@ -13,6 +13,10 @@ RUN dotnet publish src/OneGround.ZGW.Notificaties.WebApi/ZGW.Notificaties.WebApi
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
+LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
+      org.opencontainers.image.description="ZGW Notificaties Web API for OneGround, providing notification services as part of the ZGW APIs suite." \
+      org.opencontainers.image.licenses="BSD-3-Clause"
+
 WORKDIR /app
 
 COPY --from=build /app/publish .
