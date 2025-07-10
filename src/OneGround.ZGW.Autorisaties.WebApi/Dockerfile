@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
 
-LABEL org.opencontainers.image.source=https://github.com/OneGround/ZGW-APIs
-&& org.opencontainers.image.description="ZGW Autorisaties Web API for OneGround, providing authorization services as part of the ZGW APIs suite."
-&& org.opencontainers.image.licenses=BSD-3-Clause
+LABEL org.opencontainers.image.source=https://github.com/OneGround/ZGW-APIs \
+      org.opencontainers.image.description="ZGW Autorisaties Web API for OneGround, providing authorization services as part of the ZGW APIs suite." \
+      org.opencontainers.image.licenses=BSD-3-Clause
 
 ARG Version=1.0.0
 
