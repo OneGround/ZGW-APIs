@@ -3,17 +3,17 @@ name: Create and publish Autorisaties Docker image
 on:
   push:
     branches:
-      - FUND-1852
+      # - FUND-1852
       - main
     paths:
       - 'src/OneGround.ZGW.Common/**'
       - 'src/OneGround.ZGW.Common.*/**'
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Autorisaties.*/**'
-  # pull_request:
-  #   branches:
-  #       - FUND-1852
-  #       - main
+  pull_request:
+    branches:
+        - FUND-1852
+        - main
   workflow_dispatch:
 
 jobs:
