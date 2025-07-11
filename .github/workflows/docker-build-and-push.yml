@@ -70,7 +70,6 @@ jobs:
           file: ${{ inputs.docker_file }}
           push: true
           provenance: false
-          sbom: false
           tags: ${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}          
 
       - name: Create Git tag
