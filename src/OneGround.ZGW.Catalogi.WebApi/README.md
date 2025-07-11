@@ -1,28 +1,32 @@
-# OneGround Autorisaties API
+# OneGround Catalogi API
 
 ## Featured Tags
 
-- ```docker pull ghcr.io/oneground/autorisaties-api:<version>```
+- ```docker pull ghcr.io/oneground/catalogi-api:<version>```
 
 ## About
 
-This repository contains the official container images for the OneGround Autorisaties API. You can use Docker to run a standalone Linux container with the OneGround Autorisaties API.
+This repository contains the official container images for the OneGround Catalogi API. You can use Docker to run a standalone Linux container with the OneGround Catalogi API.
 
-## What is OneGround Autorisaties API?
+## What is OneGround Catalogi API?
 
-The OneGround Autorisaties API provides a standardized interface for managing authorizations within the ZGW ecosystem. It enables applications to securely manage and verify user permissions for various ZGW components, supporting integration with other municipal systems.
+The OneGround Catalogi API provides a standardized interface for managing case type catalogs, case types, and all related types within the ZGW ecosystem.
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
+
+## Dependencies
+
+The OneGround Catalogi API depends on the OneGround Autorisaties API.
 
 ## How to Use This Image
 
 ```bash
-docker run -it -p 8080:80 ghcr.io/oneground/autorisaties-api:<version>
+docker run -it -p 8080:80 ghcr.io/oneground/catalogi-api:<version>
 ```
 
 ## Full Tag Listing
 
-You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
+You can retrieve a list of all available tags for OneGround Catalogi API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
 
 ## Support
 

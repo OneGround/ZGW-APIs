@@ -1,28 +1,32 @@
-# OneGround Autorisaties API
+# OneGround Zaken API
 
 ## Featured Tags
 
-- ```docker pull ghcr.io/oneground/autorisaties-api:<version>```
+- ```docker pull ghcr.io/oneground/zaken-api:<version>```
 
 ## About
 
-This repository contains the official container images for the OneGround Autorisaties API. You can use Docker to run a standalone Linux container with the OneGround Autorisaties API.
+This repository contains the official container images for the OneGround Zaken API. You can use Docker to run a standalone Linux container with the OneGround Zaken API.
 
-## What is OneGround Autorisaties API?
+## What is OneGround Zaken API?
 
-The OneGround Autorisaties API provides a standardized interface for managing authorizations within the ZGW ecosystem. It enables applications to securely manage and verify user permissions for various ZGW components, supporting integration with other municipal systems.
+The OneGround Zaken API provides a standardized interface for case registration, including relationships with information objects, decisions, and contacts.
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
+
+## Dependencies
+
+The OneGround Zaken API depends on the OneGround Autorisaties API.
 
 ## How to Use This Image
 
 ```bash
-docker run -it -p 8080:80 ghcr.io/oneground/autorisaties-api:<version>
+docker run -it -p 8080:80 ghcr.io/oneground/zaken-api:<version>
 ```
 
 ## Full Tag Listing
 
-You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
+You can retrieve a list of all available tags for OneGround Zaken API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
 
 ## Support
 
