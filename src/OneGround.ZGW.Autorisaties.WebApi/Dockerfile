@@ -13,9 +13,9 @@ RUN dotnet publish src/OneGround.ZGW.Autorisaties.WebApi/ZGW.Autorisaties.WebApi
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
-# LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs"
-# LABEL org.opencontainers.image.description="ZGW Autorisaties Web API for OneGround, providing authorization services as part of the ZGW APIs suite."
-# LABEL org.opencontainers.image.licenses="BSD-3-Clause"
+LABEL org.opencontainers.image.source=https://github.com/OneGround/ZGW-APIs
+LABEL org.opencontainers.image.description="ZGW Autorisaties Web API for OneGround, providing authorization services as part of the ZGW APIs suite."
+LABEL org.opencontainers.image.licenses=BSD-3-Clause
 
 WORKDIR /app
 
