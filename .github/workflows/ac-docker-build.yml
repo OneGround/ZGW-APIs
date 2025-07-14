@@ -35,3 +35,6 @@ jobs:
       repository_name: 'x-test-oneground-autorisaties-api'
       description: 'OneGround Autorisaties API'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}      
