@@ -34,7 +34,7 @@ jobs:
   update-docker-hub-repository:   
     uses: ./.github/workflows/docker-hub-update.yml
     with:
-      repository_name: 'zaken-api'
+      repository_name: 'x-test-3-autorisaties-api'
       description: 'OneGround implementation of ZGW Zaken API (from Netherlands VNG standard)'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
     secrets:
