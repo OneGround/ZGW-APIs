@@ -32,7 +32,7 @@ jobs:
   update-docker-hub-repository:   
     uses: ./.github/workflows/docker-hub-update.yml
     with:
-      repository_name: 'x-test-oneground-autorisaties-api'
+      repository_name: 'zaken-api'
       description: 'OneGround Autorisaties API'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
     secrets:
