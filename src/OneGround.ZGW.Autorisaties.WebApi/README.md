@@ -40,4 +40,4 @@ To provide feedback on this project visit our [GitHub repository](https://github
 
 ## License
 
-This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for more details.
+This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for more details. ASD

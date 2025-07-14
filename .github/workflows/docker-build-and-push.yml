@@ -83,7 +83,6 @@ jobs:
           provenance: false
           tags: |
             ${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
-            ${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}
 
       - name: Create Git tag
         run: |
