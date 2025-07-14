@@ -27,6 +27,7 @@ jobs:
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
       context: '.' 
+      publish_to_docker_hub: true
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
