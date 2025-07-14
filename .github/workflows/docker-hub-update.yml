@@ -14,6 +14,13 @@ on:
         required: true
         type: string
         description: 'Path to the README file for the Docker Hub repository'
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_PASSWORD:
+        required: true
+      DOCKERHUB_USER:
+        required: true
 
 env:
   NAMESPACE: oneground
