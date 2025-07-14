@@ -4,11 +4,12 @@ namespace OneGround.ZGW.Common.Configuration;
 
 public class ZgwServiceAccountConfiguration
 {
-    public Dictionary<string, ZgwServiceAccountCredential> ZgwServiceAccountCredentials { get; set; }
+    public required List<ZgwServiceAccountCredential> Credentials { get; set; }
 }
 
 public class ZgwServiceAccountCredential
 {
-    public string ClientId { get; set; }
-    public string ClientSecret { get; set; }
+    public required string Rsin { get; set; }
+    public required string ClientId { get; set; }
+    public required string ClientSecret { get; set; }
 }
