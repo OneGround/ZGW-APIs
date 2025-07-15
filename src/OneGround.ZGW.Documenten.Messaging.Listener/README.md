@@ -29,7 +29,7 @@ The OneGround Documenten Listener depends on:
 ## How to use this image
 
 ```bash
-docker run -it -p 8080:80 ghcr.io/oneground/documenten-listner:<version>
+docker run -it -p 8080:80 ghcr.io/oneground/documenten-listener:<version>
 ```
 
 ## Support
