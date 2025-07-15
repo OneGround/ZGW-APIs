@@ -32,14 +32,14 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             .Custom(
                 (a, c) =>
                 {
-                    ValidateComponent(a, c);
+                    ValidateAccessLevel(a, c);
                     ValidateScopesDefined(a, c);
                     ValidateOnUniqueComponentsAndScopes(a, c);
                 }
             );
     }
 
-    private static void ValidateComponent(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
+    private static void ValidateAccessLevel(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
     {
         if (autorisaties == null)
         {
@@ -48,11 +48,13 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 
         foreach (var authorization in autorisaties)
         {
-            var isZrcOrDrc = authorization.Component == Component.zrc.ToString() || authorization.Component == Component.drc.ToString();
+            var isZrcOrDrc =
+                authorization.Component.Equals(Component.zrc.ToString(), StringComparison.OrdinalIgnoreCase)
+                || authorization.Component.Equals(Component.drc.ToString(), StringComparison.OrdinalIgnoreCase);
 
             var accessLevelValid =
                 !string.IsNullOrEmpty(authorization.MaxVertrouwelijkheidaanduiding)
-                || Enum.TryParse<VertrouwelijkheidAanduiding>(authorization.MaxVertrouwelijkheidaanduiding, out _);
+                && Enum.TryParse<VertrouwelijkheidAanduiding>(authorization.MaxVertrouwelijkheidaanduiding, out _);
 
             if (isZrcOrDrc && !accessLevelValid)
             {
@@ -80,9 +82,14 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 
     private static void ValidateScopesDefined(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
     {
-        var autorisatiesWithScopes = autorisaties.Where(a => a.Scopes == null || !a.Scopes.Any());
+        if (autorisaties == null)
+        {
+            return;
+        }
 
-        foreach (var autorisatiesWithWithScope in autorisatiesWithScopes)
+        var autorisatiesWithoutScopes = autorisaties.Where(a => a.Scopes == null || !a.Scopes.Any());
+
+        foreach (var autorisatiesWithWithScope in autorisatiesWithoutScopes)
         {
             validatorCtx.AddFailure(
                 new FluentValidation.Results.ValidationFailure(
@@ -106,7 +113,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             return;
         }
 
-        var groupedByComponent = autorisaties.GroupBy(a => a.Component);
+        var groupedByComponent = autorisaties.Where(a => a.Scopes != null).GroupBy(a => a.Component);
 
         var moreThanOneComponent = groupedByComponent.Where(group => group.Count() > 1).Select(g => g.Key);
 

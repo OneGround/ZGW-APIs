@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.Migrations;
@@ -15,6 +19,32 @@ public class AcDbContext : BaseDbContext, IDataMigrationsDbContext
     public DbSet<ApplicatieClient> ApplicatieClients { get; set; }
     public DbSet<Autorisatie> Autorisaties { get; set; }
     public DbSet<FutureAutorisatie> FutureAutorisaties { get; set; }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        SortScopes();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void SortScopes()
+    {
+        foreach (var entry in ChangeTracker.Entries<Autorisatie>())
+        {
+            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+            {
+                if (entry.Entity.Scopes != null)
+                    entry.Entity.Scopes = entry.Entity.Scopes.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+            }
+        }
+        foreach (var entry in ChangeTracker.Entries<FutureAutorisatie>())
+        {
+            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+            {
+                if (entry.Entity.Scopes != null)
+                    entry.Entity.Scopes = entry.Entity.Scopes.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+            }
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
