@@ -111,8 +111,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:5000"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"
-      Auth__ZgwLegacyAuthProviderUrl: "http://localhost:7173"
+      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:

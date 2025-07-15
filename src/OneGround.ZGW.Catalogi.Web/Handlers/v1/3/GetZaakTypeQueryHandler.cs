@@ -32,7 +32,11 @@ class GetZaakTypeQueryHandler : CatalogiBaseHandler<GetZaakTypeQueryHandler>, IR
     {
         _logger.LogDebug("Get ZaakType {Id}....", request.Id);
 
-        var zaakType = await _zaakTypeDataService.GetAsync(request.Id, cancellationToken: cancellationToken);
+        var zaakType = await _zaakTypeDataService.GetAsync(
+            request.Id,
+            includeSoftRelations: request.IncludeSoftRelations,
+            cancellationToken: cancellationToken
+        );
         if (zaakType == null)
         {
             return new QueryResult<ZaakType>(null, QueryStatus.NotFound);
@@ -45,4 +49,5 @@ class GetZaakTypeQueryHandler : CatalogiBaseHandler<GetZaakTypeQueryHandler>, IR
 class GetZaakTypeQuery : IRequest<QueryResult<ZaakType>>
 {
     public Guid Id { get; set; }
+    public bool IncludeSoftRelations { get; set; } = true;
 }
