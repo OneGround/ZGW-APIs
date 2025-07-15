@@ -1,4 +1,4 @@
-name: KeycloakSetup Docker Build
+name: KeycloakSetup CI
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   docker-build:
-    name: Build KeycloakSetup Docker Image
+    name: Build Docker Image
     runs-on: ubuntu-latest
 
     steps:
