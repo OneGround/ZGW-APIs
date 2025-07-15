@@ -3,7 +3,7 @@
 ## Featured Tags
 
  ```bash
- docker pull ghcr.io/oneground/autorisbesluitenaties-api:<version>
+ docker pull ghcr.io/oneground/besluiten-api:<version>
  ```
 
 You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
