@@ -1,4 +1,4 @@
-name: Create and publish Zaken Docker image
+name: Zaken-Api CI
 
 on:
   push:

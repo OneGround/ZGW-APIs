@@ -1,4 +1,4 @@
-name: Create and publish Besluiten Docker image
+name: Besluiten-Api CI
 
 on:
   push:

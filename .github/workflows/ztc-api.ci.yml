@@ -1,4 +1,4 @@
-name: Create and publish Catalogi Docker image
+name: Catalogi-Api CI
 
 on:
   push:

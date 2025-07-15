@@ -1,4 +1,4 @@
-name: Create and publish Notificaties Listener Docker image
+name: Notificaties-Listener CI
 
 on:
   push:

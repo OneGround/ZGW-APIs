@@ -1,4 +1,4 @@
-name: Create and publish Documenten Docker image
+name: Documenten-Api CI
 
 on:
   push:

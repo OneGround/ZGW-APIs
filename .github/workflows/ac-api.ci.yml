@@ -1,4 +1,4 @@
-name: Create and publish Autorisaties Docker image
+name: Autorisaties-Api CI
 
 on:
   push:

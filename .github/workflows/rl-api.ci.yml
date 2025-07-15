@@ -1,4 +1,4 @@
-name: Create and publish Referentielijsten Docker image
+name: Referentielijsten-Api CI
 
 on:
   push:

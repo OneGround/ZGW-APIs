@@ -1,4 +1,4 @@
-name: Create and publish Notificaties Docker image
+name: Notificaties-Api CI
 
 on:
   push:

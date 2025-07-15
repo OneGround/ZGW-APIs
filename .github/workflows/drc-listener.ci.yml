@@ -1,4 +1,4 @@
-name: Create and publish Documenten Listener Docker image
+name: Documenten-Listener CI
 
 on:
   push:
