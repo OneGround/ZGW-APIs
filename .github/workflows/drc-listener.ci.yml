@@ -22,7 +22,7 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'documenten-api'
+      service_name: 'documenten-listener'
       major_version: 1
       minor_version: 5
       docker_file: './src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile'
