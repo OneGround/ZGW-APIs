@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/documenten-listener:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Documenten Listener in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
+You can retrieve a list of all available tags for OneGround Documenten Listener in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
 
 ## About
 
@@ -36,7 +36,7 @@ docker run -it -p 8080:80 ghcr.io/oneground/documenten-listner:<version>
 
 View issues related to this image in our [GitHub issues](https://github.com/OneGround/ZGW-APIs/issues).
 
-If you encounter any bugs or security issues with the project, please file an issue in our [GitHub repo](https://github.com/OneGround/ZGW-APIs/issues/new/choose)
+If you encounter any bugs or security issues with the project, please file an issue in our [GitHub repo](https://github.com/OneGround/ZGW-APIs/issues/new/choose).
 
 ## Feedback
 

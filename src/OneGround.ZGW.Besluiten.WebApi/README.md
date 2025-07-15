@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/besluiten-api:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
+You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
 
 ## About
 
@@ -47,7 +47,7 @@ For a real-world setup, you will need to provide environment variables for conne
 
 View issues related to this image in our [GitHub issues](https://github.com/OneGround/ZGW-APIs/issues).
 
-If you encounter any bugs or security issues with the tool, please file an issue in our [GitHub repo](https://github.com/OneGround/ZGW-APIs/issues/new/choose)
+If you encounter any bugs or security issues with the tool, please file an issue in our [GitHub repo](https://github.com/OneGround/ZGW-APIs/issues/new/choose).
 
 ## Feedback
 
