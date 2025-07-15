@@ -12,7 +12,7 @@ You can retrieve a list of all available tags for OneGround Documenten Listener 
 
 This is the official container image for the **OneGround Documenten Listener**. It's an open-source project that implements background listener.
 
-## What is OneGround Documenten Listner?
+## What is OneGround Documenten Listener?
 
 This OneGround implementation provides an automated mechanism that actively listens for and processes notifications about document-related events. Designed to work in conjunction with the core ZGW components, the Documenten Listener subscribes to the Notificaties API to receive real-time alerts whenever a document is created, updated, or otherwise modified within the Documenten API. This enables automated, event-driven workflows such as virus scanning, metadata extraction (OCR), or archiving, ensuring that essential background tasks are performed reliably and efficiently.
 
