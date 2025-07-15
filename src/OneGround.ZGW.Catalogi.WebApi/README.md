@@ -18,6 +18,10 @@ This OneGround implementation provides a standardized interface for managing and
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
 
+## ZGW API Versions Supported by OneGround
+
+You can find all supported versions in the [OneGround API Versions list](https://dev.oneground.nl/docs/api-versions).
+
 ## Dependencies
 
 The OneGround Zaken API depends on:

@@ -18,6 +18,10 @@ This OneGround implementation provides a standardized interface for registering 
 
 Adherence to VNG standards promotes interoperability and a unified approach to process management, creating a cohesive data landscape for government operations.
 
+## ZGW API Versions Supported by OneGround
+
+You can find all supported versions in the [OneGround API Versions list](https://dev.oneground.nl/docs/api-versions).
+
 ## Dependencies
 
 The OneGround Zaken API depends on:

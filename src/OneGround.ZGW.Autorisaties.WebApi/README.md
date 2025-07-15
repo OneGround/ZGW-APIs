@@ -20,6 +20,10 @@ Adherence to VNG standards promotes a secure and interoperable framework, creati
 
 For more details and implementation guidelines, visit the main [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
 
+## ZGW API Versions Supported by OneGround
+
+You can find all supported versions in the [OneGround API Versions list](https://dev.oneground.nl/docs/api-versions).
+
 ## How to use this image
 
 ```bash

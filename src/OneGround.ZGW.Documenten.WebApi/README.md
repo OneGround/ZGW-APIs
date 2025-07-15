@@ -20,6 +20,10 @@ Adherence to VNG standards promotes interoperability and a unified approach to d
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
 
+## ZGW API Versions Supported by OneGround
+
+You can find all supported versions in the [OneGround API Versions list](https://dev.oneground.nl/docs/api-versions).
+
 ## Dependencies
 
 The OneGround Besluiten API depends on:

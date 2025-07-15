@@ -20,6 +20,10 @@ By adhering to the VNG standard for notifications, the OneGround Notificaties AP
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
 
+## ZGW API Versions Supported by OneGround
+
+You can find all supported versions in the [OneGround API Versions list](https://dev.oneground.nl/docs/api-versions).
+
 ## Dependencies
 
 The OneGround Notificaties API depends on:
