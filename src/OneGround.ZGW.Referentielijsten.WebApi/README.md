@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/referentielijsten-api:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Documenten API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
+You can retrieve a list of all available tags for OneGround Referentielijsten API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
 
 ## About
 
