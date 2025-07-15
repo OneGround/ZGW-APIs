@@ -115,7 +115,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             validatorCtx.AddFailure(
                 new FluentValidation.Results.ValidationFailure(
                     "component",
-                    $"Component'(s) '{string.Join(", ", moreThanOneComponent)}' defined more than once."
+                    $"Component(s) '{string.Join(", ", moreThanOneComponent)}' defined more than once."
                 )
                 {
                     ErrorCode = ErrorCode.Unique,
@@ -125,14 +125,14 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 
         foreach (var componentGroup in groupedByComponent)
         {
-            var moreThenOneScope = componentGroup.SelectMany(a => a.Scopes).GroupBy(s => s).Where(s => s.Count() > 1).Select(s => s.Key);
+            var moreThanOneScope = componentGroup.SelectMany(a => a.Scopes).GroupBy(s => s).Where(s => s.Count() > 1).Select(s => s.Key);
 
-            if (moreThenOneScope.Any())
+            if (moreThanOneScope.Any())
             {
                 validatorCtx.AddFailure(
                     new FluentValidation.Results.ValidationFailure(
                         "scopes",
-                        $"Component '{componentGroup.Key}': Scope(s) '{string.Join(", ", moreThenOneScope)}' defined more than once."
+                        $"Component '{componentGroup.Key}': Scope(s) '{string.Join(", ", moreThanOneScope)}' defined more than once."
                     )
                     {
                         ErrorCode = ErrorCode.Unique,
