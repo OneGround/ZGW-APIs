@@ -9,6 +9,8 @@ public partial class Initial : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.AlterDatabase().Annotation("Npgsql:PostgresExtension:postgis", ",,");
+
         migrationBuilder.CreateTable(
             name: "abonnementen",
             columns: table => new

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using NodaTime;
-using OneGround.ZGW.Catalogi.DataModel;
 
 #nullable disable
 
@@ -12,6 +11,8 @@ public partial class Initial : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.AlterDatabase().Annotation("Npgsql:PostgresExtension:postgis", ",,");
+
         migrationBuilder.CreateTable(
             name: "audittrail",
             columns: table => new
