@@ -21,11 +21,6 @@ on:
         required: true
         type: string
         description: 'Docker build context'
-      # publish_to_docker_hub:
-      #   required: false
-      #   type: boolean
-      #   default: true
-      #   description: 'Flag to indicate whether to publish the image to Docker Hub'
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -60,7 +55,6 @@ jobs:
       #     password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
-        # if: inputs.publish_to_docker_hub == true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -80,15 +74,6 @@ jobs:
           -MajorVersion "${{ inputs.major_version }}"
           -MinorVersion "${{ inputs.minor_version }}"
 
-      # - name: Prepare Docker tags
-      #   id: docker_tags
-      #   run: |
-      #     TAGS="${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}"
-      #     if [ "${{ inputs.publish_to_docker_hub }}" = "true" ]; then
-      #       TAGS="$TAGS,${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}"
-      #     fi
-      #     echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -96,7 +81,6 @@ jobs:
           file: ${{ inputs.docker_file }}
           push: true
           provenance: false
-          # tags: ${{ steps.docker_tags.outputs.tags }}
           tags: ${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}"
 
       - name: Create Git tag

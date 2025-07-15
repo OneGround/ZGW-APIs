@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-referentielijsten-api-image:
+  build-and-publish-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     permissions:
       contents: write
