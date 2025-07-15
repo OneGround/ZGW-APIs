@@ -1,5 +1,5 @@
 {
-  "descriptionHash": "5D903A2F392FB0AB2BA10D3488D8B68F1F80D1F060091277088AF77DB2050B128FDB97EEAD57DE1FA716B34719DB13C25B4DF5A5D3F88D3B53A76C26C1B18F24",
+  "descriptionHash": "931015297C2345525AAD391A57C3E7D607F36D70390C18FF067B0513794FE97D7A7E60C0ED7BDA1FA6FC5C0B37C84CFA8A01EC189B9FDC62377C74F7260909F1",
   "descriptionLocation": "https://www.keycloak.org/docs-api/26.3.1/rest-api/openapi.json",
   "lockFileVersion": "1.0.0",
   "kiotaVersion": "1.28.0",
@@ -28,7 +28,12 @@
     "application/x-www-form-urlencoded;q=0.2",
     "multipart/form-data;q=0.1"
   ],
-  "includePatterns": [],
+  "includePatterns": [
+    "/admin/realms",
+    "/admin/realms/{realm-name}",
+    "/admin/realms/{realm-name}/clients",
+    "/admin/realms/{realm-name}/clients/{id}/protocol-mappers/models"
+  ],
   "excludePatterns": [],
   "disabledValidationRules": []
 }
