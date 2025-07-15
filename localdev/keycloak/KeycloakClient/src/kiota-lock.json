@@ -1,8 +1,8 @@
 {
   "descriptionHash": "5D903A2F392FB0AB2BA10D3488D8B68F1F80D1F060091277088AF77DB2050B128FDB97EEAD57DE1FA716B34719DB13C25B4DF5A5D3F88D3B53A76C26C1B18F24",
-  "descriptionLocation": "https://www.keycloak.org/docs-api/latest/rest-api/openapi.json",
+  "descriptionLocation": "https://www.keycloak.org/docs-api/26.3.1/rest-api/openapi.json",
   "lockFileVersion": "1.0.0",
-  "kiotaVersion": "1.27.0",
+  "kiotaVersion": "1.28.0",
   "clientClassName": "KeycloakClient",
   "typeAccessModifier": "Public",
   "clientNamespaceName": "Keycloak.Client",
