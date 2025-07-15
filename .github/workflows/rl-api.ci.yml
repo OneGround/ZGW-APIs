@@ -18,6 +18,9 @@ on:
 jobs:
   build-and-publish-referentielijsten-api-image:
     uses: ./.github/workflows/docker-build-and-push.yml
+    permissions:
+      contents: write
+      packages: write
     with:
       service_name: 'referentielijsten-api'
       major_version: 1

@@ -18,6 +18,9 @@ on:
 jobs:
   build-and-publish-image:
     uses: ./.github/workflows/docker-build-and-push.yml
+    permissions:
+      contents: write
+      packages: write
     with:
       service_name: 'notificaties-api'
       major_version: 1
