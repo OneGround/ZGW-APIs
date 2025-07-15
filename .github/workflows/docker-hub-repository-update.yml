@@ -39,11 +39,6 @@ jobs:
           files: |
             ${{ inputs.readme_filepath }}
 
-      - name: Log secrets and variables
-        run: |
-          echo "DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}"
-          echo "DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}"
-
       - name: Update Docker Hub repository
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: peter-evans/dockerhub-description@v4
