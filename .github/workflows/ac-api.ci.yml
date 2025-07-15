@@ -9,10 +9,6 @@ on:
       - 'src/OneGround.ZGW.Common.*/**'
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Autorisaties.*/**'
-  pull_request:
-    branches:
-        - FUND-1852
-        - main
   workflow_dispatch:
 
 jobs:
