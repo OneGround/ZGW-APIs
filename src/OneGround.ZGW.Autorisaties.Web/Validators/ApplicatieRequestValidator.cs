@@ -1,6 +1,10 @@
-﻿using FluentValidation;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using FluentValidation;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Validations;
 
@@ -24,5 +28,117 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
                     .IsEnumName(typeof(VertrouwelijkheidAanduiding))
                     .Unless(v => string.IsNullOrEmpty(v.MaxVertrouwelijkheidaanduiding));
             });
+        CascadeRuleFor(r => r.Autorisaties)
+            .Custom(
+                (a, c) =>
+                {
+                    ValidateComponent(a, c);
+                    ValidateScopesDefined(a, c);
+                    ValidateOnUniqueComponentsAndScopes(a, c);
+                }
+            );
+    }
+
+    private static void ValidateComponent(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
+    {
+        if (autorisaties == null)
+        {
+            return;
+        }
+
+        foreach (var authorization in autorisaties)
+        {
+            var isZrcOrDrc = authorization.Component == Component.zrc.ToString() || authorization.Component == Component.drc.ToString();
+
+            var accessLevelValid =
+                !string.IsNullOrEmpty(authorization.MaxVertrouwelijkheidaanduiding)
+                || Enum.TryParse<VertrouwelijkheidAanduiding>(authorization.MaxVertrouwelijkheidaanduiding, out _);
+
+            if (isZrcOrDrc && !accessLevelValid)
+            {
+                validatorCtx.AddFailure(
+                    new FluentValidation.Results.ValidationFailure("accessLevel", $"Component '{authorization.Component}' has no valid access level.")
+                    {
+                        ErrorCode = ErrorCode.Invalid,
+                    }
+                );
+            }
+            else if (!isZrcOrDrc && accessLevelValid)
+            {
+                validatorCtx.AddFailure(
+                    new FluentValidation.Results.ValidationFailure(
+                        "accessLevel",
+                        $"Component '{authorization.Component}' does not require an access level."
+                    )
+                    {
+                        ErrorCode = ErrorCode.Invalid,
+                    }
+                );
+            }
+        }
+    }
+
+    private static void ValidateScopesDefined(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
+    {
+        var autorisatiesWithScopes = autorisaties.Where(a => a.Scopes == null || !a.Scopes.Any());
+
+        foreach (var autorisatiesWithWithScope in autorisatiesWithScopes)
+        {
+            validatorCtx.AddFailure(
+                new FluentValidation.Results.ValidationFailure(
+                    "scopes",
+                    $"Component '{autorisatiesWithWithScope.Component}': 'scopes' has no elements."
+                )
+                {
+                    ErrorCode = ErrorCode.Invalid,
+                }
+            );
+        }
+    }
+
+    private static void ValidateOnUniqueComponentsAndScopes(
+        IEnumerable<AutorisatieRequestDto> autorisaties,
+        ValidationContext<ApplicatieRequestDto> validatorCtx
+    )
+    {
+        if (autorisaties == null)
+        {
+            return;
+        }
+
+        var groupedByComponent = autorisaties.GroupBy(a => a.Component);
+
+        var moreThanOneComponent = groupedByComponent.Where(group => group.Count() > 1).Select(g => g.Key);
+
+        if (moreThanOneComponent.Any())
+        {
+            validatorCtx.AddFailure(
+                new FluentValidation.Results.ValidationFailure(
+                    "component",
+                    $"Component'(s) '{string.Join(", ", moreThanOneComponent)}' defined more than once."
+                )
+                {
+                    ErrorCode = ErrorCode.Unique,
+                }
+            );
+        }
+
+        foreach (var componentGroup in groupedByComponent)
+        {
+            var moreThenOneScope = componentGroup.SelectMany(a => a.Scopes).GroupBy(s => s).Where(s => s.Count() > 1).Select(s => s.Key);
+
+            if (moreThenOneScope.Any())
+            {
+                validatorCtx.AddFailure(
+                    new FluentValidation.Results.ValidationFailure(
+                        "scopes",
+                        $"Component '{componentGroup.Key}': Scope(s) '{string.Join(", ", moreThenOneScope)}' defined more than once."
+                    )
+                    {
+                        ErrorCode = ErrorCode.Unique,
+                    }
+                );
+            }
+        }
     }
 }
