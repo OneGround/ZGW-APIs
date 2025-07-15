@@ -25,8 +25,6 @@ namespace KeycloakSetup
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             builder.Configuration.AddEnvironmentVariables("KEYCLOAK_");
 
-
-
             // Configure services
             builder.Services.Configure<KeycloakSettings>(builder.Configuration.GetSection("Keycloak"));
             builder.Services.AddTransient<BadRequestLoggingDelegatingHandler>();

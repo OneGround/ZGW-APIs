@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Keycloak.Client;
-using Keycloak.Client.Models;
+using KeycloakSetup.Client;
+using KeycloakSetup.Client.Models;
 using KeycloakSetup.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

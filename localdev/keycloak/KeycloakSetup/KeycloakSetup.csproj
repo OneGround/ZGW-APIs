@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1"/>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1"/>
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="1.19.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0"/>
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
   </ItemGroup>
@@ -22,10 +23,6 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\KeycloakClient\KeycloakClient.csproj" />
   </ItemGroup>
 
 </Project> 
