@@ -34,5 +34,18 @@ public class AcDbContext : BaseDbContext, IDataMigrationsDbContext
                 e.Owner,
             })
             .IsUnique();
+
+        modelBuilder
+            .Entity<FutureAutorisatie>()
+            .HasIndex(e => new
+            {
+                e.Component,
+                e.MaxVertrouwelijkheidaanduiding,
+                e.Scopes,
+                e.ApplicatieId,
+                e.Owner,
+            })
+            .IsUnique()
+            .IsCreatedConcurrently();
     }
 }
