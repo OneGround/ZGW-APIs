@@ -13,10 +13,11 @@ The tool performs the following setup steps automatically:
 ## Prerequisites
 
 - .NET SDK
-- Running Keycloak instance (default: http://localhost:8080)
+- Running Keycloak instance (default: <http://localhost:8080>)
 - Keycloak admin credentials
 
 ## Configuration
+
 Edit the `appsettings.json` file in the project directory:
 
 ```json
@@ -48,6 +49,7 @@ Each client in the `Clients` array has the following properties:
 - **Rsin**: Organization number (string) associated with the client
 
 The tool will create:
+
 - A separate OIDC client for each entry in the `Clients` array
 - Hardcoded claim mappers directly on each client
 - RSIN claims in access tokens with the organization's RSIN value
@@ -55,6 +57,7 @@ The tool will create:
 #### How RSIN Claims Work
 
 The tool automatically configures RSIN claims by:
+
 1. Adding a hardcoded claim mapper directly to each client with the RSIN value
 2. Configuring the mapper to include the RSIN claim in access tokens, ID tokens, and userinfo tokens
 3. The mapper is automatically included when the client authenticates
@@ -107,9 +110,6 @@ The response will contain an access token that includes the RSIN claim:
 ### Alternative Identity Providers
 
 **Important**: This Keycloak setup is just an example configuration. You can use any identity provider with oauth2 as long as **access tokens contains `rsin` claim with the organization's RSIN number.**
-
-
-
 
 ## Security Notes
 
