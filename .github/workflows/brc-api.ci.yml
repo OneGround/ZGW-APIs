@@ -1,0 +1,42 @@
+name: Create and publish Besluiten Docker image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.Common.*/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Besluiten.*/**'
+  pull_request:
+    branches:
+      - FUND-1852
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-image:
+    uses: ./.github/workflows/docker-build-and-push.yml
+    permissions:
+      contents: write
+      packages: write
+    with:
+      service_name: 'besluiten-api'
+      major_version: 1
+      minor_version: 0
+      docker_file: './src/OneGround.ZGW.Besluiten.WebApi/Dockerfile'
+      context: '.'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-repository-update.yml
+    with:
+      repository_name: 'besluiten-api'
+      description: 'OneGround implementation of ZGW Besluiten API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Besluiten.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

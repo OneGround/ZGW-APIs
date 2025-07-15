@@ -9,10 +9,14 @@ on:
       - 'src/OneGround.ZGW.Common.*/**'
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Documenten.*/**'
+  pull_request:
+    branches:
+      - FUND-1852
+      - main
   workflow_dispatch:
 
 jobs:
-  build-and-publish-documenten-api-image:
+  build-and-publish-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     with:
       service_name: 'documenten-api'
@@ -21,12 +25,12 @@ jobs:
       docker_file: './src/OneGround.ZGW.Documenten.WebApi/Dockerfile'
       context: '.'
 
-  build-and-publish-documenten-listener-image:
-    needs: build-and-publish-documenten-api-image
-    uses: ./.github/workflows/docker-build-and-push.yml
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-repository-update.yml
     with:
-      service_name: 'documenten-listener'
-      major_version: 1
-      minor_version: 5
-      docker_file: './src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile'
-      context: '.'
+      repository_name: 'documenten-api'
+      description: 'OneGround implementation of ZGW Documenten API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Documenten.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

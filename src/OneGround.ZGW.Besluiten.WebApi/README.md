@@ -2,31 +2,42 @@
 
 ## Featured Tags
 
-- ```docker pull ghcr.io/oneground/besluiten-api:<version>```
+ ```bash
+ docker pull ghcr.io/oneground/autorisbesluitenaties-api:<version>
+ ```
+
+You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
 
 ## About
 
-This repository contains the official container images for the OneGround Besluiten API. You can use Docker to run a standalone Linux container with the OneGround Besluiten API.
+This is the official container image for the **OneGround Besluiten API**. It's an open-source project that implements the official [VNG Besluiten API](https://vng-realisatie.github.io/gemma-zaken/standaard/besluiten) standard used in the Netherlands.
 
 ## What is OneGround Besluiten API?
 
-The OneGround Besluiten API provides a standardized interface for managing decisions within the ZGW ecosystem. It enables applications to create, register, and link decisions to their corresponding cases, supporting a transparent and auditable case management process.
+This OneGround implementation provides a standardized interface for registering and managing decisions, allowing applications to create, access, and link them directly to corresponding cases and information objects. Designed for seamless integration with other core ZGW components such as the Catalogi API, Documenten API, Notificaties API, and Zaken API, this process ensures that decision-making is transparent, auditable, and integrated with other government systems. By adhering to VNG standards, the OneGround Besluiten API promotes interoperability and a unified approach to data management, creating a cohesive data landscape for government operations.
 
 For more details and implementation guidelines, visit the [OneGround ZGW APIs GitHub repository](https://github.com/OneGround/ZGW-APIs).
 
 ## Dependencies
 
-The OneGround Besluiten API depends on the OneGround Autorisaties API.
+The OneGround Zaken API depends on:
 
-## How to Use This Image
+- [OneGround Autorisaties API](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api)
+- [OneGround Catalogi API](https://github.com/OneGround/ZGW-APIs/pkgs/container/catalogi-api)
+- [OneGround Documenten API](https://github.com/OneGround/ZGW-APIs/pkgs/container/documenten-api)
+- [OneGround Documenten Listener](https://github.com/OneGround/ZGW-APIs/pkgs/container/documenten-listener)
+- [OneGround Notificaties API](https://github.com/OneGround/ZGW-APIs/pkgs/container/notificaties-api)
+- [OneGround Zaken API](https://github.com/OneGround/ZGW-APIs/pkgs/container/zaken-api)
+
+## How to use this image
 
 ```bash
 docker run -it -p 8080:80 ghcr.io/oneground/besluiten-api:<version>
 ```
 
-## Full Tag Listing
+## Configuration
 
-You can retrieve a list of all available tags for OneGround Besluiten API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags)
+For a real-world setup, you will need to provide environment variables for connecting to a database and other services. It's recommended to use docker-compose for a more robust setup.
 
 ## Support
 
@@ -40,4 +51,4 @@ To provide feedback on this tool visit our [GitHub repository](https://github.co
 
 ## License
 
-See license terms in our [GitHub License](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE)
+This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for more details.

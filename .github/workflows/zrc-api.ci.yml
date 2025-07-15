@@ -1,0 +1,39 @@
+name: Create and publish Zaken Docker image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.Common.*/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Zaken.*/**'
+  pull_request:
+    branches:
+      - FUND-1852
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-zaken-api-image:
+    uses: ./.github/workflows/docker-build-and-push.yml
+    with:
+      service_name: 'zaken-api'
+      major_version: 1
+      minor_version: 5
+      docker_file: './src/OneGround.ZGW.Zaken.WebApi/Dockerfile'
+      context: '.'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-repository-update.yml
+    with:
+      repository_name: 'zaken-api'
+      description: 'OneGround implementation of ZGW Zaken API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Zaken.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

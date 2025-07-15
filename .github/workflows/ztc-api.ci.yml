@@ -1,0 +1,39 @@
+name: Create and publish Catalogi Docker image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.Common.*/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Catalogi.*/**'
+  pull_request:
+    branches:
+      - FUND-1852
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-catalogi-api-image:
+    uses: ./.github/workflows/docker-build-and-push.yml
+    with:
+      service_name: 'catalogi-api'
+      major_version: 1
+      minor_version: 3
+      docker_file: './src/OneGround.ZGW.Catalogi.WebApi/Dockerfile'
+      context: '.'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-repository-update.yml
+    with:
+      repository_name: 'catalogi-api'
+      description: 'OneGround implementation of ZGW Catalogi API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Catalogi.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

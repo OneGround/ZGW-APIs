@@ -2,7 +2,7 @@ name: Create and publish Autorisaties Docker image
 
 on:
   push:
-    branches:     
+    branches:
       - main
     paths:
       - 'src/OneGround.ZGW.Common/**'
@@ -16,28 +16,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-autorisaties-api-image:   
+  build-and-publish-image:
     uses: ./.github/workflows/docker-build-and-push.yml
     permissions:
       contents: write
       packages: write
     with:
-      service_name: 'x-test-3-autorisaties-api'
+      service_name: 'autorisaties-api'
       major_version: 1
       minor_version: 0
       docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
-      context: '.' 
-      publish_to_docker_hub: true
+      context: '.'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
- 
-  update-docker-hub-repository:   
-    uses: ./.github/workflows/docker-hub-update.yml
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/docker-hub-repository-update.yml
     with:
-      repository_name: 'x-test-3-autorisaties-api'
-      description: 'OneGround implementation of ZGW Zaken API (from Netherlands VNG standard)'
+      repository_name: 'autorisaties-api'
+      description: 'OneGround implementation of ZGW Autorisaties API (from Netherlands VNG standard)'
       readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

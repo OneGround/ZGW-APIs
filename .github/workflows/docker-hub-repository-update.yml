@@ -17,8 +17,8 @@ on:
     secrets:
       DOCKERHUB_USERNAME:
         required: true
-      DOCKERHUB_PASSWORD:
-        required: true     
+      DOCKERHUB_TOKEN:
+        required: true
 
 env:
   NAMESPACE: oneground
@@ -38,18 +38,18 @@ jobs:
         with:
           files: |
             ${{ inputs.readme_filepath }}
-      
+
       - name: Log secrets and variables
         run: |
           echo "DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}"
-          echo "DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}"
-         
+          echo "DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}"
+
       - name: Update Docker Hub repository
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ env.NAMESPACE }}/${{ inputs.repository_name }}
           short-description: ${{ inputs.description }}
           readme-filepath: ${{ inputs.readme_filepath }}
