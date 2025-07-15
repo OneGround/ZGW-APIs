@@ -29,7 +29,7 @@ The OneGround Notificaties Listener depends on:
 ## How to use this image
 
 ```bash
-docker run -it -p 8080:80 ghcr.io/oneground/notificaties-listner:<version>
+docker run -it -p 8080:80 ghcr.io/oneground/notificaties-listener:<version>
 ```
 
 ## Configuration
