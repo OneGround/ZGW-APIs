@@ -1,4 +1,4 @@
-name: KeycloakSetup CI
+name: CI KeycloakSetup
 
 on:
   push:
