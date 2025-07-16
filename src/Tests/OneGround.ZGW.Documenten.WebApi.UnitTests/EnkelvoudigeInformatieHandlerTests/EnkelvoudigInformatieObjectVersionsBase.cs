@@ -58,7 +58,6 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
         var inMemorySettings = new Dictionary<string, string>
         {
             { "Application:SkipMigrationsAtStartup", "true" },
-            { "Application:DontCheckServerValidation", "false" },
             { "Application:IgnoreInformatieObjectTypeValidation", "true" },
             { "Application:IgnoreZaakAndBesluitValidation", "true" },
             { "Application:DontSendNotificaties", "false" },

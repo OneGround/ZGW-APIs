@@ -43,18 +43,6 @@ public static class ServiceAgentExtensions
 
         var httpClient = services
             .AddHttpClient<TClient, TImplementation>(agentImplementationName)
-            .ConfigurePrimaryHttpMessageHandler(s =>
-            {
-                var handler = new HttpClientHandler();
-
-                if (configuration.GetValue<bool>("Application:DontCheckServerValidation"))
-                {
-                    var serverCertificateValidator = s.GetService<IServerCertificateValidator>();
-                    handler.ServerCertificateCustomValidationCallback = serverCertificateValidator.ValidateCertificate;
-                }
-
-                return handler;
-            })
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddHttpMessageHandler<BatchIdHandler>();
 
