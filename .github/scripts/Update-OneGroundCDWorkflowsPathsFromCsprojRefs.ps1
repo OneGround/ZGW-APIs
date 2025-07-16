@@ -24,7 +24,7 @@ $($GEN_FOOTER)
 ... [YAML content] ...
 --------------------------------------------------------------
 "@
-$GEN_INCLUDE_LINE = "      - {0}"
+$GEN_PATH_LINE = "      - {0}"
 
 function GetDotNetReferences([string]$csprojPath, [System.Collections.ArrayList]$skip = $null) {
     if ($null -ne $skip -and $skip -contains $csProjPath) {
@@ -105,26 +105,26 @@ function Export-CsProjFromCmdLine([string]$line) {
     return $line.Substring($GEN_CMD_PREFIX.Length)
 }
 
-function Resolve-RefsToIncludeList([array]$refs, [string]$root) {
-    $includes = New-Object System.Collections.ArrayList
+function Resolve-RefsToPathList([array]$refs, [string]$root) {
+    $paths = New-Object System.Collections.ArrayList
 
     $root = [System.IO.Path]::GetFullPath($root) -replace '\\', '/'
     foreach ($ref in $refs) {
         $refDir = Split-Path -Parent $ref
-        $include = Get-RelativePath -rootPath $root -filePath $refDir
+        $path = Get-RelativePath -rootPath $root -filePath $refDir
 
-        $include = $include -replace '\\', '/'
-        if (!$include.EndsWith("/")) {
-            $include += "/"
+        $path = $path -replace '\\', '/'
+        if (!$path.EndsWith("/")) {
+            $path += "/"
         }
-        $include += "**"
-        [void]$includes.Add("'" + $include + "'")
+        $path += "**"
+        [void]$paths.Add("'" + $path + "'")
     }
 
-    return $includes;
+    return $paths;
 }
 
-function Format-OutputContent($content, $lines, [array]$includes) {
+function Format-OutputContent($content, $lines, [array]$paths) {
     $output = New-Object System.Collections.ArrayList
     $pointer = $lines.start + 1 + $lines.cmd.Count
 
@@ -132,8 +132,8 @@ function Format-OutputContent($content, $lines, [array]$includes) {
         [void]$output.Add($content[$i])
     }
 
-    foreach ($include in $includes) {
-        [void]$output.Add($GEN_INCLUDE_LINE -f $include)
+    foreach ($path in $paths) {
+        [void]$output.Add($GEN_PATH_LINE -f $path)
         $pointer++
     }
 
@@ -159,7 +159,7 @@ function Get-RelativePath {
 
     return $normalizedFilePath.Substring($normalizedRootPath.Length)
 }
-function Compare-OutputContent($content, $lines, [array]$includes) {
+function Compare-OutputContent($content, $lines, [array]$paths) {
     $start = $lines.start + 1 + $lines.cmd.Count
 
     $contentObj = @()
@@ -168,16 +168,16 @@ function Compare-OutputContent($content, $lines, [array]$includes) {
         $contentObj = $content[$start..$end]
     }
 
-    $includeObj = @()
-    if ($includes.Count -gt 0) {
-        $includeObj = $includes | ForEach-Object { $GEN_INCLUDE_LINE -f $_ }
+    $pathObj = @()
+    if ($paths.Count -gt 0) {
+        $pathObj = $paths | ForEach-Object { $GEN_PATH_LINE -f $_ }
     }
 
-    return Compare-Object -ReferenceObject $includeObj -DifferenceObject $contentObj
+    return Compare-Object -ReferenceObject $pathObj -DifferenceObject $contentObj
 }
 
 function Update-OneGroundCDWorkflowPathsFromCsprojRefs([string]$yamlFilePath, [string]$rootDir, [bool]$validateOnly) {
-    Write-Host "Starting to update include list in $yamlFilePath YAML pipeline file..."
+    Write-Host "Starting to update path list in $yamlFilePath YAML workflow file..."
 
     Write-Host "Reading content from $yamlFilePath..."
     $content = Get-Content -Path $yamlFilePath -ErrorAction Stop
@@ -185,15 +185,15 @@ function Update-OneGroundCDWorkflowPathsFromCsprojRefs([string]$yamlFilePath, [s
     $lines = Search-ContentLines -content $content
 
     if ($lines.start -eq -1) {
-        Write-Error "Could not find generated header in $yamlFilePath. Please add header and footer to YAML pipeline file. Exiting..."
-        Write-Host "Please add the following lines to the YAML pipeline file after on.push.paths line to enable automatic generation of the include list:"
+        Write-Error "Could not find generated header in $yamlFilePath. Please add header and footer to YAML workflow file. Exiting..."
+        Write-Host "Please add the following lines to the YAML workflow file after on.push.paths line to enable automatic generation of the path list:"
         Write-Host $GEN_HELP
         exit 1
     }
 
     if ($lines.end -eq -1) {
-        Write-Error "Could not find generated footer in $yamlFilePath. Please add footer to YAML pipeline file.. Exiting..."
-        Write-Host "Please add the following lines to the YAML pipeline file after on.push.paths line to enable automatic generation of the include list:"
+        Write-Error "Could not find generated footer in $yamlFilePath. Please add footer to YAML workflow file.. Exiting..."
+        Write-Host "Please add the following lines to the YAML workflow file after on.push.paths line to enable automatic generation of the path list:"
         Write-Host $GEN_HELP
         exit 1
     }
@@ -219,7 +219,7 @@ function Update-OneGroundCDWorkflowPathsFromCsprojRefs([string]$yamlFilePath, [s
 
         if (-not (Test-Path $csProjPath)) {
             Write-Error "Could not find csproj file from $($yamlFilePath):$cmdLine at path: $csProjPath. Exiting..."
-            Write-Host "Please ensure that the path is correct in the YAML pipeline file comment line."
+            Write-Host "Please ensure that the path is correct in the YAML workflow file comment line."
             Write-Host $GEN_HELP
             exit 1
         }
@@ -244,24 +244,24 @@ function Update-OneGroundCDWorkflowPathsFromCsprojRefs([string]$yamlFilePath, [s
     $refs = $refs | Sort-Object
 
     Write-Host "Found $($refs.Count) unique references in all csproj files."
-    $includes = Resolve-RefsToIncludeList -refs $refs -root $rootDir
+    $paths = Resolve-RefsToPathList -refs $refs -root $rootDir
 
     if ($validateOnly) {
-        Write-Host "Validating include list in $yamlFilePath..."
-        $comparisonResult = Compare-OutputContent -content $content -lines $lines -includes $includes
+        Write-Host "Validating path list in $yamlFilePath..."
+        $comparisonResult = Compare-OutputContent -content $content -lines $lines -paths $paths
 
         if ($comparisonResult.Length -eq 0) {
-            Write-Host "Include list in $yamlFilePath is up-to-date."
+            Write-Host "Path list in $yamlFilePath is up-to-date."
         }
         else {
-            Write-Host "Include list in $yamlFilePath is outdated. Please update the include list in the YAML pipeline file."
+            Write-Host "Path list in $yamlFilePath is outdated. Please update the path list in the YAML workflow file."
             $comparisonResult | Format-Table -Property InputObject, SideIndicator -AutoSize
             exit 2
         }
     }
     else {
         Write-Host "Formatting output content..."
-        $output = Format-OutputContent -content $content -lines $lines -includes $includes
+        $output = Format-OutputContent -content $content -lines $lines -paths $paths
         Write-Host "Writing updated content to $yamlFilePath..."
         Set-Content -Path $yamlFilePath -Value $output
     }

@@ -1,5 +1,5 @@
 {
-    "AutoGeneratingIncludePipelines": [
+    "AutoGeneratingWorkflowPaths": [
         ".github/workflows/cd-autorisaties-api.yml",
         ".github/workflows/cd-besluiten-api.yml",
         ".github/workflows/cd-catalogi-api.yml",
