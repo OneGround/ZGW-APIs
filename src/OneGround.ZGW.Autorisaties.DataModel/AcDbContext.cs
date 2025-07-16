@@ -32,16 +32,22 @@ public class AcDbContext : BaseDbContext, IDataMigrationsDbContext
         {
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
-                if (entry.Entity.Scopes != null)
-                    entry.Entity.Scopes = entry.Entity.Scopes.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+                var sortedScopes = entry.Entity.Scopes?.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+                if (!entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
+                {
+                    entry.Entity.Scopes = sortedScopes;
+                }
             }
         }
         foreach (var entry in ChangeTracker.Entries<FutureAutorisatie>())
         {
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
-                if (entry.Entity.Scopes != null)
-                    entry.Entity.Scopes = entry.Entity.Scopes.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+                var sortedScopes = entry.Entity.Scopes?.OrderBy(s => s, StringComparer.Ordinal).ToArray();
+                if (!entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
+                {
+                    entry.Entity.Scopes = sortedScopes;
+                }
             }
         }
     }

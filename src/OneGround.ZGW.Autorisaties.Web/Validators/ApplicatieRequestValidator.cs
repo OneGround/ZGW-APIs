@@ -94,14 +94,14 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             return;
         }
 
-        var autorisatiesWithoutScopes = autorisaties.Where(a => a.Scopes == null || !a.Scopes.Any());
+        var autorisatiesWithoutScopes = autorisaties.Where(a => a.Scopes == null || a.Scopes.Length == 0);
 
-        foreach (var autorisatiesWithWithScope in autorisatiesWithoutScopes)
+        foreach (var autorisatiesWithoutScope in autorisatiesWithoutScopes)
         {
             validatorCtx.AddFailure(
                 new FluentValidation.Results.ValidationFailure(
                     "Scopes",
-                    $"Component '{autorisatiesWithWithScope.Component}': 'scopes' has no elements."
+                    $"Component '{autorisatiesWithoutScope.Component}': 'scopes' has no elements."
                 )
                 {
                     ErrorCode = ErrorCode.Invalid,
@@ -139,7 +139,11 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 
         foreach (var componentGroup in groupedByComponent)
         {
-            var moreThanOneScope = componentGroup.SelectMany(a => a.Scopes).GroupBy(s => s).Where(s => s.Count() > 1).Select(s => s.Key);
+            var moreThanOneScope = componentGroup
+                .SelectMany(a => a.Scopes)
+                .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .Where(s => s.Count() > 1)
+                .Select(s => s.Key);
 
             if (moreThanOneScope.Any())
             {

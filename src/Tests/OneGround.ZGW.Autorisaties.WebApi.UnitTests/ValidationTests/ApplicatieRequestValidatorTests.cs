@@ -170,17 +170,17 @@ public class ApplicatieRequestValidatorTests
                 {
                     Component = Component.zrc.ToString(),
                     MaxVertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.openbaar.ToString(),
-                    Scopes = ["scopes1", "scope2"],
+                    Scopes = ["scope1", "scope2"],
                 },
                 new AutorisatieRequestDto
                 {
                     Component = Component.drc.ToString(),
                     MaxVertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.openbaar.ToString(),
-                    Scopes = ["scopes1", "scope2"],
+                    Scopes = ["scope1", "scope2"],
                 },
-                new AutorisatieRequestDto { Component = Component.ac.ToString(), Scopes = ["scopes1", "scope2"] },
-                new AutorisatieRequestDto { Component = Component.brc.ToString(), Scopes = ["scopes1", "scope2"] },
-                new AutorisatieRequestDto { Component = Component.ztc.ToString(), Scopes = ["scopes1", "scope2"] },
+                new AutorisatieRequestDto { Component = Component.ac.ToString(), Scopes = ["scope1", "scope2"] },
+                new AutorisatieRequestDto { Component = Component.brc.ToString(), Scopes = ["scope1", "scope2"] },
+                new AutorisatieRequestDto { Component = Component.ztc.ToString(), Scopes = ["scope1", "scope2"] },
             },
         };
 
