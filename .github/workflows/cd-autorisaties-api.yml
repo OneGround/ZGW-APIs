@@ -1,0 +1,55 @@
+name: CD Autorisaties-Api
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/cd-autorisaties-api.yml
+## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
+## > src/OneGround.ZGW.Autorisaties.WebApi/ZGW.Autorisaties.WebApi.csproj
+      - 'src/OneGround.ZGW.Autorisaties.Common/**'
+      - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
+      - 'src/OneGround.ZGW.Autorisaties.DataModel/**'
+      - 'src/OneGround.ZGW.Autorisaties.Web/**'
+      - 'src/OneGround.ZGW.Autorisaties.WebApi/**'
+      - 'src/OneGround.ZGW.Catalogi.Contracts/**'
+      - 'src/OneGround.ZGW.Catalogi.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Abstractions/**'
+      - 'src/OneGround.ZGW.Common.Contracts/**'
+      - 'src/OneGround.ZGW.Common.DataModel/**'
+      - 'src/OneGround.ZGW.Common.Messaging/**'
+      - 'src/OneGround.ZGW.Common.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Web/**'
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Notificaties.Contracts/**'
+      - 'src/OneGround.ZGW.Notificaties.ServiceAgent/**'
+## END OF GENERATED PATH LIST ##
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-image:
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
+    permissions:
+      contents: write
+      packages: write
+    with:
+      service_name: 'autorisaties-api'
+      major_version: 1
+      minor_version: 0
+      docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
+      context: '.'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
+    with:
+      repository_name: 'autorisaties-api'
+      description: 'OneGround implementation of ZGW Autorisaties API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

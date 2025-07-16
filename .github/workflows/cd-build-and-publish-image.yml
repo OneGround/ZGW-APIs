@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: CD Build and Publish a Docker Image
 
 on:
   workflow_call:
@@ -63,7 +63,7 @@ jobs:
         id: get_application_version
         shell: pwsh
         run: >-
-          ./.github/scripts/get-next-application-version.ps1
+          ./.github/scripts/Get-NextApplicationVersion.ps1
           -ServiceName "${{ inputs.service_name }}"
           -MajorVersion "${{ inputs.major_version }}"
           -MinorVersion "${{ inputs.minor_version }}"

@@ -1,0 +1,62 @@
+name: CD Zaken-Api
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/cd-zaken-api.yml
+## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
+## > src/OneGround.ZGW.Zaken.WebApi/ZGW.Zaken.WebApi.csproj
+      - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
+      - 'src/OneGround.ZGW.Autorisaties.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Besluiten.Contracts/**'
+      - 'src/OneGround.ZGW.Besluiten.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Catalogi.Contracts/**'
+      - 'src/OneGround.ZGW.Catalogi.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Abstractions/**'
+      - 'src/OneGround.ZGW.Common.Contracts/**'
+      - 'src/OneGround.ZGW.Common.DataModel/**'
+      - 'src/OneGround.ZGW.Common.Messaging/**'
+      - 'src/OneGround.ZGW.Common.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Web/**'
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Documenten.Contracts/**'
+      - 'src/OneGround.ZGW.Documenten.Messaging.Contracts/**'
+      - 'src/OneGround.ZGW.Documenten.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Notificaties.Contracts/**'
+      - 'src/OneGround.ZGW.Notificaties.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Zaken.Contracts/**'
+      - 'src/OneGround.ZGW.Zaken.DataModel/**'
+      - 'src/OneGround.ZGW.Zaken.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Zaken.Web/**'
+      - 'src/OneGround.ZGW.Zaken.WebApi/**'
+## END OF GENERATED PATH LIST ##
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-image:
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
+    permissions:
+      contents: write
+      packages: write
+    with:
+      service_name: 'zaken-api'
+      major_version: 1
+      minor_version: 5
+      docker_file: './src/OneGround.ZGW.Zaken.WebApi/Dockerfile'
+      context: '.'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-docker-hub-repository:
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
+    with:
+      repository_name: 'zaken-api'
+      description: 'OneGround implementation of ZGW Zaken API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Zaken.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

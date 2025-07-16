@@ -1,19 +1,21 @@
-name: Documenten-Api CI
+name: CD Documenten-Api
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'src/OneGround.ZGW.Common/**'
-      - 'src/OneGround.ZGW.Common.*/**'
-      - 'src/OneGround.ZGW.DataAccess/**'
-      - 'src/OneGround.ZGW.Documenten.*/**'
+      - .github/workflows/cd-documenten-api.yml
+## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
+## > src/OneGround.ZGW.Documenten.WebApi/ZGW.Documenten.WebApi.csproj
+      - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
+      - 'src/OneGround.ZGW.Zaken.ServiceAgent/**'
+## END OF GENERATED PATH LIST ##
   workflow_dispatch:
 
 jobs:
   build-and-publish-image:
-    uses: ./.github/workflows/docker-build-and-push.yml
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
     permissions:
       contents: write
       packages: write
@@ -28,7 +30,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   update-docker-hub-repository:
-    uses: ./.github/workflows/docker-hub-repository-update.yml
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
       repository_name: 'documenten-api'
       description: 'OneGround implementation of ZGW Documenten API (from Netherlands VNG standard)'
