@@ -1,4 +1,4 @@
-name: CD Besluiten-Api
+name: Publish Besluiten-Api
 
 on:
   push:

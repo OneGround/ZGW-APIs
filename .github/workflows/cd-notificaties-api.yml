@@ -1,4 +1,4 @@
-name: CD Notificaties-Api
+name: Publish Notificaties-Api
 
 on:
   push:

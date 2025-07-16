@@ -1,4 +1,4 @@
-name: CD Autorisaties-Api
+name: Publish Autorisaties-Api
 
 on:
   push:

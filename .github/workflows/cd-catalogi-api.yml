@@ -1,4 +1,4 @@
-name: CD Catalogi-Api
+name: Publish Catalogi-Api
 
 on:
   push:

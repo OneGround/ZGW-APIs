@@ -1,4 +1,4 @@
-name: CD Zaken-Api
+name: Publish Zaken-Api
 
 on:
   push:

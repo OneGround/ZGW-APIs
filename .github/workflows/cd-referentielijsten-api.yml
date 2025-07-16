@@ -1,4 +1,4 @@
-name: CD Referentielijsten-Api
+name: Publish Referentielijsten-Api
 
 on:
   push:

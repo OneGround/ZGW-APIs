@@ -1,4 +1,4 @@
-name: CD Documenten-Listener
+name: Publish Documenten-Listener
 
 on:
   push:

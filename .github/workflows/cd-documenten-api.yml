@@ -1,4 +1,4 @@
-name: CD Documenten-Api
+name: Publish Documenten-Api
 
 on:
   push:
