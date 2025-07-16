@@ -1,0 +1,29 @@
+name: CI KeycloakSetup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'localdev/keycloak/**'
+      - '.github/workflows/keycloak-setup-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'localdev/keycloak/**'
+      - '.github/workflows/keycloak-setup-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      working-directory: localdev/keycloak
+      run: docker build -f KeycloakSetup/Dockerfile .
