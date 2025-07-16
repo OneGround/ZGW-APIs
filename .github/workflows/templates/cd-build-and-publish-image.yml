@@ -1,4 +1,4 @@
-name: CD Build and Publish a Docker Image
+name: Build and Publish a Docker Image
 
 on:
   workflow_call:

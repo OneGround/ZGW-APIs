@@ -1,4 +1,4 @@
-name: CD Update Docker Hub Repository
+name: Update Docker Hub Repository
 on:
   workflow_call:
     inputs:
