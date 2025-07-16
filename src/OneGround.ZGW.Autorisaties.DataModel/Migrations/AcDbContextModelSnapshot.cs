@@ -17,9 +17,10 @@ namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.2")
+                .HasAnnotation("ProductVersion", "8.0.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("OneGround.ZGW.Autorisaties.DataModel.Applicatie", b =>
@@ -158,6 +159,9 @@ namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicatieId");
+
+                    b.HasIndex("Component", "MaxVertrouwelijkheidaanduiding", "Scopes", "ApplicatieId", "ZaakType", "BesluitType", "InformatieObjectType", "Owner")
+                        .IsUnique();
 
                     b.ToTable("autorisaties");
                 });

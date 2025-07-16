@@ -6,7 +6,6 @@ using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.ServiceAgent;
-using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Documenten.Messaging.Configuration;
 using OneGround.ZGW.Documenten.Messaging.Consumers;
 using OneGround.ZGW.Documenten.Messaging.Contracts;
@@ -27,15 +26,10 @@ public class ServiceConfiguration
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddDocumentenServiceAgent(_configuration);
-
-        services.AddScoped<IServerCertificateValidator, ByPassServerCertificateValidator>();
-
         services.AddOrganisationContext();
         services.AddCorrelationId();
-
         services.AddScoped<BatchIdHandler>();
         services.AddBatchId();
-
         services.AddServiceEndpoints(_configuration);
 
         services.Configure<MassTransitHostOptions>(options =>

@@ -244,7 +244,7 @@ public class BesluitTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetBesluitTypeQuery { Id = id });
+        var resultGet = await _mediator.Send(new GetBesluitTypeQuery { Id = id, IncludeSoftRelations = false });
 
         if (resultGet.Status == QueryStatus.NotFound)
         {

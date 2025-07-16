@@ -32,7 +32,11 @@ class GetBesluitTypeQueryHandler : CatalogiBaseHandler<GetBesluitTypeQueryHandle
     {
         _logger.LogDebug("Get BesluitType {Id}....", request.Id);
 
-        var besluitType = await _besluitTypeDataService.GetAsync(request.Id, cancellationToken: cancellationToken);
+        var besluitType = await _besluitTypeDataService.GetAsync(
+            request.Id,
+            includeSoftRelations: request.IncludeSoftRelations,
+            cancellationToken: cancellationToken
+        );
         if (besluitType == null)
         {
             return new QueryResult<BesluitType>(null, QueryStatus.NotFound);
@@ -45,4 +49,5 @@ class GetBesluitTypeQueryHandler : CatalogiBaseHandler<GetBesluitTypeQueryHandle
 class GetBesluitTypeQuery : IRequest<QueryResult<BesluitType>>
 {
     public Guid Id { get; set; }
+    public bool IncludeSoftRelations { get; set; } = true;
 }

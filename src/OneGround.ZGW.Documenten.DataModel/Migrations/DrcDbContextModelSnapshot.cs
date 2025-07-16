@@ -493,8 +493,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasIndex("Bronorganisatie");
 
-                    b.HasIndex("EnkelvoudigInformatieObjectId")
-                        .IsUnique();
+                    b.HasIndex("EnkelvoudigInformatieObjectId");
 
                     b.HasIndex("Id")
                         .HasDatabaseName("idx_e0_light_covering");

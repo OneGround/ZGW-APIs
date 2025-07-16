@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
@@ -9,7 +8,6 @@ public static class CommonServicesServiceCollectionExtensions
 {
     public static void AddCommonServices(this IServiceCollection services)
     {
-        services.AddScoped<IServerCertificateValidator, ByPassServerCertificateValidator>();
         services.AddScoped<IPaginationHelper, PaginationHelper>();
         services.AddScoped<IPaginationUriService, PaginationUriService>();
 

@@ -38,15 +38,10 @@ public class ServiceConfiguration
             throw new InvalidOperationException("No valid UserConnectionString specified in appSettings.json section: ConnectionStrings.");
 
         services.AddZGWDbContext<NrcDbContext>(_configuration);
-
-        services.AddScoped<IServerCertificateValidator, ByPassServerCertificateValidator>();
-
         services.AddBatchId();
         services.AddOrganisationContext();
         services.AddCorrelationId();
-
         services.AddServiceEndpoints(_configuration);
-
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
 
@@ -59,15 +54,6 @@ public class ServiceConfiguration
         // Define the HTTP pipeline
         services
             .AddHttpClient<INotificationSender, NotificationSender>()
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var handler = new HttpClientHandler();
-
-                var serverCertificateValidator = sp.GetService<IServerCertificateValidator>();
-                handler.ServerCertificateCustomValidationCallback = serverCertificateValidator.ValidateCertificate;
-
-                return handler;
-            })
             .AddResilienceHandler(
                 "resilience-pipeline-notificaties",
                 (builder, context) =>

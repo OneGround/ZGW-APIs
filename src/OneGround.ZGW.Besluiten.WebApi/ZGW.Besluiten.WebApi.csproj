@@ -3,6 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>OneGround.ZGW.Besluiten.WebApi</AssemblyName>
     <RootNamespace>OneGround.ZGW.Besluiten.WebApi</RootNamespace>
+    <UserSecretsId>192cd23b-3c21-4c04-9adb-eff935464e4a</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\appsettings.Shared.json">
@@ -15,7 +16,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
   </ItemGroup>
   <ItemGroup>

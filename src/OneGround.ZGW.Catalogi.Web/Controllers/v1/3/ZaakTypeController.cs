@@ -245,7 +245,7 @@ public class ZaakTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetZaakTypeQuery { Id = id });
+        var resultGet = await _mediator.Send(new GetZaakTypeQuery { Id = id, IncludeSoftRelations = false });
 
         if (resultGet.Status == QueryStatus.NotFound)
         {

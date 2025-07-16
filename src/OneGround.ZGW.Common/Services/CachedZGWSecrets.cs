@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -18,7 +19,7 @@ public class CachedZGWSecrets : ICachedZGWSecrets
 
     public Task<ServiceSecret> GetServiceSecretAsync(string rsin, string service, CancellationToken cancellationToken)
     {
-        _optionsMonitor.CurrentValue.ZgwServiceAccountCredentials.TryGetValue(rsin, out var credentials);
+        var credentials = _optionsMonitor.CurrentValue.Credentials.FirstOrDefault(x => x.Rsin == rsin);
 
         if (credentials == null)
         {

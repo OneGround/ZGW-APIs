@@ -83,10 +83,10 @@ class GetAllBesluitenQueryHandler
     {
         await CreateTempTableBesluitAuthorizationAsync(cancellationToken);
 
-        var besluitAuthorizations = _authorizationContext.Authorization.Authorizations.Select(a => new TempBesluitAuthorization
-        {
-            BesluitType = a.BesluitType,
-        });
+        var besluitAuthorizations = _authorizationContext
+            .Authorization.Authorizations.Where(permission => permission.BesluitType != null)
+            .GroupBy(permission => permission.BesluitType)
+            .Select(g => new TempBesluitAuthorization { BesluitType = g.Key });
 
         await _context.TempBesluitAuthorization.AddRangeAsync(besluitAuthorizations, cancellationToken);
 
@@ -96,11 +96,11 @@ class GetAllBesluitenQueryHandler
     private async Task CreateTempTableBesluitAuthorizationAsync(CancellationToken cancellationToken)
     {
         const string sql = $"""
-            CREATE TEMPORARY TABLE "{nameof(TempBesluitAuthorization)}" 
+            CREATE TEMPORARY TABLE "{nameof(TempBesluitAuthorization)}"
             (
                "{nameof(TempBesluitAuthorization.BesluitType)}" text NOT NULL,
                PRIMARY KEY ("{nameof(TempBesluitAuthorization.BesluitType)}")
-            ) 
+            )
             """;
         await _temporaryTableProvider.CreateAsync(_context, sql, cancellationToken);
     }

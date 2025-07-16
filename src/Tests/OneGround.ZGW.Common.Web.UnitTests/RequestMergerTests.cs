@@ -49,15 +49,15 @@ public class RequestMergerTests
 
     public static IEnumerable<object[]> TypeTestData =>
         [
-            //new object [] { "value" },
-            //new object [] { true },
+            ["value"],
+            [true],
             [new Point(11.1, 12.2)],
         ];
 
     public static IEnumerable<object[]> ValueTestData =>
         [
-            //new object [] { "value", "new_value" },
-            //new object [] { true, false },
+            ["value", "new_value"],
+            [true, false],
             [new Point(11.1, 12.2), new Point(13.3, 14.4)],
         ];
 

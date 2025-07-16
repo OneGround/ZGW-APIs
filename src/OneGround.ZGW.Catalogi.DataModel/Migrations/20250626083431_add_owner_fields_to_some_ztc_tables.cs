@@ -10,8 +10,6 @@ namespace OneGround.ZGW.Catalogi.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterDatabase().Annotation("Npgsql:PostgresExtension:postgis", ",,");
-
             migrationBuilder.AddColumn<string>(
                 name: "owner",
                 table: "zaaktypedeelzaaktypen",

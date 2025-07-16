@@ -25,11 +25,16 @@ public class InformatieObjectAuthorizationTempTableService : IInformatieObjectAu
     {
         await CreateTempTableAsync(drcDbContext, cancellationToken);
 
-        var informatieObjectTypeAuthorizations = authorizationContext.Authorization.Authorizations.Select(a => new TempInformatieObjectAuthorization
-        {
-            MaximumVertrouwelijkheidAanduiding = a.MaximumVertrouwelijkheidAanduiding.Value,
-            InformatieObjectType = a.InformatieObjectType,
-        });
+        var informatieObjectTypeAuthorizations = authorizationContext
+            .Authorization.Authorizations.Where(permission =>
+                permission.InformatieObjectType != null && permission.MaximumVertrouwelijkheidAanduiding.HasValue
+            )
+            .GroupBy(permission => permission.InformatieObjectType)
+            .Select(g => new TempInformatieObjectAuthorization
+            {
+                MaximumVertrouwelijkheidAanduiding = g.Max(a => a.MaximumVertrouwelijkheidAanduiding!.Value),
+                InformatieObjectType = g.Key,
+            });
 
         await drcDbContext.TempInformatieObjectAuthorization.AddRangeAsync(informatieObjectTypeAuthorizations, cancellationToken);
 
@@ -39,12 +44,12 @@ public class InformatieObjectAuthorizationTempTableService : IInformatieObjectAu
     private async Task CreateTempTableAsync(DrcDbContext drcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
-            CREATE TEMPORARY TABLE "{nameof(TempInformatieObjectAuthorization)}" 
+            CREATE TEMPORARY TABLE "{nameof(TempInformatieObjectAuthorization)}"
             (
                "{nameof(TempInformatieObjectAuthorization.InformatieObjectType)}" text NOT NULL,
                "{nameof(TempInformatieObjectAuthorization.MaximumVertrouwelijkheidAanduiding)}" integer NOT NULL,
                PRIMARY KEY ("{nameof(TempInformatieObjectAuthorization.InformatieObjectType)}")
-            ) 
+            )
             """;
         await _temporaryTableProvider.CreateAsync(drcDbContext, sql, cancellationToken);
     }

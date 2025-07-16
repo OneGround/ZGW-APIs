@@ -1,6 +1,7 @@
 ﻿namespace OneGround.ZGW.Common.Authentication;
 
-public sealed record ZgwAuthConfiguration
+public record ZgwAuthConfiguration
 {
-    public string ZgwLegacyAuthProviderUrl { get; init; }
+    public string Authority { get; init; }
+    public string ValidAudience { get; init; }
 }

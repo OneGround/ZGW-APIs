@@ -9,7 +9,7 @@ public static class ZGWSecretManagerExtensions
 {
     public static IServiceCollection AddZGWSecretManager(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<ZgwServiceAccountConfiguration>(configuration.GetSection("ZgwServiceAccountCredentials"));
+        services.Configure<ZgwServiceAccountConfiguration>(configuration.GetSection("ZgwServiceAccounts"));
         return services.AddSingleton<ICachedZGWSecrets, CachedZGWSecrets>();
     }
 }
