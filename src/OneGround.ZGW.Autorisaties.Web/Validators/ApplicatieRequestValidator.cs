@@ -48,6 +48,10 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 
         foreach (var authorization in autorisaties)
         {
+            if (string.IsNullOrEmpty(authorization.Component) || !Enum.TryParse<Component>(authorization.Component, out _))
+            {
+                continue;
+            }
             var isZrcOrDrc =
                 authorization.Component.Equals(Component.zrc.ToString(), StringComparison.OrdinalIgnoreCase)
                 || authorization.Component.Equals(Component.drc.ToString(), StringComparison.OrdinalIgnoreCase);
@@ -59,7 +63,10 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             if (isZrcOrDrc && !accessLevelValid)
             {
                 validatorCtx.AddFailure(
-                    new FluentValidation.Results.ValidationFailure("accessLevel", $"Component '{authorization.Component}' has no valid access level.")
+                    new FluentValidation.Results.ValidationFailure(
+                        "MaxVertrouwelijkheidaanduiding",
+                        $"Component '{authorization.Component}' has no valid access level."
+                    )
                     {
                         ErrorCode = ErrorCode.Invalid,
                     }
@@ -69,7 +76,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             {
                 validatorCtx.AddFailure(
                     new FluentValidation.Results.ValidationFailure(
-                        "accessLevel",
+                        "MaxVertrouwelijkheidaanduiding",
                         $"Component '{authorization.Component}' does not require an access level."
                     )
                     {
@@ -93,7 +100,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
         {
             validatorCtx.AddFailure(
                 new FluentValidation.Results.ValidationFailure(
-                    "scopes",
+                    "Scopes",
                     $"Component '{autorisatiesWithWithScope.Component}': 'scopes' has no elements."
                 )
                 {
@@ -121,7 +128,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
         {
             validatorCtx.AddFailure(
                 new FluentValidation.Results.ValidationFailure(
-                    "component",
+                    "Component",
                     $"Component(s) '{string.Join(", ", moreThanOneComponent)}' defined more than once."
                 )
                 {
@@ -138,7 +145,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             {
                 validatorCtx.AddFailure(
                     new FluentValidation.Results.ValidationFailure(
-                        "scopes",
+                        "Scopes",
                         $"Component '{componentGroup.Key}': Scope(s) '{string.Join(", ", moreThanOneScope)}' defined more than once."
                     )
                     {
