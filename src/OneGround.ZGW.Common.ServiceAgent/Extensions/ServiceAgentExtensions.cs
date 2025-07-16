@@ -1,12 +1,7 @@
 using System;
 using System.Net.Http;
-using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
-using Microsoft.Extensions.Options;
-using OneGround.ZGW.Common.Authentication;
-using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.ServiceAgent.Authentication;
 using OneGround.ZGW.Common.ServiceAgent.Caching;
@@ -15,13 +10,6 @@ using OneGround.ZGW.Common.Services;
 using Polly;
 
 namespace OneGround.ZGW.Common.ServiceAgent.Extensions;
-
-public enum AuthorizationType
-{
-    ServiceAccount,
-    UserAccount,
-    AnonymousClient,
-}
 
 public static class ServiceAgentExtensions
 {
@@ -39,10 +27,9 @@ public static class ServiceAgentExtensions
         var agentImplementationName = typeof(TImplementation).FullName;
 
         services.AddScoped<BatchIdHandler>();
-        RegisterZgwTokenClient(services, configuration);
 
         var httpClient = services
-            .AddHttpClient<TClient, TImplementation>(agentImplementationName)
+            .AddHttpClient<TClient, TImplementation>(agentImplementationName!)
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddHttpMessageHandler<BatchIdHandler>();
 
@@ -68,18 +55,12 @@ public static class ServiceAgentExtensions
 
         if (authorizationType == AuthorizationType.ServiceAccount)
         {
-            httpClient.AddHttpMessageHandler(services =>
-            {
-                return services.GetRequiredService<ServiceAgentAuthenticationHandlerFactory>().Create(serviceRoleName);
-            });
+            httpClient.AddHttpMessageHandler(sp => sp.GetRequiredService<ServiceAgentAuthenticationHandlerFactory>().Create(serviceRoleName));
             services.AddSingleton<ServiceAgentAuthenticationHandlerFactory>();
         }
         else if (authorizationType == AuthorizationType.UserAccount)
         {
-            httpClient.AddHttpMessageHandler(services =>
-            {
-                return services.GetRequiredService<AuthorizedServiceAgentAuthenticationHandlerFactory>().Create();
-            });
+            httpClient.AddHttpMessageHandler(sp => sp.GetRequiredService<AuthorizedServiceAgentAuthenticationHandlerFactory>().Create());
             services.AddSingleton<AuthorizedServiceAgentAuthenticationHandlerFactory>();
             services.AddSingleton<IClientJwtTokenContext, ClientJwtTokenContext>();
         }
@@ -89,9 +70,9 @@ public static class ServiceAgentExtensions
             services.AddSingleton(s =>
             {
                 var serviceEndpoints = s.GetService<IServiceDiscovery>();
-                var configuration = new CachingConfiguration<TClient>(serviceEndpoints);
-                caching(configuration);
-                return configuration;
+                var cachingConfiguration = new CachingConfiguration<TClient>(serviceEndpoints);
+                caching(cachingConfiguration);
+                return cachingConfiguration;
             });
             services.AddTransient<CachingHandler<TClient>>();
             httpClient.AddHttpMessageHandler<CachingHandler<TClient>>();
@@ -100,55 +81,5 @@ public static class ServiceAgentExtensions
         services.AddTransient<CorrelationIdHandler>();
 
         services.AddSingleton<IServiceAgentResponseBuilder, ServiceAgentResponseBuilder>();
-    }
-
-    private static void RegisterZgwTokenClient(IServiceCollection services, IConfiguration configuration)
-    {
-        services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
-        services.AddMemoryCache();
-        services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
-
-        services
-            .AddHttpClient(
-                ServiceRoleName.IDP,
-                (provider, client) =>
-                {
-                    var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
-                    client.BaseAddress = new Uri(authenticationOptions.Value.ZgwLegacyAuthProviderUrl);
-                }
-            )
-            .AddHttpMessageHandler<CorrelationIdHandler>()
-            .AddResilienceHandler(
-                "ZGW-IDP-Token-Resilience",
-                builder =>
-                {
-                    builder.AddRetry(
-                        new HttpRetryStrategyOptions
-                        {
-                            MaxRetryAttempts = 3,
-                            BackoffType = DelayBackoffType.Exponential,
-                            UseJitter = true,
-                            Delay = TimeSpan.FromSeconds(1),
-                        }
-                    );
-                }
-            );
-
-        services.AddSingleton<IZgwAuthDiscoveryCache, ZgwAuthDiscoveryCache>(provider =>
-        {
-            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-            var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
-            var discoveryPolicy = new DiscoveryPolicy { RequireKeySet = false };
-
-            var discoveryCache = new DiscoveryCache(
-                authenticationOptions.Value.ZgwLegacyAuthProviderUrl,
-                () => httpClientFactory.CreateClient(ServiceRoleName.IDP),
-                discoveryPolicy
-            );
-
-            return new ZgwAuthDiscoveryCache(discoveryCache);
-        });
-
-        services.AddTransient<IZgwTokenService, ZgwTokenService>();
     }
 }
