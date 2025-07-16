@@ -210,7 +210,7 @@ function Update-OneGroundCDWorkflowPathsFromCsprojRefs([string]$yamlFilePath, [s
         if ($null -eq $csProjPath) {
             Write-Error "Could not find command line in $($yamlFilePath):$cmdLine. Exiting..."
             Write-Host $GEN_HELP
-            exit 1C:\dev\ZGW_APIs\builds\builds\zgw-autorisaties.docker-build.yml
+            exit 1
         }
 
         if (![System.IO.Path]::IsPathRooted($csProjPath)) {
