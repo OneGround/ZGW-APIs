@@ -33,7 +33,8 @@ public class AcDbContext : BaseDbContext, IDataMigrationsDbContext
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
                 var sortedScopes = entry.Entity.Scopes?.OrderBy(s => s, StringComparer.Ordinal).ToArray();
-                if (!entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
+
+                if (entry.Entity.Scopes == null || !entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
                 {
                     entry.Entity.Scopes = sortedScopes;
                 }
@@ -44,7 +45,8 @@ public class AcDbContext : BaseDbContext, IDataMigrationsDbContext
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
                 var sortedScopes = entry.Entity.Scopes?.OrderBy(s => s, StringComparer.Ordinal).ToArray();
-                if (!entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
+
+                if (entry.Entity.Scopes == null || !entry.Entity.Scopes.SequenceEqual(sortedScopes, StringComparer.Ordinal))
                 {
                     entry.Entity.Scopes = sortedScopes;
                 }
