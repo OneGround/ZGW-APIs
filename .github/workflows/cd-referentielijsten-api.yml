@@ -28,11 +28,17 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'referentielijsten-api'
+      git_tag_name: 'referentielijsten-api'
       major_version: 1
       minor_version: 0
-      docker_file: './src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile'
-      context: '.'
+      services: |
+        [
+          {
+            "service_name": "referentielijsten-api",
+            "docker_file": "./src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile",
+            "context": "."
+          }
+        ]
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

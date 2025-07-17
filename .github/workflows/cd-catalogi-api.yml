@@ -36,11 +36,17 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'catalogi-api'
+      git_tag_name: 'catalogi-api'
       major_version: 1
       minor_version: 3
-      docker_file: './src/OneGround.ZGW.Catalogi.WebApi/Dockerfile'
-      context: '.'
+      services: |
+        [
+          {
+            "service_name": "catalogi-api",
+            "docker_file": "./src/OneGround.ZGW.Catalogi.WebApi/Dockerfile",
+            "context": "."
+          }
+        ]
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

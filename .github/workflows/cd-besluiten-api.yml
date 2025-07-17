@@ -41,11 +41,17 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'besluiten-api'
+      git_tag_name: 'besluiten-api'
       major_version: 1
       minor_version: 0
-      docker_file: './src/OneGround.ZGW.Besluiten.WebApi/Dockerfile'
-      context: '.'
+      services: |
+        [
+          {
+            "service_name": "besluiten-api",
+            "docker_file": "./src/OneGround.ZGW.Besluiten.WebApi/Dockerfile",
+            "context": "."
+          }
+        ]
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

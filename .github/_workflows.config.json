@@ -3,10 +3,8 @@
         ".github/workflows/cd-autorisaties-api.yml",
         ".github/workflows/cd-besluiten-api.yml",
         ".github/workflows/cd-catalogi-api.yml",
-        ".github/workflows/cd-documenten-api.yml",
-        ".github/workflows/cd-documenten-listener.yml",
-        ".github/workflows/cd-notificaties-api.yml",
-        ".github/workflows/cd-notificaties-listener.yml",
+        ".github/workflows/cd-documenten.yml",
+        ".github/workflows/cd-notificaties.yml",
         ".github/workflows/cd-referentielijsten-api.yml",
         ".github/workflows/cd-zaken-api.yml"
     ]

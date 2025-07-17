@@ -35,11 +35,17 @@ jobs:
       contents: write
       packages: write
     with:
-      service_name: 'autorisaties-api'
+      git_tag_name: 'autorisaties-api'
       major_version: 1
       minor_version: 0
-      docker_file: './src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile'
-      context: '.'
+      services: |
+        [
+          {
+            "service_name": "autorisaties-api",
+            "docker_file": "./src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile",
+            "context": "."
+          }
+        ]
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

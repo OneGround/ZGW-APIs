@@ -3,24 +3,20 @@ name: Build and Publish a Docker Image
 on:
   workflow_call:
     inputs:
-      service_name:
-        required: true
-        type: string
-        description: 'Name of the OneGround service'
       major_version:
         required: true
         type: string
       minor_version:
         required: true
         type: string
-      docker_file:
+      git_tag_name:
         required: true
         type: string
-        description: 'Path to the Dockerfile'
-      context:
+        description: 'Tag name for the Docker image'
+      services:
         required: true
         type: string
-        description: 'Docker build context'
+        description: 'A JSON array of service objects. Each object must have "service_name", "docker_file", and "context" keys.'
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -37,6 +33,10 @@ jobs:
     permissions:
       contents: write
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(inputs.services) }}
 
     steps:
       - name: Checkout repository
@@ -64,22 +64,22 @@ jobs:
         shell: pwsh
         run: >-
           ./.github/scripts/Get-NextApplicationVersion.ps1
-          -ServiceName "${{ inputs.service_name }}"
+          -ServiceName "${{ inputs.git_tag_name }}"
           -MajorVersion "${{ inputs.major_version }}"
           -MinorVersion "${{ inputs.minor_version }}"
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image for ${{ matrix.service.name }}
         uses: docker/build-push-action@v6
         with:
-          context: ${{ inputs.context }}
-          file: ${{ inputs.docker_file }}
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.docker_file }}
           push: true
           provenance: false
-          tags: "${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ inputs.service_name }}:${{ steps.get_application_version.outputs.version }}"
+          tags: "${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ matrix.service.service_name }}:${{ steps.get_application_version.outputs.version }}"
 
       - name: Create Git tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${{ inputs.service_name }}@${{ steps.get_application_version.outputs.version }}" -m "Release version ${{ steps.get_application_version.outputs.version }} for ${{ inputs.service_name }}"
-          git push origin "${{ inputs.service_name }}@${{ steps.get_application_version.outputs.version }}"
+          git tag "${{ inputs.git_tag_name }}@${{ steps.get_application_version.outputs.version }}" -m "Release version ${{ steps.get_application_version.outputs.version }}"
+          git push origin "${{ inputs.git_tag_name }}@${{ steps.get_application_version.outputs.version }}"
