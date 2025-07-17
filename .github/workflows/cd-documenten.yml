@@ -44,7 +44,7 @@ on:
 
 jobs:
   build-and-publish-image:
-    uses: ./.github/workflows/templates/cd-build-and-publish-image.yml
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
     permissions:
       contents: write
       packages: write
@@ -70,7 +70,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   update-documenten-apidocker-hub-repository:
-    uses: ./.github/workflows/templates/cd-docker-hub-repository-update.yml
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
       repository_name: 'documenten-api'
       description: 'OneGround implementation of ZGW Documenten API (from Netherlands VNG standard)'
@@ -80,7 +80,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   update-documenten-listener-docker-hub-repository:
-    uses: ./.github/workflows/templates/cd-docker-hub-repository-update.yml
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
       repository_name: 'documenten-listener'
       description: 'OneGround implementation of ZGW Documenten Listener (from Netherlands VNG standard)'

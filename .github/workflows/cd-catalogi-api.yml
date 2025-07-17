@@ -31,7 +31,7 @@ on:
 
 jobs:
   build-and-publish-image:
-    uses: ./.github/workflows/templates/cd-build-and-publish-image.yml
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
     permissions:
       contents: write
       packages: write
@@ -52,7 +52,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   update-docker-hub-repository:
-    uses: ./.github/workflows/templates/cd-docker-hub-repository-update.yml
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
       repository_name: 'catalogi-api'
       description: 'OneGround implementation of ZGW Catalogi API (from Netherlands VNG standard)'
