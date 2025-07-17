@@ -10,7 +10,7 @@ You can retrieve a list of all available tags for OneGround Notificaties Listene
 
 ## About
 
-This is the official container image for the **OneGround Notificaties Listener**. It's an open-source project that implements background listener.
+This is the official container image for the **OneGround Notificaties Listener**. It's an open-source project that implements a background listener.
 
 ## What is OneGround Notificaties Listener?
 
