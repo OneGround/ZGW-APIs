@@ -17,11 +17,6 @@ on:
         required: true
         type: string
         description: 'A JSON array of service objects. Each object must have "service_name", "docker_file", and "context" keys.'
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
 
 env:
   GITHUB_REGISTRY: ghcr.io
