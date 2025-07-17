@@ -1,11 +1,11 @@
-name: Publish Notificaties-Api
+name: Publish Notificaties
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/cd-notificaties-api.yml
+      - .github/workflows/cd-notificaties.yml
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Notificaties.WebApi/ZGW.Notificaties.WebApi.csproj
 ## > src/OneGround.ZGW.Notificaties.Messaging.Listener/ZGW.Notificaties.Messaging.Listener.csproj

@@ -1,11 +1,11 @@
-name: Publish Documenten-Api
+name: Publish Documenten
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/cd-documenten-api.yml
+      - .github/workflows/cd-documenten.yml
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Documenten.WebApi/ZGW.Documenten.WebApi.csproj
 ## > src/OneGround.ZGW.Documenten.Messaging.Listener/ZGW.Documenten.Messaging.Listener.csproj

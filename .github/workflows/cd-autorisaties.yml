@@ -1,23 +1,30 @@
-name: Publish Referentielijsten-Api
+name: Publish Autorisaties
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/cd-referentielijsten-api.yml
+      - .github/workflows/cd-autorisaties.yml
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
-## > src/OneGround.ZGW.Referentielijsten.WebApi/ZGW.Referentielijsten.WebApi.csproj
+## > src/OneGround.ZGW.Autorisaties.WebApi/ZGW.Autorisaties.WebApi.csproj
+      - 'src/OneGround.ZGW.Autorisaties.Common/**'
+      - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
+      - 'src/OneGround.ZGW.Autorisaties.DataModel/**'
+      - 'src/OneGround.ZGW.Autorisaties.Web/**'
+      - 'src/OneGround.ZGW.Autorisaties.WebApi/**'
+      - 'src/OneGround.ZGW.Catalogi.Contracts/**'
+      - 'src/OneGround.ZGW.Catalogi.ServiceAgent/**'
       - 'src/OneGround.ZGW.Common.Abstractions/**'
       - 'src/OneGround.ZGW.Common.Contracts/**'
       - 'src/OneGround.ZGW.Common.DataModel/**'
       - 'src/OneGround.ZGW.Common.Messaging/**'
+      - 'src/OneGround.ZGW.Common.ServiceAgent/**'
       - 'src/OneGround.ZGW.Common.Web/**'
       - 'src/OneGround.ZGW.Common/**'
       - 'src/OneGround.ZGW.DataAccess/**'
-      - 'src/OneGround.ZGW.Referentielijsten.Contracts/**'
-      - 'src/OneGround.ZGW.Referentielijsten.Web/**'
-      - 'src/OneGround.ZGW.Referentielijsten.WebApi/**'
+      - 'src/OneGround.ZGW.Notificaties.Contracts/**'
+      - 'src/OneGround.ZGW.Notificaties.ServiceAgent/**'
 ## END OF GENERATED PATH LIST ##
   workflow_dispatch:
 
@@ -28,14 +35,14 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'referentielijsten'
+      git_tag_name: 'autorisaties'
       major_version: 1
       minor_version: 0
       services: |
         [
           {
-            "service_name": "referentielijsten-api",
-            "docker_file": "./src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile",
+            "service_name": "autorisaties-api",
+            "docker_file": "./src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile",
             "context": "."
           }
         ]
@@ -46,9 +53,9 @@ jobs:
   update-docker-hub-repository:
     uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
-      repository_name: 'referentielijsten-api'
-      description: 'OneGround implementation of ZGW Referentielijsten API (from Netherlands VNG standard)'
-      readme_filepath: './src/OneGround.ZGW.Referentielijsten.WebApi/README.md'
+      repository_name: 'autorisaties-api'
+      description: 'OneGround implementation of ZGW Autorisaties API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Autorisaties.WebApi/README.md'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

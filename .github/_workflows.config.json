@@ -1,11 +1,11 @@
 {
     "AutoGeneratingWorkflowPaths": [
-        ".github/workflows/cd-autorisaties-api.yml",
-        ".github/workflows/cd-besluiten-api.yml",
-        ".github/workflows/cd-catalogi-api.yml",
+        ".github/workflows/cd-autorisaties.yml",
+        ".github/workflows/cd-besluiten.yml",
+        ".github/workflows/cd-catalogi.yml",
         ".github/workflows/cd-documenten.yml",
         ".github/workflows/cd-notificaties.yml",
-        ".github/workflows/cd-referentielijsten-api.yml",
-        ".github/workflows/cd-zaken-api.yml"
+        ".github/workflows/cd-referentielijsten.yml",
+        ".github/workflows/cd-zaken.yml"
     ]
 }
