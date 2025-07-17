@@ -3,6 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>OneGround.ZGW.Catalogi.WebApi</AssemblyName>
     <RootNamespace>OneGround.ZGW.Catalogi.WebApi</RootNamespace>
+    <UserSecretsId>192cd23b-3c21-4c04-9adb-eff935464e4a</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\appsettings.Shared.json">
