@@ -1,9 +1,10 @@
 name: Publish Notificaties-Api
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+      - FUND-1852
     paths:
       - .github/workflows/cd-notificaties-api.yml
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
