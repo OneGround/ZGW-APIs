@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Zaken.DataModel;
