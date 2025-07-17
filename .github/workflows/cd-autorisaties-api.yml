@@ -35,7 +35,7 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'autorisaties-api'
+      git_tag_name: 'autorisaties'
       major_version: 1
       minor_version: 0
       services: |

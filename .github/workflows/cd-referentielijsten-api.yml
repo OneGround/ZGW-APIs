@@ -28,7 +28,7 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'referentielijsten-api'
+      git_tag_name: 'referentielijsten'
       major_version: 1
       minor_version: 0
       services: |

@@ -36,7 +36,7 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'catalogi-api'
+      git_tag_name: 'catalogi'
       major_version: 1
       minor_version: 3
       services: |

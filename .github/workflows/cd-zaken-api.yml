@@ -42,7 +42,7 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'zaken-api'
+      git_tag_name: 'zaken'
       major_version: 1
       minor_version: 5
       services: |

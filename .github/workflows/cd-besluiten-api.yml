@@ -41,7 +41,7 @@ jobs:
       contents: write
       packages: write
     with:
-      git_tag_name: 'besluiten-api'
+      git_tag_name: 'besluiten'
       major_version: 1
       minor_version: 0
       services: |
