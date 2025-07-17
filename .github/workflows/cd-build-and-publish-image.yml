@@ -28,10 +28,34 @@ env:
   ORGANIZATION: oneground
 
 jobs:
+  get-next-application-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_next_application_version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PowerShell
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 7.5.0
+
+      - name: Get next application version
+        id: get_next_application_version
+        shell: pwsh
+        run: >-
+          ./.github/scripts/Get-NextApplicationVersion.ps1
+          -ServiceName "${{ inputs.git_tag_name }}"
+          -MajorVersion "${{ inputs.major_version }}"
+          -MinorVersion "${{ inputs.minor_version }}"
+
   docker-build-push:
+    needs: get-next-application-version
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       packages: write
     strategy:
       fail-fast: false
@@ -54,20 +78,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install PowerShell
-        uses: PSModule/install-powershell@v1
-        with:
-          Version: 7.5.0
-
-      - name: Get next application version
-        id: get_application_version
-        shell: pwsh
-        run: >-
-          ./.github/scripts/Get-NextApplicationVersion.ps1
-          -ServiceName "${{ inputs.git_tag_name }}"
-          -MajorVersion "${{ inputs.major_version }}"
-          -MinorVersion "${{ inputs.minor_version }}"
-
       - name: Build and push Docker image for ${{ matrix.service.name }}
         uses: docker/build-push-action@v6
         with:
@@ -75,11 +85,20 @@ jobs:
           file: ${{ matrix.service.docker_file }}
           push: true
           provenance: false
-          tags: "${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ matrix.service.service_name }}:${{ steps.get_application_version.outputs.version }}"
+          tags: "${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ matrix.service.service_name }}:${{ needs.get-next-application-version.outputs.version }}"
 
-      - name: Create Git tag
+  create_git_tag:
+    needs: [get-next-application-version, docker-build-push]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create and push Git tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${{ inputs.git_tag_name }}@${{ steps.get_application_version.outputs.version }}" -m "Release version ${{ steps.get_application_version.outputs.version }}"
-          git push origin "${{ inputs.git_tag_name }}@${{ steps.get_application_version.outputs.version }}"
+          git tag "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.version }}" -m "Release version ${{ needs.get-next-application-version.outputs.version }}"
+          git push origin "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.version }}"
