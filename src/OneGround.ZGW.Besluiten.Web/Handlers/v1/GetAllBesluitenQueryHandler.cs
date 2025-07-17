@@ -8,13 +8,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.DataModel;
-using OneGround.ZGW.Besluiten.DataModel.Authorization;
 using OneGround.ZGW.Besluiten.Web.Models.v1;
+using OneGround.ZGW.Besluiten.Web.Services;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Besluiten.Web.Handlers.v1;
 
@@ -23,7 +22,7 @@ class GetAllBesluitenQueryHandler
         IRequestHandler<GetAllBesluitenQuery, QueryResult<PagedResult<Besluit>>>
 {
     private readonly BrcDbContext _context;
-    private readonly ITemporaryTableProvider _temporaryTableProvider;
+    private readonly IBesluitAuthorizationTempTableService _besluitAuthorizationTempTableService;
 
     public GetAllBesluitenQueryHandler(
         ILogger<GetAllBesluitenQueryHandler> logger,
@@ -31,12 +30,12 @@ class GetAllBesluitenQueryHandler
         IEntityUriService uriService,
         BrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        ITemporaryTableProvider temporaryTableProvider
+        IBesluitAuthorizationTempTableService besluitAuthorizationTempTableService
     )
         : base(logger, configuration, uriService, authorizationContextAccessor)
     {
         _context = context;
-        _temporaryTableProvider = temporaryTableProvider;
+        _besluitAuthorizationTempTableService = besluitAuthorizationTempTableService;
     }
 
     public async Task<QueryResult<PagedResult<Besluit>>> Handle(GetAllBesluitenQuery request, CancellationToken cancellationToken)
@@ -50,7 +49,11 @@ class GetAllBesluitenQueryHandler
 
         if (!_authorizationContext.Authorization.HasAllAuthorizations)
         {
-            await InsertBesluitAuthorizationsToTempTableAsync(cancellationToken);
+            await _besluitAuthorizationTempTableService.InsertBesluitAuthorizationsToTempTableAsync(
+                _authorizationContext,
+                _context,
+                cancellationToken
+            );
 
             query = query
                 .Join(_context.TempBesluitAuthorization, o => o.BesluitType, i => i.BesluitType, (b, a) => new { Besluit = b, Authorisatie = a })
@@ -77,32 +80,6 @@ class GetAllBesluitenQueryHandler
             && (filter.VerantwoordelijkeOrganisatie == null || z.VerantwoordelijkeOrganisatie == filter.VerantwoordelijkeOrganisatie)
             && (filter.BesluitType == null || z.BesluitType == filter.BesluitType)
             && (filter.Zaak == null || z.Zaak == filter.Zaak);
-    }
-
-    private async Task InsertBesluitAuthorizationsToTempTableAsync(CancellationToken cancellationToken)
-    {
-        await CreateTempTableBesluitAuthorizationAsync(cancellationToken);
-
-        var besluitAuthorizations = _authorizationContext
-            .Authorization.Authorizations.Where(permission => permission.BesluitType != null)
-            .GroupBy(permission => permission.BesluitType)
-            .Select(g => new TempBesluitAuthorization { BesluitType = g.Key });
-
-        await _context.TempBesluitAuthorization.AddRangeAsync(besluitAuthorizations, cancellationToken);
-
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task CreateTempTableBesluitAuthorizationAsync(CancellationToken cancellationToken)
-    {
-        const string sql = $"""
-            CREATE TEMPORARY TABLE "{nameof(TempBesluitAuthorization)}"
-            (
-               "{nameof(TempBesluitAuthorization.BesluitType)}" text NOT NULL,
-               PRIMARY KEY ("{nameof(TempBesluitAuthorization.BesluitType)}")
-            )
-            """;
-        await _temporaryTableProvider.CreateAsync(_context, sql, cancellationToken);
     }
 }
 

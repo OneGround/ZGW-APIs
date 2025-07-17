@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -42,12 +42,13 @@ public class ZaakAuthorizationTempTableService : IZaakAuthorizationTempTableServ
     private async Task CreateTempTableAsync(ZrcDbContext zrcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
+            DROP TABLE IF EXISTS "{nameof(TempZaakAuthorization)}";
             CREATE TEMPORARY TABLE "{nameof(TempZaakAuthorization)}"
             (
                "{nameof(TempZaakAuthorization.ZaakType)}" text NOT NULL,
                "{nameof(TempZaakAuthorization.MaximumVertrouwelijkheidAanduiding)}" integer NOT NULL,
                PRIMARY KEY ("{nameof(TempZaakAuthorization.ZaakType)}")
-            )
+            );
             """;
         await _temporaryTableProvider.CreateAsync(zrcDbContext, sql, cancellationToken);
     }

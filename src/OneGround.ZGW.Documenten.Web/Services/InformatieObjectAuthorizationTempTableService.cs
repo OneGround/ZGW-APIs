@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -44,12 +44,13 @@ public class InformatieObjectAuthorizationTempTableService : IInformatieObjectAu
     private async Task CreateTempTableAsync(DrcDbContext drcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
+            DROP TABLE IF EXISTS "{nameof(TempInformatieObjectAuthorization)}";
             CREATE TEMPORARY TABLE "{nameof(TempInformatieObjectAuthorization)}"
             (
                "{nameof(TempInformatieObjectAuthorization.InformatieObjectType)}" text NOT NULL,
                "{nameof(TempInformatieObjectAuthorization.MaximumVertrouwelijkheidAanduiding)}" integer NOT NULL,
                PRIMARY KEY ("{nameof(TempInformatieObjectAuthorization.InformatieObjectType)}")
-            )
+            );
             """;
         await _temporaryTableProvider.CreateAsync(drcDbContext, sql, cancellationToken);
     }

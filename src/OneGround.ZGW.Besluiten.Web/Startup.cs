@@ -11,6 +11,7 @@ using OneGround.ZGW.Besluiten.Web.BusinessRules;
 using OneGround.ZGW.Besluiten.Web.Controllers;
 using OneGround.ZGW.Besluiten.Web.Expands.v1;
 using OneGround.ZGW.Besluiten.Web.Handlers.v1.EntityUpdaters;
+using OneGround.ZGW.Besluiten.Web.Services;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -125,6 +126,8 @@ public class Startup
         services.AddSingleton<IApiMetaData, ApiMetaData>();
 
         services.AddSingleton<IEntityUpdater<Besluit>, BesluitUpdater>();
+
+        services.AddTransient<IBesluitAuthorizationTempTableService, BesluitAuthorizationTempTableService>();
 
         services.AddCorrelationId();
         services.AddBatchId();
