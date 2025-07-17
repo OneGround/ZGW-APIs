@@ -100,5 +100,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.version }}" -m "Release version ${{ needs.get-next-application-version.outputs.version }}"
+          git tag "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.version }}" -m "Release version ${{ needs.get-next-application-version.outputs.version }} for ${{ inputs.git_tag_name }}"
           git push origin "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.version }}"
