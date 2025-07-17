@@ -1,0 +1,40 @@
+name: CI Validate OneGround Application Workflow Paths
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci-validate-workflow-paths.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci-validate-workflow-paths.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-workflow-paths:
+    name: Validate workflow paths
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install PowerShell
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 7.5.0
+
+      - name: Validate OneGround application CD workflow paths
+        shell: pwsh
+        run: >-
+          ./.github/scripts/Validate-OneGroundCDWorkflowsPaths.ps1
