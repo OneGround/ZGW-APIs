@@ -20,7 +20,7 @@ public class RequestToDomainProfile : Profile
     public RequestToDomainProfile()
     {
         //
-        // 1. Zaak
+        // 1. Map Get all Zaken via query-parameters GetAllZakenQueryParameters to internal GetAllZakenFilter model
 
         CreateMap<GetAllZakenQueryParameters, GetAllZakenFilter>()
             .ForMember(dest => dest.Archiefactiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum)))
@@ -40,6 +40,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Startdatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lt)))
             .ForMember(dest => dest.Startdatum__lte, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lte)))
             .ForMember(dest => dest.Bronorganisatie__in, opt => opt.MapFrom(src => ProfileHelper.ArrayFromString(src.Bronorganisatie__in)))
+            .ForMember(dest => dest.Uuid__in, opt => opt.MapFrom(src => Array.Empty<Guid>()))
+            .ForMember(dest => dest.Zaaktype__in, opt => opt.MapFrom(src => Array.Empty<string>()))
             .ForMember(
                 dest => dest.Archiefactiedatum__isnull,
                 opt => opt.MapFrom(src => ProfileHelper.BooleanFromString(src.Archiefactiedatum__isnull))
@@ -103,25 +105,53 @@ public class RequestToDomainProfile : Profile
                 opt => opt.MapFrom(src => src.Rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie)
             );
 
-        // for zaak geometry search endpoint
+        //
+        // 2. Map POST Zaak (geometry) search ZaakSearchRequestDto to internal GetAllZakenFilter model
+
         CreateMap<ZaakSearchRequestDto, GetAllZakenFilter>()
             .ForMember(dest => dest.Archiefactiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum)))
             .ForMember(dest => dest.Archiefactiedatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__gt)))
             .ForMember(dest => dest.Archiefactiedatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__lt)))
-            .ForMember(
-                dest => dest.Archiefnominatie__in,
-                opt => opt.MapFrom(src => ProfileHelper.EnumArrayFromString<ArchiefNominatie>(src.Archiefnominatie__in))
+            .ForMember(dest => dest.Archiefnominatie__in, opt => opt.MapFrom(src => src.Archiefnominatie__in))
+            .AfterMap(
+                (_, dest) =>
+                {
+                    dest.Archiefnominatie__in ??= Array.Empty<ArchiefNominatie>();
+                }
             )
-            .ForMember(
-                dest => dest.Archiefstatus__in,
-                opt => opt.MapFrom(src => ProfileHelper.EnumArrayFromString<ArchiefStatus>(src.Archiefstatus__in))
+            .ForMember(dest => dest.Archiefstatus__in, opt => opt.MapFrom(src => src.Archiefstatus__in))
+            .AfterMap(
+                (_, dest) =>
+                {
+                    dest.Archiefstatus__in ??= Array.Empty<ArchiefStatus>();
+                }
             )
             .ForMember(dest => dest.Startdatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum)))
             .ForMember(dest => dest.Startdatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__gt)))
             .ForMember(dest => dest.Startdatum__gte, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__gte)))
             .ForMember(dest => dest.Startdatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lt)))
             .ForMember(dest => dest.Startdatum__lte, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lte)))
-            .ForMember(dest => dest.Bronorganisatie__in, opt => opt.MapFrom(src => ProfileHelper.ArrayFromString(src.Bronorganisatie__in)))
+            .ForMember(dest => dest.Bronorganisatie__in, opt => opt.MapFrom(src => src.Bronorganisatie__in))
+            .AfterMap(
+                (_, dest) =>
+                {
+                    dest.Bronorganisatie__in ??= Array.Empty<string>();
+                }
+            )
+            .ForMember(dest => dest.Uuid__in, opt => opt.MapFrom(src => src.Uuid__in))
+            .AfterMap(
+                (_, dest) =>
+                {
+                    dest.Uuid__in ??= Array.Empty<Guid>();
+                }
+            )
+            .ForMember(dest => dest.Zaaktype__in, opt => opt.MapFrom(src => src.Zaaktype__in))
+            .AfterMap(
+                (_, dest) =>
+                {
+                    dest.Zaaktype__in ??= Array.Empty<string>();
+                }
+            )
             .ForMember(dest => dest.Archiefactiedatum__isnull, opt => opt.MapFrom(src => src.Archiefactiedatum__isnull))
             .ForMember(dest => dest.Registratiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Registratiedatum)))
             .ForMember(dest => dest.Registratiedatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Registratiedatum__gt)))

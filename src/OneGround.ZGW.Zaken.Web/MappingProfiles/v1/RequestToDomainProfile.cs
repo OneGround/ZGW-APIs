@@ -21,7 +21,7 @@ public class RequestToDomainProfile : Profile
     public RequestToDomainProfile()
     {
         //
-        // 1. Zaak
+        // 1. Map Get all Zaken via query-parameters GetAllZakenQueryParameters to internal GetAllZakenFilter model
 
         CreateMap<GetAllZakenQueryParameters, GetAllZakenFilter>()
             .ForMember(dest => dest.Archiefactiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum)))
@@ -41,7 +41,9 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Startdatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lt)))
             .ForMember(dest => dest.Startdatum__lte, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Startdatum__lte)));
 
-        // for zaak geometry search endpoint
+        //
+        // 2. Map POST Zaak (geometry) search ZaakSearchRequestDto to internal GetAllZakenFilter model
+
         CreateMap<ZaakSearchRequestDto, GetAllZakenFilter>()
             .ForMember(dest => dest.Archiefactiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum)))
             .ForMember(dest => dest.Archiefactiedatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__gt)))

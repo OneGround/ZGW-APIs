@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Besluiten.Contracts.v1.Queries;
 
-public class GetAllBesluitenQueryParameters : QueryParameters, IExpandQueryParameter
+public class GetAllBesluitenQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
     /// Identificatie van het besluit binnen de organisatie die het besluit heeft vastgesteld. Indien deze niet opgegeven is, dan wordt die gegenereerd.

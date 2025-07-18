@@ -46,7 +46,7 @@ public static class IRuleBuilderExtensions
     }
 
     public static IRuleBuilderOptions<T, string> ExpandsValid<T>(this IRuleBuilder<T, string> ruleBuilder, IEnumerable<string> supportedExpand)
-        where T : IExpandQueryParameter
+        where T : IExpandParameter
     {
         var result = ruleBuilder.Custom(
             (_, b) =>
@@ -59,7 +59,7 @@ public static class IRuleBuilderExtensions
     }
 
     private static void ValidateExpands<T>(ValidationContext<T> validatorCtx, IEnumerable<string> supportedExpand)
-        where T : IExpandQueryParameter
+        where T : IExpandParameter
     {
         if (validatorCtx.InstanceToValidate.Expand != null)
         {

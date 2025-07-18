@@ -11,7 +11,6 @@ public class ZaakSearchRequestValidator : ZGWValidator<ZaakSearchRequestDto>
     public ZaakSearchRequestValidator()
     {
         CascadeRuleFor(r => r.ZaakGeometry)
-            .NotNull()
             .ChildRules(v =>
             {
                 v.CascadeRuleFor(z => z.Within).NotNull();

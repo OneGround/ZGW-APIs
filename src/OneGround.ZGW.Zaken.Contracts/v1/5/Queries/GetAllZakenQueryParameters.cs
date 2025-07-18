@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Zaken.Contracts.v1._5.Queries;
 
-public class GetAllZakenQueryParameters : QueryParameters, IExpandQueryParameter, IZakenSearchableFields
+public class GetAllZakenQueryParameters : QueryParameters, IExpandParameter, IZakenCommonSearchableFields
 {
     /// <summary>
     /// De unieke identificatie van de ZAAK binnen de organisatie die verantwoordelijk is voor de behandeling van de ZAAK.

@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Zaken.Contracts.v1._5.Requests;
 
-public class ZaakSearchRequestDto : IZakenSearchableFields
+public class ZaakSearchRequestDto : IZakenCommonSearchableFields, IExpandParameter
 {
     [JsonProperty("zaakgeometrie")]
     public WithinGeometry ZaakGeometry { get; set; }
+
+    [JsonProperty("uuid__in")]
+    public string[] Uuid__in { get; set; }
 
     [JsonProperty("identificatie")]
     public string Identificatie { get; set; }
@@ -15,17 +19,20 @@ public class ZaakSearchRequestDto : IZakenSearchableFields
     [JsonProperty("bronorganisatie")]
     public string Bronorganisatie { get; set; }
 
-    [FromQuery(Name = "bronorganisatie__in")]
-    public string Bronorganisatie__in { get; set; }
+    [JsonProperty("bronorganisatie__in")]
+    public string[] Bronorganisatie__in { get; set; }
 
     [JsonProperty("zaaktype")]
     public string Zaaktype { get; set; }
+
+    [JsonProperty("zaaktype__in")]
+    public string[] Zaaktype__in { get; set; }
 
     [JsonProperty("archiefnominatie")]
     public string Archiefnominatie { get; set; }
 
     [JsonProperty("archiefnominatie__in")]
-    public string Archiefnominatie__in { get; set; }
+    public string[] Archiefnominatie__in { get; set; }
 
     [JsonProperty("archiefactiedatum")]
     public string Archiefactiedatum { get; set; }
@@ -43,7 +50,7 @@ public class ZaakSearchRequestDto : IZakenSearchableFields
     public string Archiefstatus { get; set; }
 
     [JsonProperty("archiefstatus__in")]
-    public string Archiefstatus__in { get; set; }
+    public string[] Archiefstatus__in { get; set; }
 
     [JsonProperty("startdatum")]
     public string Startdatum { get; set; }
@@ -134,6 +141,12 @@ public class ZaakSearchRequestDto : IZakenSearchableFields
 
     [JsonProperty("rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie")]
     public string Rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie { get; set; }
+
+    [JsonProperty("expand")]
+    public string Expand { get; set; }
+
+    [JsonProperty("ordering")]
+    public string Ordering { get; set; }
 }
 
 public class WithinGeometry

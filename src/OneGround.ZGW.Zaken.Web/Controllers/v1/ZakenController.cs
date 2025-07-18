@@ -203,7 +203,7 @@ public class ZakenController : ZGWControllerBase
             new GetAllZakenQuery
             {
                 GetAllZakenFilter = filter,
-                WithinZaakGeometry = zaakSearchRequest.ZaakGeometry.Within,
+                WithinZaakGeometry = zaakSearchRequest.ZaakGeometry?.Within,
                 Pagination = pagination,
                 Ordering = ordering,
                 SRID = GetSridFromAcceptCrsHeader(),

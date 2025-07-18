@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 
-public class GetAllVerzendingenQueryParameters : QueryParameters, IExpandQueryParameter
+public class GetAllVerzendingenQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
     /// Omschrijving van de aard van de relatie van de BETROKKENE tot het INFORMATIEOBJECT.

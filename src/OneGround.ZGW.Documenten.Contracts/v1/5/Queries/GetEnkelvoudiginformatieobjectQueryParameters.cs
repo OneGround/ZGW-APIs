@@ -17,7 +17,7 @@ public interface IGetEnkelvoudigInformatieObjectQueryParameters
     string RegistratieOp { get; set; }
 }
 
-public class GetEnkelvoudigInformatieObjectQueryParameters : QueryParameters, IGetEnkelvoudigInformatieObjectQueryParameters, IExpandQueryParameter
+public class GetEnkelvoudigInformatieObjectQueryParameters : QueryParameters, IGetEnkelvoudigInformatieObjectQueryParameters, IExpandParameter
 {
     /// <summary>
     /// Het (automatische) versienummer van het INFORMATIEOBJECT.
