@@ -87,6 +87,7 @@ jobs:
           file: ${{ matrix.service.docker_file }}
           push: true
           provenance: false
+          build-args: Version=${{ needs.get-next-application-version.outputs.version }}
           tags: "${{ env.GITHUB_REGISTRY }}/${{ env.ORGANIZATION }}/${{ matrix.service.service_name }}:${{ needs.get-next-application-version.outputs.version }}"
 
   create_git_tag:
