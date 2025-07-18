@@ -1,0 +1,87 @@
+name: Publish Documenten
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/cd-documenten.yml
+## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
+## > src/OneGround.ZGW.Documenten.WebApi/ZGW.Documenten.WebApi.csproj
+## > src/OneGround.ZGW.Documenten.Messaging.Listener/ZGW.Documenten.Messaging.Listener.csproj
+      - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
+      - 'src/OneGround.ZGW.Autorisaties.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Besluiten.Contracts/**'
+      - 'src/OneGround.ZGW.Besluiten.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Catalogi.Contracts/**'
+      - 'src/OneGround.ZGW.Catalogi.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Abstractions/**'
+      - 'src/OneGround.ZGW.Common.Contracts/**'
+      - 'src/OneGround.ZGW.Common.DataModel/**'
+      - 'src/OneGround.ZGW.Common.Messaging/**'
+      - 'src/OneGround.ZGW.Common.MimeTypes/**'
+      - 'src/OneGround.ZGW.Common.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Common.Web/**'
+      - 'src/OneGround.ZGW.Common/**'
+      - 'src/OneGround.ZGW.DataAccess/**'
+      - 'src/OneGround.ZGW.Documenten.Contracts/**'
+      - 'src/OneGround.ZGW.Documenten.DataModel/**'
+      - 'src/OneGround.ZGW.Documenten.Messaging.Contracts/**'
+      - 'src/OneGround.ZGW.Documenten.Messaging.Listener/**'
+      - 'src/OneGround.ZGW.Documenten.Messaging/**'
+      - 'src/OneGround.ZGW.Documenten.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Documenten.Services.Ceph/**'
+      - 'src/OneGround.ZGW.Documenten.Services.FileSystem/**'
+      - 'src/OneGround.ZGW.Documenten.Services/**'
+      - 'src/OneGround.ZGW.Documenten.Web/**'
+      - 'src/OneGround.ZGW.Documenten.WebApi/**'
+      - 'src/OneGround.ZGW.Notificaties.Contracts/**'
+      - 'src/OneGround.ZGW.Notificaties.ServiceAgent/**'
+      - 'src/OneGround.ZGW.Zaken.Contracts/**'
+      - 'src/OneGround.ZGW.Zaken.ServiceAgent/**'
+## END OF GENERATED PATH LIST ##
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-image:
+    uses: ./.github/workflows/cd-build-and-publish-image.yml
+    permissions:
+      contents: write
+      packages: write
+    with:
+      git_tag_name: 'documenten'
+      major_version: 1
+      minor_version: 5
+      services: |
+        [
+          {
+            "service_name": "documenten-api",
+            "docker_file": "./src/OneGround.ZGW.Documenten.WebApi/Dockerfile",
+            "context": "."
+          },
+          {
+            "service_name": "documenten-listener",
+            "docker_file": "./src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile",
+            "context": "."
+          }
+        ]
+
+  update-documenten-apidocker-hub-repository:
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
+    with:
+      repository_name: 'documenten-api'
+      description: 'OneGround implementation of ZGW Documenten API (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Documenten.WebApi/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  update-documenten-listener-docker-hub-repository:
+    uses: ./.github/workflows/cd-docker-hub-repository-update.yml
+    with:
+      repository_name: 'documenten-listener'
+      description: 'OneGround implementation of ZGW Documenten Listener (from Netherlands VNG standard)'
+      readme_filepath: './src/OneGround.ZGW.Documenten.Messaging.Listener/README.md'
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

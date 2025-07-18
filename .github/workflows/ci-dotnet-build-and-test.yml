@@ -1,4 +1,4 @@
-name: .NET Build & Test
+name: CI .NET Build & Test
 
 on:
   push:
@@ -6,13 +6,13 @@ on:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/dotnet-build-and-test.yml'
+      - '.github/workflows/ci-dotnet-build-and-test.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/dotnet-build-and-test.yml'
+      - '.github/workflows/ci-dotnet-build-and-test.yml'
   workflow_dispatch:
 
 jobs:
