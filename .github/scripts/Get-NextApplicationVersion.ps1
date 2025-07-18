@@ -3,14 +3,14 @@
     Calculates the next semantic version number based on existing Git tags.
 .DESCRIPTION
     This script determines the next patch version for a given service and major/minor version.
-    It searches for the highest existing Git tag matching the pattern "ServiceName@Major.Minor.*".
+    It searches for the highest existing Git tag matching the pattern "GitTagName@Major.Minor.*".
 
     If no tags are found, it starts the patch version from the specified PatchVersionStartsFrom number.
     If tags are found, it calculates the next patch version as the greater of either (latest patch + 1) or the PatchVersionStartsFrom number. This allows for starting a new, higher patch number series at any time.
 
     The calculated version is output to the console and to the GITHUB_OUTPUT environment file if it exists.
-.PARAMETER ServiceName
-    The name of the service or component. This is used as a prefix for the Git tag.
+.PARAMETER GitTagName
+    The Git tag name.
 .PARAMETER MajorVersion
     The major version number.
 .PARAMETER MinorVersion
@@ -25,7 +25,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [string]$ServiceName,
+    [string]$GitTagName,
 
     [Parameter(Mandatory=$true)]
     [string]$MajorVersion,
@@ -44,8 +44,7 @@ param(
     [int]$PatchVersionStartsFrom
 )
 
-$tagPrefix = "$($ServiceName)@$($MajorVersion).$($MinorVersion)."
-
+$tagPrefix = "$($GitTagName)@$($MajorVersion).$($MinorVersion)."
 Write-Host "Searching for Git tags with prefix: $($tagPrefix)*"
 
 $latestTag = git tag --list "$($tagPrefix)*" --sort=-v:refname | Select-Object -First 1
@@ -60,10 +59,15 @@ else {
     $patchVersion = [Math]::Max($PatchVersionStartsFrom, ($latestPatchNumber + 1))
 }
 
-$version = "$($MajorVersion).$($MinorVersion).$($patchVersion)"
+$specificVersion = "$($MajorVersion).$($MinorVersion).$($patchVersion)"
+$floatingVersion = "$($MajorVersion).$($MinorVersion)"
 
-Write-Host "Calculated version: $version"
+Write-Host "Specific version: $specificVersion"
+Write-Host "Floating version: $floatingVersion"
 
 if ($env:GITHUB_OUTPUT) {
-    "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    Write-Host "Setting GitHub Actions outputs..."
+    "specific_version=$specificVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    "floating_version=$floatingVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    Write-Host "Outputs set."
 }
