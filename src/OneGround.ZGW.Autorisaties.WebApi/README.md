@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/autorisaties-api:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Autorisaties API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
+The complete list of available versions for the OneGround Autorisaties API is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api/versions).
 
 ## About
 

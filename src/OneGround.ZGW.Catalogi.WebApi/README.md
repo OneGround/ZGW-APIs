@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/catalogi-api:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Catalogi API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
+The complete list of available versions for the OneGround Catalogi API is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/catalogi-api/versions).
 
 ## About
 
