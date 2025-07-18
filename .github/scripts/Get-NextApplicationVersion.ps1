@@ -19,8 +19,8 @@
     The starting number for a patch series. The calculated patch will be at least this number.
     Must be a positive integer that is a multiple of 100 (e.g., 100, 200, 1100).
 .OUTPUTS
-    System.String - The calculated version string is written to the host.
-    If the GITHUB_OUTPUT environment variable is set, the version is also appended to that file in the format "version=x.y.z".
+    - specific_version: The full version string, including the patch number (e.g., "1.2.101").
+    - floating_version: The version string containing only the major and minor numbers (e.g., "1.2").
 #>
 [CmdletBinding()]
 param(
