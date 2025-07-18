@@ -14,11 +14,6 @@ public interface IZakenCommonSearchableFields
     string Bronorganisatie { get; set; }
 
     /// <summary>
-    /// Multiple values may be separated by commas.
-    /// </summary>
-    //string Bronorganisatie__in { get; set; }
-
-    /// <summary>
     /// URL-referentie naar het ZAAKTYPE (in de Catalogi API) in de CATALOGUS waar deze voorkomt.
     /// </summary>
     string Zaaktype { get; set; }
@@ -27,11 +22,6 @@ public interface IZakenCommonSearchableFields
     /// Aanduiding of het zaakdossier blijvend bewaard of na een bepaalde termijn vernietigd moet worden.
     /// </summary>
     string Archiefnominatie { get; set; }
-
-    /// <summary>
-    /// Multiple values may be separated by commas.
-    /// </summary>
-    //string Archiefnominatie__in { get; set; }
 
     /// <summary>
     /// De datum waarop het gearchiveerde zaakdossier vernietigd moet worden dan wel overgebracht moet worden naar een archiefbewaarplaats.
@@ -60,11 +50,6 @@ public interface IZakenCommonSearchableFields
     /// Aanduiding of het zaakdossier blijvend bewaard of na een bepaalde termijn vernietigd moet worden.
     /// </summary>
     string Archiefstatus { get; set; }
-
-    /// <summary>
-    /// Multiple values of Archiefstatus may be separated by commas.
-    /// </summary>
-    //string Archiefstatus__in { get; set; }
 
     /// <summary>
     /// De datum waarop met de uitvoering van de zaak is gestart.
