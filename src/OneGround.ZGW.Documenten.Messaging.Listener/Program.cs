@@ -2,19 +2,16 @@ using Microsoft.Extensions.Hosting;
 using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Documenten.Messaging;
 
-var builder = Host.CreateDefaultBuilder();
-builder.ConfigureZgwListenerHostDefaults(ServiceRoleName.DRC_LISTENER);
+var builder = Host.CreateApplicationBuilder();
+builder.ConfigureHostDefaults(ServiceRoleName.DRC_LISTENER);
 
-builder.ConfigureServices(
-    (hostContext, services) =>
-    {
-        var serviceConfiguration = new ServiceConfiguration(hostContext.Configuration);
-        serviceConfiguration.ConfigureServices(services);
-        services.AddZGWSecretManager(hostContext.Configuration);
-    }
-);
+var serviceConfiguration = new ServiceConfiguration(builder.Configuration);
+serviceConfiguration.ConfigureServices(builder.Services);
+builder.Services.AddZGWSecretManager(builder.Configuration);
+builder.Services.RegisterZgwTokenClient();
 
 var app = builder.Build();
 

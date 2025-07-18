@@ -6,19 +6,14 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Notificaties.Messaging;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 
-var builder = Host.CreateDefaultBuilder();
-builder.ConfigureZgwListenerHostDefaults(ServiceRoleName.NRC_LISTENER);
+var builder = Host.CreateApplicationBuilder();
+builder.ConfigureHostDefaults(ServiceRoleName.NRC_LISTENER);
 
-builder.ConfigureServices(
-    (hostContext, services) =>
-    {
-        var serviceConfiguration = new ServiceConfiguration(hostContext.Configuration);
-        serviceConfiguration.ConfigureServices(services);
+var serviceConfiguration = new ServiceConfiguration(builder.Configuration);
+serviceConfiguration.ConfigureServices(builder.Services);
 
-        services.AddSingleton<INotificationFilterService, NotificationFilterService>();
-        services.AddZGWSecretManager(hostContext.Configuration);
-    }
-);
+builder.Services.AddSingleton<INotificationFilterService, NotificationFilterService>();
+builder.Services.AddZGWSecretManager(builder.Configuration);
 
 var app = builder.Build();
 

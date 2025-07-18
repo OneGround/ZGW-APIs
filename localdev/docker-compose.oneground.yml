@@ -95,6 +95,52 @@ services:
     networks:
       - oneground
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.1
+    restart: unless-stopped
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT=false
+      - KEYCLOAK_LOGLEVEL=debug
+      - KC_DB=postgres
+      - KC_DB_DATABASE=keycloak
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres_docker_db:5432/keycloak?currentSchema=keycloak
+      - KC_HEALTH_ENABLED=true
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { java.net.URI uri = java.net.URI.create(args[0]); System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)uri.toURL().openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:9000/health/ready']
+      interval: 5s
+      timeout: 5s
+      retries: 8
+      start_period: 5s
+    command: ["start-dev"]
+    depends_on:
+      postgres_docker_db:
+        condition: service_healthy
+    networks:
+      - oneground
+    
+
+  keycloak-setup:
+    build:
+      context: keycloak/.
+      dockerfile: KeycloakSetup/Dockerfile
+    environment:
+      Keycloak__BaseUrl: http://keycloak:8080
+      Keycloak__AdminUsername: admin
+      Keycloak__AdminPassword: admin
+      Keycloak__RealmName: OneGround
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - oneground
+
   zgw.autorisaties.webapi:
     build:
       context: ../
@@ -110,6 +156,7 @@ services:
       - ${AC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
@@ -132,6 +179,7 @@ services:
       - ${BRC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_BRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -153,6 +201,7 @@ services:
       - ${ZTC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZTC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -172,9 +221,11 @@ services:
         condition: service_healthy
     env_file: "default.env"
     environment:
+      DOTNET_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+      Eventbus__HostName: rabbit_mq
     networks:
       - oneground
 
@@ -193,6 +244,7 @@ services:
       - ${DRC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -213,10 +265,12 @@ services:
         condition: service_healthy
     env_file: "default.env"
     environment:
+      DOTNET_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
       ConnectionStrings__HangfireConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+      Eventbus__HostName: rabbit_mq
     networks:
       - oneground
 
@@ -235,6 +289,7 @@ services:
       - ${NRC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -249,6 +304,7 @@ services:
       - ${RC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
     networks:
       - oneground
@@ -268,6 +324,7 @@ services:
       - ${ZRC_PORT}:5000
     env_file: "default.env"
     environment:
+      ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://*:5000"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_ZRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"

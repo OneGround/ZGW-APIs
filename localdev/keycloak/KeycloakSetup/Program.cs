@@ -23,7 +23,7 @@ namespace KeycloakSetup
 
             // Add configuration
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            builder.Configuration.AddEnvironmentVariables("KEYCLOAK_");
+            builder.Configuration.AddEnvironmentVariables();
 
             // Configure services
             builder.Services.Configure<KeycloakSettings>(builder.Configuration.GetSection("Keycloak"));
