@@ -1,18 +1,33 @@
 ﻿using System;
-using IdentityModel.AspNetCore.OAuth2Introspection;
+using System.Net.Http;
+using Duende.IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Options;
+using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Configuration;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
+using Polly;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 
 public static class ZGWAuthenticationServiceCollectionExtensions
 {
-    public static void AddZGWAuthentication<TAuthorizationResolver>(this IServiceCollection services, IConfiguration configuration)
+    public static void AddZgwAuthentication<TAuthorizationResolver>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment
+    )
         where TAuthorizationResolver : class, IAuthorizationResolver
     {
+        services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
+
         services.AddSingleton<IAuthorizationContextAccessor, AuthorizationContextAccessor>();
         services.AddScoped<IAuthorizationResolver, TAuthorizationResolver>();
 
@@ -20,18 +35,70 @@ public static class ZGWAuthenticationServiceCollectionExtensions
         services.AddZGWSecretManager(configuration);
 
         services
-            .AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
-            .AddOAuth2Introspection(options =>
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                options.Authority = configuration.GetValue<string>("Auth:ZgwLegacyAuthProviderUrl");
-                options.DiscoveryPolicy.ValidateEndpoints = false;
-                options.DiscoveryPolicy.RequireKeySet = false;
-                options.EnableCaching = true;
-                options.CacheKeyPrefix = "ZGW:TokenIntrospections:";
-                options.CacheDuration = TimeSpan.FromMinutes(5);
+                var authority = configuration.GetValue<string>("Auth:Authority");
+                var audience = configuration.GetValue<string>("Auth:ValidAudience");
+                var requireHttpsMetadata = !hostEnvironment.IsLocal();
+
+                options.Authority = authority;
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = requireHttpsMetadata;
+                options.TokenValidationParameters.ValidIssuer = authority;
+                options.Audience = audience;
             });
 
         services.AddRedisCache();
-        services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName).AddHttpMessageHandler<CorrelationIdHandler>();
+        services.RegisterZgwTokenClient();
+    }
+
+    private static void RegisterZgwTokenClient(this IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
+
+        services
+            .AddHttpClient(
+                ServiceRoleName.IDP,
+                (provider, client) =>
+                {
+                    var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
+                    client.BaseAddress = new Uri(authenticationOptions.Value.Authority);
+                }
+            )
+            .AddHttpMessageHandler<CorrelationIdHandler>()
+            .AddResilienceHandler(
+                "ZGW-IDP-Token-Resilience",
+                builder =>
+                {
+                    builder.AddRetry(
+                        new HttpRetryStrategyOptions
+                        {
+                            MaxRetryAttempts = 3,
+                            BackoffType = DelayBackoffType.Exponential,
+                            UseJitter = true,
+                            Delay = TimeSpan.FromSeconds(1),
+                        }
+                    );
+                }
+            );
+
+        services.AddSingleton<IZgwAuthDiscoveryCache, ZgwAuthDiscoveryCache>(provider =>
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
+            var discoveryPolicy = new DiscoveryPolicy();
+
+            var discoveryCache = new DiscoveryCache(
+                authenticationOptions.Value.Authority,
+                () => httpClientFactory.CreateClient(ServiceRoleName.IDP),
+                discoveryPolicy
+            );
+
+            return new ZgwAuthDiscoveryCache(discoveryCache);
+        });
+
+        services.AddTransient<IZgwTokenService, ZgwTokenService>();
     }
 }

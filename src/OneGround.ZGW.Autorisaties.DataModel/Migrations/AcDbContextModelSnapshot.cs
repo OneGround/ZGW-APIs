@@ -200,6 +200,10 @@ namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
 
                     b.HasIndex("ApplicatieId");
 
+                    b.HasIndex("Component", "MaxVertrouwelijkheidaanduiding", "Scopes", "ApplicatieId", "Owner")
+                        .IsUnique()
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
                     b.ToTable("future_autorisaties");
                 });
 
