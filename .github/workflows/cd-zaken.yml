@@ -45,6 +45,7 @@ jobs:
       git_tag_name: 'zaken'
       major_version: 1
       minor_version: 5
+      patch_version_starts_from: 100
       services: |
         [
           {

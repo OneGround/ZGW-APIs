@@ -6,13 +6,19 @@ on:
       major_version:
         required: true
         type: string
+        description: 'The major version number for the release.'
       minor_version:
         required: true
         type: string
+        description: 'The minor version number for the release.'
+      patch_version_starts_from:
+        required: true
+        type: string
+        description: 'The starting number for the patch version series (e.g., "100", "200"). Must be a multiple of 100.'
       git_tag_name:
         required: true
         type: string
-        description: 'Tag name for the Docker image'
+        description: 'Tag name for the Docker image.'
       services:
         required: true
         type: string
@@ -46,6 +52,7 @@ jobs:
           -ServiceName "${{ inputs.git_tag_name }}"
           -MajorVersion "${{ inputs.major_version }}"
           -MinorVersion "${{ inputs.minor_version }}"
+          -PatchVersionStartsFrom "${{ inputs.patch_version_starts_from }}"
 
   docker-build-push:
     needs: get-next-application-version

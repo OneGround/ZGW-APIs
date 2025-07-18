@@ -5,8 +5,8 @@
     This script determines the next patch version for a given service and major/minor version.
     It searches for the highest existing Git tag matching the pattern "ServiceName@Major.Minor.*".
 
-    If no tags are found, it starts the patch version from the specified PatchStart number.
-    If tags are found, it calculates the next patch version as the greater of either (latest patch + 1) or the PatchStart number. This allows for starting a new, higher patch number series at any time.
+    If no tags are found, it starts the patch version from the specified PatchVersionStartsFrom number.
+    If tags are found, it calculates the next patch version as the greater of either (latest patch + 1) or the PatchVersionStartsFrom number. This allows for starting a new, higher patch number series at any time.
 
     The calculated version is output to the console and to the GITHUB_OUTPUT environment file if it exists.
 .PARAMETER ServiceName
@@ -15,7 +15,7 @@
     The major version number.
 .PARAMETER MinorVersion
     The minor version number.
-.PARAMETER PatchStart
+.PARAMETER PatchVersionStartsFrom
     The starting number for a patch series. The calculated patch will be at least this number.
     Must be a positive integer that is a multiple of 100 (e.g., 100, 200, 1100).
 .OUTPUTS
@@ -38,10 +38,10 @@ param(
         if ($_ -ge 100 -and $_ % 100 -eq 0) {
             return $true
         } else {
-            throw "PatchStart must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
+            throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
         }
     })]
-    [int]$PatchStart
+    [int]$PatchVersionStartsFrom
 )
 
 $tagPrefix = "$($ServiceName)@$($MajorVersion).$($MinorVersion)."
@@ -51,13 +51,13 @@ Write-Host "Searching for Git tags with prefix: $($tagPrefix)*"
 $latestTag = git tag --list "$($tagPrefix)*" --sort=-v:refname | Select-Object -First 1
 
 if ($null -eq $latestTag) {
-    Write-Host "No existing tags found. Starting patch version from $PatchStart."
-    $patchVersion = $PatchStart
+    Write-Host "No existing tags found. Starting patch version from $PatchVersionStartsFrom."
+    $patchVersion = $PatchVersionStartsFrom
 }
 else {
     Write-Host "Latest overall tag found: $latestTag"
     $latestPatchNumber = [int]$latestTag.Split('.')[-1]
-    $patchVersion = [Math]::Max($PatchStart, ($latestPatchNumber + 1))
+    $patchVersion = [Math]::Max($PatchVersionStartsFrom, ($latestPatchNumber + 1))
 }
 
 $version = "$($MajorVersion).$($MinorVersion).$($patchVersion)"

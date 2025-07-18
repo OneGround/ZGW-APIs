@@ -39,6 +39,7 @@ jobs:
       git_tag_name: 'catalogi'
       major_version: 1
       minor_version: 3
+      patch_version_starts_from: 100
       services: |
         [
           {

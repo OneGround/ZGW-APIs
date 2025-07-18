@@ -43,6 +43,7 @@ jobs:
       git_tag_name: 'notificaties'
       major_version: 1
       minor_version: 0
+      patch_version_starts_from: 100
       services: |
         [
           {
@@ -56,7 +57,7 @@ jobs:
             "context": "."
           }
         ]
-    
+
   update-notificaties-api-docker-hub-repository:
     uses: ./.github/workflows/cd-docker-hub-repository-update.yml
     with:
