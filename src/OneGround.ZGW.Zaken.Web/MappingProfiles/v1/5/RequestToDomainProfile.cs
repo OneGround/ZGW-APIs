@@ -152,13 +152,7 @@ public class RequestToDomainProfile : Profile
                     dest.Zaaktype__in ??= Array.Empty<string>();
                 }
             )
-            .ForMember(dest => dest.Archiefnominatie__in, opt => opt.MapFrom(src => src.Archiefnominatie__in))
-            .AfterMap(
-                (_, dest) =>
-                {
-                    dest.Archiefnominatie__in ??= Array.Empty<ArchiefNominatie>();
-                }
-            )
+// Removed duplicate mapping for Archiefnominatie__in
             .ForMember(dest => dest.Archiefactiedatum__isnull, opt => opt.MapFrom(src => src.Archiefactiedatum__isnull))
             .ForMember(dest => dest.Registratiedatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Registratiedatum)))
             .ForMember(dest => dest.Registratiedatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Registratiedatum__gt)))
