@@ -1,6 +1,6 @@
 namespace OneGround.ZGW.Zaken.Contracts.v1._5;
 
-public interface IZakenSearchableFields
+public interface IZakenCommonSearchableFields
 {
     /// <summary>
     /// De unieke identificatie van de ZAAK binnen de organisatie die verantwoordelijk is voor de behandeling van de ZAAK.
@@ -16,7 +16,7 @@ public interface IZakenSearchableFields
     /// <summary>
     /// Multiple values may be separated by commas.
     /// </summary>
-    string Bronorganisatie__in { get; set; }
+    //string Bronorganisatie__in { get; set; }
 
     /// <summary>
     /// URL-referentie naar het ZAAKTYPE (in de Catalogi API) in de CATALOGUS waar deze voorkomt.
@@ -31,7 +31,7 @@ public interface IZakenSearchableFields
     /// <summary>
     /// Multiple values may be separated by commas.
     /// </summary>
-    string Archiefnominatie__in { get; set; }
+    //string Archiefnominatie__in { get; set; }
 
     /// <summary>
     /// De datum waarop het gearchiveerde zaakdossier vernietigd moet worden dan wel overgebracht moet worden naar een archiefbewaarplaats.
@@ -64,7 +64,7 @@ public interface IZakenSearchableFields
     /// <summary>
     /// Multiple values of Archiefstatus may be separated by commas.
     /// </summary>
-    string Archiefstatus__in { get; set; }
+    //string Archiefstatus__in { get; set; }
 
     /// <summary>
     /// De datum waarop met de uitvoering van de zaak is gestart.

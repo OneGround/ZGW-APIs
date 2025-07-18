@@ -6,9 +6,9 @@ using OneGround.ZGW.Zaken.DataModel;
 
 namespace OneGround.ZGW.Zaken.Web.Validators.v1._5;
 
-public class ZakenSearchValidator : ZGWValidator<IZakenSearchableFields>
+public class ZakenCommonSearchableFields : ZGWValidator<IZakenCommonSearchableFields>
 {
-    public ZakenSearchValidator()
+    public ZakenCommonSearchableFields()
     {
         CascadeRuleFor(p => p.Bronorganisatie).IsRsin(required: false);
         CascadeRuleFor(p => p.Zaaktype).IsUri();
@@ -22,11 +22,8 @@ public class ZakenSearchValidator : ZGWValidator<IZakenSearchableFields>
         CascadeRuleFor(p => p.Startdatum__gt).IsDate(false);
         CascadeRuleFor(p => p.Startdatum__lte).IsDate(false);
         CascadeRuleFor(p => p.Startdatum__lt).IsDate(false);
-        CascadeRuleForEach(p => TryList(p.Archiefnominatie__in)).IsEnumName(typeof(ArchiefNominatie)).WithName("archiefnominatie__in");
         CascadeRuleFor(p => p.Archiefactiedatum__lt).IsDate(false);
         CascadeRuleFor(p => p.Archiefactiedatum__gt).IsDate(false);
-        CascadeRuleForEach(p => TryList(p.Archiefstatus__in)).IsEnumName(typeof(ArchiefStatus)).WithName("archiefstatus__in");
-        CascadeRuleForEach(p => TryList(p.Bronorganisatie__in)).IsRsin().WithName("bronorganisatie__in");
         CascadeRuleFor(p => p.Archiefactiedatum__isnull).IsBoolean();
         CascadeRuleFor(p => p.Registratiedatum).IsDate(false);
         CascadeRuleFor(p => p.Registratiedatum__gt).IsDate(false);

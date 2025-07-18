@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1.Queries;
 
-public class GetAllObjectInformatieObjectenQueryParameters : QueryParameters, IExpandQueryParameter
+public class GetAllObjectInformatieObjectenQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
     /// URL-referentie naar het gerelateerde OBJECT (in deze of een andere API).

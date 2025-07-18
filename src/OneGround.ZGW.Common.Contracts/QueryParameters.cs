@@ -5,11 +5,6 @@ namespace OneGround.ZGW.Common.Contracts;
 
 public interface IQueryParameters { }
 
-public interface IExpandQueryParameter : IQueryParameters
-{
-    public string Expand { get; set; }
-}
-
 public abstract class QueryParameters : IQueryParameters
 {
     public override string ToString()

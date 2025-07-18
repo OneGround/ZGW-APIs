@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 
-public class GetAllEnkelvoudigInformatieObjectenQueryParameters : QueryParameters, IExpandQueryParameter
+public class GetAllEnkelvoudigInformatieObjectenQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
     /// Het RSIN van de Niet-natuurlijk persoon zijnde de organisatie die het informatieobject heeft gecreëerd of heeft ontvangen en als eerste in een samenwerkingsketen heeft vastgelegd.

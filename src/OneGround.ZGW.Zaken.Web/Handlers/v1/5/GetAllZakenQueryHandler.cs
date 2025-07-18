@@ -67,7 +67,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
                 .Select(z => z.Zaak);
         }
 
-        var totalCount = await GetTotalCountCachedAsync(query, request.GetAllZakenFilter, cancellationToken);
+        var totalCount = await GetTotalCountCachedAsync(query, request.GetAllZakenFilter, request.WithinZaakGeometry, cancellationToken);
 
         var pagedResult = await query
             .Include(z => z.Hoofdzaak)
@@ -114,10 +114,22 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         return z => zaakGeometry == null || EF.Functions.Transform(z.Zaakgeometrie, srid).Within(zaakGeometry);
     }
 
-    private async Task<int> GetTotalCountCachedAsync(IQueryable<Zaak> query, GetAllZakenFilter filter, CancellationToken cancellationToken)
+    private async Task<int> GetTotalCountCachedAsync(
+        IQueryable<Zaak> query,
+        GetAllZakenFilter filter,
+        Geometry geometrie,
+        CancellationToken cancellationToken
+    )
     {
-        // Create a key for the current request+ClientId (uri contains the query-parameters as well)
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllZakenFilter = filter });
+        // Create a key for the current request+ClientId (uri contains the query-parameters/geo as well)
+        var key = ObjectHasher.ComputeSha1Hash(
+            new
+            {
+                ClientId = _rsin,
+                GetAllZakenFilter = filter,
+                Geometrie = geometrie?.ToString(),
+            }
+        );
 
         // Note: Cache the Count from SQL for 1 minute
         int totalCount = await _cache.GetAsync(
@@ -156,6 +168,8 @@ internal static class IQueryableExtension
             .WhereIf(filter.Archiefactiedatum__gt != null, z => z.Archiefactiedatum > filter.Archiefactiedatum__gt)
             .WhereIf(filter.Archiefactiedatum__lt != null, z => z.Archiefactiedatum < filter.Archiefactiedatum__lt)
             .WhereIf(filter.Zaaktype != null, z => z.Zaaktype == filter.Zaaktype)
+            .WhereIf(filter.Uuid__in.Any(), z => filter.Uuid__in.Contains(z.Id))
+            .WhereIf(filter.Zaaktype__in.Any(), z => filter.Zaaktype__in.Contains(z.Zaaktype))
             .WhereIf(filter.Bronorganisatie__in.Any(), z => filter.Bronorganisatie__in.Contains(z.Bronorganisatie))
             .WhereIf(
                 filter.Archiefactiedatum__isnull.HasValue,

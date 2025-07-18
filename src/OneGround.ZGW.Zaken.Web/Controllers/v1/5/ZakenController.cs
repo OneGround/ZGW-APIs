@@ -155,14 +155,9 @@ public class ZakenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakResponseDto>))]
     [RequiresAcceptCrs]
     [Expand]
-    public async Task<IActionResult> SearchAsync(
-        [FromBody] ZaakSearchRequestDto zaakSearchRequest,
-        [FromQuery] SearchZakenQueryParameters queryParameters,
-        int page = 1,
-        string ordering = null
-    )
+    public async Task<IActionResult> SearchAsync([FromBody] ZaakSearchRequestDto zaakSearchRequest, int page = 1)
     {
-        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Page}, {Ordering}", nameof(SearchAsync), zaakSearchRequest, page, ordering);
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Page}", nameof(SearchAsync), zaakSearchRequest, page);
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZakenPageSize));
         var filter = _mapper.Map<GetAllZakenFilter>(zaakSearchRequest);
@@ -171,9 +166,9 @@ public class ZakenController : ZGWControllerBase
             new GetAllZakenQuery
             {
                 GetAllZakenFilter = filter,
-                WithinZaakGeometry = zaakSearchRequest.ZaakGeometry.Within,
+                WithinZaakGeometry = zaakSearchRequest.ZaakGeometry?.Within,
                 Pagination = pagination,
-                Ordering = ordering,
+                Ordering = zaakSearchRequest.Ordering,
                 SRID = GetSridFromAcceptCrsHeader(),
             }
         );
@@ -185,7 +180,7 @@ public class ZakenController : ZGWControllerBase
 
         var zakenResponse = _mapper.Map<List<ZaakResponseDto>>(result.Result.PageResult);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
+        var expandLookup = ExpandLookup(zaakSearchRequest.Expand);
 
         var zakenWithOptionalExpand = zakenResponse.Select(z => _expander.ResolveAsync(expandLookup, z).Result).ToList();
 

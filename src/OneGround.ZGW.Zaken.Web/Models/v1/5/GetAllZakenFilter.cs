@@ -7,6 +7,8 @@ namespace OneGround.ZGW.Zaken.Web.Models.v1._5;
 
 public class GetAllZakenFilter
 {
+    public IList<Guid> Uuid__in { get; set; }
+    public IList<string> Zaaktype__in { get; set; }
     public string Identificatie { get; set; }
     public string Bronorganisatie { get; set; }
     public string Zaaktype { get; set; }
