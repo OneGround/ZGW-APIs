@@ -13,9 +13,9 @@ namespace OneGround.ZGW.Common.Logging;
 
 public static class SerilogConfig
 {
-    public static IHostBuilder UseAndConfigureSerilog(this IHostBuilder builder, string serviceRoleName, string logFileName)
+    public static IHostApplicationBuilder UseAndConfigureSerilog(this IHostApplicationBuilder builder, string serviceRoleName, string logFileName)
     {
-        builder.UseSerilog(
+        builder.Services.AddSerilog(
             (ctx, config) =>
             {
                 var versionString = Assembly.GetAssembly(typeof(SerilogConfig))?.GetName().Version?.ToString();
@@ -23,7 +23,7 @@ public static class SerilogConfig
                 var outputTemplate = "[{Timestamp:HH:mm:ss.fff} {CorrelationId} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
                 var logConfig = config
-                    .ReadFrom.Configuration(ctx.Configuration)
+                    .ReadFrom.Configuration(builder.Configuration)
                     .Enrich.FromLogContext()
                     .Enrich.WithMachineName()
                     .Enrich.WithProperty("assembly_version", versionString)
@@ -41,7 +41,7 @@ public static class SerilogConfig
                     .Destructure.With(new GeometryDeconstructingPolicy())
                     .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate);
 
-                if (!ctx.HostingEnvironment.IsLocal() && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                if (!builder.Environment.IsLocal() && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     var logPath = $"/var/log/app/{logFileName}";
 
