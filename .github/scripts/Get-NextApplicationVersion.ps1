@@ -22,6 +22,20 @@
     - specific_version: The full version string, including the patch number (e.g., "1.2.101").
     - floating_version: The version string containing only the major and minor numbers (e.g., "1.2").
 #>
+
+function Validate-PatchVersionStartsFrom {
+    param(
+        [int]$PatchVersion
+    )
+
+    if ($PatchVersion -ge 100 -and $PatchVersion % 100 -eq 0) {
+        return $true
+    }
+    else {
+        throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
+    }
+}
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -64,17 +78,4 @@ if ($env:GITHUB_OUTPUT) {
     "specific_version=$specificVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     "floating_version=$floatingVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     Write-Host "Outputs set."
-}
-
-function Validate-PatchVersionStartsFrom {
-    param(
-        [int]$PatchVersion
-    )
-
-    if ($PatchVersion -ge 100 -and $PatchVersion % 100 -eq 0) {
-        return $true
-    }
-    else {
-        throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
-    }
 }
