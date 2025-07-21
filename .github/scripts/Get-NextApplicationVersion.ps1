@@ -34,13 +34,7 @@ param(
     [string]$MinorVersion,
 
     [Parameter(Mandatory=$true)]
-    [ValidateScript({
-        if ($_ -ge 100 -and $_ % 100 -eq 0) {
-            return $true
-        } else {
-            throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
-        }
-    })]
+    [ValidateScript({ Validate-PatchVersionStartsFrom($_) })]
     [int]$PatchVersionStartsFrom
 )
 
@@ -70,4 +64,17 @@ if ($env:GITHUB_OUTPUT) {
     "specific_version=$specificVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     "floating_version=$floatingVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     Write-Host "Outputs set."
+}
+
+function Validate-PatchVersionStartsFrom {
+    param(
+        [int]$PatchVersion
+    )
+
+    if ($PatchVersion -ge 100 -and $PatchVersion % 100 -eq 0) {
+        return $true
+    }
+    else {
+        throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
+    }
 }
