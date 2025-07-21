@@ -50,10 +50,9 @@ public static class ZGWAuthenticationServiceCollectionExtensions
             });
 
         services.AddRedisCache();
-        services.RegisterZgwTokenClient();
     }
 
-    private static void RegisterZgwTokenClient(this IServiceCollection services)
+    public static void RegisterZgwTokenClient(this IServiceCollection services)
     {
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();

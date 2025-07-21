@@ -8,6 +8,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE nrc_db;
     CREATE DATABASE zrc_db;
     CREATE DATABASE ztc_db;
+    CREATE DATABASE keycloak;
 EOSQL
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "ac_db" <<-EOSQL
@@ -35,6 +36,12 @@ EOSQL
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "ztc_db" <<-EOSQL
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO postgres;
+EOSQL
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "keycloak" <<-EOSQL
+    CREATE SCHEMA keycloak AUTHORIZATION postgres;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA keycloak GRANT USAGE ON SEQUENCES TO postgres;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA keycloak GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO postgres;
 EOSQL
 
 # Replication

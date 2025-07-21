@@ -7,32 +7,27 @@ namespace OneGround.ZGW.Common.Configuration;
 
 public static class ConfigurationBuilderExtensions
 {
-    public static IHostBuilder SetConfigurationProviders(this IHostBuilder hostBuilder)
+    public static IHostApplicationBuilder SetConfigurationProviders(this IHostApplicationBuilder builder)
     {
-        hostBuilder.ConfigureAppConfiguration(
-            (ctx, config) =>
-            {
-                //Some configuration files are pre-loaded so clear it first
-                config.Sources.Clear();
+        //Some configuration files are pre-loaded so clear it first
+        builder.Configuration.Sources.Clear();
 
-                config.AddSharedAppSettings(ctx.HostingEnvironment);
+        builder.Configuration.AddSharedAppSettings(builder.Environment);
 
-                config
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                    .AddJsonFile($"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+        builder
+            .Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-                if (ctx.HostingEnvironment.IsLocal())
-                {
-                    config.AddUserSecrets(Assembly.GetEntryAssembly());
-                }
+        if (builder.Environment.IsLocal())
+        {
+            builder.Configuration.AddUserSecrets(Assembly.GetEntryAssembly());
+        }
 
-                config.AddEnvironmentVariables();
-            }
-        );
-        return hostBuilder;
+        builder.Configuration.AddEnvironmentVariables();
+        return builder;
     }
 
-    private static void AddSharedAppSettings(this IConfigurationBuilder configurationBuilder, IHostEnvironment hostEnvironment)
+    private static void AddSharedAppSettings(this IConfigurationManager configurationBuilder, IHostEnvironment hostEnvironment)
     {
         // load appsettings.Shared.json from the output folder in debug mode (IDE)
         // Since it is a (shared) linked file, and .net reads appsettings files directly from the source working folder,

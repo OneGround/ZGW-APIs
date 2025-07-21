@@ -11,6 +11,8 @@ builder.ConfigureZgwWebHostDefaults(ServiceRoleName.AC);
 var startup = new Startup(builder.Configuration);
 
 builder.Services.AddZgwAuthentication<DbContextAuthorizationResolver>(builder.Configuration, builder.Environment);
+builder.Services.RegisterZgwTokenClient();
+
 startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
