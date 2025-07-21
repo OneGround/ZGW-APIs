@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using OneGround.ZGW.Catalogi.DataModel;
 namespace OneGround.ZGW.Catalogi.DataModel.Migrations
 {
     [DbContext(typeof(ZtcDbContext))]
-    partial class ZtcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250721132600_make_column_informatieobjectcategorie_not_null")]
+    partial class make_column_informatieobjectcategorie_not_null
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
