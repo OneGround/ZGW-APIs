@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/notificaties-listener:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Notificaties Listener in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
+The complete list of available versions for the OneGround Notificaties Listener is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/notificaties-listener/versions).
 
 ## About
 

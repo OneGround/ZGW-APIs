@@ -6,7 +6,7 @@
  docker pull ghcr.io/oneground/besluiten-api:<version>
  ```
 
-You can retrieve a list of all available tags for OneGround Besluiten API in our [GitHub tags](https://github.com/OneGround/ZGW-APIs/tags).
+The complete list of available versions for the OneGround Besluiten API is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/besluiten-api/versions).
 
 ## About
 

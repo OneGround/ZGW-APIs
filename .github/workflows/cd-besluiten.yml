@@ -44,6 +44,7 @@ jobs:
       git_tag_name: 'besluiten'
       major_version: 1
       minor_version: 0
+      patch_version_starts_from: 100
       services: |
         [
           {
