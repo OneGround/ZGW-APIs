@@ -32,7 +32,8 @@ jobs:
   get-next-application-version:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_next_application_version.outputs.version }}
+      specific_version: ${{ steps.get_next_application_version.outputs.specific_version }}
+      floating_version: ${{ steps.get_next_application_version.outputs.floating_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
