@@ -23,19 +23,6 @@
     - floating_version: The version string containing only the major and minor numbers (e.g., "1.2").
 #>
 
-function Validate-PatchVersionStartsFrom {
-    param(
-        [int]$PatchVersion
-    )
-
-    if ($PatchVersion -ge 100 -and $PatchVersion % 100 -eq 0) {
-        return $true
-    }
-    else {
-        throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
-    }
-}
-
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -48,7 +35,13 @@ param(
     [string]$MinorVersion,
 
     [Parameter(Mandatory=$true)]
-    [ValidateScript({ Validate-PatchVersionStartsFrom($_) })]
+    [ValidateScript({
+        if ($_ -ge 100 -and $_ % 100 -eq 0) {
+            return $true
+        } else {
+            throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)"
+        }
+    })]
     [int]$PatchVersionStartsFrom
 )
 
