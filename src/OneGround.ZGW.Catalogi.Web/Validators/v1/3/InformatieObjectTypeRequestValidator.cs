@@ -16,7 +16,7 @@ public class InformatieObjectTypeRequestValidator : ZGWValidator<InformatieObjec
         CascadeRuleFor(r => r.EindeGeldigheid).IsDate(false);
         CascadeRuleFor(r => r.BeginObject).IsDate(false);
         CascadeRuleFor(r => r.EindeObject).IsDate(false);
-        CascadeRuleFor(r => r.InformatieObjectCategorie).MaximumLength(80);
+        CascadeRuleFor(r => r.InformatieObjectCategorie).NotNull().NotEmpty().MaximumLength(80);
         CascadeRuleFor(r => r.Trefwoord).ForEach(r => r.MaximumLength(30));
         CascadeRuleFor(z => z.OmschrijvingGeneriek)
             .ChildRules(validator =>

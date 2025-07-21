@@ -59,6 +59,8 @@ public class InformatieObjectType : OwnedEntity, IAuditableEntity, IConceptEntit
     [Column("eindeObject")]
     public DateOnly? EindeObject { get; set; }
 
+    [Required]
+    [MaxLength(80)]
     [Column("informatieobjectcategorie")]
     public string InformatieObjectCategorie { get; set; }
 
