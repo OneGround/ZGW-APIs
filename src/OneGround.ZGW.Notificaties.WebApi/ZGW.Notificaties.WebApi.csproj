@@ -12,7 +12,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging\ZGW.Documenten.Messaging.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
