@@ -39,7 +39,7 @@ param(
         if ($_ -ge 100 -and $_ % 100 -eq 0) {
             return $true
         } else {
-            throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)."
+            throw "PatchVersionStartsFrom must be a multiple of 100 and greater than or equal to 100 (e.g., 100, 200, 300)"
         }
     })]
     [int]$PatchVersionStartsFrom
