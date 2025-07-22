@@ -5,14 +5,12 @@
     - [Postgres](#postgres)
     - [RabbitMQ](#rabbitmq)
   - [Docker hosted ZGW APIs](#docker-hosted-zgw-apis)
-    - [Generate a new SSL certificate](#generate-a-new-ssl-certificate)
+    - [Start and stop ZGW APIs](#start-and-stop-zgw-apis)
     - [Install the SSL certificate](#install-the-ssl-certificate)
     - [For Windows Users (PowerShell)](#for-windows-users-powershell)
     - [For macOS and Linux Users (Bash)](#for-macos-and-linux-users-bash)
     - [Verification](#verification)
     - [Update hosts file with those lines](#update-hosts-file-with-those-lines)
-    - [Start ZGW APIs](#start-zgw-apis)
-    - [Stop ZGW APIs](#stop-zgw-apis)
     - [HaProxy status page](#haproxy-status-page)
     - [Zaken Api](#zaken-api)
     - [Documenten Api](#documenten-api)
@@ -48,21 +46,27 @@ database(s): zrc_db
 
 ## Docker hosted ZGW APIs
 
-### Generate a new SSL certificate
+### Start and stop ZGW APIs
 
-From localdev folder, run the following command to build the certificate generator and create the certificates:
+- Run command from localdev folder to start:
 
-```txt
-docker-compose -f .\docker-compose.oneground-certificates.yml  up --build --remove-orphans
-```
+    ```bash
+    docker compose --project-directory .\ --env-file .\.env -f docker-compose.oneground.yml up -d
+    ```
 
-Upon successful completion, you will find a new folder named `oneground-certificates` inside `localdev` containing the following files:
+- Run command from localdev folder to stop:
+
+    ```bash
+    docker compose --project-directory .\ -f docker-compose.oneground.yml down
+    ```
+
+### Install the SSL certificate
+
+Upon successful start, you will find a new folder named `oneground-certificates` inside `localdev` containing the following files:
 
 - `oneground.local.pem` - The public certificate
 - `oneground.local.key` - The private key
 - `oneground.local.combined.pem` - A combination of the key and certificate
-
-### Install the SSL certificate
 
 To make your browser and system trust the generated certificate, you need to install it into your system's trust store.
 
@@ -126,23 +130,6 @@ After installation, it is recommended to restart your web browser.
 127.0.0.1 autorisaties.oneground.local
 127.0.0.1 referentielijsten.oneground.local
 127.0.0.1 haproxy.oneground.local
-127.0.0.1 rabbitmq.oneground.local
-```
-
-### Start ZGW APIs
-
-Run command from localdev folder
-
-```txt
-docker compose --project-directory .\ --env-file .\.env -f docker-compose.oneground.yml up -d
-```
-
-### Stop ZGW APIs
-
-Run command from localdev folder
-
-```txt
-docker compose --project-directory .\ -f docker-compose.oneground.yml down
 ```
 
 ### HaProxy status page

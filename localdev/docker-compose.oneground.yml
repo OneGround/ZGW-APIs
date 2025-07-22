@@ -1,4 +1,14 @@
+name: oneground-local
+
 services:
+  oneground-certificates-generator:
+    build:
+      context: ./oneground-certificates-generator
+      dockerfile: Dockerfile
+    image: oneground-certificates-generator
+    volumes:
+      - ./oneground-certificates:/certs
+
   haproxy:
     image: haproxy:2.2-alpine
     ports:
@@ -6,12 +16,14 @@ services:
       - 443:443
     volumes:
       - ./haproxy/haproxy-localstack.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./oneground-certificates/oneground.local.combined.pem:/etc/ssl/certs/oneground.local.combined.pem:ro
+      - ./oneground-certificates:/etc/ssl/certs:ro
     restart: unless-stopped
+    depends_on:
+      oneground-certificates-generator:
+        condition: service_completed_successfully
     networks:
       oneground:
         aliases:
-          - ${EVENTBUS_HOST}
           - ${NRC_HOST}
           - ${ZTC_HOST}
           - ${ZRC_HOST}
@@ -124,7 +136,6 @@ services:
         condition: service_healthy
     networks:
       - oneground
-    
 
   keycloak-setup:
     build:
@@ -157,7 +168,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
+      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
