@@ -166,9 +166,12 @@ services:
     ports:
       - ${AC_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
+    volumes:
+    - ./oneground-services-data/ac-data:/app/data
     environment:
       ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"
+      Application__ApplyFixturesAtStartup: true
+      SeedData__Applicaties: "/app/data/applicaties.json"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
