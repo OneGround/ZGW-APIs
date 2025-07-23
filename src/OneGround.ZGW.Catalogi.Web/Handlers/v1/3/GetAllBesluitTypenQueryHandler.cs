@@ -61,13 +61,13 @@ class GetAllBesluitTypenQueryHandler
         var datumGeldigheid = request.GetAllBesluitTypenFilter.DatumGeldigheid.GetValueOrDefault(DateOnly.FromDateTime(DateTime.Today));
 
         // Resolve soft BesluitType-Zaaktype relations with the current version within geldigheid
-        await ResolveBesluitTypeZaakTypeRelations(pagedResult, datumGeldigheid, request.GetAllBesluitTypenFilter.Status, cancellationToken);
+        await ResolveBesluitTypeZaakTypeRelations(pagedResult, datumGeldigheid, cancellationToken);
 
         // Resolve soft BesluitType-InformatieObject relations with the current version within geldigheid
         await ResolveBesluitTypeInformatieObjectTypeRelations(rsinFilter, pagedResult, datumGeldigheid, cancellationToken);
 
         // Resolve soft BesluitType-Resultaattype relations with the current version within geldigheid
-        await ResolveBesluitTypeResultaatTypeRelations(pagedResult, datumGeldigheid, request.GetAllBesluitTypenFilter.Status, cancellationToken);
+        await ResolveBesluitTypeResultaatTypeRelations(pagedResult, datumGeldigheid, cancellationToken);
 
         var result = new PagedResult<BesluitType> { PageResult = pagedResult, Count = totalCount };
 
@@ -77,7 +77,6 @@ class GetAllBesluitTypenQueryHandler
     private async Task ResolveBesluitTypeZaakTypeRelations(
         List<BesluitType> pagedResult,
         DateOnly datumGeldigheid,
-        ConceptStatus status,
         CancellationToken cancellationToken
     )
     {
@@ -88,7 +87,7 @@ class GetAllBesluitTypenQueryHandler
                 .Where(rsinZaakTypeFilter)
                 .Join(_context.ZaakTypeBesluitTypen, o => o.Id, i => i.ZaakTypeId, (z, a) => new { ZaakType = z, a.BesluitTypeOmschrijving })
                 .Join(
-                    _context.BesluitTypen.Where(b => status != ConceptStatus.definitief || !b.Concept),
+                    _context.BesluitTypen.Where(b => !b.Concept),
                     k => k.BesluitTypeOmschrijving,
                     i => i.Omschrijving,
                     (z, b) => new { ZaakType = z, BesluitType = b }
@@ -189,7 +188,6 @@ class GetAllBesluitTypenQueryHandler
     private async Task ResolveBesluitTypeResultaatTypeRelations(
         List<BesluitType> pagedResult,
         DateOnly datumGeldigheid,
-        ConceptStatus status,
         CancellationToken cancellationToken
     )
     {
@@ -205,7 +203,7 @@ class GetAllBesluitTypenQueryHandler
                     (z, a) => new { ResultaatType = z, a.BesluitTypeOmschrijving }
                 )
                 .Join(
-                    _context.BesluitTypen.Where(b => status != ConceptStatus.definitief || !b.Concept),
+                    _context.BesluitTypen.Where(b => !b.Concept),
                     k => k.BesluitTypeOmschrijving,
                     i => i.Omschrijving,
                     (z, b) => new { ResultaatType = z, BesluitType = b }

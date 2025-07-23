@@ -64,10 +64,10 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
         var datumGeldigheid = filter.DatumGeldigheid.GetValueOrDefault(DateOnly.FromDateTime(DateTime.Today));
 
         // Resolve soft InformatieObjectType-BesluitType relations with the current version within geldigheid
-        await ResolveInformatieObjectTypeBesluitTypeRelations(pagedResult, datumGeldigheid, filter.Status, cancellationToken);
+        await ResolveInformatieObjectTypeBesluitTypeRelations(pagedResult, datumGeldigheid, cancellationToken);
 
         // Resolve soft InformatieObjectType-ZaakType relations with the current version within geldigheid
-        await ResolveInformatieObjectTypeZaakTypeRelations(pagedResult, datumGeldigheid, filter.Status, cancellationToken);
+        await ResolveInformatieObjectTypeZaakTypeRelations(pagedResult, datumGeldigheid, cancellationToken);
 
         var result = new PagedResult<InformatieObjectType> { PageResult = pagedResult, Count = totalCount };
 
@@ -108,7 +108,6 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
     private async Task ResolveInformatieObjectTypeBesluitTypeRelations(
         List<InformatieObjectType> pagedResult,
         DateOnly datumGeldigheid,
-        ConceptStatus status,
         CancellationToken cancellationToken
     )
     {
@@ -119,7 +118,7 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
             await _context
                 .BesluitTypeInformatieObjectTypen.Include(b => b.BesluitType)
                 .Where(rsinFilter)
-                .Where(b => status != ConceptStatus.definitief || !b.BesluitType.Concept)
+                .Where(b => !b.BesluitType.Concept)
                 .Where(b =>
                     datumGeldigheid >= b.BesluitType.BeginGeldigheid
                     && (b.BesluitType.EindeGeldigheid == null || datumGeldigheid <= b.BesluitType.EindeGeldigheid)
@@ -144,7 +143,6 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
     private async Task ResolveInformatieObjectTypeZaakTypeRelations(
         List<InformatieObjectType> pagedResult,
         DateOnly datumGeldigheid,
-        ConceptStatus status,
         CancellationToken cancellationToken
     )
     {
@@ -155,7 +153,7 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
             await _context
                 .ZaakTypeInformatieObjectTypen.Include(z => z.ZaakType)
                 .Where(rsinFilter)
-                .Where(z => status != ConceptStatus.definitief || !z.ZaakType.Concept)
+                .Where(z => !z.ZaakType.Concept)
                 .Where(z =>
                     datumGeldigheid >= z.ZaakType.BeginGeldigheid
                     && (z.ZaakType.EindeGeldigheid == null || datumGeldigheid <= z.ZaakType.EindeGeldigheid)
