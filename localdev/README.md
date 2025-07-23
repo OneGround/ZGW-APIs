@@ -163,7 +163,7 @@ Follow these two steps to get a Bearer token for the API.
 
 #### Step 2: Update Environment and Restart Services
 
-After getting your `oneground-client-secret-from-keycloak`, you need to add it to your project's environment file and restart your services for the change to take effect.
+After getting your `oneground-client-secret`, you need to add it to your project's environment file and restart your services for the change to take effect.
 
 1. Update Your `default.env` File
    - Open the `default.env` file located in the localdev folder and replace its placeholder value with the secret you copied from Keycloak:
