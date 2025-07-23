@@ -35,19 +35,17 @@ public static class ZGWAuthenticationServiceCollectionExtensions
         services.AddZGWSecretManager(configuration);
 
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+            .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<ZgwAuthConfiguration>>((o, s) =>
             {
-                var authority = configuration.GetValue<string>("Auth:Authority");
-                var audience = configuration.GetValue<string>("Auth:ValidAudience");
-                var validIssuer = configuration.GetValue<string>("Auth:ValidIssuer");
+                var authConfig = s.Value;
                 var requireHttpsMetadata = !hostEnvironment.IsLocal();
 
-                options.Authority = authority;
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = requireHttpsMetadata;
-                options.TokenValidationParameters.ValidIssuer = validIssuer;
-                options.Audience = audience;
+                o.Authority = authConfig.Authority;
+                o.SaveToken = true;
+                o.RequireHttpsMetadata = requireHttpsMetadata;
+                o.TokenValidationParameters.ValidIssuer = authConfig.ValidIssuer;
+                o.Audience = authConfig.ValidAudience;
             });
 
         services.AddRedisCache();
