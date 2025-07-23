@@ -40,12 +40,13 @@ public static class ZGWAuthenticationServiceCollectionExtensions
             {
                 var authority = configuration.GetValue<string>("Auth:Authority");
                 var audience = configuration.GetValue<string>("Auth:ValidAudience");
+                var validIssuer = configuration.GetValue<string>("Auth:ValidIssuer");
                 var requireHttpsMetadata = !hostEnvironment.IsLocal();
 
                 options.Authority = authority;
                 options.SaveToken = true;
                 options.RequireHttpsMetadata = requireHttpsMetadata;
-                options.TokenValidationParameters.ValidIssuer = authority;
+                options.TokenValidationParameters.ValidIssuer = validIssuer;
                 options.Audience = audience;
             });
 
