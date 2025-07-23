@@ -28,11 +28,15 @@ public class EnrichedLoggingMiddleware
         _diagnosticContext.Set("ClientId", clientId);
         _diagnosticContext.Set("UserId", userId);
         _diagnosticContext.Set("User", user);
+        _diagnosticContext.Set("RequestHost", context.Request.Host.Value);
+        _diagnosticContext.Set("RequestScheme", context.Request.Scheme);
 
         using var logRsin = LogContext.PushProperty("RSIN", rsin);
         using var logClientId = LogContext.PushProperty("ClientId", clientId);
         using var logUserId = LogContext.PushProperty("UserId", userId);
         using var logUser = LogContext.PushProperty("User", user);
+        using var logHost = LogContext.PushProperty("RequestHost", context.Request.Host.Value);
+        using var logSchema = LogContext.PushProperty("RequestScheme", context.Request.Scheme);
 
         await _next(context);
     }
