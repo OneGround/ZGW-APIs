@@ -38,7 +38,6 @@ public class BesluitAuthorizationTempTableService : IBesluitAuthorizationTempTab
     private async Task CreateTempTableAsync(BrcDbContext brcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
-            DROP TABLE IF EXISTS "{nameof(TempBesluitAuthorization)}";
             CREATE TEMPORARY TABLE "{nameof(TempBesluitAuthorization)}"
             (
                "{nameof(TempBesluitAuthorization.BesluitType)}" text NOT NULL,

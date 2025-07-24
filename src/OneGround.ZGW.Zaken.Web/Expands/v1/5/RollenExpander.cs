@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Caching;
@@ -14,19 +16,19 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
 
 public class RollenExpander : IObjectExpander<string>
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IGenericCache<RolTypeResponseDto> _roltypeCache;
 
     public RollenExpander(
-        IMediator mediator,
+        IServiceProvider serviceProvider,
         IMapper mapper,
         ICatalogiServiceAgent catalogiServiceAgent,
         IGenericCache<RolTypeResponseDto> roltypeCache
     )
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _mapper = mapper;
         _catalogiServiceAgent = catalogiServiceAgent;
         _roltypeCache = roltypeCache;
@@ -38,7 +40,10 @@ public class RollenExpander : IObjectExpander<string>
     {
         object error = null;
 
-        var result = _mediator
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetService<IMediator>();
+
+        var result = mediator
             .Send(
                 new GetAllZaakRolQuery
                 {

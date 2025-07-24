@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
@@ -11,14 +13,19 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
 
 public class EigenschappenExpander : IObjectExpander<string>
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IEntityUriService _uriService;
 
-    public EigenschappenExpander(IMediator mediator, IMapper mapper, ICatalogiServiceAgent catalogiServiceAgent, IEntityUriService uriService)
+    public EigenschappenExpander(
+        IServiceProvider serviceProvider,
+        IMapper mapper,
+        ICatalogiServiceAgent catalogiServiceAgent,
+        IEntityUriService uriService
+    )
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _mapper = mapper;
         _catalogiServiceAgent = catalogiServiceAgent;
         _uriService = uriService;
@@ -30,7 +37,10 @@ public class EigenschappenExpander : IObjectExpander<string>
     {
         object error = null;
 
-        var result = _mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = _uriService.GetId(zaakUrl) }).Result;
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetService<IMediator>();
+
+        var result = mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = _uriService.GetId(zaakUrl) }).Result;
 
         if (result.Status != QueryStatus.OK)
         {

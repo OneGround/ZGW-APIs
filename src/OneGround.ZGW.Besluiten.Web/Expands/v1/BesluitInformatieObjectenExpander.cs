@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.Web.Handlers.v1;
 using OneGround.ZGW.Besluiten.Web.Models.v1;
@@ -15,19 +17,19 @@ namespace OneGround.ZGW.Besluiten.Web.Expands.v1;
 
 public class BesluitInformatieObjectenExpander : IObjectExpander<string>
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly IGenericCache<object> _informatieobjectResponseCache;
 
     public BesluitInformatieObjectenExpander(
-        IMediator mediator,
+        IServiceProvider serviceProvider,
         IMapper mapper,
         IUserAuthDocumentenServiceAgent documentenServiceAgent,
         IGenericCache<object> informatieobjectResponseCache
     )
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _mapper = mapper;
         _documentenServiceAgent = documentenServiceAgent;
         _informatieobjectResponseCache = informatieobjectResponseCache;
@@ -39,8 +41,11 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
     {
         object error = null;
 
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetService<IMediator>();
+
         // Get all besluit-informatieobjecten
-        var result = _mediator
+        var result = mediator
             .Send(
                 new GetAllBesluitInformatieObjectenQuery
                 {
