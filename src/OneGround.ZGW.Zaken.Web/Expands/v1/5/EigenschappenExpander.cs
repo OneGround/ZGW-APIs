@@ -38,9 +38,9 @@ public class EigenschappenExpander : IObjectExpander<string>
         object error = null;
 
         using var scope = _serviceProvider.CreateScope();
-        var mediator = scope.ServiceProvider.GetService<IMediator>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        var result = mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = _uriService.GetId(zaakUrl) }).Result;
+        var result = await mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = _uriService.GetId(zaakUrl) });
 
         if (result.Status != QueryStatus.OK)
         {

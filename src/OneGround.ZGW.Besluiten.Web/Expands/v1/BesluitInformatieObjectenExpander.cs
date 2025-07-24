@@ -42,7 +42,7 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
         object error = null;
 
         using var scope = _serviceProvider.CreateScope();
-        var mediator = scope.ServiceProvider.GetService<IMediator>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         // Get all besluit-informatieobjecten
         var result = mediator

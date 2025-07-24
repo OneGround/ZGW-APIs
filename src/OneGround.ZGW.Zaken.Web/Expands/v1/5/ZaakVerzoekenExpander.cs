@@ -28,7 +28,7 @@ public class ZaakVerzoekenExpander : IObjectExpander<string>
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
         using var scope = _serviceProvider.CreateScope();
-        var mediator = scope.ServiceProvider.GetService<IMediator>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         var result = await mediator.Send(
             new GetAllZaakVerzoekenQuery
