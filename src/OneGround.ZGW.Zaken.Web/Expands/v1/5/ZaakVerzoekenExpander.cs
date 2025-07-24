@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
@@ -12,12 +14,12 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
 
 public class ZaakVerzoekenExpander : IObjectExpander<string>
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
 
-    public ZaakVerzoekenExpander(IMediator mediator, IMapper mapper)
+    public ZaakVerzoekenExpander(IServiceProvider serviceProvider, IMapper mapper)
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _mapper = mapper;
     }
 
@@ -25,7 +27,10 @@ public class ZaakVerzoekenExpander : IObjectExpander<string>
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
-        var result = await _mediator.Send(
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        var result = await mediator.Send(
             new GetAllZaakVerzoekenQuery
             {
                 GetAllZaakVerzoekenFilter = new GetAllZaakVerzoekenFilter
