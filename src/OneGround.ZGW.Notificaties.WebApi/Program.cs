@@ -11,7 +11,7 @@ builder.ConfigureZgwWebHostDefaults(ServiceRoleName.NRC);
 var startup = new Startup(builder.Configuration);
 
 builder.Services.AddZgwAuthentication<AutorisatiesServiceAgentAuthorizationResolver>(builder.Configuration, builder.Environment);
-builder.Services.RegisterZgwTokenClient(builder.Environment);
+builder.Services.RegisterZgwTokenClient(builder.Configuration, builder.Environment);
 
 startup.ConfigureServices(builder.Services);
 

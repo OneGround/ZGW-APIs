@@ -11,7 +11,7 @@ builder.ConfigureHostDefaults(ServiceRoleName.DRC_LISTENER);
 var serviceConfiguration = new ServiceConfiguration(builder.Configuration);
 serviceConfiguration.ConfigureServices(builder.Services);
 builder.Services.AddZGWSecretManager(builder.Configuration);
-builder.Services.RegisterZgwTokenClient(builder.Environment);
+builder.Services.RegisterZgwTokenClient(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 

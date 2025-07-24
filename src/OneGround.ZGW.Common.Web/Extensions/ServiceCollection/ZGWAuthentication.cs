@@ -58,8 +58,10 @@ public static class ZGWAuthenticationServiceCollectionExtensions
         services.AddRedisCache();
     }
 
-    public static void RegisterZgwTokenClient(this IServiceCollection services, IHostEnvironment hostEnvironment)
+    public static void RegisterZgwTokenClient(this IServiceCollection services, IConfiguration configuration, IHostEnvironment hostEnvironment)
     {
+        services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
+
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
 
