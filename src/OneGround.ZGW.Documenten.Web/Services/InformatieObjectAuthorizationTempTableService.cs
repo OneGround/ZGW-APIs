@@ -44,7 +44,6 @@ public class InformatieObjectAuthorizationTempTableService : IInformatieObjectAu
     private async Task CreateTempTableAsync(DrcDbContext drcDbContext, CancellationToken cancellationToken)
     {
         const string sql = $"""
-            DROP TABLE IF EXISTS "{nameof(TempInformatieObjectAuthorization)}";
             CREATE TEMPORARY TABLE "{nameof(TempInformatieObjectAuthorization)}"
             (
                "{nameof(TempInformatieObjectAuthorization.InformatieObjectType)}" text NOT NULL,

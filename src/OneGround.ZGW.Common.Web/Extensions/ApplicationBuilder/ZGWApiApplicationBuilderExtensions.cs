@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using OneGround.ZGW.Common.Configuration;
@@ -16,7 +16,12 @@ public static class ZGWApiApplicationBuilderExtensions
         Action<IApplicationBuilder> registerMiddleware = null
     )
     {
-        app.UseSerilogRequestLogging();
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = "HTTP {RequestScheme}://{RequestHost}{RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+            options.IncludeQueryInRequestPath = true;
+        });
+
         app.UseForwardedHeaders();
         app.UseMiddleware<ApiVersionMiddleware>();
 

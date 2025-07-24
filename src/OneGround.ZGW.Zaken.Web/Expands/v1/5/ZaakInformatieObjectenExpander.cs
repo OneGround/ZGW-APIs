@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
@@ -14,19 +16,19 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
 
 public class ZaakInformatieObjectenExpander : IObjectExpander<string>
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly IGenericCache<object> _informatieobjectResponseCache; // Note: The informatieobjecten comes from DRC (which had expanded repsonse as well)
 
     public ZaakInformatieObjectenExpander(
-        IMediator mediator,
+        IServiceProvider serviceProvider,
         IMapper mapper,
         IUserAuthDocumentenServiceAgent documentenServiceAgent,
         IGenericCache<object> informatieobjectResponseCache
     )
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _mapper = mapper;
         _documentenServiceAgent = documentenServiceAgent;
         _informatieobjectResponseCache = informatieobjectResponseCache;
@@ -38,8 +40,11 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
     {
         object error = null;
 
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
         // Get all zaak-informatieobjecten
-        var result = _mediator
+        var result = mediator
             .Send(
                 new GetAllZaakInformatieObjectenQuery
                 {
