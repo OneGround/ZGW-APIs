@@ -1,0 +1,19 @@
+[
+    {
+        "Id": "15DD2316-823D-49F4-84C5-DE45382A315B",
+        "Label": "OneGround API",
+        "HeeftAlleAutorisaties": true,
+        "CreationTime": "2025-01-01T08:00:00Z",
+        "CreatedBy": "data-seed",
+        "Owner": "000000000",
+        "ClientIds": [
+            {
+                "Id": "397FFECE-768C-4491-B44A-A66FBA55C494",
+                "ApplicatieId": "15DD2316-823D-49F4-84C5-DE45382A315B",
+                "ClientId": "oneground-000000000",
+                "CreationTime": "2025-01-01T08:00:00Z",
+                "CreatedBy": "data-seed"
+            }
+        ]
+    }
+]

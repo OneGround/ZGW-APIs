@@ -169,7 +169,7 @@ After getting your `oneground-client-secret`, you need to add it to your project
    - Open the `default.env` file located in the localdev folder and replace its placeholder value with the secret you copied from Keycloak:
 
         ```text
-        ZgwServiceAccounts__Credentials__ClientSecret=<oneground-client-secret>
+        ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
         ```
 
 2. Restart you Docker Containers
