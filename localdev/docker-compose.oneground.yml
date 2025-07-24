@@ -3,7 +3,7 @@ name: oneground-local
 services:
   oneground-certificates-generator:
     build:
-      context: ./oneground-certificates-generator
+      context: ../tools/oneground-certificates-generator
       dockerfile: Dockerfile
     image: oneground-certificates-generator
     volumes:

@@ -3,7 +3,7 @@ name: oneground-getting-started
 services:
   oneground-certificates-generator:
     build:
-      context: ../../localdev/oneground-certificates-generator
+      context: ../../tools/oneground-certificates-generator
       dockerfile: Dockerfile
     image: oneground-certificates-generator
     volumes:
