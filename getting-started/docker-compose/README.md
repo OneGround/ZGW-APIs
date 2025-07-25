@@ -184,7 +184,18 @@ Now you can exchange the client credentials for a temporary access token. Use th
 - Open Windows PowerShell and execute this command:
 
     ```powershell
-    $response = Invoke-WebRequest -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" -Method POST -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
+    # Assign the web request result to the $response variable
+    $response = Invoke-WebRequest `
+        -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
+        -Method POST `
+        -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} `
+        -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
+    ```
+
+- Then take an access token from `$response`
+
+    ```powershell
+    # Display the content of the response
     $response.Content
     ```
 
