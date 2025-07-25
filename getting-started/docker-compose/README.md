@@ -143,7 +143,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 #### Step 5.1: Get the Client Secret from Keycloak
 
-1. Navigate to the Keycloak admin console: `http://localhost:8080/admin/master/console/#/OneGround/`
+1. Navigate to the Keycloak admin console: [http://localhost:8080/admin/master/console/#/OneGround/](http://localhost:8080/admin/master/console/#/OneGround/)
 2. Log in using the credentials:
    - **Username**: `admin`
    - **Password**: `admin`
@@ -155,8 +155,13 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 #### Step 5.2: Update Environment File and Restart Services
 
-1. Return to the `ZGW-APIs-main/getting-started/docker-compose` directory in your terminal.
-2. Open the `.env` file in a text editor.
+1. Return to the `ZGW-APIs-main/getting-started/docker-compose` directory in your terminal:
+
+    ```bash
+    cd ZGW-APIs-main/getting-started/docker-compose
+    ```
+
+2. Open the [ZGW-APIs-main/getting-started/docker-compose/.env](./.env) file in a text editor.
 3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
    ```text
@@ -164,7 +169,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
    ```
 
 4. Save the `.env` file.
-5. Restart the Docker containers to apply the new configuration.
+5. Restart the Docker containers to apply the new configuration:
 
    ```bash
    docker compose --project-directory . --env-file ./.env -f docker-compose.oneground-packages.yml up -d
@@ -176,20 +181,24 @@ Now you can exchange the client credentials for a temporary access token. Use th
 
 ##### For Windows (PowerShell)
 
-```powershell
-$response = Invoke-WebRequest -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" -Method POST -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
-$response.Content
-```
+- Open Windows Powershell and execute this command:
+
+    ```powershell
+    $response = Invoke-WebRequest -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" -Method POST -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
+    $response.Content
+    ```
 
 ##### For Linux, macOS, or WSL (cURL)
 
-```bash
-curl --location --request POST 'http://localhost:8080/realms/OneGround/protocol/openid-connect/token' \
---header 'Content-Type: application/x-www-form-urlencoded' \
---data-urlencode 'grant_type=client_credentials' \
---data-urlencode 'client_id=oneground-000000000' \
---data-urlencode 'client_secret=<oneground-client-secret>'
-```
+- Open terminal and execute this command:
+
+    ```bash
+    curl --location --request POST 'http://localhost:8080/realms/OneGround/protocol/openid-connect/token' \
+    --header 'Content-Type: application/x-www-form-urlencoded' \
+    --data-urlencode 'grant_type=client_credentials' \
+    --data-urlencode 'client_id=oneground-000000000' \
+    --data-urlencode 'client_secret=<oneground-client-secret>'
+    ```
 
 You will receive a JSON response containing the `access_token`. You can now use this token as a `Bearer` token to authorize your API requests.
 
