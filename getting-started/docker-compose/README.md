@@ -1,69 +1,66 @@
-# Docker Hosted OneGround Services
+# OneGround ZGW APIs: Docker Compose Setup
 
-## About This Setup
+## About This Guide
 
-This guide walks you through launching a complete, local demonstration of the OneGround ZGW APIs using the provided **Docker Compose** setup. The goal is to get you up and running quickly so you can explore the entire suite of services.
+This guide provides instructions for launching a complete, local demonstration of the OneGround ZGW APIs using the provided **Docker Compose** setup. The goal is to get you up and running quickly so you can explore the entire suite of services.
 
 This setup includes:
 
-- All core ZGW API services running in containers
-- HAProxy for routing services to friendly local domains
-- Keycloak for authentication, pre-configured for the services
-- Scripts to automatically generate and install a local SSL certificate
+* All core ZGW API services running in Docker containers.
+* HAProxy for routing services to user-friendly local domain names.
+* Keycloak for authentication, pre-configured for the services.
+* Scripts to automatically generate and install a local SSL certificate.
 
-Follow the instructions below to launch the stack and interact with the live APIs.
+Follow the instructions below to launch the stack, authenticate, and interact with the live APIs.
 
 ## Prerequisites
 
-- [GIT](https://github.com/git-guides/install-git)
-- [Docker Engine](https://docs.docker.com/engine/install/) (Desktop or Server)
-- [Docker Compose](https://docs.docker.com/compose/install/) (sometimes comes bundled with Docker Engine)
+Before you begin, ensure you have the following software installed:
 
-## Getting started
+* [GIT](https://github.com/git-guides/install-git)
+* [Docker Engine](https://docs.docker.com/engine/install/) (Desktop or Server)
+* [Docker Compose](https://docs.docker.com/compose/install/) (This is often included with Docker Desktop)
 
-### Clone the repository
+## Getting Started
 
-1. Clone the respository:
+### 1. Clone the Repository
 
-    ```bash
-    git clone https://github.com/OneGround/ZGW-APIs.git
-    ```
-
-2. Open directory:
-
-    ```bash
-    cd ZGW_APIs\getting-started\docker-compose
-    ```
-
-### Start ZGW APIs
-
-Run command from `docker-compose` directory to start:
+First, clone the repository to your local machine and navigate into the `docker-compose` directory.
 
 ```bash
-docker compose --project-directory .\ --env-file .\.env -f docker-compose.oneground-packages.yml up -d
+# Clone the repository
+git clone [https://github.com/OneGround/ZGW-APIs.git](https://github.com/OneGround/ZGW-APIs.git)
+
+# Navigate to the docker-compose directory
+cd ZGW-APIs/getting-started/docker-compose
 ```
 
-### Install the SSL Certificate
+### 2. Start the ZGW API Services
 
-Upon successful ZGW APIs start, you will find a new folder named `oneground-certificates` inside `docker-compose` containing the following files:
+From the `docker-compose` directory, run the following command to start all the required services in the background.
 
-- `oneground.local.pem` - The public certificate
-- `oneground.local.key` - The private key
-- `oneground.local.combined.pem` - A combination of the key and certificate
+```bash
+docker compose --project-directory . --env-file ./.env -f docker-compose.oneground-packages.yml up -d
+```
 
-To make your browser and system trust the generated certificate, you need to install it into your system's trust store.
+### 3. Install the Local SSL Certificate
 
-#### For Windows Users (PowerShell)
+For your browser to trust the local services, you need to install the generated SSL certificate. After the services start, a new folder named `oneground-certificates` will appear in your current directory. This folder should contain those files:
 
-1. **Open PowerShell with Administrator privileges.**
-    - Click the Start menu.
-    - Type "PowerShell".
-    - Right-click on "Windows PowerShell" and select "Run as administrator".
+* `oneground.local.pem` - The public certificate
+* `oneground.local.key` - The private key
+* `oneground.local.combined.pem` - A combination of the key and certificate
 
+Follow the steps for your operating system.
+
+#### For Windows (using PowerShell)
+
+1. **Open PowerShell as an Administrator.**
+    * Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 2. **Navigate to the certificate installer directory.**
 
     ```powershell
-    cd ZGW_APIs/tools/oneground-certificates-installer
+    cd ../../tools/oneground-certificates-installer
     ```
 
 3. **Run the installation script.**
@@ -72,15 +69,15 @@ To make your browser and system trust the generated certificate, you need to ins
     .\install-oneground-certificate.ps1
     ```
 
-    The script will import the certificate into the Windows `Trusted Root Certification Authorities` store.
+    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
-#### For macOS and Linux Users (Bash)
+#### For macOS and Linux (using Bash)
 
 1. **Open your terminal.**
 2. **Navigate to the certificate installer directory.**
 
     ```bash
-    cd ZGW_APIs/tools/oneground-certificates-installer
+    cd ../../tools/oneground-certificates-installer
     ```
 
 3. **Make the script executable** (you only need to do this once).
@@ -89,96 +86,92 @@ To make your browser and system trust the generated certificate, you need to ins
     chmod +x ./install-oneground-certificate.sh
     ```
 
-4. **Run the installation script.** You may be prompted for your password to authorize the changes.
+4. **Run the installation script.** You may be prompted for your password.
 
     ```bash
     ./install-oneground-certificate.sh
     ```
 
-    This script will install the certificate into your system's keychain or trust store.
+    This script installs the certificate into your system's keychain or trust store.
 
-#### After certificate installation
+> **Note:** After installing the certificate, we recommend restarting your web browser to ensure the changes take effect.
 
-After certificate installation, it is recommended to restart your web browser.
+### 4. Update Your `hosts` File
 
-### Setup ZGW APIs Authentication
+To access the services using friendly domain names (e.g., `zaken.oneground.local`), you need to add entries to your system's `hosts` file.
 
-Follow these two steps to get a Bearer token for the API.
+1. Open your `hosts` file as an administrator.
+    * **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+    * **macOS/Linux:** `/etc/hosts`
+2. Add the following lines to the end of the file and save it.
 
-#### Step 1: Get the Client Secret from Keycloak
-
-1. Navigate to the OneGround clients in Keycloak:
-
-   - <http://localhost:8080/admin/master/console/#/OneGround/clients>
-
-2. Login if prompted.
-
-   - **Username**: admin
-   - **Password**: admin
-
-3. Select `oneground-000000000` from a list
-
-4. Under the **Credentials** tab, copy the value in the `Client Secret` field. This is your `<oneground-client-secret>`.
-
-#### Step 2: Update Environment variables and Restart Services
-
-After getting your `oneground-client-secret`, you need to add it to your project's environment file and restart your services for the change to take effect.
-
-1. Open dircetory:
-
-    ```bash
-    cd ZGW_APIs\getting-started\docker-compose
+    ```txt
+    127.0.0.1 zaken.oneground.local
+    127.0.0.1 catalogi.oneground.local
+    127.0.0.1 notificaties.oneground.local
+    127.0.0.1 notificaties-receiver.oneground.local
+    127.0.0.1 besluiten.oneground.local
+    127.0.0.1 documenten.oneground.local
+    127.0.0.1 autorisaties.oneground.local
+    127.0.0.1 referentielijsten.oneground.local
+    127.0.0.1 haproxy.oneground.local
     ```
 
-2. Update `default.env` file
-   - Open the `default.env` file and replace its placeholder value with the secret you copied from Keycloak:
+### 5. Configure API Authentication
 
-        ```text
-        ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
-        ```
+To make authorized requests to the APIs, you first need to get a client secret from Keycloak and then use it to request a Bearer token.
 
-3. Restart you Docker Containers
-    - Run the following command form docker-compose folder:
+#### Step 5.1: Get the Client Secret from Keycloak
 
-        ```bash
-        docker compose --project-directory .\ --env-file .\.env -f docker-compose.oneground-packages.yml up -d
-        ```
+1. Navigate to the Keycloak admin console: `http://localhost:8080/admin/master/console/#/OneGround/`
+2. Log in using the credentials:
+    * **Username**: `admin`
+    * **Password**: `admin`
+3. From the navigation on the left, select **Clients**.
+4. Select the `oneground-000000000` client from the list.
+    > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](https://github.com/OneGround/ZGW-APIs/blob/main/localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](https://github.com/OneGround/ZGW-APIs/blob/main/getting-started/docker-compose/oneground-services-data/ac-data/applicaties.json).
+5. Go to the **Credentials** tab.
+6. Copy the value from the **Client Secret** field. This is your `<oneground-client-secret>`.
 
-#### Step 3: Request an Access Token
+#### Step 5.2: Update Environment File and Restart Services
 
-Now, use the `<client_id>` (default value for this setup is **oneground-000000000**) and the `<oneground-client-secret>` you just copied to get an access token.
+1. Return to the `ZGW_APIs/getting-started/docker-compose` directory in your terminal.
+2. Open the `.env` file in a text editor.
+3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
-Choose the command for your operating system and replace `<client_id>` and `<oneground-client-secret>` with the actual values.
+    ```text
+    ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
+    ```
+
+4. Save the `.env` file.
+5. Restart the Docker containers to apply the new configuration.
+
+    ```bash
+    docker compose --project-directory . --env-file ./.env -f docker-compose.oneground-packages.yml up -d
+    ```
+
+#### Step 5.3: Request an Access Token
+
+Now you can exchange the client credentials for a temporary access token. Use the command for your operating system, replacing `<oneground-client-secret>` with your actual secret. The default client ID is `oneground-000000000`.
 
 ##### For Windows (PowerShell)
 
-Use this `Invoke-RestMethod` command in your PowerShell terminal
-
-```bash
-$response = Invoke-WebRequest -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" -Method POST -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} -Body "grant_type=client_credentials&client_id=<oneground-client-id>&client_secret=<oneground-client-secret>"
-```
-
-and then
-
-```bash
+```powershell
+$response = Invoke-WebRequest -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" -Method POST -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
 $response.Content
 ```
 
-##### For Linux, macOS, or WSL
-
-Use this curl command in your terminal.
+##### For Linux, macOS, or WSL (cURL)
 
 ```bash
 curl --location --request POST 'http://localhost:8080/realms/OneGround/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'grant_type=client_credentials' \
---data-urlencode 'client_id=<oneground-client-id>' \
---data-urlencode 'client_secret=<oneground-client-secret>' \
+--data-urlencode 'client_id=oneground-000000000' \
+--data-urlencode 'client_secret=<oneground-client-secret>'
 ```
 
-##### Expected Result
-
-Either command will return a JSON object containing the access_token.
+You will receive a JSON response containing the `access_token`. You can now use this token as a `Bearer` token to authorize your API requests.
 
 ```json
 {
@@ -190,104 +183,35 @@ Either command will return a JSON object containing the access_token.
 }
 ```
 
-You can now use this `access_token` as a Bearer token to authorize your API requests.
+## Stopping the Services
 
-### Update hosts file
-
-Update hosts file with those lines:
-
-```txt
-127.0.0.1 zaken.oneground.local
-127.0.0.1 catalogi.oneground.local
-127.0.0.1 notificaties.oneground.local
-127.0.0.1 notificaties-receiver.oneground.local
-127.0.0.1 besluiten.oneground.local
-127.0.0.1 documenten.oneground.local
-127.0.0.1 autorisaties.oneground.local
-127.0.0.1 referentielijsten.oneground.local
-127.0.0.1 haproxy.oneground.local
-```
-
-### Stop ZGW APIs
-
-Run command to stop Docker containers:
+To stop all running Docker containers, run the following command from the `docker-compose` directory:
 
 ```bash
-docker compose --project-directory .\ -f docker-compose.oneground-packages.yml down
+docker compose --project-directory . -f docker-compose.oneground-packages.yml down
 ```
 
-## Docker hosted ZGW APIs
+## Service Endpoints and Tools
 
-### HaProxy status page
+Here is a reference list of all the services and tools running in this Docker setup.
 
-- **Status page:** <https://haproxy.oneground.local>
+### ZGW API Services
 
-### Autorisaties Api
+| Service                   | Swagger UI                                                 | Health Check                                               |
+| :------------------------ | :--------------------------------------------------------- | :--------------------------------------------------------- |
+| **Autorisaties API** | `https://autorisaties.oneground.local/swagger`             | `https://autorisaties.oneground.local/health`              |
+| **Besluiten API** | `https://besluiten.oneground.local/swagger`                | `https://besluiten.oneground.local/health`                 |
+| **Catalogi API** | `https://catalogi.oneground.local/swagger`                 | `https://catalogi.oneground.local/health`                  |
+| **Documenten API** | `https://documenten.oneground.local/swagger`               | `https://documenten.oneground.local/health`                |
+| **Notificaties API** | `https://notificaties.oneground.local/swagger`             | `https://notificaties.oneground.local/health`              |
+| **Referentielijsten API** | `https://referentielijsten.oneground.local/swagger`        | `https://referentielijsten.oneground.local/health`         |
+| **Zaken API** | `https://zaken.oneground.local/swagger`                    | `https://zaken.oneground.local/health`                     |
 
-- **Port:** 5009
-- **Swagger:** <https://autorisaties.oneground.local/swagger>
-- **Health:** <https://autorisaties.oneground.local/health>
+### Hosted Tools
 
-### Besluiten Api
-
-- **Port:** 5013
-- **Swagger:** <https://besluiten.oneground.local/swagger>
-- **Health:** <https://besluiten.oneground.local/health>
-
-### Catalogi Api
-
-- **Port:** 5010
-- **Swagger:** <https://catalogi.oneground.local/swagger>
-- **Health:** <https://catalogi.oneground.local/health>
-
-### Documenten Api
-
-- **Port:** 5007
-- **Swagger:** <https://documenten.oneground.local/swagger>
-- **Health:** <https://documenten.oneground.local/health>
-
-### Notificaties Api
-
-- **Port:** 5015
-- **Swagger:** <https://notificaties.oneground.local/swagger>
-- **Health:** <https://notificaties.oneground.local/health>
-
-### Referentielijsten Api
-
-- **Port:** 5018
-- **Swagger:** <https://referentielijsten.oneground.local/swagger>
-- **Health:** <https://referentielijsten.oneground.local/health>
-
-### Zaken Api
-
-- **Port:** 5005
-- **Swagger:** <https://zaken.oneground.local/swagger>
-- **Health:** <https://zaken.oneground.local/health>
-
-## Docker hosted tools & services
-
-### Postgres
-
-Postgres including all zgw services in docker
-
-```txt
-servername: zgw_db
-server port: 5432
-database(s): zrc_db
-```
-
-Postgres stand-alone
-
-```txt
-servername: postgres_docker_db
-server port: 5432
-database(s): zrc_db
-```
-
-### RabbitMQ
-
-<http://localhost:15672>
-
-### Keycloack
-
-<http://localhost:8080>
+| Tool              | URL                       | Notes                                       |
+| :---------------- | :------------------------ | :------------------------------------------ |
+| **HAProxy Stats** | `https://haproxy.oneground.local` | View statistics for the reverse proxy.      |
+| **Keycloak** | `http://localhost:8080`     | Identity and Access Management.             |
+| **RabbitMQ** | `http://localhost:15672`    | Message broker management UI.               |
+| **PostgreSQL** | `localhost:5432`          | Database server. Connect with any SQL client. |
