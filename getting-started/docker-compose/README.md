@@ -29,7 +29,7 @@ First, clone the repository to your local machine and navigate into the `docker-
 
 ```bash
 # Clone the repository
-git clone [https://github.com/OneGround/ZGW-APIs.git](https://github.com/OneGround/ZGW-APIs.git)
+git clone https://github.com/OneGround/ZGW-APIs.git
 
 # Navigate to the docker-compose directory
 cd ZGW-APIs/getting-started/docker-compose
