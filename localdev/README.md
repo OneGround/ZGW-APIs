@@ -92,7 +92,7 @@ To make your browser and system trust the generated certificate, you need to ins
 2. **Navigate to the certificate installer directory.**
 
     ```powershell
-    cd path/to/your/project/localdev/oneground-certificates-installer
+    cd ZGW-APIs/tools/oneground-certificates-installer
     ```
 
 3. **Run the installation script.**
@@ -109,7 +109,7 @@ To make your browser and system trust the generated certificate, you need to ins
 2. **Navigate to the certificate installer directory.**
 
     ```bash
-    cd path/to/your/project/localdev/oneground-certificates-installer
+    cd ZGW-APIs/tool/oneground-certificates-installer
     ```
 
 3. **Make the script executable** (you only need to do this once).
