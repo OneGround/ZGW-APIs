@@ -131,7 +131,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
     * **Password**: `admin`
 3. From the navigation on the left, select **Clients**.
 4. Select the `oneground-000000000` client from the list.
-    > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](https://github.com/OneGround/ZGW-APIs/blob/main/localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](https://github.com/OneGround/ZGW-APIs/blob/main/getting-started/docker-compose/oneground-services-data/ac-data/applicaties.json).
+    > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](../../localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](../oneground-services-data/ac-data/applicaties.json).
 5. Go to the **Credentials** tab.
 6. Copy the value from the **Client Secret** field. This is your `<oneground-client-secret>`.
 
