@@ -172,7 +172,7 @@ After getting your `oneground-client-secret`, you need to add it to your project
         ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
         ```
 
-2. Restart you Docker Containers
+2. Restart your Docker Containers
     - Run the following command from localdev folder:
 
         ```bash
