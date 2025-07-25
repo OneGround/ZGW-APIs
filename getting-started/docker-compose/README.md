@@ -218,7 +218,7 @@ You will receive a JSON response containing the `access_token`. You can now use 
 > 2. In the `Access Token Lifespan` field, set a longer duration (e.g., `30 minutes` or `1 hour`).
 > 3. Click **Save**.
 >
-> You will need to request a new token for this change to take effect (see [step 5.3 for instructions](#step-53-request-an-access-token)).
+> You will need to request a new token for this change to take effect.
 
 ## Stopping the Services
 
