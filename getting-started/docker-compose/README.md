@@ -51,6 +51,8 @@ For your browser to trust the local services, you need to install the generated 
 * `oneground.local.key` - The private key
 * `oneground.local.combined.pem` - A combination of the key and certificate
 
+> **Note:** The generated SSL certificate is valid for 365 days.
+
 Follow the steps for your operating system.
 
 #### For Windows (using PowerShell)
