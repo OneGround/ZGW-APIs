@@ -59,10 +59,11 @@ Follow the steps for your operating system.
 
 1. **Open PowerShell as an Administrator.**
     * Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+
 2. **Navigate to the certificate installer directory.**
 
     ```powershell
-    cd ../../tools/oneground-certificates-installer
+    cd ZGW-APIs/tools/oneground-certificates-installer
     ```
 
 3. **Run the installation script.**
@@ -79,7 +80,7 @@ Follow the steps for your operating system.
 2. **Navigate to the certificate installer directory.**
 
     ```bash
-    cd ../../tools/oneground-certificates-installer
+    cd ZGW-APIs/tools/oneground-certificates-installer
     ```
 
 3. **Make the script executable** (you only need to do this once).
