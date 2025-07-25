@@ -50,7 +50,6 @@ Before you begin, ensure you have the following software installed:
 3. Open your terminal and navigate into the `docker-compose` directory:
 
 ```bash
-# Navigate to the docker-compose directory
 cd ZGW-APIs-main/getting-started/docker-compose
 ```
 
