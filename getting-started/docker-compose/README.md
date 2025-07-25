@@ -16,7 +16,7 @@
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
         - [For Windows (PowerShell)](#for-windows-powershell)
         - [For Linux, macOS, or WSL (cURL)](#for-linux-macos-or-wsl-curl)
-  - [Stopping the Services](#stopping-the-services)
+    - [6. Stopping the Services](#6-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services](#zgw-api-services)
     - [Hosted Tools](#hosted-tools)
@@ -220,7 +220,7 @@ You will receive a JSON response containing the `access_token`. You can now use 
 >
 > You will need to request a new token for this change to take effect.
 
-## Stopping the Services
+### 6. Stopping the Services
 
 To stop all running Docker containers, run the following command from the `docker-compose` directory:
 
