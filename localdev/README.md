@@ -4,7 +4,7 @@
   - [Docker hosted tools \& services](#docker-hosted-tools--services)
     - [Postgres](#postgres)
     - [RabbitMQ](#rabbitmq)
-    - [Keycloack](#keycloack)
+    - [Keycloak](#keycloak)
   - [Docker hosted ZGW APIs](#docker-hosted-zgw-apis)
     - [Start and stop ZGW APIs](#start-and-stop-zgw-apis)
     - [Install the SSL Certificate Guide](#install-the-ssl-certificate-guide)
