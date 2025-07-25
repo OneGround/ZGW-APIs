@@ -173,7 +173,7 @@ After getting your `oneground-client-secret`, you need to add it to your project
         ```
 
 2. Restart you Docker Containers
-    - Run the following command form localdev folder:
+    - Run the following command from localdev folder:
 
         ```bash
         docker compose --project-directory .\ --env-file .\.env -f docker-compose.oneground.yml up -d
