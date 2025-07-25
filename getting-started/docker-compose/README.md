@@ -58,7 +58,7 @@ cd ZGW-APIs-main/getting-started/docker-compose
 From the `docker-compose` directory, run the following command to start all the required services in the background.
 
 ```bash
-docker compose --project-directory . --env-file ./.env -f docker-compose.oneground-packages.yml up -d
+docker compose --env-file ./.env -f docker-compose.yml up -d
 ```
 
 ### 3. Install the Local SSL Certificate
@@ -172,12 +172,12 @@ To make authorized requests to the APIs, you first need to get a client secret f
 5. Restart the Docker containers to apply the new configuration:
 
    ```bash
-   docker compose --project-directory . --env-file ./.env -f docker-compose.oneground-packages.yml up -d
+   docker compose --env-file ./.env -f docker-compose.yml up -d
    ```
 
 #### Step 5.3: Request an Access Token
 
-Now you can exchange the client credentials for a temporary access token. Use the command for your operating system, replacing `<oneground-client-secret>` with your actual secret. The default client ID is `oneground-000000000`.
+This process uses the standard OAuth 2.0 Client Credentials grant type to obtain an access token. Now you can exchange the client credentials for a temporary access token. Use the command for your operating system, replacing `<oneground-client-secret>` with your actual secret. The default client ID is `oneground-000000000`.
 
 ##### For Windows (PowerShell)
 
@@ -236,7 +236,7 @@ You will receive a JSON response containing the `access_token`. You can now use 
 To stop all running Docker containers, run the following command from the `docker-compose` directory:
 
 ```bash
-docker compose --project-directory . -f docker-compose.oneground-packages.yml down
+docker compose --project-directory . -f docker-compose.yml down
 ```
 
 ## Service Endpoints and Tools
