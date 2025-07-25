@@ -181,7 +181,6 @@ You will receive a JSON response containing the `access_token`. You can now use 
     "expires_in": 300,
     "refresh_expires_in": 0,
     "token_type": "Bearer",
-    ...
 }
 ```
 
