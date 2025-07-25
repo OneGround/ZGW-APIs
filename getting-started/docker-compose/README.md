@@ -1,15 +1,36 @@
 # OneGround ZGW APIs: Docker Compose Setup
 
+- [OneGround ZGW APIs: Docker Compose Setup](#oneground-zgw-apis-docker-compose-setup)
+  - [About This Guide](#about-this-guide)
+  - [Prerequisites](#prerequisites)
+  - [Getting Started](#getting-started)
+    - [1. Clone the Repository](#1-clone-the-repository)
+    - [2. Start the ZGW API Services](#2-start-the-zgw-api-services)
+    - [3. Install the Local SSL Certificate](#3-install-the-local-ssl-certificate)
+      - [For Windows (using PowerShell)](#for-windows-using-powershell)
+      - [For macOS and Linux (using Bash)](#for-macos-and-linux-using-bash)
+    - [4. Update Your `hosts` File](#4-update-your-hosts-file)
+    - [5. Configure API Authentication](#5-configure-api-authentication)
+      - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
+      - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
+      - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
+        - [For Windows (PowerShell)](#for-windows-powershell)
+        - [For Linux, macOS, or WSL (cURL)](#for-linux-macos-or-wsl-curl)
+  - [Stopping the Services](#stopping-the-services)
+  - [Service Endpoints and Tools](#service-endpoints-and-tools)
+    - [ZGW API Services](#zgw-api-services)
+    - [Hosted Tools](#hosted-tools)
+
 ## About This Guide
 
 This guide provides instructions for launching a complete, local demonstration of the OneGround ZGW APIs using the provided **Docker Compose** setup. The goal is to get you up and running quickly so you can explore the entire suite of services.
 
 This setup includes:
 
-* All core ZGW API services running in Docker containers.
-* HAProxy for routing services to user-friendly local domain names.
-* Keycloak for authentication, pre-configured for the services.
-* Scripts to automatically generate and install a local SSL certificate.
+- All core ZGW API services running in Docker containers.
+- HAProxy for routing services to user-friendly local domain names.
+- Keycloak for authentication, pre-configured for the services.
+- Scripts to automatically generate and install a local SSL certificate.
 
 Follow the instructions below to launch the stack, authenticate, and interact with the live APIs.
 
@@ -17,9 +38,9 @@ Follow the instructions below to launch the stack, authenticate, and interact wi
 
 Before you begin, ensure you have the following software installed:
 
-* [GIT](https://github.com/git-guides/install-git)
-* [Docker Engine](https://docs.docker.com/engine/install/) (Desktop or Server)
-* [Docker Compose](https://docs.docker.com/compose/install/) (This is often included with Docker Desktop)
+- [GIT](https://github.com/git-guides/install-git)
+- [Docker Engine](https://docs.docker.com/engine/install/) (Desktop or Server)
+- [Docker Compose](https://docs.docker.com/compose/install/) (This is often included with Docker Desktop)
 
 ## Getting Started
 
@@ -47,9 +68,9 @@ docker compose --project-directory . --env-file ./.env -f docker-compose.onegrou
 
 For your browser to trust the local services, you need to install the generated SSL certificate. After the services start, a new folder named `oneground-certificates` will appear in your current directory. This folder should contain those files:
 
-* `oneground.local.pem` - The public certificate
-* `oneground.local.key` - The private key
-* `oneground.local.combined.pem` - A combination of the key and certificate
+- `oneground.local.pem` - The public certificate
+- `oneground.local.key` - The private key
+- `oneground.local.combined.pem` - A combination of the key and certificate
 
 > **Note:** The generated SSL certificate is valid for 365 days.
 
@@ -58,7 +79,7 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
-    * Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory.**
 
@@ -104,8 +125,8 @@ Follow the steps for your operating system.
 To access the services using friendly domain names (e.g., `zaken.oneground.local`), you need to add entries to your system's `hosts` file.
 
 1. Open your `hosts` file as an administrator.
-    * **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-    * **macOS/Linux:** `/etc/hosts`
+    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+    - **macOS/Linux:** `/etc/hosts`
 2. Add the following lines to the end of the file and save it.
 
     ```txt
@@ -128,8 +149,8 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 1. Navigate to the Keycloak admin console: `http://localhost:8080/admin/master/console/#/OneGround/`
 2. Log in using the credentials:
-    * **Username**: `admin`
-    * **Password**: `admin`
+    - **Username**: `admin`
+    - **Password**: `admin`
 3. From the navigation on the left, select **Clients**.
 4. Select the `oneground-000000000` client from the list.
     > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](../../localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](../oneground-services-data/ac-data/applicaties.json).
@@ -184,6 +205,15 @@ You will receive a JSON response containing the `access_token`. You can now use 
     "token_type": "Bearer",
 }
 ```
+
+> **Tip: How to Increase Token Expiration Time**
+> By default, the access token expires in 5 minutes (300 seconds). To increase this time:
+>
+> 1. Navigate directly to the **Tokens** settings page in Keycloak: [http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens](http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens).
+> 2. In the `Access Token Lifespan` field, set a longer duration (e.g., `30 minutes` or `1 hour`).
+> 3. Click **Save**.
+>
+> You will need to request a new token for this change to take effect (see [step 5.3 for instructions](#step-53-request-an-access-token)).
 
 ## Stopping the Services
 
