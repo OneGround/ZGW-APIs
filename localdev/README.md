@@ -52,7 +52,7 @@ database(s): zrc_db
 
 <http://localhost:15672>
 
-### Keycloack
+### Keycloak
 
 <http://localhost:8080>
 
