@@ -60,7 +60,7 @@ Before you begin, ensure you have the following software installed:
 
 ### 2. Start the ZGW API Services
 
-From the `localdev` directory, run the following command to start all the required services in the background.
+From the `localdev` directory, run the following command to start all the required services in the background:
 
 ```bash
 docker compose --env-file ./.env up -d
@@ -82,13 +82,13 @@ Follow the steps for your operating system.
 
 1. **Open PowerShell as an Administrator.**
    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
-2. **Navigate to the certificate installer directory.**
+2. **Navigate to the certificate installer directory:**
 
    ```powershell
    cd ZGW_APIs/tools/oneground-certificates-installer
    ```
 
-3. **Run the installation script.**
+3. **Run the installation script:**
 
    ```powershell
    .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
@@ -99,19 +99,19 @@ Follow the steps for your operating system.
 #### For macOS and Linux (using Bash)
 
 1. **Open your terminal.**
-2. **Navigate to the certificate installer directory.**
+2. **Navigate to the certificate installer directory:**
 
    ```bash
    cd ZGW_APIs/tools/oneground-certificates-installer
    ```
 
-3. **Make the script executable** (you only need to do this once).
+3. **Make the script executable** (you only need to do this once):
 
    ```bash
    chmod +x ./install-oneground-certificate.sh
    ```
 
-4. **Run the installation script.** You may be prompted for your password.
+4. **Run the installation script.** (you may be prompted for your password):
 
    ```bash
    ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
@@ -128,7 +128,7 @@ To ensure all services can communicate with each other and are accessible in you
 1. Open your `hosts` file as an administrator.
    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
    - **macOS/Linux:** `/etc/hosts`
-2. Add the following lines to the end of the file and save it.
+2. Add the following lines to the end of the file and save it:
 
    ```txt
    127.0.0.1 zaken.oneground.local
@@ -197,7 +197,7 @@ Now you can exchange the client credentials for a temporary access token. Use th
         -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
     ```
 
-- Then take an access token from `$response`
+- Then take an access token from `$response`:
 
     ```powershell
     # Display the content of the response
