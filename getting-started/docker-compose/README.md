@@ -86,7 +86,7 @@ Follow the steps for your operating system.
 3. **Run the installation script.**
 
    ```powershell
-   .\install-oneground-certificate.ps1
+   .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\getting-started\docker-compose\oneground-certificates\oneground.local.pem"
    ```
 
    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
@@ -109,7 +109,7 @@ Follow the steps for your operating system.
 4. **Run the installation script.** You may be prompted for your password.
 
    ```bash
-   ./install-oneground-certificate.sh
+   ./install-oneground-certificate.sh ..\..\getting-started\docker-compose\oneground-certificates\oneground.local.pem
    ```
 
    This script installs the certificate into your system's keychain or trust store.
@@ -161,14 +161,14 @@ To make authorized requests to the APIs, you first need to get a client secret f
     cd ZGW-APIs-main/getting-started/docker-compose
     ```
 
-2. Open the [ZGW-APIs-main/getting-started/docker-compose/.env](./.env) file in a text editor.
+2. Open the [ZGW-APIs-main/getting-started/docker-compose/default.env](./default.env) file in a text editor.
 3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
    ```text
    ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
    ```
 
-4. Save the `.env` file.
+4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
    ```bash
@@ -247,19 +247,19 @@ Here is a reference list of all the services and tools running in this Docker se
 
 | Service | Swagger UI | Health Check |
 | :--- | :--- | :--- |
-| **Autorisaties API** | `https://autorisaties.oneground.local/swagger` | `https://autorisaties.oneground.local/health` |
-| **Besluiten API** | `https://besluiten.oneground.local/swagger` | `https://besluiten.oneground.local/health` |
-| **Catalogi API** | `https://catalogi.oneground.local/swagger` | `https://catalogi.oneground.local/health` |
-| **Documenten API** | `https://documenten.oneground.local/swagger` | `https://documenten.oneground.local/health` |
-| **Notificaties API** | `https://notificaties.oneground.local/swagger` | `https://notificaties.oneground.local/health` |
-| **Referentielijsten API** | `https://referentielijsten.oneground.local/swagger` | `https://referentielijsten.oneground.local/health` |
-| **Zaken API** | `https://zaken.oneground.local/swagger` | `https://zaken.oneground.local/health` |
+| **Autorisaties API** | [https://autorisaties.oneground.local/swagger](https://autorisaties.oneground.local/swagger) | [https://autorisaties.oneground.local/health](https://autorisaties.oneground.local/health) |
+| **Besluiten API** | [https://besluiten.oneground.local/swagger](https://besluiten.oneground.local/swagger) | [https://besluiten.oneground.local/health](https://besluiten.oneground.local/health) |
+| **Catalogi API** | [https://catalogi.oneground.local/swagger](https://catalogi.oneground.local/swagger) | [https://catalogi.oneground.local/health](https://catalogi.oneground.local/health) |
+| **Documenten API** | [https://documenten.oneground.local/swagger](https://documenten.oneground.local/swagger) | [https://documenten.oneground.local/health](https://documenten.oneground.local/health) |
+| **Notificaties API** | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger) | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health) |
+| **Referentielijsten API** | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health) |
+| **Zaken API** | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger) | [https://zaken.oneground.local/health](https://zaken.oneground.local/health) |
 
 ### Hosted Tools
 
 | Tool | URL | Notes |
 | :--- | :--- | :--- |
-| **HAProxy Stats** | `https://haproxy.oneground.local` | View statistics for the reverse proxy. |
-| **Keycloak** | `http://localhost:8080` | Identity and Access Management. |
-| **RabbitMQ** | `http://localhost:15672` | Message broker management UI. |
-| **PostgreSQL** | `localhost:5432` | Database server. Connect with any SQL client. |
+| **HAProxy Stats** | [https://haproxy.oneground.local](https://haproxy.oneground.local) | View statistics for the reverse proxy. |
+| **Keycloak** | [http://localhost:8080](http://localhost:8080) | Identity and Access Management (user: admin, password: admin). |
+| **RabbitMQ** | [http://localhost:15672](http://localhost:15672) | Message broker management UI (user: guest, password: guest). |
+| **PostgreSQL** | `http://localhost:5432` | Database server. Connect with any SQL client. |
