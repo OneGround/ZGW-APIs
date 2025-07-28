@@ -12,7 +12,8 @@ This is a C# implementation of the ZGW-APIs standard.
 
 ## Case Management (Zaakgericht Werken)
 
-Case Management (Zaakgericht Werken) is a process-oriented work method used by Dutch municipalities and increasingly by national government bodies to handle requests from citizens and businesses. This implementation provides the necessary APIs to support this way of working in a common ground architecture. Common ground architecture originally consisted of 5 layers:  
+Case Management (Zaakgericht Werken) is a process-oriented work method used by Dutch municipalities and increasingly by national government bodies to handle requests from citizens and businesses. This implementation provides the necessary APIs to support this way of working in a common ground architecture. Common ground architecture originally consisted of 5 layers:
+
 * UI (not in this project)
 * process logic (not in this project)
 * middle ware (not in this project)
@@ -77,8 +78,10 @@ Supporting APIs:
 
 ### Docker Deployment
 
-> [!Note]
-> Localdev folder is not yet ready for local development.
+We offer two primary methods for running the ZGW APIs using Docker:
+
+* **Running from Docker Images:** For a quick and easy setup, follow our recommended [Getting Started guide](./getting-started/docker-compose/README.md).
+* **Running from Source Code:** For local development or contributing to the project, follow our [localdev setup guide](./localdev/README.md).
 
 ## Configuration
 
@@ -91,6 +94,7 @@ Configuration can be done through:
 For more information, visit our [documentation portal](https://dev.oneground.nl).
 
 ## Project Structure
+
 * src: source code
 * localdev: everything needed to set up your own development environment inclusing Ceph and Databases
 
