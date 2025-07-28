@@ -58,7 +58,7 @@ cd ZGW-APIs-main/getting-started/docker-compose
 From the `docker-compose` directory, run the following command to start all the required services in the background.
 
 ```bash
-docker compose --env-file ./.env -f docker-compose.yml up -d
+docker compose --env-file ./.env  up -d
 ```
 
 ### 3. Install the Local SSL Certificate
@@ -172,7 +172,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 5. Restart the Docker containers to apply the new configuration:
 
    ```bash
-   docker compose --env-file ./.env -f docker-compose.yml up -d
+   docker compose --env-file ./.env  up -d
    ```
 
 #### Step 5.3: Request an Access Token
@@ -236,7 +236,7 @@ You will receive a JSON response containing the `access_token`. You can now use 
 To stop all running Docker containers, run the following command from the `docker-compose` directory:
 
 ```bash
-docker compose --project-directory . -f docker-compose.yml down
+docker compose down
 ```
 
 ## Service Endpoints and Tools
@@ -245,15 +245,16 @@ Here is a reference list of all the services and tools running in this Docker se
 
 ### ZGW API Services
 
-| Service | Swagger UI | Health Check |
-| :--- | :--- | :--- |
-| **Autorisaties API** | [https://autorisaties.oneground.local/swagger](https://autorisaties.oneground.local/swagger) | [https://autorisaties.oneground.local/health](https://autorisaties.oneground.local/health) |
-| **Besluiten API** | [https://besluiten.oneground.local/swagger](https://besluiten.oneground.local/swagger) | [https://besluiten.oneground.local/health](https://besluiten.oneground.local/health) |
-| **Catalogi API** | [https://catalogi.oneground.local/swagger](https://catalogi.oneground.local/swagger) | [https://catalogi.oneground.local/health](https://catalogi.oneground.local/health) |
-| **Documenten API** | [https://documenten.oneground.local/swagger](https://documenten.oneground.local/swagger) | [https://documenten.oneground.local/health](https://documenten.oneground.local/health) |
-| **Notificaties API** | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger) | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health) |
-| **Referentielijsten API** | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health) |
-| **Zaken API** | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger) | [https://zaken.oneground.local/health](https://zaken.oneground.local/health) |
+| Service | Port | Swagger UI | Health Check |
+| :--- | :--- | :--- | :--- |
+| **Autorisaties API** | 5009 | [https://autorisaties.oneground.local/swagger](https://autorisaties.oneground.local/swagger) | [https://autorisaties.oneground.local/health](https://autorisaties.oneground.local/health) |
+| **Besluiten API** | 5013 | [https://besluiten.oneground.local/swagger](https://besluiten.oneground.local/swagger) | [https://besluiten.oneground.local/health](https://besluiten.oneground.local/health) |
+| **Catalogi API** | 5011 | [https://catalogi.oneground.local/swagger](https://catalogi.oneground.local/swagger) | [https://catalogi.oneground.local/health](https://catalogi.oneground.local/health) |
+| **Documenten API** | 5007 | [https://documenten.oneground.local/swagger](https://documenten.oneground.local/swagger) | [https://documenten.oneground.local/health](https://documenten.oneground.local/health) |
+| **Notificaties API** | 5015 | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger) | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health) |
+| **Referentielijsten API** | 5018 | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health) |
+| **Zaken API** | 5005 | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger) | [https://zaken.oneground.local/health](https://zaken.oneground.local/health) |
+
 
 ### Hosted Tools
 
