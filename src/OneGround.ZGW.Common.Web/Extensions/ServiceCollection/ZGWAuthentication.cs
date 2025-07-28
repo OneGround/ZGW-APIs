@@ -38,22 +38,30 @@ public static class ZGWAuthenticationServiceCollectionExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                var authority = configuration.GetValue<string>("Auth:Authority");
-                var audience = configuration.GetValue<string>("Auth:ValidAudience");
-                var requireHttpsMetadata = !hostEnvironment.IsLocal();
-
-                options.Authority = authority;
                 options.SaveToken = true;
-                options.RequireHttpsMetadata = requireHttpsMetadata;
-                options.TokenValidationParameters.ValidIssuer = authority;
-                options.Audience = audience;
+                options.RequireHttpsMetadata = !hostEnvironment.IsLocal();
             });
+
+        services
+            .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<ZgwAuthConfiguration>>(
+                (jwtBearerOptions, options) =>
+                {
+                    var authConfig = options.Value;
+
+                    jwtBearerOptions.Authority = authConfig.Authority;
+                    jwtBearerOptions.TokenValidationParameters.ValidIssuer = authConfig.ValidIssuer;
+                    jwtBearerOptions.Audience = authConfig.ValidAudience;
+                }
+            );
 
         services.AddRedisCache();
     }
 
-    public static void RegisterZgwTokenClient(this IServiceCollection services)
+    public static void RegisterZgwTokenClient(this IServiceCollection services, IConfiguration configuration, IHostEnvironment hostEnvironment)
     {
+        services.Configure<ZgwAuthConfiguration>(configuration.GetSection("Auth"));
+
         services.AddMemoryCache();
         services.AddSingleton<IZgwTokenCacheService, ZgwTokenCacheService>();
 
@@ -87,7 +95,7 @@ public static class ZGWAuthenticationServiceCollectionExtensions
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             var authenticationOptions = provider.GetRequiredService<IOptions<ZgwAuthConfiguration>>();
-            var discoveryPolicy = new DiscoveryPolicy();
+            var discoveryPolicy = new DiscoveryPolicy { RequireHttps = !hostEnvironment.IsLocal() };
 
             var discoveryCache = new DiscoveryCache(
                 authenticationOptions.Value.Authority,

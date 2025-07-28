@@ -2,11 +2,17 @@
 
 set -e
 
-CERT_FILE="../oneground-certificates/oneground.local.pem"
-CERT_NAME="oneground.local.crt"
+if [[ -z "$1" ]]; then
+    echo "Error: No certificate path provided." >&2
+    echo "Usage: $0 <path-to-certificate-file>" >&2
+    exit 1
+fi
+
+CERT_FILE="$1"
+CERT_NAME="$(basename "$CERT_FILE" .pem).crt"
 
 if [[ ! -f "$CERT_FILE" ]]; then
-    echo "Certificate file not found! Please run the main install script."
+    echo "Certificate file not found at '$CERT_FILE'! Please check the path." >&2
     exit 1
 fi
 
@@ -18,11 +24,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
     echo "Certificate installed in macOS System Keychain."
 elif [[ "$(uname)" == "Linux" ]]; then
     echo "Detected Linux..."
-    
+
     if command -v update-ca-certificates &> /dev/null; then
         cp "$CERT_FILE" "/usr/local/share/ca-certificates/$CERT_NAME"
         update-ca-certificates
-        echo "Certificate installed for Debian/Ubuntu-based systems."    
+        echo "Certificate installed for Debian/Ubuntu-based systems."
     elif command -v update-ca-trust &> /dev/null; then
         cp "$CERT_FILE" "/etc/pki/ca-trust/source/anchors/"
         update-ca-trust

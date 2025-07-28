@@ -1,17 +1,29 @@
+name: oneground-getting-started
+
 services:
+  oneground-certificates-generator:
+    build:
+      context: ../../tools/oneground-certificates-generator
+      dockerfile: Dockerfile
+    image: oneground-certificates-generator
+    volumes:
+      - ./oneground-certificates:/certs
+
   haproxy:
     image: haproxy:2.2-alpine
     ports:
       - 80:80
       - 443:443
     volumes:
-      - ./haproxy/haproxy-localstack.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./oneground-certificates/oneground.local.combined.pem:/etc/ssl/certs/oneground.local.combined.pem:ro
+      - ../../localdev/haproxy/haproxy-localstack.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ../../localdev/oneground-certificates:/etc/ssl/certs:ro
     restart: unless-stopped
+    depends_on:
+      oneground-certificates-generator:
+        condition: service_completed_successfully
     networks:
       oneground:
         aliases:
-          - ${EVENTBUS_HOST}
           - ${NRC_HOST}
           - ${ZTC_HOST}
           - ${ZRC_HOST}
@@ -39,10 +51,10 @@ services:
 
   postgres_docker_db:
     build:
-      context: postgresql/.
+      context: ../../localdev/postgresql/.
     volumes:
       - postgres:/var/lib/postgresql/data
-      - ./postgresql/init-database.sh:/docker-entrypoint-initdb.d
+      - ../../localdev/postgresql/init-database.sh:/docker-entrypoint-initdb.d
     restart: always
     ports:
       - ${POSTGRES_PORT}:5432
@@ -69,29 +81,6 @@ services:
       timeout: 5s
       retries: 8
       start_period: 10s
-    networks:
-      - oneground
-
-  ceph:
-    image: ceph/daemon:latest-octopus
-    command: demo
-    environment:
-      MON_IP: 127.0.0.1
-      CEPH_PUBLIC_NETWORK: 0.0.0.0/0
-      CEPH_DEMO_UID: demo
-      CEPH_DEMO_ACCESS_KEY: demo
-      CEPH_DEMO_SECRET_KEY: demo
-      CEPH_DEMO_BUCKET: "${CEPH_DEMO_BUCKET}"
-      CEPH_DEMO_DASHBOARD_USER: "${CEPH_DEMO_DASHBOARD_USER}"
-      CEPH_DEMO_DASHBOARD_PASSWORD: "${CEPH_DEMO_DASHBOARD_PASSWORD}"
-    volumes:
-      - ./ceph/demo.sh:/opt/ceph-container/bin/demo.sh
-      - ceph-etc:/etc/ceph
-      - ceph-lib:/var/lib/ceph/
-    ports:
-      - 8443:8443
-      - 5000:5000
-      - 8888:8888
     networks:
       - oneground
 
@@ -124,11 +113,10 @@ services:
         condition: service_healthy
     networks:
       - oneground
-    
 
   keycloak-setup:
     build:
-      context: keycloak/.
+      context: ../../localdev/keycloak/.
       dockerfile: KeycloakSetup/Dockerfile
     environment:
       Keycloak__BaseUrl: http://keycloak:${KEYCLOAK_PORT}
@@ -142,9 +130,7 @@ services:
       - oneground
 
   zgw.autorisaties.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile
+    image: ghcr.io/oneground/autorisaties-api:1.0
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -155,18 +141,18 @@ services:
     ports:
       - ${AC_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
+    volumes:
+      - ../oneground-services-data/ac-data:/app/data
     environment:
       ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
-      SeedData__Applicaties: "localdev/oneground-services-data/ac-data/applicaties.json"      
+      SeedData__Applicaties: "/app/data/applicaties.json"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_AC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
       - oneground
 
   zgw.besluiten.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Besluiten.WebApi/Dockerfile
+    image: ghcr.io/oneground/besluiten-api:1.0
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -185,9 +171,7 @@ services:
       - oneground
 
   zgw.catalogi.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Catalogi.WebApi/Dockerfile
+    image: ghcr.io/oneground/catalogi-api:1.3
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -206,9 +190,7 @@ services:
       - oneground
 
   zgw.documenten.messaging.listener:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile
+    image: ghcr.io/oneground/documenten-listener:1.5
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -224,9 +206,7 @@ services:
       - oneground
 
   zgw.documenten.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Documenten.WebApi/Dockerfile
+    image: ghcr.io/oneground/documenten-api:1.5
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -246,9 +226,7 @@ services:
       - oneground
 
   zgw.notificaties.messaging.listener:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Notificaties.Messaging.Listener/Dockerfile
+    image: ghcr.io/oneground/notificaties-listener:1.0
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -265,9 +243,7 @@ services:
       - oneground
 
   zgw.notificaties.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Notificaties.WebApi/Dockerfile
+    image: ghcr.io/oneground/notificaties-api:1.0
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -286,9 +262,7 @@ services:
       - oneground
 
   zgw.referentielijsten.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile
+    image: ghcr.io/oneground/referentielijsten-api:1.0
     ports:
       - ${RC_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
@@ -298,9 +272,7 @@ services:
       - oneground
 
   zgw.zaken.webapi:
-    build:
-      context: ../
-      dockerfile: src/OneGround.ZGW.Zaken.WebApi/Dockerfile
+    image: ghcr.io/oneground/zaken-api:1.5
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -320,8 +292,6 @@ services:
 
 volumes:
   postgres:
-  ceph-etc:
-  ceph-lib:
 
 networks:
   oneground:

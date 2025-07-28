@@ -39,7 +39,7 @@ Edit the `appsettings.json` file in the project directory:
 }
 ```
 
-#### Client Configuration
+### Client Configuration
 
 Each client in the `Clients` array has the following properties:
 
