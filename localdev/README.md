@@ -82,13 +82,26 @@ Follow the steps for your operating system.
 
 1. **Open PowerShell as an Administrator.**
    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+  
 2. **Navigate to the certificate installer directory:**
 
    ```powershell
    cd ZGW_APIs/tools/oneground-certificates-installer
    ```
 
-3. **Run the installation script:**
+3. **Run the following command to check your current execution policy:**
+
+   ```powershell
+   Get-ExecutionPolicy -List
+   ```
+
+4. **To allow the script to run just for this session, execute the following command. This bypasses the policy for the current process only:**
+
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+   ```
+
+5. **Run the installation script:**
 
    ```powershell
    .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"

@@ -15,8 +15,8 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ../../localdev/haproxy/haproxy-localstack.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ../../localdev/oneground-certificates:/etc/ssl/certs:ro
+      - ${HAPROXY_CONFIG_PATH}:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ${ONEGROUND_CERTIFICATES_PATH}:/etc/ssl/certs:ro
     restart: unless-stopped
     depends_on:
       oneground-certificates-generator:
