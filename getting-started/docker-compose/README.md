@@ -109,7 +109,7 @@ Follow the steps for your operating system.
 4. **Run the installation script.** You may be prompted for your password.
 
    ```bash
-   ./install-oneground-certificate.sh ..\..\getting-started\docker-compose\oneground-certificates\oneground.local.pem
+   ./install-oneground-certificate.sh ../../getting-started/docker-compose/oneground-certificates/oneground.local.pem
    ```
 
    This script installs the certificate into your system's keychain or trust store.
