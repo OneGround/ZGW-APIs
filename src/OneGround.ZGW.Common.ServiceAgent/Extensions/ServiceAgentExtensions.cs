@@ -32,21 +32,16 @@ public static class ServiceAgentExtensions
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddHttpMessageHandler<BatchIdHandler>();
 
-        // Bind named ResiliencePipeline{ServiceRoleName} from configuration (custom setting) like: "ResiliencePipelineZTC"
-        services.Configure<ResiliencePipelineOptions>(
-            $"resilience-pipeline-{serviceRoleName}",
-            configuration.GetSection($"ServiceAgentsConfig:{serviceRoleName}")
-        );
+        var pipelineName = $"resilience-pipeline-{serviceRoleName}";
+
+        services.Configure<ResiliencePipelineOptions>(pipelineName, configuration.GetSection($"PollyConfig:{serviceRoleName}"));
 
         httpClient.AddResilienceHandler(
-            $"resilience-pipeline-{serviceRoleName}",
+            pipelineName,
             (builder, context) =>
             {
-                // Enable dynamic reloads of this pipeline whenever the named ResiliencePipeline change
-                context.EnableReloads<ResiliencePipelineOptions>($"resilience-pipeline-{serviceRoleName}");
-
-                // Retrieve the named options
-                var options = context.GetOptions<ResiliencePipelineOptions>($"resilience-pipeline-{serviceRoleName}");
+                context.EnableReloads<ResiliencePipelineOptions>(pipelineName);
+                var options = context.GetOptions<ResiliencePipelineOptions>(pipelineName);
 
                 builder.AddRetry(options.Retry).AddTimeout(options.Timeout);
             }
