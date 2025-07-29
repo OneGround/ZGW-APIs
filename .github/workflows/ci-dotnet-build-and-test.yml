@@ -19,6 +19,11 @@ jobs:
     outputs:
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
 
+    env:
+      PATHS_TO_CHECK: >-
+        'src/'
+        '.github/workflows/ci-dotnet-build-and-test.yml'
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -35,7 +40,7 @@ jobs:
         fi
 
         echo "Checking for PR changes between base (${{ github.event.pull_request.base.sha }}) and head (${{ github.event.pull_request.head.sha }})"
-        if ! git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- 'src/' '.github/workflows/ci-dotnet-build-and-test.yml'; then
+        if ! git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- ${{ env.PATHS_TO_CHECK }}; then
           echo "Changes detected in relevant paths."
           echo "any_changed=true" >> "$GITHUB_OUTPUT"
         else
