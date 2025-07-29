@@ -30,11 +30,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Check for files changes
+    - name: Check for changed files
       id: changed-files
-      uses: ./.github/workflows/check-changes.yml
+      uses: ./.github/workflows/actions/check-changed-files.yml
       with:
-        paths-to-check: |
+        paths_to_check: |
           src/
           .github/workflows/ci-dotnet-build-and-test.yml
 
