@@ -30,6 +30,7 @@ jobs:
       env:
         PATHS_TO_CHECK: ${{ inputs.paths-to-check }}
       run: |
+        # Always run the build for push or manual dispatch events
         if [[ "${{ github.event_name }}" != "pull_request" ]]; then
           echo "Not a PR. Assuming changes are relevant."
           echo "any_changed=true" >> "$GITHUB_OUTPUT"
