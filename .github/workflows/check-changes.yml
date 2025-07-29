@@ -42,7 +42,7 @@ jobs:
         echo "Comparing HEAD (${{ github.event.pull_request.head.sha }}) against merge base ($MERGE_BASE)"
 
         # Read the space-separated string into a Bash array
-        read -r -a paths <<< "$PATHS_TO_CHECK"
+        mapfile -t paths < <(grep . <<< "$PATHS_TO_CHECK")
 
         if [ ${#paths[@]} -eq 0 ]; then
           echo "No paths provided to check. Assuming no relevant changes."

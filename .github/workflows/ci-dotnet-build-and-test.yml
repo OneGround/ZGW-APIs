@@ -17,9 +17,9 @@ jobs:
     name: Check for files changes
     uses: ./.github/workflows/check-changes.yml
     with:
-      paths-to-check: >-
-        'src/'
-        '.github/workflows/ci-dotnet-build-and-test.yml'
+      paths-to-check: |
+        src/
+        .github/workflows/ci-dotnet-build-and-test.yml
 
   build-and-test:
     name: Build and Test .NET Project
