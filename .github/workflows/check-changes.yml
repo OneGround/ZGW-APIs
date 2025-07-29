@@ -41,7 +41,7 @@ jobs:
         MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
         echo "Comparing HEAD (${{ github.event.pull_request.head.sha }}) against merge base ($MERGE_BASE)"
 
-        # Read the space-separated string into a Bash array
+        # Read the multi-line string into a Bash array
         mapfile -t paths < <(grep . <<< "$PATHS_TO_CHECK")
 
         if [ ${#paths[@]} -eq 0 ]; then
