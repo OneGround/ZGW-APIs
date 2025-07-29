@@ -16,6 +16,9 @@ jobs:
   build-and-test:
     name: Build and Test .NET Project
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
 
     env:
       SOLUTION_ROOT: '${{ github.workspace }}/src'
