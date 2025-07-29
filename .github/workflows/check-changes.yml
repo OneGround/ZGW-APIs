@@ -41,7 +41,7 @@ jobs:
         echo "Comparing HEAD (${{ github.event.pull_request.head.sha }}) against merge base ($MERGE_BASE)"
 
         # Read the multi-line string into a Bash array
-        mapfile -t paths < <(echo "$PATHS_TO_CHECK")
+        mapfile -t paths <<< "$PATHS_TO_CHECK"
 
         # The '--' ensures remaining arguments are treated as paths, not options.
         # Using a Bash array "${paths[@]}" ensures each path is treated as a
