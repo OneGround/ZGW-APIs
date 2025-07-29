@@ -66,6 +66,7 @@ class CreateInformatieObjectTypeCommandHandler
         informatieObjectType.Catalogus = catalogus;
         informatieObjectType.Owner = informatieObjectType.Catalogus.Owner;
         informatieObjectType.Concept = true;
+        informatieObjectType.InformatieObjectCategorie = $"{catalogus.Domein}-Document";
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
