@@ -23,7 +23,7 @@ jobs:
 
       - name: Check for changed files
         id: changed-files
-        uses: ./.github/workflows/actions/check-changed-files.yml
+        uses: .github/workflows/actions/check-changed-files.yml
         with:
           paths-to-check: |
             src/
