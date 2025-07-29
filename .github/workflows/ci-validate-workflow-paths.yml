@@ -25,7 +25,7 @@ jobs:
         id: changed-files
         uses: ./.github/actions/check-changed-files
         with:
-          paths-to-check: |
+          paths_to_check: |
             src/
             .github/workflows/ci-validate-workflow-paths.yml
 
