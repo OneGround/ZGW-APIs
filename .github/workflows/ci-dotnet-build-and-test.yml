@@ -18,8 +18,8 @@ jobs:
     uses: ./.github/workflows/check-changes.yml
     with:
       paths-to-check: |
-        'src/'
-        '.github/workflows/ci-dotnet-build-and-test.yml'
+        src/
+        .github/workflows/ci-dotnet-build-and-test.yml
 
   build-and-test:
     name: Build and Test .NET Project
