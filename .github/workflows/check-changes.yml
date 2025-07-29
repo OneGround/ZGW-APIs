@@ -27,6 +27,8 @@ jobs:
 
     - name: Get changed files
       id: changed-files
+      env:
+        PATHS_TO_CHECK: ${{ inputs.paths-to-check }}
       run: |
         if [[ "${{ github.event_name }}" != "pull_request" ]]; then
           echo "Not a PR. Assuming changes are relevant."
@@ -36,9 +38,15 @@ jobs:
 
         echo "Validating SHAs for PR #${{ github.event.pull_request.number }}"
         MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-
         echo "Comparing HEAD (${{ github.event.pull_request.head.sha }}) against merge base ($MERGE_BASE)"
-        if ! git diff --quiet $MERGE_BASE ${{ github.event.pull_request.head.sha }} -- ${{ inputs.paths-to-check }}; then
+
+        # Read the multi-line string into a Bash array
+        mapfile -t paths < <(echo "$PATHS_TO_CHECK")
+
+        # The '--' ensures remaining arguments are treated as paths, not options.
+        # Using a Bash array "${paths[@]}" ensures each path is treated as a
+        # separate argument, correctly handling spaces or special characters.
+        if ! git diff --quiet $MERGE_BASE ${{ github.event.pull_request.head.sha }} -- "${paths[@]}"; then
           echo "Changes detected in relevant paths."
           echo "any_changed=true" >> "$GITHUB_OUTPUT"
         else
