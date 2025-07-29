@@ -29,10 +29,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Check for changed files
       id: changed-files
-      uses: ./.github/workflows/actions/check-changed-files.yml
+      uses: ./.github/actions/check-changed-files
       with:
         paths_to_check: |
           src/
