@@ -54,14 +54,7 @@ public class ServiceConfiguration
                     context.EnableReloads<ResiliencePipelineOptions>(pipelineName);
                     var options = context.GetOptions<ResiliencePipelineOptions>(pipelineName);
 
-                    builder.AddRetry(
-                        new RetryStrategyOptions<HttpResponseMessage>
-                        {
-                            MaxRetryAttempts = options.Retry.MaxRetryAttempts,
-                            BackoffType = options.Retry.BackoffType,
-                            Delay = options.Retry.Delay,
-                        }
-                    );
+                    builder.AddRetry(options.Retry);
 
                     builder.AddTimeout(options.Timeout);
                 }

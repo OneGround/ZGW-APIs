@@ -84,7 +84,6 @@ public static class ZGWAuthenticationServiceCollectionExtensions
                         {
                             MaxRetryAttempts = 3,
                             BackoffType = DelayBackoffType.Exponential,
-                            UseJitter = true,
                             Delay = TimeSpan.FromSeconds(1),
                         }
                     );
