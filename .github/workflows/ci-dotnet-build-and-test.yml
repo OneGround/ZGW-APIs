@@ -39,8 +39,11 @@ jobs:
           exit 0
         fi
 
-        echo "Checking for PR changes between base (${{ github.event.pull_request.base.sha }}) and head (${{ github.event.pull_request.head.sha }})"
-        if ! git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- ${{ env.PATHS_TO_CHECK }}; then
+        echo "Validating SHAs for PR #${{ github.event.pull_request.number }}"
+        MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+
+        echo "Comparing HEAD (${{ github.event.pull_request.head.sha }}) against merge base ($MERGE_BASE)"
+        if ! git diff --quiet $MERGE_BASE ${{ github.event.pull_request.head.sha }} -- ${{ env.PATHS_TO_CHECK }}; then
           echo "Changes detected in relevant paths."
           echo "any_changed=true" >> "$GITHUB_OUTPUT"
         else
@@ -79,4 +82,3 @@ jobs:
     - name: Test
       run: dotnet test ${{ env.SOLUTION_UNIT_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"Code coverage" --logger trx --results-directory ${{ runner.temp }}
       working-directory: ${{ env.SOLUTION_ROOT }}
-      
