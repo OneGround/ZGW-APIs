@@ -10,9 +10,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - '.github/workflows/ci-validate-workflow-paths.yml'
   workflow_dispatch:
 
 jobs:
@@ -24,17 +21,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check for changed files
+        id: changed-files
+        uses: ./.github/actions/check-changed-files
+        with:
+          paths_to_check: |
+            src/
+            .github/workflows/ci-validate-workflow-paths.yml
+
       - name: Setup .NET
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
       - name: Install PowerShell
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: PSModule/install-powershell@v1
         with:
           Version: 7.5.0
 
       - name: Validate OneGround application CD workflow paths
+        if: steps.changed-files.outputs.any_changed == 'true'
         shell: pwsh
         run: >-
           ./.github/scripts/Validate-OneGroundCDWorkflowsPaths.ps1
