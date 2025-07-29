@@ -50,7 +50,8 @@ jobs:
           exit 0
         fi
 
-        # separate argument, correctly handling spaces or special characters.
+        # Ensure each path is treated as a separate argument to the git diff command,
+        # correctly handling paths with spaces or special characters.
         if ! git diff --quiet $MERGE_BASE ${{ github.event.pull_request.head.sha }} -- "${paths[@]}"; then
           echo "Changes detected in relevant paths."
           echo "any_changed=true" >> "$GITHUB_OUTPUT"
