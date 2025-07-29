@@ -17,8 +17,7 @@ jobs:
     name: Check for files changes
     uses: ./.github/workflows/check-changes.yml
     with:
-      # Paths to check for changes, ensuring the build only runs if relevant files are modified
-      paths-to-check: >-
+      paths-to-check: |
         'src/'
         '.github/workflows/ci-dotnet-build-and-test.yml'
 
