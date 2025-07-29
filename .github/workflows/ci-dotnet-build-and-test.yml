@@ -34,7 +34,7 @@ jobs:
 
     - name: Check for changed files
       id: changed-files
-      uses: ./.github/actions/check-changed-files.yml
+      uses: ./.github/actions/check-changed-files
       with:
         paths_to_check: |
           src/
