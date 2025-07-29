@@ -13,19 +13,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-files-changes:
-    name: Check for files changes
-    uses: ./.github/workflows/check-changes.yml
-    with:
-      paths-to-check: |
-        src/
-        .github/workflows/ci-dotnet-build-and-test.yml
-
   build-and-test:
     name: Build and Test .NET Project
     runs-on: ubuntu-latest
-    needs: check-files-changes
-    if: needs.check-files-changes.outputs.any_changed == 'true'
 
     env:
       SOLUTION_ROOT: '${{ github.workspace }}/src'
@@ -34,21 +24,34 @@ jobs:
       BUILD_CONFIGURATION: 'Release'
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for files changes
+      id: changed-files
+      uses: ./.github/workflows/check-changes.yml
+      with:
+        paths-to-check: |
+          src/
+          .github/workflows/ci-dotnet-build-and-test.yml
 
     - name: Setup .NET
+      if: steps.changed-files.outputs.any_changed == 'true'
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
+      if: steps.changed-files.outputs.any_changed == 'true'
       run: dotnet restore ${{ env.SOLUTION_FILE }}
       working-directory: ${{ env.SOLUTION_ROOT }}
 
     - name: Build
+      if: steps.changed-files.outputs.any_changed == 'true'
       run: dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
       working-directory: ${{ env.SOLUTION_ROOT }}
 
     - name: Test
+      if: steps.changed-files.outputs.any_changed == 'true'
       run: dotnet test ${{ env.SOLUTION_UNIT_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"Code coverage" --logger trx --results-directory ${{ runner.temp }}
       working-directory: ${{ env.SOLUTION_ROOT }}
