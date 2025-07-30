@@ -11,6 +11,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Web.Validators;
 
 namespace OneGround.ZGW.Notificaties.Web.Handlers;
 
@@ -18,17 +19,20 @@ class CreateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<CreateAbo
 {
     private readonly NrcDbContext _context;
     private readonly ILogger<CreateAbonnementCommandHandler> _logger;
+    private readonly IAbonnementKanaalValidator _abonnementKanaalValidator;
 
     public CreateAbonnementCommandHandler(
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
         NrcDbContext context,
-        ILogger<CreateAbonnementCommandHandler> logger
+        ILogger<CreateAbonnementCommandHandler> logger,
+        IAbonnementKanaalValidator abonnementKanaalValidator
     )
         : base(configuration, authorizationContextAccessor)
     {
         _context = context;
         _logger = logger;
+        _abonnementKanaalValidator = abonnementKanaalValidator;
     }
 
     public async Task<CommandResult<Abonnement>> Handle(CreateAbonnementCommand request, CancellationToken cancellationToken)
@@ -44,55 +48,24 @@ class CreateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<CreateAbo
             var kanaal = await _context.Kanalen.SingleOrDefaultAsync(k => k.Naam == abonnementkanaal.Kanaal.Naam, cancellationToken);
             if (kanaal == null)
             {
-                errors.Add(
-                    new ValidationError(
-                        "kanaal",
-                        ErrorCode.NotFound,
-                        $"In het abonnement is een niet bestaand kanaal '{abonnementkanaal.Kanaal.Naam}' opgegeven."
-                    )
+                var error = new ValidationError(
+                    "naam",
+                    ErrorCode.NotFound,
+                    $"In het abonnement is een niet bestaand kanaal '{abonnementkanaal.Kanaal.Naam}' opgegeven."
                 );
+                errors.Add(error);
             }
             else
             {
-                var kanaalFilterMap = kanaal.Filters.ToHashSet();
-
-                foreach (var filter in abonnementkanaal.Filters)
+                if (!_abonnementKanaalValidator.Validate(abonnementkanaal, kanaal, errors))
                 {
-                    if (filter.Key == "#resource")
-                    {
-                        continue;
-                    }
-                    if (filter.Key == "#actie")
-                    {
-                        string[] acties = ["create", "update", "destroy"];
-
-                        if (!acties.Contains(filter.Value)) // TODO: Consider using a business-rule service (so shared with create/modify)
-                        {
-                            errors.Add(
-                                new ValidationError(
-                                    "filter",
-                                    ErrorCode.NotFound,
-                                    $"In het abonnement is bij filter '#actie' een incorrecte waarde '{filter.Value}' opgegeven."
-                                )
-                            );
-                        }
-                    }
-                    else if (!kanaalFilterMap.Contains(filter.Key))
-                    {
-                        errors.Add(
-                            new ValidationError(
-                                "filter",
-                                ErrorCode.NotFound,
-                                $"In het abonnement is een niet bestaand filter '{filter.Key}' opgegeven."
-                            )
-                        );
-                    }
+                    continue;
                 }
             }
             abonnementkanaal.Kanaal = kanaal;
         }
 
-        if (errors.Count != 0)
+        if (errors.Any())
         {
             return new CommandResult<Abonnement>(null, CommandStatus.ValidationError, errors.ToArray());
         }

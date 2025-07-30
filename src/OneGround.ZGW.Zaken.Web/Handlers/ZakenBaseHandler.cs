@@ -95,8 +95,8 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
-    public async Task SendNotificationAsync<K>(Actie actie, K zaakEntity, CancellationToken cancellationToken)
-        where K : IZaakEntity, IUrlEntity
+    public async Task SendNotificationAsync<TZaakEntity>(Actie actie, TZaakEntity zaakEntity, CancellationToken cancellationToken)
+        where TZaakEntity : IZaakEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(zaakEntity.Zaak);
         var resourceUrl = _uriService.GetUri(zaakEntity);

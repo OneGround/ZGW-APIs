@@ -81,8 +81,8 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
-    public async Task SendNotificationAsync<K>(Actie actie, K besluitEntity, CancellationToken cancellationToken)
-        where K : IBesluitEntity, IUrlEntity
+    public async Task SendNotificationAsync<TBesluitEntity>(Actie actie, TBesluitEntity besluitEntity, CancellationToken cancellationToken)
+        where TBesluitEntity : IBesluitEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(besluitEntity.Besluit);
         var resourceUrl = _uriService.GetUri(besluitEntity);

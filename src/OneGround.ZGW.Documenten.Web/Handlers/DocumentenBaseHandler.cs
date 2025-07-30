@@ -62,7 +62,7 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
     private static Resource GetEntityResource(IInformatieObjectEntity informatieObjectEntity) =>
         informatieObjectEntity switch
         {
-            EnkelvoudigInformatieObject => Resource.enkelvoudiginformatieobject, // ???
+            EnkelvoudigInformatieObject => Resource.enkelvoudiginformatieobject,
             GebruiksRecht => Resource.gebruiksrechten,
             Verzending => Resource.verzending,
             _ => throw new ArgumentException(null, nameof(informatieObjectEntity)),
@@ -87,8 +87,12 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
-    public async Task SendNotificationAsync<K>(Actie actie, K informatieObjectEntity, CancellationToken cancellationToken)
-        where K : IInformatieObjectEntity, IUrlEntity
+    public async Task SendNotificationAsync<TInformatieObjectEntity>(
+        Actie actie,
+        TInformatieObjectEntity informatieObjectEntity,
+        CancellationToken cancellationToken
+    )
+        where TInformatieObjectEntity : IInformatieObjectEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(informatieObjectEntity.InformatieObject);
         var resourceUrl = _uriService.GetUri(informatieObjectEntity);
@@ -106,68 +110,6 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
             },
             cancellationToken
         );
-    }
-
-    //[Obsolete("USe the Generic one")]
-    //public Task SendNotificationAsync(Actie actie, EnkelvoudigInformatieObjectVersie informatieObjectVersie, CancellationToken cancellationToken)
-    //{
-    //    var hoofdObject = _uriService.GetUri(informatieObjectVersie.InformatieObject);
-    //    return SendNotificationAsync(
-    //        Resource.enkelvoudiginformatieobject,
-    //        actie,
-    //        hoofdObject,
-    //        hoofdObject,
-    //        GetKenmerken(informatieObjectVersie),
-    //        informatieObjectVersie.InformatieObject.Owner,
-    //        cancellationToken
-    //    );
-    //}
-
-    //[Obsolete("USe the Generic one")]
-    //public Task SendNotificationAsync(Actie actie, GebruiksRecht entity, CancellationToken cancellationToken)
-    //{
-    //    var hoofdObject = _uriService.GetUri(entity.InformatieObject);
-    //    var resourceUrl = _uriService.GetUri(entity);
-    //    return SendNotificationAsync(
-    //        Resource.gebruiksrechten,
-    //        actie,
-    //        hoofdObject,
-    //        resourceUrl,
-    //        EmptyKenmerken,
-    //        entity.InformatieObject.Owner,
-    //        cancellationToken
-    //    );
-    //}
-
-    //[Obsolete("USe the Generic one")]
-    //public Task SendNotificationAsync(Actie actie, Verzending entity, CancellationToken cancellationToken)
-    //{
-    //    var hoofdObject = _uriService.GetUri(entity.InformatieObject);
-    //    var resourceUrl = _uriService.GetUri(entity);
-    //    return SendNotificationAsync(
-    //        Resource.verzending,
-    //        actie,
-    //        hoofdObject,
-    //        resourceUrl,
-    //        EmptyKenmerken,
-    //        entity.InformatieObject.Owner,
-    //        cancellationToken
-    //    );
-    //}
-
-    //private static ImmutableDictionary<string, string> EmptyKenmerken => ImmutableDictionary.Create<string, string>();
-
-    private static Dictionary<string, string> GetKenmerken(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObject)
-    {
-        return new Dictionary<string, string>
-        {
-            { "bronorganisatie", enkelvoudigInformatieObject.Bronorganisatie },
-            { "informatieobjecttype", enkelvoudigInformatieObject.InformatieObject.InformatieObjectType },
-            {
-                "vertrouwelijkheidaanduiding",
-                enkelvoudigInformatieObject.Vertrouwelijkheidaanduiding.HasValue ? $"{enkelvoudigInformatieObject.Vertrouwelijkheidaanduiding}" : null
-            },
-        };
     }
 
     private async Task SendNotificationAsync(Notification notification, CancellationToken cancellationToken)
