@@ -42,20 +42,20 @@ public class ServiceConfiguration
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
 
-        const string pipelineName = "resilience-pipeline-notificaties";
-        services.Configure<ResiliencePipelineOptions>(pipelineName, _configuration.GetRequiredSection("PollyConfig"));
+        const string serviceName = "NotificatiesSender";
+        var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);
+        services.Configure<HttpResiliencePipelineOptions>(optionsKey, _configuration.GetRequiredSection(optionsKey));
 
         services
             .AddHttpClient<INotificationSender, NotificationSender>()
             .AddResilienceHandler(
-                pipelineName,
+                serviceName,
                 (builder, context) =>
                 {
-                    context.EnableReloads<ResiliencePipelineOptions>(pipelineName);
-                    var options = context.GetOptions<ResiliencePipelineOptions>(pipelineName);
+                    context.EnableReloads<HttpResiliencePipelineOptions>(optionsKey);
+                    var options = context.GetOptions<HttpResiliencePipelineOptions>(optionsKey);
 
                     builder.AddRetry(options.Retry);
-
                     builder.AddTimeout(options.Timeout);
                 }
             );

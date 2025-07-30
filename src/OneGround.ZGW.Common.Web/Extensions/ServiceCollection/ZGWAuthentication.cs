@@ -76,7 +76,7 @@ public static class ZGWAuthenticationServiceCollectionExtensions
             )
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddResilienceHandler(
-                "ZGW-IDP-Token-Resilience",
+                "token-resilience",
                 builder =>
                 {
                     builder.AddRetry(

@@ -4,7 +4,7 @@ using Polly;
 
 namespace OneGround.ZGW.Common.ServiceAgent.Configuration;
 
-public static class ResiliencePipelineDefaults
+public static class HttpResiliencePipelineDefaults
 {
     public static readonly HttpRetryStrategyOptions RetryStrategyOptions = new()
     {

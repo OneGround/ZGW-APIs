@@ -32,16 +32,16 @@ public static class ServiceAgentExtensions
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddHttpMessageHandler<BatchIdHandler>();
 
-        var pipelineName = $"resilience-pipeline-{serviceRoleName}";
+        var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceRoleName);
 
-        services.Configure<ResiliencePipelineOptions>(pipelineName, configuration.GetSection($"PollyConfig:{serviceRoleName}"));
+        services.Configure<HttpResiliencePipelineOptions>(optionsKey, configuration.GetSection(optionsKey));
 
         httpClient.AddResilienceHandler(
-            pipelineName,
+            serviceRoleName,
             (builder, context) =>
             {
-                context.EnableReloads<ResiliencePipelineOptions>(pipelineName);
-                var options = context.GetOptions<ResiliencePipelineOptions>(pipelineName);
+                context.EnableReloads<HttpResiliencePipelineOptions>(optionsKey);
+                var options = context.GetOptions<HttpResiliencePipelineOptions>(optionsKey);
 
                 builder.AddRetry(options.Retry).AddTimeout(options.Timeout);
             }
