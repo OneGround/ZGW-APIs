@@ -28,11 +28,7 @@ mkdir oneground-ac && cd oneground-ac
 
 #### Step 2: Download the Docker Compose File
 
-Download the `docker-compose.autorisaties.yml` file into your new directory.
-
-```bash
-curl -o docker-compose.autorisaties.yml [https://raw.githubusercontent.com/OneGround/ZGW-APIs/main/getting-started/docker-compose.autorisaties.yml](https://raw.githubusercontent.com/OneGround/ZGW-APIs/main/getting-started/docker-compose.autorisaties.yml)
-```
+Download the `docker-compose.autorisaties.yml` by following [GitHub link](https://raw.githubusercontent.com/OneGround/ZGW-APIs/main/getting-started/docker-compose.autorisaties.yml) and place it into your new directory.
 
 #### Step 3: Configure the Service
 
