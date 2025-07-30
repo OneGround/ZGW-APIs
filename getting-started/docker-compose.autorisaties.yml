@@ -1,0 +1,50 @@
+#
+# Docker Compose for running the OneGround Autorisaties API (AC) as a standalone service.
+#
+# INSTRUCTIONS:
+# 1. Edit the placeholder values (e.g., <POSTGRES_HOST>) in the 'environment' section below.
+# 2. If your other services use a specific Docker network, change 'bridge' to your network's name at the bottom.
+#
+name: oneground-autorisaties-api
+
+services:
+  oneground.autorisaties.webapi:
+    image: ghcr.io/oneground/autorisaties-api:1.0
+    restart: unless-stopped
+    ports:
+      # You can change the first port (5009) if it conflicts with another service.
+      - "5009:5000"
+    environment:
+      # --- General Service Settings ---
+      ASPNETCORE_URLS: "http://*:5000"
+
+      # --- Database Connection Strings ---
+      # Replace placeholders with your actual PostgreSQL connection details.
+      ConnectionStrings__UserConnectionString: "Host=<POSTGRES_HOST>;Port=<POSTGRES_PORT>;Database=ac_db;Username=<DATABASE_USER>;Password=<DATABASE_USER_PASSWORD>"
+      ConnectionStrings__AdminConnectionString: "Host=<POSTGRES_HOST>;Port=<POSTGRES_PORT>;Database=ac_db;Username=<DATABASE_ADMIN>;Password=<DATABASE_ADMIN_PASSWORD>"
+
+      # --- RabbitMQ Event Bus Connection ---
+      # Replace placeholders with your actual RabbitMQ connection details.
+      Eventbus__HostName: "<RABBITMQ_HOST>"
+      Eventbus__VirtualHost: "<RABBITMQ_VHOST>"
+      Eventbus__UserName: "<RABBITMQ_USERNAME>"
+      Eventbus__Password: "<RABBITMQ_PASSWORD>"
+
+      # --- Redis Cache Connection ---
+      # Replace placeholder with your actual Redis connection details.
+      Redis__ConnectionString: "<REDIS_CONNECTION_STRING>"
+
+      # --- Identity Provider (OIDC) Settings ---
+      # Replace placeholders with your actual OIDC provider details.
+      Auth__Authority: "<IDP_AUTHORITY_URL>"
+      Auth__ValidIssuer: "<IDP_ISSUER_URL>"
+      Auth__ValidAudience: "account"
+    networks:
+      - external_network
+
+networks:
+  external_network:
+    # IMPORTANT: Change 'bridge' to the name of the Docker network
+    # where your Postgres, RabbitMQ, and Redis services are running.
+    name: bridge
+    external: true
