@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -29,9 +29,10 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         IEntityUriService uriService,
         ZrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService
+        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;

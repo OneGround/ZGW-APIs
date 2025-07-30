@@ -16,6 +16,7 @@ using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -33,9 +34,10 @@ class CreateGebruiksRechtCommandHandler
         IEntityUriService uriService,
         INotificatieService notificatieService,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

@@ -30,9 +30,10 @@ class GetAllBesluitenQueryHandler
         IEntityUriService uriService,
         BrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBesluitAuthorizationTempTableService besluitAuthorizationTempTableService
+        IBesluitAuthorizationTempTableService besluitAuthorizationTempTableService,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, besluitKenmerkenResolver)
     {
         _context = context;
         _besluitAuthorizationTempTableService = besluitAuthorizationTempTableService;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +17,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -36,9 +37,10 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
         INotificatieService notificatieService,
-        IDocumentServicesResolver documentServicesResolver
+        IDocumentServicesResolver documentServicesResolver,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

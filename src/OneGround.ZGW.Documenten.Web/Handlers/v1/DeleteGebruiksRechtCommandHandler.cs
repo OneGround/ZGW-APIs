@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -32,9 +33,10 @@ class DeleteGebruiksRechtCommandHandler
         IEntityUriService uriService,
         INotificatieService notificationService,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

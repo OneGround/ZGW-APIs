@@ -39,9 +39,10 @@ class CreateKlantContactCommandHandler
         IClosedZaakModificationBusinessRule closedZaakModificationBusinessRule,
         IAuditTrailFactory auditTrailFactory,
         INummerGenerator nummerGenerator,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _zrcDbContext = zrcDbContext;
         _closedZaakModificationBusinessRule = closedZaakModificationBusinessRule;

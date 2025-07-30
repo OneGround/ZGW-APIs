@@ -22,6 +22,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -49,9 +50,10 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         IAuditTrailFactory auditTrailFactory,
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _enkelvoudigInformatieObjectBusinessRuleService = enkelvoudigInformatieObjectBusinessRuleService;
@@ -98,7 +100,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         // We have enabled (some) metadata fields for the underlying document provider
         var metadata = new DocumentMeta
         {
-            Rsin = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Owner,
+            Rsin = enkelvoudigInformatieObjectVersie.InformatieObject.Owner,
             Version = enkelvoudigInformatieObjectVersie.Versie,
         };
 
@@ -149,10 +151,10 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             restBestandsomvang -= maxPerBestandsdeel;
         }
 
-        if (!versie.EnkelvoudigInformatieObject.Locked)
+        if (!versie.InformatieObject.Locked)
         {
-            versie.EnkelvoudigInformatieObject.Locked = true;
-            versie.EnkelvoudigInformatieObject.Lock = _lockGenerator.Generate();
+            versie.InformatieObject.Locked = true;
+            versie.InformatieObject.Lock = _lockGenerator.Generate();
         }
 
         _logger.LogDebug("{numBestanden} bestandsdelen added in database", numBestanden);
@@ -164,7 +166,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         {
             // This value is guaranteed to be read from the cache (when validation is enabled which is normally the case of course!)
             var informatieObjectType = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-                enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+                enkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
             );
 
             if (

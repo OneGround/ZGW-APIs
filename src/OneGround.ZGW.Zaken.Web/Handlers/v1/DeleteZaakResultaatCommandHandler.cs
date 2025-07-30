@@ -38,9 +38,10 @@ class DeleteZaakResultaatCommandHandler
         INotificatieService notificatieService,
         IAuditTrailFactory auditTrailFactory,
         IClosedZaakModificationBusinessRule closedZaakModificationBusinessRule,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

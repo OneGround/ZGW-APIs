@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -12,6 +12,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -28,9 +29,10 @@ class DownloadEnkelvoudigInformatieObjectQueryHandler
         DrcDbContext context,
         IEntityUriService uriService,
         IDocumentServicesResolver documentServicesResolver,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _documentServicesResolver = documentServicesResolver;

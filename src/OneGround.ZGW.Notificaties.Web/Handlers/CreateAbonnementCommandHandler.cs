@@ -52,6 +52,43 @@ class CreateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<CreateAbo
                     )
                 );
             }
+            else
+            {
+                var kanaalFilterMap = kanaal.Filters.ToHashSet();
+
+                foreach (var filter in abonnementkanaal.Filters)
+                {
+                    if (filter.Key == "#resource")
+                    {
+                        continue;
+                    }
+                    if (filter.Key == "#actie")
+                    {
+                        string[] acties = ["create", "update", "destroy"];
+
+                        if (!acties.Contains(filter.Value)) // TODO: Consider using a business-rule service (so shared with create/modify)
+                        {
+                            errors.Add(
+                                new ValidationError(
+                                    "filter",
+                                    ErrorCode.NotFound,
+                                    $"In het abonnement is bij filter '#actie' een incorrecte waarde '{filter.Value}' opgegeven."
+                                )
+                            );
+                        }
+                    }
+                    else if (!kanaalFilterMap.Contains(filter.Key))
+                    {
+                        errors.Add(
+                            new ValidationError(
+                                "filter",
+                                ErrorCode.NotFound,
+                                $"In het abonnement is een niet bestaand filter '{filter.Key}' opgegeven."
+                            )
+                        );
+                    }
+                }
+            }
             abonnementkanaal.Kanaal = kanaal;
         }
 

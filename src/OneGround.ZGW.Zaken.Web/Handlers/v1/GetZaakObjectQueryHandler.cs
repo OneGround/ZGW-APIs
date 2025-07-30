@@ -24,9 +24,10 @@ class GetZaakObjectQueryHandler : ZakenBaseHandler<GetZaakObjectQueryHandler>, I
         IConfiguration configuration,
         IEntityUriService uriService,
         ZrcDbContext context,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService: null)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService: null, zaakKenmerkenResolver)
     {
         _context = context;
     }

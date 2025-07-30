@@ -22,29 +22,4 @@ public class AbonnementRequestValidator : ZGWValidator<AbonnementRequestDto>
                     });
             });
     }
-
-    //private void ValidateKanalen(IList<AbonnementKanaalDto> kanalen, IList<ValidationError> errors)
-    //{
-    //    int ki = 1;
-    //    foreach (var kanaal in kanalen)
-    //    {
-    //        new FieldValidator($"kanaal[{ki}].naam", kanaal.Naam, errors)
-    //            .ValidateRequired()
-    //            .ValidateLength(50);
-
-    //        if (kanaal.Filters != null)
-    //        {
-    //            int fi = 1;
-    //            foreach (var filter in kanaal.Filters)
-    //            {
-    //                new FieldValidator($"kanaal[{ki}].filters[{fi}].key", filter.Key, errors)
-    //                    .ValidateRequired()
-    //                    .ValidateLength(200);
-
-    //                fi++;
-    //            }
-    //        }
-    //        ki++;
-    //    }
-    //}
 }

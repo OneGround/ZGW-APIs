@@ -35,6 +35,7 @@ using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using OneGround.ZGW.Zaken.Web.Expands.v1._5;
+using OneGround.ZGW.Zaken.Web.Handlers;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
 using OneGround.ZGW.Zaken.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Zaken.Web.Services;
@@ -156,6 +157,7 @@ public class Startup
         services.AddSingleton<IDistributedCacheHelper, DistributedCacheHelper>();
 
         services.AddTransient<IZaakAuthorizationTempTableService, ZaakAuthorizationTempTableService>();
+        services.AddScoped<IZaakKenmerkenResolver, ZaakKenmerkenResolver>();
 
         services.AddCorrelationId();
         services.AddBatchId();

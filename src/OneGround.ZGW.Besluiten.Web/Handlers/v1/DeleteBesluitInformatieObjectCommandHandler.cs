@@ -45,9 +45,10 @@ class DeleteBesluitInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         ICorrelationContextAccessor correlationContextAccessor,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBatchIdAccessor batchIdAccessor
+        IBatchIdAccessor batchIdAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
         _client = client;

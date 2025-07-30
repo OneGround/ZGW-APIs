@@ -5,11 +5,6 @@ using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Zaken.DataModel;
 
-public interface IZaakEntity
-{
-    public Zaak Zaak { get; }
-}
-
 [Table("zaakstatussen")]
 public class ZaakStatus : OwnedEntity, IAuditableEntity, IUrlEntity, IZaakEntity
 {

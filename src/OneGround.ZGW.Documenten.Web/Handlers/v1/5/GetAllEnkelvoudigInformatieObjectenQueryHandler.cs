@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -16,6 +16,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -34,9 +35,10 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         DrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDistributedCacheHelper cache,
-        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService
+        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _cache = cache;

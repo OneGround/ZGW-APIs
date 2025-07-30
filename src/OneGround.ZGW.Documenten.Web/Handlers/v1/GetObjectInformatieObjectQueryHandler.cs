@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -24,9 +25,10 @@ class GetObjectInformatieObjectQueryHandler
         IConfiguration configuration,
         IEntityUriService uriService,
         DrcDbContext context,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
     }

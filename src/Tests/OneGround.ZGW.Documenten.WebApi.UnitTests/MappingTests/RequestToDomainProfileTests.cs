@@ -100,7 +100,7 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Inhoud, result.Inhoud);
         Assert.Equal(value.Link, result.Link);
         Assert.Equal(value.Beschrijving, result.Beschrijving);
-        Assert.Equal(value.IndicatieGebruiksrecht, result.EnkelvoudigInformatieObject.IndicatieGebruiksrecht);
+        Assert.Equal(value.IndicatieGebruiksrecht, result.InformatieObject.IndicatieGebruiksrecht);
         Assert.Equal(value.OntvangstDatum, result.OntvangstDatum.Value.ToString("yyyy-MM-dd"));
         Assert.Equal(value.VerzendDatum, result.VerzendDatum.Value.ToString("yyyy-MM-dd"));
         Assert.Equal(value.Ondertekening.Datum, result.Ondertekening_Datum.Value.ToString("yyyy-MM-dd"));
@@ -109,7 +109,7 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Integriteit.Algoritme, result.Integriteit_Algoritme.ToString());
         Assert.Equal(value.Integriteit.Waarde, result.Integriteit_Waarde);
         Assert.Equal(value.Integriteit.Datum, result.Integriteit_Datum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.InformatieObjectType, result.EnkelvoudigInformatieObject.InformatieObjectType);
+        Assert.Equal(value.InformatieObjectType, result.InformatieObject.InformatieObjectType);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class RequestToDomainProfileTests
         var result = _mapper.Map<EnkelvoudigInformatieObjectVersie>(value);
 
         // Assert
-        Assert.Equal(value.Lock, result.EnkelvoudigInformatieObject.Lock);
+        Assert.Equal(value.Lock, result.InformatieObject.Lock);
     }
 
     [Fact]

@@ -145,7 +145,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         // Define 1:N relation between EnkelvoudigInformatieObject and EnkelvoudigInformatieObjectVersie
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()
-            .HasOne(e => e.EnkelvoudigInformatieObject)
+            .HasOne(e => e.InformatieObject)
             .WithMany(e => e.EnkelvoudigInformatieObjectVersies)
             .HasForeignKey(e => e.EnkelvoudigInformatieObjectId)
             .IsRequired();
@@ -153,7 +153,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         // Define 1:1 relation between LatestEnkelvoudigInformatieObjectVersie and EnkelvoudigInformatieObject
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()
-            .HasOne(e => e.LatestEnkelvoudigInformatieObject)
+            .HasOne(e => e.LatestInformatieObject)
             .WithOne(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .HasForeignKey<EnkelvoudigInformatieObject>(e => e.LatestEnkelvoudigInformatieObjectVersieId);
 

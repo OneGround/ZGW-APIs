@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,22 +53,66 @@ class UpdateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<UpdateAbo
 
         _logger.LogDebug("Updating Abonnement {Id}....", abonnement.Id);
 
-        foreach (var ak in request.Abonnement.AbonnementKanalen)
+        foreach (var abonnementkanaal in request.Abonnement.AbonnementKanalen)
         {
-            var kanaal = await _context.Kanalen.SingleOrDefaultAsync(k => k.Naam == ak.Kanaal.Naam, cancellationToken);
+            var kanaal = await _context.Kanalen.SingleOrDefaultAsync(k => k.Naam == abonnementkanaal.Kanaal.Naam, cancellationToken);
 
             if (kanaal == null)
             {
                 var error = new ValidationError(
                     "identificatie",
                     ErrorCode.NotFound,
-                    $"In het abonnement is een niet bestaand kanaal '{ak.Kanaal.Naam}' opgegeven."
+                    $"In het abonnement is een niet bestaand kanaal '{abonnementkanaal.Kanaal.Naam}' opgegeven."
                 );
                 return new CommandResult<Abonnement>(null, CommandStatus.ValidationError, error);
             }
+            else
+            {
+                var errors = new List<ValidationError>();
 
-            ak.Kanaal = kanaal;
-            abonnement.AbonnementKanalen.Add(ak);
+                var kanaalFilterMap = kanaal.Filters.ToHashSet();
+
+                foreach (var filter in abonnementkanaal.Filters)
+                {
+                    if (filter.Key == "#resource")
+                    {
+                        continue;
+                    }
+                    if (filter.Key == "#actie")
+                    {
+                        string[] acties = ["create", "update", "destroy"];
+
+                        if (!acties.Contains(filter.Value)) // TODO: Consider using a business-rule service (so shared with create/modify)
+                        {
+                            errors.Add(
+                                new ValidationError(
+                                    "filter",
+                                    ErrorCode.NotFound,
+                                    $"In het abonnement is bij filter '#actie' een incorrecte waarde '{filter.Value}' opgegeven."
+                                )
+                            );
+                        }
+                    }
+                    else if (!kanaalFilterMap.Contains(filter.Key))
+                    {
+                        errors.Add(
+                            new ValidationError(
+                                "filter",
+                                ErrorCode.NotFound,
+                                $"In het abonnement is een niet bestaand filter '{filter.Key}' opgegeven."
+                            )
+                        );
+                    }
+                }
+
+                if (errors.Count != 0)
+                {
+                    return new CommandResult<Abonnement>(null, CommandStatus.ValidationError, errors.ToArray());
+                }
+            }
+
+            abonnementkanaal.Kanaal = kanaal;
+            abonnement.AbonnementKanalen.Add(abonnementkanaal);
         }
 
         abonnement.Auth = request.Abonnement.Auth;

@@ -25,9 +25,10 @@ class GetZaakEigenschapQueryHandler
         IConfiguration configuration,
         ZrcDbContext context,
         IEntityUriService uriService,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
     }
