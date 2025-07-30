@@ -1,17 +1,14 @@
-using System.Net;
 using Hangfire;
 using Hangfire.PostgreSql;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
-using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.ServiceAgent;
-using OneGround.ZGW.Common.Services;
+using OneGround.ZGW.Common.ServiceAgent.Configuration;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
@@ -45,57 +42,20 @@ public class ServiceConfiguration
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
 
-        // Bind named ResiliencePipelineNotificaties from configuration (custom setting)
-        services.Configure<ResiliencePipelineOptions>(
-            "resilience-pipeline-notificaties",
-            _configuration.GetRequiredSection("ResiliencePipelineNotificaties")
-        );
+        const string serviceName = "NotificatiesSender";
+        var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);
+        services.Configure<HttpResiliencePipelineOptions>(optionsKey, _configuration.GetRequiredSection(optionsKey));
 
-        // Define the HTTP pipeline
         services
             .AddHttpClient<INotificationSender, NotificationSender>()
             .AddResilienceHandler(
-                "resilience-pipeline-notificaties",
+                serviceName,
                 (builder, context) =>
                 {
-                    // Enable dynamic reloads of this pipeline whenever the named ResiliencePipelineNotificaties change
-                    context.EnableReloads<ResiliencePipelineOptions>("resilience-pipeline-notificaties");
+                    context.EnableReloads<HttpResiliencePipelineOptions>(optionsKey);
+                    var options = context.GetOptions<HttpResiliencePipelineOptions>(optionsKey);
 
-                    // Retrieve the named options
-                    var options = context.GetOptions<ResiliencePipelineOptions>("resilience-pipeline-notificaties");
-
-                    builder.AddRetry(
-                        new RetryStrategyOptions<HttpResponseMessage>
-                        {
-                            MaxRetryAttempts = options.Retry.MaxRetryAttempts,
-                            BackoffType = options.Retry.BackoffType,
-                            UseJitter = options.Retry.UseJitter,
-                            Delay = options.Retry.Delay,
-                            ShouldHandle = arg =>
-                            {
-                                if (arg.Outcome.Result == null) // This flow is when service did not repond at all (gives no HTTP statuscode)
-                                {
-                                    // Always retry on this flow
-                                    return ValueTask.FromResult(true);
-                                }
-
-                                // Retry depending on the HTTP status code
-                                var shouldRetry = DefaultRetryOnHttpStatusCodes
-                                    .Concat(options.AddRetryOnHttpStatusCodes)
-                                    .Any(statuscode => arg.Outcome.Result.StatusCode == statuscode);
-
-                                return ValueTask.FromResult(shouldRetry);
-                            },
-                            OnRetry = arg =>
-                            {
-                                LogRetry(context, arg);
-
-                                // Event handlers can be asynchronous; here, we return an empty ValueTask.
-                                return default;
-                            },
-                        }
-                    );
-
+                    builder.AddRetry(options.Retry);
                     builder.AddTimeout(options.Timeout);
                 }
             );
@@ -177,61 +137,4 @@ public class ServiceConfiguration
             }
         );
     }
-
-    private static void LogRetry(ResilienceHandlerContext context, OnRetryArguments<HttpResponseMessage> arg)
-    {
-        using var scope = context.ServiceProvider.CreateScope();
-
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<ServiceConfiguration>>();
-
-        // Get the context in which a retry should be taken and log...
-        if (
-            arg.Context.Properties.TryGetValue(
-                new ResiliencePropertyKey<HttpRequestMessage>("Resilience.Http.RequestMessage"),
-                out var httpRequestMessage
-            )
-        )
-        {
-            if (arg.Outcome.Result is { } httpResponseMessage)
-            {
-                logger.LogInformation(
-                    "OnRetry, Attempt# {AttemptNumber} on {Method} {RequestUri} => {ReasonPhrase} [{StatusCode}]. Next over {TotalSeconds} second(s).",
-                    arg.AttemptNumber,
-                    httpRequestMessage.Method,
-                    httpRequestMessage.RequestUri,
-                    httpResponseMessage.ReasonPhrase,
-                    (int)httpResponseMessage.StatusCode,
-                    arg.RetryDelay.TotalSeconds
-                );
-            }
-            else
-            {
-                logger.LogInformation(
-                    "OnRetry, Attempt# {AttemptNumber} on {Method} {RequestUri} => (no response). Next over {TotalSeconds} second(s).",
-                    arg.AttemptNumber,
-                    httpRequestMessage.Method,
-                    httpRequestMessage.RequestUri,
-                    arg.RetryDelay.TotalSeconds
-                );
-            }
-        }
-        else
-        {
-            logger.LogInformation(
-                "OnRetry, Attempt# {AttemptNumber}. Next over {TotalSeconds} second(s).",
-                arg.AttemptNumber,
-                arg.RetryDelay.TotalSeconds
-            );
-        }
-    }
-
-    private static IEnumerable<HttpStatusCode> DefaultRetryOnHttpStatusCodes =>
-        [
-            HttpStatusCode.RequestTimeout,
-            HttpStatusCode.TooManyRequests,
-            HttpStatusCode.InternalServerError,
-            HttpStatusCode.BadGateway,
-            HttpStatusCode.ServiceUnavailable,
-            HttpStatusCode.GatewayTimeout,
-        ];
 }
