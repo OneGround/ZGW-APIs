@@ -18,36 +18,22 @@ Before you begin, ensure you have the following:
 
 ### Setup Instructions
 
-#### Step 1: Create a Project Directory
+#### Step 1: Download the AC standalone directory
 
-First, create a dedicated directory for the service to keep things organized.
-
-```bash
-mkdir oneground-ac && cd oneground-ac
-```
-
-#### Step 2: Download the Docker Compose File
-
-Download the `docker-compose.autorisaties.yml` by following [GitHub link](https://raw.githubusercontent.com/OneGround/ZGW-APIs/main/getting-started/docker-compose.autorisaties.yml) and place it into your new directory.
+Download the setup by following [GitHub link](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FAC) and unzip it.
 
 #### Step 3: Configure the Service
 
-Open the `docker-compose.autorisaties.yml` file you just downloaded in a text editor.
+1. **Environment Variables**: Edit `.env` file, replace all placeholder values (e.g., `<POSTGRES_HOST>`, `<RABBITMQ_HOST>`, etc.) with the actual connection details for your setup.
 
-You will need to edit two sections:
-
-1. **Environment Variables**: In the `services.zgw.autorisaties.webapi.environment` section, replace all placeholder values (e.g., `<POSTGRES_HOST>`, `<RABBITMQ_HOST>`, etc.) with the actual connection details for your setup.
-
-2. **Networking**: At the bottom of the file, in the `networks.external_network` section, change `name: bridge` to the name of the Docker network that your other services (Postgres, RabbitMQ, Redis) are connected to.
-
-> **Note on Security**: This method places configuration, including secrets, directly into the `docker-compose.autorisaties.yml` file for simplicity. For production environments, we strongly recommend using a separate `.env` file or another secrets management tool to protect sensitive data.
+2. **Networking**: Edit `docker-compose.yml` file, in the `networks.external_network` section, change `name: bridge` to the name of the Docker network that your other services (Postgres, RabbitMQ, Redis) are connected to.
 
 #### Step 4: Start the Service
 
-Once you have saved your changes to the `docker-compose.autorisaties.yml` file, you can start the service.
+Once you have saved your changes to the `docker-compose.yml` and `.env` files, you can start the service.
 
 ```bash
-docker compose -f docker-compose.autorisaties.yml up -d
+docker compose up -d
 ```
 
 #### Step 5: Verify the Service
@@ -64,6 +50,6 @@ The Autorisaties API should now be running and accessible on port `5009` (e.g., 
 
 ### Advanced Configuration
 
-The environment variables provided in the `docker-compose.autorisaties.yml` file cover the mandatory dependencies only. You can explore the source repository for more settings in files like `appsettings.json`, `appsettings.Local.json`, and `appsettings.Shared.json`.
+The environment variables provided in the `.env` file cover the mandatory dependencies only. You can explore the source repository for more settings in files like `appsettings.json`, `appsettings.Local.json`, and `appsettings.Shared.json`.
 
-Any setting from these files can be configured as an environment variable. To do so, convert the JSON path to an environment variable by replacing the colon (`:`) with a double underscore (`__`). For example, to override `Logging:LogLevel:Default`, you would add an environment variable `Logging__LogLevel__Default=Warning` to the `docker-compose.autorisaties.yml` file.
+Any setting from these files can be configured as an environment variable. To do so, convert the JSON path to an environment variable by replacing the colon (`:`) with a double underscore (`__`). For example, to override `Logging:LogLevel:Default`, you would add an environment variable `Logging__LogLevel__Default=Warning` to the `.env` file.
