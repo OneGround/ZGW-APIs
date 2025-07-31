@@ -58,7 +58,7 @@ You will be working with two primary files for this setup:
 
 The `docker-compose.yml` file is configured to use a specific version of the `autorisaties-api` image (e.g., `1.0`). You can browse all available versions and select a different one if needed.
 
-A complete list of published image versions can be found on the [**GitHub Packages page**](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api)
+A complete list of published image versions can be found on the [**GitHub Packages page**](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api).
 
 To use a different version, simply update the `image` tag in your `docker-compose.yml` file.
 
@@ -80,7 +80,7 @@ Open the `.env` file in a text editor. Replace all placeholder values (e.g., `<P
 | `Eventbus__VirtualHost`                  | The virtual host to use on RabbitMQ.                     | `/`                           |
 | `Eventbus__UserName`                     | The username for authenticating with RabbitMQ.           | `guest`                       |
 | `Eventbus__Password`                     | The password for authenticating with RabbitMQ.           | `guest`                       |
-| `Redis__ConnectionString`                   | The host and port for your Redis instance.               | `localhost`            |
+| `Redis__ConnectionString`                | The connection string for your Redis instance.           | `localhost:6379`              |
 | `Auth__Authority`                        | The base URL of your OIDC Identity Provider.             | `https://auth.example.com`    |
 | `Auth__ValidIssuer`                      | The issuer URL of your OIDC Identity Provider.           | `https://auth.example.com`    |
 | `Auth__ValidAudience`                    | The audience value (`aud` claim) for validating JWTs.    | `autorisaties-api`            |
