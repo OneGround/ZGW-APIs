@@ -134,8 +134,8 @@ services:
     user: root
     volumes:
       - ../oneground-services-data/ac-data:/app/data
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Autorisaties.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Autorisaties.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -160,8 +160,8 @@ services:
     image: ghcr.io/oneground/besluiten-api:1.0
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Besluiten.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Besluiten.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -185,8 +185,8 @@ services:
     image: ghcr.io/oneground/catalogi-api:1.3
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Catalogi.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Catalogi.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -210,8 +210,8 @@ services:
     image: ghcr.io/oneground/documenten-listener:1.5
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Documenten.Messaging.Listener'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Documenten.Messaging.Listener'
     depends_on:
       haproxy:
         condition: service_started
@@ -232,8 +232,8 @@ services:
     image: ghcr.io/oneground/documenten-api:1.5
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Documenten.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Documenten.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -258,8 +258,8 @@ services:
     image: ghcr.io/oneground/notificaties-listener:1.0
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Notificaties.Messaging.Listener'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Notificaties.Messaging.Listener'
     depends_on:
       haproxy:
         condition: service_started
@@ -281,8 +281,8 @@ services:
     image: ghcr.io/oneground/notificaties-api:1.0
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Notificaties.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Notificaties.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -305,8 +305,8 @@ services:
   zgw.referentielijsten.webapi:
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Referentielijsten.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Referentielijsten.WebApi'
     depends_on:
       haproxy:
         condition: service_started
@@ -323,8 +323,8 @@ services:
     image: ghcr.io/oneground/zaken-api:1.5
     user: root
     volumes:
-      - ./oneground-certificates:/usr/local/share/ca-certificates
-    entrypoint: sh -c 'cp /usr/local/share/ca-certificates/oneground.local.pem /usr/local/share/ca-certificates/oneground.local.crt && update-ca-certificates && ./OneGround.ZGW.Zaken.WebApi'
+      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
+    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Zaken.WebApi'
     depends_on:
       haproxy:
         condition: service_started
