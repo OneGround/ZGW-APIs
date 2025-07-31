@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Web.Validators;
 
 namespace OneGround.ZGW.Notificaties.Web.Handlers;
 
@@ -18,17 +20,20 @@ class UpdateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<UpdateAbo
 {
     private readonly NrcDbContext _context;
     private readonly ILogger<UpdateAbonnementCommandHandler> _logger;
+    private readonly IAbonnementKanaalValidator _abonnementKanaalValidator;
 
     public UpdateAbonnementCommandHandler(
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
         NrcDbContext context,
-        ILogger<UpdateAbonnementCommandHandler> logger
+        ILogger<UpdateAbonnementCommandHandler> logger,
+        IAbonnementKanaalValidator abonnementKanaalValidator
     )
         : base(configuration, authorizationContextAccessor)
     {
         _context = context;
         _logger = logger;
+        _abonnementKanaalValidator = abonnementKanaalValidator;
     }
 
     public async Task<CommandResult<Abonnement>> Handle(UpdateAbonnementCommand request, CancellationToken cancellationToken)
@@ -52,22 +57,35 @@ class UpdateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<UpdateAbo
 
         _logger.LogDebug("Updating Abonnement {Id}....", abonnement.Id);
 
-        foreach (var ak in request.Abonnement.AbonnementKanalen)
-        {
-            var kanaal = await _context.Kanalen.SingleOrDefaultAsync(k => k.Naam == ak.Kanaal.Naam, cancellationToken);
+        var errors = new List<ValidationError>();
 
+        foreach (var abonnementkanaal in request.Abonnement.AbonnementKanalen)
+        {
+            var kanaal = await _context.Kanalen.SingleOrDefaultAsync(k => k.Naam == abonnementkanaal.Kanaal.Naam, cancellationToken);
             if (kanaal == null)
             {
                 var error = new ValidationError(
-                    "identificatie",
+                    "naam",
                     ErrorCode.NotFound,
-                    $"In het abonnement is een niet bestaand kanaal '{ak.Kanaal.Naam}' opgegeven."
+                    $"In het abonnement is een niet bestaand kanaal '{abonnementkanaal.Kanaal.Naam}' opgegeven."
                 );
-                return new CommandResult<Abonnement>(null, CommandStatus.ValidationError, error);
+                errors.Add(error);
+            }
+            else
+            {
+                if (!_abonnementKanaalValidator.Validate(abonnementkanaal, kanaal, errors))
+                {
+                    continue;
+                }
             }
 
-            ak.Kanaal = kanaal;
-            abonnement.AbonnementKanalen.Add(ak);
+            abonnementkanaal.Kanaal = kanaal;
+            abonnement.AbonnementKanalen.Add(abonnementkanaal);
+        }
+
+        if (errors.Any())
+        {
+            return new CommandResult<Abonnement>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
         abonnement.Auth = request.Abonnement.Auth;

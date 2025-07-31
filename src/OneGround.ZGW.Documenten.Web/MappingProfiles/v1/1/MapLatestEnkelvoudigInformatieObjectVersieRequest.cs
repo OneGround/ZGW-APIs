@@ -27,7 +27,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.Taal = latestVersion.Taal;
         dest.Bestandsnaam = latestVersion.Bestandsnaam;
         dest.Bestandsomvang = latestVersion.Bestandsomvang;
-        dest.Lock = latestVersion.EnkelvoudigInformatieObject.Lock;
+        dest.Lock = latestVersion.InformatieObject.Lock;
         dest.Inhoud = latestVersion.Inhoud;
         dest.Link = latestVersion.Link;
         dest.Beschrijving = latestVersion.Beschrijving;
@@ -35,7 +35,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, false);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, false);
-        dest.InformatieObjectType = latestVersion.EnkelvoudigInformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
+        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
     }
 }

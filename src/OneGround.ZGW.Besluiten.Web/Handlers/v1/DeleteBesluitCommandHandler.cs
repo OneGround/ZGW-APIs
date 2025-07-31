@@ -44,9 +44,10 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
         IZakenServiceAgent zakenServiceAgent,
         ICorrelationContextAccessor correlationContextAccessor,
         IBatchIdAccessor batchIdAccessor,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
         _publishEndpoint = publishEndpoint;

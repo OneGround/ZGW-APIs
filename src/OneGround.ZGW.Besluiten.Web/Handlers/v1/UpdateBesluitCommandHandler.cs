@@ -39,9 +39,10 @@ class UpdateBesluitCommandHandler : BesluitenBaseHandler<UpdateBesluitCommandHan
         INotificatieService notificatieService,
         IEntityUpdater<Besluit> entityUpdater,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
         _besluitBusinessRuleService = besluitBusinessRuleService;

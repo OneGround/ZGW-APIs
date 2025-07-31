@@ -50,40 +50,11 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 // Notify abonnees (subscribers)....
                 var notificatie = context.Message;
 
-                var abonnementen = await _memoryCache.GetOrCreate(
-                    $"abonnementen_{notificatie.Rsin}",
-                    async e =>
-                    {
-                        e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+                var abonnementen = await GetCachedAbonnementenAsync(notificatie, context.CancellationToken);
 
-                        var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
-
-                        var abonnements = await dbContext
-                            .Abonnementen.AsNoTracking()
-                            .Where(a => a.Owner == notificatie.Rsin)
-                            .Include(a => a.AbonnementKanalen)
-                            .ThenInclude(a => a.Kanaal)
-                            .Include(a => a.AbonnementKanalen)
-                            .ThenInclude(a => a.Filters)
-                            .ToListAsync(context.CancellationToken);
-
-                        Logger.LogDebug("{Count} abonnementen retrieved and cached for {Rsin}", abonnements.Count, notificatie.Rsin);
-
-                        return abonnements;
-                    }
-                );
+                var allowedKanaalFilers = await GetAllowedKanaalFilersAsync(context.CancellationToken);
 
                 Logger.LogDebug("Notification owner matched these subscriptions: {@Subscriptions}", abonnementen.Select(s => s.Id));
-
-                IReadOnlyDictionary<string, string> notificatieKenmerken;
-                if (notificatie.Kenmerken == null)
-                {
-                    notificatieKenmerken = ImmutableDictionary.Create<string, string>();
-                }
-                else
-                {
-                    notificatieKenmerken = notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value);
-                }
 
                 foreach (var abonnement in abonnementen)
                 {
@@ -97,15 +68,42 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                     foreach (var kanaal in kanalen)
                     {
+                        var validNotificatieKenmerken =
+                            notificatie.Kenmerken != null
+                                ? notificatie
+                                    .Kenmerken.Where(f => allowedKanaalFilers[kanaal.Kanaal.Naam].Contains(f.Key))
+                                    .ToDictionary(k => k.Key.ToLower(), v => v.Value)
+                                : [];
+
                         var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
 
                         Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
 
-                        if (filters.Count != 0 && !filters.Any(filter => Filter(notificatieKenmerken, filter)))
+                        if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
+                        {
                             continue;
+                        }
+
+                        if (
+                            filters.ContainsKey("#resource")
+                            && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource)
+                        )
+                        {
+                            continue;
+                        }
+
+                        if (
+                            filters.Count != 0
+                            && !filters.Where(f => f.Key != "#actie" && f.Key != "#resource").All(filter => Filter(validNotificatieKenmerken, filter))
+                        )
+                        {
+                            continue;
+                        }
 
                         if (_notificationFilterService.IsIgnored(notificatie, abonnement, kanaal))
+                        {
                             continue;
+                        }
 
                         const byte priority = (byte)MessagePriority.Normal;
 
@@ -117,7 +115,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             Resource = notificatie.Resource,
                             ResourceUrl = notificatie.ResourceUrl,
                             Actie = notificatie.Actie,
-                            Kenmerken = notificatie.Kenmerken,
+                            Kenmerken = validNotificatieKenmerken,
                             Rsin = notificatie.Rsin,
                             CorrelationId = notificatie.CorrelationId,
                             // subscriber on THIS channel...
@@ -147,6 +145,51 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 );
             }
         }
+    }
+
+    private async Task<Dictionary<string, string[]>> GetAllowedKanaalFilersAsync(CancellationToken cancellationToken)
+    {
+        return await _memoryCache.GetOrCreate(
+            $"kanaalfilters",
+            async e =>
+            {
+                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+
+                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
+
+                var _allowedKanaalFilers = (await dbContext.Kanalen.ToListAsync(cancellationToken)).ToDictionary(k => k.Naam, v => v.Filters);
+
+                Logger.LogDebug("{Count} filters retrieved and cached", _allowedKanaalFilers.Count);
+
+                return _allowedKanaalFilers;
+            }
+        );
+    }
+
+    private async Task<List<Abonnement>> GetCachedAbonnementenAsync(ISendNotificaties notificatie, CancellationToken cancellationToken)
+    {
+        return await _memoryCache.GetOrCreate(
+            $"abonnementen_{notificatie.Rsin}",
+            async e =>
+            {
+                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+
+                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
+
+                var _abonnementen = await dbContext
+                    .Abonnementen.AsNoTracking()
+                    .Where(a => a.Owner == notificatie.Rsin)
+                    .Include(a => a.AbonnementKanalen)
+                    .ThenInclude(a => a.Kanaal)
+                    .Include(a => a.AbonnementKanalen)
+                    .ThenInclude(a => a.Filters)
+                    .ToListAsync(cancellationToken);
+
+                Logger.LogDebug("{Count} abonnementen retrieved and cached for {Rsin}", _abonnementen.Count, notificatie.Rsin);
+
+                return _abonnementen;
+            }
+        );
     }
 
     private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)

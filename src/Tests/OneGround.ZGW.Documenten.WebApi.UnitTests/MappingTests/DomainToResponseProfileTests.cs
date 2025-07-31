@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
@@ -101,8 +101,8 @@ public class ResponseToDomainProfileTests
         Assert.Equal(latest.Integriteit_Datum.Value.ToString("yyyy-MM-dd"), result.Integriteit.Datum);
         Assert.Equal(latest.Integriteit_Waarde, result.Integriteit.Waarde);
 
-        Assert.Equal(latest.EnkelvoudigInformatieObject.Locked, result.Locked);
-        Assert.Equal(latest.EnkelvoudigInformatieObject.InformatieObjectType, result.InformatieObjectType);
+        Assert.Equal(latest.InformatieObject.Locked, result.Locked);
+        Assert.Equal(latest.InformatieObject.InformatieObjectType, result.InformatieObjectType);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class ResponseToDomainProfileTests
 
         var value = _fixture.Create<EnkelvoudigInformatieObject>();
 
-        value.EnkelvoudigInformatieObjectVersies[0].EnkelvoudigInformatieObject = value;
+        value.EnkelvoudigInformatieObjectVersies[0].InformatieObject = value;
 
         // Act
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
@@ -165,7 +165,7 @@ public class ResponseToDomainProfileTests
 
         var value = _fixture.Create<EnkelvoudigInformatieObject>();
 
-        value.EnkelvoudigInformatieObjectVersies.ForEach(e => e.EnkelvoudigInformatieObject = value);
+        value.EnkelvoudigInformatieObjectVersies.ForEach(e => e.InformatieObject = value);
 
         // Act
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);

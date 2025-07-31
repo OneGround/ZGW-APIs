@@ -54,7 +54,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Taal = "eng",
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -114,7 +114,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
 
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -164,7 +164,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Taal = "eng",
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -221,7 +221,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Taal = "eng",
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -238,8 +238,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedDocument);
         Assert.Equal(1, addedDocument.Versie);
         Assert.Equal(8, addedDocument.Bestandsomvang);
-        Assert.False(addedDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedDocument.InformatieObject.Locked);
+        Assert.Null(addedDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f", addedDocument.Inhoud);
         Assert.Empty(addedDocument.BestandsDelen);
 
@@ -298,7 +298,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
 
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -315,8 +315,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedDocument);
         Assert.Equal(1, addedDocument.Versie);
         Assert.Equal(0, addedDocument.Bestandsomvang);
-        Assert.False(addedDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedDocument.InformatieObject.Locked);
+        Assert.Null(addedDocument.InformatieObject.Lock);
         Assert.Null(addedDocument.Inhoud);
         Assert.Empty(addedDocument.BestandsDelen);
 
@@ -365,7 +365,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
                 Taal = "eng",
                 Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
                 // Parent EnkelvoudigInformatieObject
-                EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
                 {
                     InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
                 },
@@ -383,8 +383,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(1, addedDocument.Versie);
         Assert.Equal(2_500_000, addedDocument.Bestandsomvang);
-        Assert.True(addedDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.NotEmpty(addedDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.True(addedDocument.InformatieObject.Locked);
+        Assert.NotEmpty(addedDocument.InformatieObject.Lock);
         Assert.Null(addedDocument.Inhoud); // Note: because not checked-in
         Assert.Equal("eyJOYW1lIjoiMjAyMTA4IiwiS2V5IjoiYjllZTMyYzktMDUyMy00NTI0LWI1MDEtMzk0NDAwYzUwY2VjIn0=", addedDocument.MultiPartDocumentId);
         Assert.Equal(3, addedDocument.BestandsDelen.Count);
@@ -422,7 +422,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             authorizationContextAccessor: _mockAuthorizationContextAccessor.Object,
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
-            notificatieService: _mockNotificatieService.Object
+            notificatieService: _mockNotificatieService.Object,
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
         );
     }
 }

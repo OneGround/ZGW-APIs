@@ -23,9 +23,10 @@ class GetBesluitQueryHandler : BesluitenBaseHandler<GetBesluitQueryHandler>, IRe
         IConfiguration configuration,
         IEntityUriService uriService,
         BrcDbContext context,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, besluitKenmerkenResolver)
     {
         _context = context;
     }

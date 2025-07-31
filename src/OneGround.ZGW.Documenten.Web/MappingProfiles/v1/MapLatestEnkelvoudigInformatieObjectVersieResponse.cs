@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -46,11 +46,9 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, true);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, true);
-        dest.InformatieObjectType = latestVersion.EnkelvoudigInformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
-        // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-        dest.LatestEnkelvoudigInformatieObjectVersieId = latestVersion.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId;
+        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
 
-        dest.Locked = latestVersion.EnkelvoudigInformatieObject.Locked;
+        dest.Locked = latestVersion.InformatieObject.Locked;
     }
 }

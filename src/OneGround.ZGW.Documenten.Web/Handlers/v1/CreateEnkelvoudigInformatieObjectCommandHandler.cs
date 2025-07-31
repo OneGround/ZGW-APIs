@@ -25,6 +25,7 @@ using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -50,9 +51,10 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         INotificatieService notificatieService,
         ICatalogiServiceAgent catalogiServiceAgent,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _enkelvoudigInformatieObjectBusinessRuleService = enkelvoudigInformatieObjectBusinessRuleService;
@@ -126,7 +128,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         {
             if (
                 !_authorizationContext.IsAuthorized(
-                    request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType,
+                    request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
                     request.EnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding,
                     AuthorizationScopes.Documenten.Create
                 )
@@ -136,7 +138,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             }
 
             var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-                request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+                request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
             );
             if (!informatieobjecttype.Success)
             {
@@ -149,7 +151,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             var catalogusId = _uriService.GetId(informatieobjecttype.Response.Catalogus);
 
             versie.Versie = 1;
-            versie.EnkelvoudigInformatieObject.CatalogusId = catalogusId;
+            versie.InformatieObject.CatalogusId = catalogusId;
         }
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
@@ -179,17 +181,17 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
                 var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
 
-                var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType;
+                var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType;
 
-                var indicatieGebruiksrecht = versie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
+                var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
 
                 versie.Bestandsomvang = currentVersie.Bestandsomvang;
                 versie.BeginRegistratie = DateTime.UtcNow;
                 versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId.Value;
                 // Clone the EnkelvoudigInformatieObject from previous version
-                versie.EnkelvoudigInformatieObject = existingEnkelvoudigInformatieObject;
-                versie.EnkelvoudigInformatieObject.InformatieObjectType = informatieObjectType;
-                versie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
+                versie.InformatieObject = existingEnkelvoudigInformatieObject;
+                versie.InformatieObject.InformatieObjectType = informatieObjectType;
+                versie.InformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
 
                 // New base64 encoded Inhoud specified (in request) or existing document-urn from merge operation?
                 if (!versie.Inhoud.IsAnyDocumentUrn())
@@ -200,13 +202,13 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             }
             else
             {
-                versie.EnkelvoudigInformatieObject.Owner = _rsin;
+                versie.InformatieObject.Owner = _rsin;
                 versie.BeginRegistratie = DateTime.UtcNow;
 
                 // Create new (initial) version of the EnkelvoudigInformatieObject
                 await AddDocumentToDocumentStore(versie, cancellationToken);
             }
-            versie.Owner = versie.EnkelvoudigInformatieObject.Owner;
+            versie.Owner = versie.InformatieObject.Owner;
 
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
@@ -225,27 +227,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-            //audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);
-
-            //var enkelvoudigInformatieObjectUrl = _uriService.GetUri(versie.EnkelvoudigInformatieObject);
-
-            //if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
-            //{
-            //    if (request.IsPartialUpdate)
-            //    {
-            //        await audittrail.PatchedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
-            //    }
-            //    else
-            //    {
-            //        await audittrail.UpdatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
-            //    }
-            //}
-            //else
-            //{
-            //    await audittrail.CreatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
-            //}
-
             try
             {
                 using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -253,27 +234,25 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 await _context.SaveChangesAsync(cancellationToken);
 
                 // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
 
-                // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);
+                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
                 if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
                 {
                     if (request.IsPartialUpdate)
                     {
-                        await audittrail.PatchedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
+                        await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
                     }
                     else
                     {
-                        await audittrail.UpdatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
+                        await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
                     }
                 }
                 else
                 {
-                    await audittrail.CreatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
+                    await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
                 }
-                // ----
 
                 await _context.SaveChangesAsync(cancellationToken);
 
@@ -291,11 +270,11 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             }
         }
 
-        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.EnkelvoudigInformatieObject.Id);
+        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);
 
         var actie = request.ExistingEnkelvoudigInformatieObjectId.HasValue ? Actie.update : Actie.create;
 
-        await SendNotificationAsync(actie, versie, cancellationToken);
+        await SendNotificationAsync(actie, versie.InformatieObject, cancellationToken);
 
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
     }
@@ -319,7 +298,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         // We have enabled (some) metadata fields for the underlying document provider
         var metadata = new DocumentMeta
         {
-            Rsin = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Owner,
+            Rsin = enkelvoudigInformatieObjectVersie.InformatieObject.Owner,
             Version = enkelvoudigInformatieObjectVersie.Versie,
         };
 
@@ -349,7 +328,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         {
             // This value is guaranteed to be read from the cache (when validation is enabled which is normally the case of course!)
             var informatieObjectType = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-                enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+                enkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
             );
 
             if (

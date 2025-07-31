@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +16,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -31,9 +32,10 @@ class DeleteVerzendingCommandHandler : DocumentenBaseHandler<DeleteVerzendingCom
         IEntityUriService uriService,
         INotificatieService notificationService,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

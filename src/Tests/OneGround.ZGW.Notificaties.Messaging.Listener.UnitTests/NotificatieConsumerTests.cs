@@ -68,7 +68,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = [];
+        channel.Filters = ["Bronorganisatie"];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -234,7 +234,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["bronorganisatie"];
+        channel.Filters = ["Bronorganisatie"];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();

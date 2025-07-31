@@ -50,9 +50,10 @@ class CreateBesluitInformatieObjectCommandHandler
         IPublishEndpoint publishEndpoint,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBatchIdAccessor batchIdAccessor
+        IBatchIdAccessor batchIdAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
         _besluitInformatieObjectBusinessRuleService = besluitInformatieObjectBusinessRuleService;

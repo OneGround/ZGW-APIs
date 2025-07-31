@@ -12,8 +12,8 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
 {
     [NotMapped]
     public string Url =>
-        EnkelvoudigInformatieObject != null ? $"{EnkelvoudigInformatieObject.Url}/download?versie={Versie}"
-        : LatestEnkelvoudigInformatieObject != null ? $"{LatestEnkelvoudigInformatieObject.Url}/download?versie={Versie}"
+        InformatieObject != null ? $"{InformatieObject.Url}/download?versie={Versie}"
+        : LatestInformatieObject != null ? $"{LatestInformatieObject.Url}/download?versie={Versie}"
         : throw new NullReferenceException();
 
     [Key]
@@ -131,9 +131,9 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
     [Column("enkelvoudiginformatieobject_id")]
     public Guid EnkelvoudigInformatieObjectId { get; set; }
 
-    public EnkelvoudigInformatieObject EnkelvoudigInformatieObject { get; set; }
+    public EnkelvoudigInformatieObject InformatieObject { get; set; }
 
-    public EnkelvoudigInformatieObject LatestEnkelvoudigInformatieObject { get; set; }
+    public EnkelvoudigInformatieObject LatestInformatieObject { get; set; }
 
     public List<BestandsDeel> BestandsDelen { get; set; } = [];
 

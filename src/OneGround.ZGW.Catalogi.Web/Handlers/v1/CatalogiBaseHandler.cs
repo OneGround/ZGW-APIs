@@ -50,7 +50,7 @@ public abstract class CatalogiBaseHandler<T> : ZGWBaseHandler
 
     private Dictionary<string, string> GetKenmerken(ICatalogusEntity entity)
     {
-        return new Dictionary<string, string> { { "catalogus", _uriService.GetUri(entity.Catalogus) } };
+        return new Dictionary<string, string> { { "catalogus", _uriService.GetUri(entity.Catalogus) }, { "domein", entity.Catalogus.Domein } };
     }
 
     protected async Task SendNotificationAsync(Actie actie, ICatalogusEntity entity, CancellationToken cancellationToken)

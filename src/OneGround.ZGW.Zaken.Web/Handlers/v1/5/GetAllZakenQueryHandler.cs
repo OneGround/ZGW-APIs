@@ -34,9 +34,10 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         ZrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDistributedCacheHelper cache,
-        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService
+        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;

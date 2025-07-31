@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +9,11 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Configuration;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers;
 
@@ -24,12 +24,14 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
     protected readonly IEntityUriService _uriService;
     protected readonly ApplicationConfiguration _applicationConfiguration;
     protected readonly AuthorizationContext _authorizationContext;
+    protected readonly IDocumentKenmerkenResolver _documentKenmerkenResolver;
 
     public DocumentenBaseHandler(
         ILogger<T> logger,
         IConfiguration configuration,
         IEntityUriService uriService,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(configuration, authorizationContextAccessor)
     {
@@ -41,6 +43,7 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
             throw new InvalidOperationException("Application section not found in appsettings.");
 
         _authorizationContext = authorizationContextAccessor.AuthorizationContext;
+        _documentKenmerkenResolver = documentKenmerkenResolver;
     }
 
     public DocumentenBaseHandler(
@@ -48,118 +51,76 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
         IConfiguration configuration,
         IEntityUriService uriService,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : this(logger, configuration, uriService, authorizationContextAccessor)
+        : this(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _notificatieService = notificatieService;
     }
 
-    public Task SendNotificationAsync(Actie actie, EnkelvoudigInformatieObjectVersie informatieObjectVersie, CancellationToken cancellationToken)
-    {
-        var hoofdObject = _uriService.GetUri(informatieObjectVersie.EnkelvoudigInformatieObject);
-        return SendNotificationAsync(
-            Resource.enkelvoudiginformatieobject,
-            actie,
-            hoofdObject,
-            hoofdObject,
-            GetKenmerken(informatieObjectVersie),
-            informatieObjectVersie.EnkelvoudigInformatieObject.Owner,
-            cancellationToken
-        );
-    }
+    private static Resource GetEntityResource(IInformatieObjectEntity informatieObjectEntity) =>
+        informatieObjectEntity switch
+        {
+            EnkelvoudigInformatieObject => Resource.enkelvoudiginformatieobject,
+            GebruiksRecht => Resource.gebruiksrechten,
+            Verzending => Resource.verzending,
+            _ => throw new ArgumentException(null, nameof(informatieObjectEntity)),
+        };
 
-    public Task SendNotificationAsync(Actie actie, EnkelvoudigInformatieObject informatieObject, CancellationToken cancellationToken)
+    public async Task SendNotificationAsync(Actie actie, EnkelvoudigInformatieObject informatieObject, CancellationToken cancellationToken)
     {
         var hoofdObject = _uriService.GetUri(informatieObject);
-        return SendNotificationAsync(
-            Resource.enkelvoudiginformatieobject,
-            actie,
-            hoofdObject,
-            hoofdObject,
-            EmptyKenmerken,
-            informatieObject.Owner,
-            cancellationToken
-        );
-    }
 
-    public Task SendNotificationAsync(Actie actie, GebruiksRecht entity, CancellationToken cancellationToken)
-    {
-        var hoofdObject = _uriService.GetUri(entity.InformatieObject);
-        var resourceUrl = _uriService.GetUri(entity);
-        return SendNotificationAsync(
-            Resource.gebruiksrechten,
-            actie,
-            hoofdObject,
-            resourceUrl,
-            EmptyKenmerken,
-            entity.InformatieObject.Owner,
-            cancellationToken
-        );
-    }
-
-    public Task SendNotificationAsync(Actie actie, Verzending entity, CancellationToken cancellationToken)
-    {
-        var hoofdObject = _uriService.GetUri(entity.InformatieObject);
-        var resourceUrl = _uriService.GetUri(entity);
-        return SendNotificationAsync(
-            Resource.verzending,
-            actie,
-            hoofdObject,
-            resourceUrl,
-            EmptyKenmerken,
-            entity.InformatieObject.Owner,
-            cancellationToken
-        );
-    }
-
-    private static ImmutableDictionary<string, string> EmptyKenmerken => ImmutableDictionary.Create<string, string>();
-
-    private static Dictionary<string, string> GetKenmerken(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObject)
-    {
-        return new Dictionary<string, string>
-        {
-            { "bronorganisatie", enkelvoudigInformatieObject.Bronorganisatie },
-            { "informatieobjecttype", enkelvoudigInformatieObject.EnkelvoudigInformatieObject.InformatieObjectType },
+        await SendNotificationAsync(
+            new Notification
             {
-                "vertrouwelijkheidaanduiding",
-                enkelvoudigInformatieObject.Vertrouwelijkheidaanduiding.HasValue ? $"{enkelvoudigInformatieObject.Vertrouwelijkheidaanduiding}" : null
+                HoodfObject = hoofdObject,
+                Kanaal = Kanaal.documenten.ToString(),
+                Resource = Resource.enkelvoudiginformatieobject.ToString(),
+                ResourceUrl = hoofdObject,
+                Actie = actie.ToString(),
+                Kenmerken = await _documentKenmerkenResolver.GetKenmerkenAsync(informatieObject, cancellationToken),
+                Rsin = informatieObject.Owner,
             },
-        };
+            cancellationToken
+        );
     }
 
-    private async Task SendNotificationAsync(
-        Resource resource,
+    public async Task SendNotificationAsync<TInformatieObjectEntity>(
         Actie actie,
-        string hoofdObject,
-        string resourceUrl,
-        IDictionary<string, string> kenmerken,
-        string rsin,
+        TInformatieObjectEntity informatieObjectEntity,
         CancellationToken cancellationToken
     )
+        where TInformatieObjectEntity : IInformatieObjectEntity, IUrlEntity
+    {
+        var hoofdObject = _uriService.GetUri(informatieObjectEntity.InformatieObject);
+        var resourceUrl = _uriService.GetUri(informatieObjectEntity);
+
+        await SendNotificationAsync(
+            new Notification
+            {
+                HoodfObject = hoofdObject,
+                Kanaal = Kanaal.documenten.ToString(),
+                Resource = GetEntityResource(informatieObjectEntity).ToString(),
+                ResourceUrl = resourceUrl,
+                Actie = actie.ToString(),
+                Kenmerken = await _documentKenmerkenResolver.GetKenmerkenAsync(informatieObjectEntity.InformatieObject, cancellationToken),
+                Rsin = informatieObjectEntity.InformatieObject.Owner,
+            },
+            cancellationToken
+        );
+    }
+
+    private async Task SendNotificationAsync(Notification notification, CancellationToken cancellationToken)
     {
         if (!_applicationConfiguration.DontSendNotificaties)
         {
-            var notification = new Notification
-            {
-                Kanaal = Kanaal.documenten.ToString(),
-                HoodfObject = hoofdObject,
-                Resource = resource.ToString(),
-                ResourceUrl = resourceUrl,
-                Actie = actie.ToString(),
-                Kenmerken = kenmerken,
-                Rsin = rsin,
-            };
             await _notificatieService.NotifyAsync(notification, cancellationToken);
         }
         else
         {
-            _logger.LogDebug(
-                "Warning: Notifications are disabled. Notification {NotificatieKanaal}-{NotificatieResource}-{NotificatieActie} will not be sent.",
-                Kanaal.documenten,
-                resource,
-                actie
-            );
+            _logger.LogDebug("Warning: Notifications are disabled. Notification {@Notification} will not be sent.", notification);
         }
     }
 

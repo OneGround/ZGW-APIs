@@ -92,13 +92,13 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
 
             var existing = _context
                 .EnkelvoudigInformatieObjectVersies.AsNoTracking()
-                .Include(e => e.EnkelvoudigInformatieObject.GebruiksRechten)
-                .Where(e => e.EnkelvoudigInformatieObject.Id == existingEnkelvoudigInformatieObjectId.Value)
+                .Include(e => e.InformatieObject.GebruiksRechten)
+                .Where(e => e.InformatieObject.Id == existingEnkelvoudigInformatieObjectId.Value)
                 .OrderBy(e => e.Versie)
                 .Last();
 
             // Note: Locken en unlocken van documenten (drc-009)
-            if (!existing.EnkelvoudigInformatieObject.Locked)
+            if (!existing.InformatieObject.Locked)
             {
                 var error = new ValidationError("status", ErrorCode.InvalidForReceived, "Een unlocked document mag niet bewerkt worden.");
 
@@ -106,7 +106,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
 
                 return false;
             }
-            if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Lock))
+            if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.InformatieObject.Lock))
             {
                 ValidationError error;
                 if (isPartialUpdate) // Note: To get Postman Tests get working
@@ -122,7 +122,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
                 return false;
             }
 
-            if (existing.EnkelvoudigInformatieObject.Lock != enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Lock)
+            if (existing.InformatieObject.Lock != enkelvoudigInformatieObjectVersie.InformatieObject.Lock)
             {
                 var error = new ValidationError("nonFieldErrors", ErrorCode.IncorrectLockId, "Incorrect lock ID.");
 
@@ -165,10 +165,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
                     errors.Add(error);
                 }
                 // Het informatieobjecttype niet gewijzigd wordt
-                else if (
-                    existing.EnkelvoudigInformatieObject.InformatieObjectType
-                    != enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
-                )
+                else if (existing.InformatieObject.InformatieObjectType != enkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType)
                 {
                     var error = new ValidationError("informatieobjecttype", ErrorCode.UpdateNotAllowed, "Dit veld mag niet gewijzigd worden.");
 
@@ -177,15 +174,15 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
             }
 
             indicatiePutGebruiksRechtenValidionError =
-                existing.EnkelvoudigInformatieObject.GebruiksRechten.Count == 0
-                && enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht.HasValue
-                && enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht.Value;
+                existing.InformatieObject.GebruiksRechten.Count == 0
+                && enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht.HasValue
+                && enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht.Value;
 
             if (
-                existing.EnkelvoudigInformatieObject.GebruiksRechten.Count != 0
+                existing.InformatieObject.GebruiksRechten.Count != 0
                 && (
-                    enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht == null
-                    || !enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht.Value
+                    enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht == null
+                    || !enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht.Value
                 )
             )
             {
@@ -203,8 +200,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
             // Add initial (new) EnkelvoudigInformatieObject
 
             indicatiePutGebruiksRechtenValidionError =
-                enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht.HasValue
-                && enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht.Value;
+                enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht.HasValue
+                && enkelvoudigInformatieObjectVersie.InformatieObject.IndicatieGebruiksrecht.Value;
 
             /*
             [A] ADD SCENARIO - Er wordt gevalideerd op
@@ -215,7 +212,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
             if (!ignoreInformatieObjectTypeValidation)
             {
                 // Note: Valideren informatieobjecttype op de EnkelvoudigInformatieObject - resource(drc - 001)
-                await ValidateInformatieObjectTypeAsync(enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType, errors);
+                await ValidateInformatieObjectTypeAsync(enkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType, errors);
             }
         }
 

@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -24,9 +25,10 @@ class GetBestandsdeelQueryHandler
         IConfiguration configuration,
         IEntityUriService uriService,
         DrcDbContext context,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
     }
@@ -35,12 +37,12 @@ class GetBestandsdeelQueryHandler
     {
         _logger.LogDebug("Get Bestandsdeel {BestandsdeelId}....", request.BestandsdeelId);
 
-        var rsinFilter = GetRsinFilterPredicate<BestandsDeel>(o => o.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Owner == _rsin);
+        var rsinFilter = GetRsinFilterPredicate<BestandsDeel>(o => o.EnkelvoudigInformatieObjectVersie.InformatieObject.Owner == _rsin);
 
         var bestandsdeel = await _context
             .BestandsDelen.Where(rsinFilter)
             .Include(d => d.EnkelvoudigInformatieObjectVersie)
-            .ThenInclude(d => d.EnkelvoudigInformatieObject)
+            .ThenInclude(d => d.InformatieObject)
             .SingleOrDefaultAsync(d => d.Id == request.BestandsdeelId, cancellationToken);
 
         if (bestandsdeel == null)

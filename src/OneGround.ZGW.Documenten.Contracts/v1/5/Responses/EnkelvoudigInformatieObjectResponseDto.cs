@@ -20,8 +20,4 @@ public class EnkelvoudigInformatieObjectResponseDto : EnkelvoudigInformatieObjec
 
     [JsonProperty("bestandsdelen", Order = 73)]
     public List<_1.Responses.BestandsDeelResponseDto> BestandsDelen { get; set; } = [];
-
-    // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-    [JsonProperty(PropertyName = "latestEnkelvoudigInformatieObjectVersieId", Order = 9999)]
-    public Guid? LatestEnkelvoudigInformatieObjectVersieId { get; set; }
 }
