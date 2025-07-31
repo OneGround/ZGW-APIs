@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Documenten.DataModel;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers;
@@ -13,7 +13,7 @@ public interface IDocumentKenmerkenResolver
     Task<Dictionary<string, string>> GetKenmerkenAsync(EnkelvoudigInformatieObject informatieobject, CancellationToken cancellationToken);
 }
 
-public class DocumentKenmerkenResolver : IDocumentKenmerkenResolver
+public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerkenResolver
 {
     private readonly ILogger<DocumentKenmerkenResolver> _logger;
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
@@ -38,7 +38,7 @@ public class DocumentKenmerkenResolver : IDocumentKenmerkenResolver
             },
             // Note: New fields that can be filtered on
             { "informatieobjecttype_omschrijving", await GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(informatieobject) },
-            { "catalogus", GetCatalogusUrlFromInformatieObject(informatieobject) },
+            { "catalogus", GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId) },
             { "domein", await GetDomeinFromInformatieObjectAsync(informatieobject) },
             { "status", informatieobject.LatestEnkelvoudigInformatieObjectVersie.Status.ToString() },
             { "inhoud_is_vervallen", informatieobject.LatestEnkelvoudigInformatieObjectVersie.InhoudIsVervallen.ToString() },
@@ -61,7 +61,7 @@ public class DocumentKenmerkenResolver : IDocumentKenmerkenResolver
 
     private async Task<string> GetDomeinFromInformatieObjectAsync(EnkelvoudigInformatieObject informatieobject)
     {
-        var catalogusUri = GetCatalogusUrlFromInformatieObject(informatieobject);
+        var catalogusUri = GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId);
 
         var result = await _catalogiServiceAgent.GetCatalogusAsync(catalogusUri);
         if (!result.Success)
@@ -70,14 +70,5 @@ public class DocumentKenmerkenResolver : IDocumentKenmerkenResolver
             return "(Domein not determined)";
         }
         return result.Response.Domein;
-    }
-
-    protected static string GetCatalogusUrlFromInformatieObject(EnkelvoudigInformatieObject informatieobject)
-    {
-        var options = StringSplitOptions.TrimEntries;
-        var catalogiBaseParts = informatieobject.InformatieObjectType.TrimEnd('/').Split('/', options)[..^2];
-        var catalogusUri = string.Join('/', catalogiBaseParts) + $"/catalogussen/{informatieobject.CatalogusId}";
-
-        return catalogusUri;
     }
 }

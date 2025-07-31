@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
@@ -17,7 +18,7 @@ public interface IZaakKenmerkenResolver
     Task<Dictionary<string, string>> GetKenmerkenAsync(Zaak zaak, CancellationToken cancellationToken);
 }
 
-public class ZaakKenmerkenResolver : IZaakKenmerkenResolver
+public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolver
 {
     private readonly ILogger<ZaakKenmerkenResolver> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -42,7 +43,7 @@ public class ZaakKenmerkenResolver : IZaakKenmerkenResolver
             { "archiefstatus", zaak.Archiefstatus.ToString() },
             { "archiefnominatie", zaak.Archiefnominatie.ToString() },
             { "opdrachtgevende_organisatie", zaak.OpdrachtgevendeOrganisatie },
-            { "catalogus", GetCatalogusUrlFromZaak(zaak) },
+            { "catalogus", GetCatalogusUrlFromResource(zaak.Zaaktype, zaak.CatalogusId) },
             { "domein", await GetDomeinFromZaakAsync(zaak) },
             { "is_eindzaakstatus", await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
         };
@@ -88,7 +89,7 @@ public class ZaakKenmerkenResolver : IZaakKenmerkenResolver
 
     private async Task<string> GetDomeinFromZaakAsync(Zaak zaak)
     {
-        var catalogusUri = GetCatalogusUrlFromZaak(zaak);
+        var catalogusUri = GetCatalogusUrlFromResource(zaak.Zaaktype, zaak.CatalogusId);
 
         var result = await _catalogiServiceAgent.GetCatalogusAsync(catalogusUri);
         if (!result.Success)
@@ -97,14 +98,5 @@ public class ZaakKenmerkenResolver : IZaakKenmerkenResolver
             return "(Domein not determined)";
         }
         return result.Response.Domein;
-    }
-
-    protected static string GetCatalogusUrlFromZaak(Zaak zaak)
-    {
-        var options = StringSplitOptions.TrimEntries;
-        var catalogiBaseParts = zaak.Zaaktype.TrimEnd('/').Split('/', options)[..^2];
-        var catalogusUri = string.Join('/', catalogiBaseParts) + $"/catalogussen/{zaak.CatalogusId}";
-
-        return catalogusUri;
     }
 }

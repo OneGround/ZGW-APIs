@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
+using OneGround.ZGW.Common.Web.Kenmerken;
 
 namespace OneGround.ZGW.Besluiten.Web.Handlers;
 
@@ -13,7 +13,7 @@ public interface IBesluitKenmerkenResolver
     Task<Dictionary<string, string>> GetKenmerkenAsync(Besluit besluit, CancellationToken cancellationToken);
 }
 
-public class BesluitKenmerkenResolver : IBesluitKenmerkenResolver
+public class BesluitKenmerkenResolver : BaseKenmerkenResolver, IBesluitKenmerkenResolver
 {
     private readonly ILogger<BesluitKenmerkenResolver> _logger;
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
@@ -32,7 +32,7 @@ public class BesluitKenmerkenResolver : IBesluitKenmerkenResolver
             { "verantwoordelijke_organisatie", besluit.VerantwoordelijkeOrganisatie },
             // Note: New fields that can be filtered on
             { "besluittype_omschrijving", await GetBesluitTypeOmschrijvingFromBesluitAsync(besluit) },
-            { "catalogus", GetCatalogusUrlFromBesluit(besluit) },
+            { "catalogus", GetCatalogusUrlFromResource(besluit.BesluitType, besluit.CatalogusId) },
             { "domein", await GetDomeinFromBesluitAsync(besluit) },
         };
     }
@@ -50,7 +50,7 @@ public class BesluitKenmerkenResolver : IBesluitKenmerkenResolver
 
     private async Task<string> GetDomeinFromBesluitAsync(Besluit besluit)
     {
-        var catalogusUri = GetCatalogusUrlFromBesluit(besluit);
+        var catalogusUri = GetCatalogusUrlFromResource(besluit.BesluitType, besluit.CatalogusId);
 
         var result = await _catalogiServiceAgent.GetCatalogusAsync(catalogusUri);
         if (!result.Success)
@@ -59,14 +59,5 @@ public class BesluitKenmerkenResolver : IBesluitKenmerkenResolver
             return "(Domein not determined)";
         }
         return result.Response.Domein;
-    }
-
-    protected static string GetCatalogusUrlFromBesluit(Besluit besluit)
-    {
-        var options = StringSplitOptions.TrimEntries;
-        var catalogiBaseParts = besluit.BesluitType.TrimEnd('/').Split('/', options)[..^2];
-        var catalogusUri = string.Join('/', catalogiBaseParts) + $"/catalogussen/{besluit.CatalogusId}";
-
-        return catalogusUri;
     }
 }
