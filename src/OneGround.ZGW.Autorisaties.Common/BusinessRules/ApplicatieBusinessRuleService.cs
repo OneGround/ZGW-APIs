@@ -55,38 +55,6 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
         return errors.Count == 0;
     }
 
-    public async Task<bool> ValidateApplicatieAsync(Applicatie applicatie, List<ValidationError> errors)
-    {
-        if (applicatie.ClientIds.Count > 1 && !applicatie.HeeftAlleAutorisaties)
-        {
-            errors.Add(
-                new ValidationError(
-                    "clientIds",
-                    ErrorCode.ClientIdExists,
-                    "Cannot have multiple clientID(s) when the flag heeft_alle_autorisaties is not set."
-                )
-            );
-        }
-
-        var labelExist = await _context.Applicaties.AnyAsync(a =>
-            string.Equals(a.Owner, applicatie.Owner) && string.Equals(a.Label.ToLower(), applicatie.Label.ToLower()) && a.Id != applicatie.Id
-        );
-
-        if (labelExist)
-        {
-            errors.Add(new ValidationError("label", ErrorCode.Unique, $"Label for organization:{applicatie.Owner} already exist."));
-        }
-
-        var distinctClientIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        if (applicatie.ClientIds.Count > 1 && applicatie.ClientIds.Any(client => !distinctClientIds.Add(client.ClientId)))
-        {
-            errors.Add(new ValidationError("clientIds", ErrorCode.Unique, "ClientID already added."));
-        }
-
-        return errors.Count == 0;
-    }
-
     //ac-001
     private async Task ValidateClientIdsUniquenessAsync(Applicatie applicatie, List<ValidationError> errors, Guid existingId = new Guid())
     {
