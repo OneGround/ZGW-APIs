@@ -82,7 +82,7 @@ Follow the steps for your operating system.
 
 1. **Open PowerShell as an Administrator.**
    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
-  
+
 2. **Navigate to the certificate installer directory:**
 
    ```powershell
@@ -202,7 +202,6 @@ Now you can exchange the client credentials for a temporary access token. Use th
 - Open Windows PowerShell and execute this command:
 
     ```powershell
-    # Assign the web request result to the $response variable
     $response = Invoke-WebRequest `
         -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
         -Method POST `
@@ -213,7 +212,6 @@ Now you can exchange the client credentials for a temporary access token. Use th
 - Then take an access token from `$response`:
 
     ```powershell
-    # Display the content of the response
     $response.Content
     ```
 
