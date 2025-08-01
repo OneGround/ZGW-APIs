@@ -52,7 +52,7 @@ After extracting, navigate into the created directory.
 You will be working with two primary files for this setup:
 
 - `.env`: Contains all the configuration variables and secrets for connecting to your infrastructure.
-- `docker-compose.yml`: Defines the AC service, maps the port, and handles network configuration.
+- `docker-compose.yml`: Defines the BRC service, maps the port, and handles network configuration.
 
 ---
 
