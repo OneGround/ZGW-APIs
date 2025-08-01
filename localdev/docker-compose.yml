@@ -160,8 +160,8 @@ services:
     volumes:
       - ../oneground-services-data/ac-data:/app/data
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Autorisaties.WebApi
     depends_on:
       postgres_docker_db:
@@ -188,8 +188,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Besluiten.WebApi
     depends_on:
       postgres_docker_db:
@@ -215,8 +215,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Catalogi.WebApi
     depends_on:
       postgres_docker_db:
@@ -242,8 +242,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Documenten.Messaging.Listener
     depends_on:
       postgres_docker_db:
@@ -266,8 +266,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Documenten.WebApi
     depends_on:
       postgres_docker_db:
@@ -294,8 +294,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Notificaties.Messaging.Listener
     depends_on:
       postgres_docker_db:
@@ -319,8 +319,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Notificaties.WebApi
     depends_on:
       postgres_docker_db:
@@ -346,8 +346,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Referentielijsten.WebApi
     ports:
       - ${RC_PORT}:${ASPNETCORE_INTERNAL_PORT}
@@ -364,8 +364,8 @@ services:
     user: root
     volumes:
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     command: ./OneGround.ZGW.Zaken.WebApi
     depends_on:
       postgres_docker_db:
