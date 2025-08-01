@@ -113,7 +113,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
             using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
             {
-                // Note: Save the original LatestEnkelvoudigInformatieObjectVersie because we should set to null to prevent circulair dependency while deleting
+                // Note: Save the original LatestEnkelvoudigInformatieObjectVersie because we should set to null to prevent circular dependency while deleting
                 savedLatestEnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
                 enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = null;
 
