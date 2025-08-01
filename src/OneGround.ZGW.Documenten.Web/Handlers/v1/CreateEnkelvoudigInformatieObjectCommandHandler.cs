@@ -25,7 +25,6 @@ using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 

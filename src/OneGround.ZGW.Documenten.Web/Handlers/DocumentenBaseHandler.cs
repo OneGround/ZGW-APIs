@@ -13,7 +13,6 @@ using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Configuration;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers;
 
