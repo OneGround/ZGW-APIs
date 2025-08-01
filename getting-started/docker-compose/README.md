@@ -81,7 +81,7 @@ Follow the steps for your operating system.
 2. **Navigate to the certificate installer directory:**
 
    ```powershell
-   cd ZGW_APIs/tools/oneground-certificates-installer
+   cd ZGW-APIs-main/tools/oneground-certificates-installer
    ```
 
 3. **Run the following command to check your current execution policy:**

@@ -5,7 +5,8 @@ set -e
 CERT_DIR="/certs"
 DOMAIN="oneground.local"
 
-CERT_FILE="${CERT_DIR}/${DOMAIN}.pem"
+CERT_FILE_PEM="${CERT_DIR}/${DOMAIN}.pem"
+CERT_FILE_CRT="${CERT_DIR}/${DOMAIN}.crt"
 KEY_FILE="${CERT_DIR}/${DOMAIN}.key"
 COMBINED_FILE="${CERT_DIR}/${DOMAIN}.combined.pem"
 
@@ -20,14 +21,17 @@ mkdir -p "$CERT_DIR"
 
 openssl req -x509 -newkey rsa:4096 \
   -keyout "${KEY_FILE}" \
-  -out "${CERT_FILE}" \
+  -out "${CERT_FILE_PEM}" \
   -sha256 -days 365 -nodes \
   -subj "/CN=${DOMAIN}" \
   -addext "subjectAltName = DNS:${DOMAIN},DNS:*.${DOMAIN}"
 
-cat "${CERT_FILE}" "${KEY_FILE}" > "${COMBINED_FILE}"
+cp "${CERT_FILE_PEM}" "${CERT_FILE_CRT}"
+
+cat "${CERT_FILE_PEM}" "${KEY_FILE}" > "${COMBINED_FILE}"
 
 echo "Certificates generated successfully!"
 echo "  - Key: ${KEY_FILE}"
-echo "  - Certificate: ${CERT_FILE}"
+echo "  - Certificate (PEM): ${CERT_FILE_PEM}"
+echo "  - Certificate (CRT): ${CERT_FILE_CRT}"
 echo "  - Combined for HAProxy: ${COMBINED_FILE}"
