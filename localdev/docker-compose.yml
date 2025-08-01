@@ -5,7 +5,6 @@ services:
     build:
       context: ../tools/oneground-certificates-generator
       dockerfile: Dockerfile
-    image: oneground-certificates-generator
     volumes:
       - ./oneground-certificates:/certs
 
