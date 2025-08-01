@@ -21,7 +21,6 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -106,12 +105,16 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         //
         // 1. Delete the metadata
 
+        EnkelvoudigInformatieObjectVersie savedLatestEnkelvoudigInformatieObjectVersie;
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             _logger.LogDebug("Deleting EnkelvoudigInformatieObject {Id}....", enkelvoudigInformatieObject.Id);
 
             using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
             {
+                // Note: Save the original LatestEnkelvoudigInformatieObjectVersie because we should set to null to prevent circular dependency while deleting
+                savedLatestEnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
                 enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = null;
 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -175,6 +178,9 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         //
         // 3. Notify...
+
+        // Note: Restore the original LatestEnkelvoudigInformatieObjectVersie because we should resolve and deliver all kenmerken (in SendNotificationAsync)
+        enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = savedLatestEnkelvoudigInformatieObjectVersie;
 
         await SendNotificationAsync(Actie.destroy, enkelvoudigInformatieObject, cancellationToken);
 
