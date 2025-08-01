@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Moq;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
@@ -22,9 +21,9 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
+using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
 

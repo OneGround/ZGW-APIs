@@ -6,7 +6,7 @@ using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Documenten.DataModel;
 
-namespace OneGround.ZGW.Zaken.Web.Handlers;
+namespace OneGround.ZGW.Documenten.Web.Handlers;
 
 public interface IDocumentKenmerkenResolver
 {

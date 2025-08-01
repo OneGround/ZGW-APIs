@@ -20,7 +20,6 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 

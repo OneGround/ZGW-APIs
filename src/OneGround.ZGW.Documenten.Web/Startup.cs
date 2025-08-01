@@ -33,12 +33,12 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Middleware;
 using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
-using OneGround.ZGW.Zaken.Web.Handlers;
 
 namespace OneGround.ZGW.Documenten.Web;
 
