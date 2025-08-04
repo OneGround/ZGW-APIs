@@ -410,7 +410,7 @@ If the startup is successful, the API will be running and accessible on its defa
 
 ## Advanced Configuration
 
-The provided `.env` files cover only the mandatory dependencies. The APIs support many other configuration settings, which can be found by exploring the `appsettings.json` files in their respective source repositories.
+The provided `.env` files cover only the mandatory dependencies. The APIs support many other configuration settings, which can be found by exploring the `appsettings.json` files in their respective source folders.
 
 Any setting from those files can be overridden using an environment variable. To do so, convert the JSON path of the setting to an environment variable name by replacing the colon (`:`) with a double underscore (`__`).
 
@@ -431,4 +431,4 @@ We welcome contributions to improve this project! To get started, please read ou
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for details.
+This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for details.
