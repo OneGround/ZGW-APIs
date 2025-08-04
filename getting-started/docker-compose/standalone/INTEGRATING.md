@@ -7,25 +7,24 @@ This guide provides all the necessary steps to run any of the OneGround ZGW APIs
 - [OneGround ZGW APIs - Standalone Deployment Guide](#oneground-zgw-apis---standalone-deployment-guide)
   - [Table of Contents](#table-of-contents)
   - [Core Prerequisites](#core-prerequisites)
-  - [General Setup Instructions](#general-setup-instructions)
-    - [Step 1: Obtain the Setup Files](#step-1-obtain-the-setup-files)
-    - [Step 2: Understand the Files](#step-2-understand-the-files)
-    - [Step 3: Configure Docker Networking](#step-3-configure-docker-networking)
   - [API-Specific Configuration](#api-specific-configuration)
     - [Autorisaties API (AC)](#autorisaties-api-ac)
-      - [Environment Variables (`.env`)](#environment-variables-env)
+      - [Required Autorisaties API (AC) Environment Variables (`.env`)](#required-autorisaties-api-ac-environment-variables-env)
     - [Besluiten API (BRC)](#besluiten-api-brc)
-      - [Environment Variables (`.env`)](#environment-variables-env-1)
+      - [Required Besluiten API (BRC) Environment Variables (`.env`)](#required-besluiten-api-brc-environment-variables-env)
     - [Catalogi API (ZTC)](#catalogi-api-ztc)
-      - [Environment Variables (`.env`)](#environment-variables-env-2)
+      - [Required Catalogi API (ZTC) Environment Variables (`.env`)](#required-catalogi-api-ztc-environment-variables-env)
     - [Documenten API (DRC)](#documenten-api-drc)
-      - [Environment Variables (`.env`)](#environment-variables-env-3)
+      - [Required Documenten API (DRC) Environment Variables (`.env`)](#required-documenten-api-drc-environment-variables-env)
     - [Notificaties API (NRC)](#notificaties-api-nrc)
-      - [Environment Variables (`.env`)](#environment-variables-env-4)
+      - [Required Notificaties API (NRC) Environment Variables (`.env`)](#required-notificaties-api-nrc-environment-variables-env)
     - [Referentielijsten API (RC)](#referentielijsten-api-rc)
     - [Zaken API (ZRC)](#zaken-api-zrc)
-      - [Environment Variables (`.env`)](#environment-variables-env-5)
-  - [Running the Service](#running-the-service)
+      - [Required Zaken API (ZRC) Environment Variables (`.env`)](#required-zaken-api-zrc-environment-variables-env)
+  - [Configuring and Running the Service](#configuring-and-running-the-service)
+    - [Step 1: Create and Configure `.env` File](#step-1-create-and-configure-env-file)
+    - [Step 2: Configure `docker-compose.yml`](#step-2-configure-docker-composeyml)
+    - [Step 3: Run the Service](#step-3-run-the-service)
   - [Advanced Configuration](#advanced-configuration)
   - [Contributing](#contributing)
   - [License](#license)
@@ -42,246 +41,342 @@ Before you begin, ensure you have the following components installed and running
 - A running **Redis** instance
 - An **OpenID Connect (OIDC)** compliant Identity Provider
 
-**Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
-
----
-
-## General Setup Instructions
-
-The setup process is similar for all APIs.
-
-### Step 1: Obtain the Setup Files
-
-Download the necessary configuration files for the specific API you want to run. You can find the links in the [API-Specific Configuration](#api-specific-configuration) section below. After downloading the ZIP archive, extract it to your local machine and navigate into the created directory.
-
-### Step 2: Understand the Files
-
-You will typically work with two primary files:
-
-- `.env`: Contains all the configuration variables and secrets for connecting to your infrastructure.
-- `docker-compose.yml`: Defines the API service, maps the port, and handles network configuration.
-
-### Step 3: Configure Docker Networking
-
-For APIs that need to communicate with other services, they must be on the same Docker network.
-
-1. Open the `docker-compose.yml` file.
-2. Locate the `networks.external_network` section at the bottom.
-3. Change `name: bridge` to the name of your existing external network where your other services are running.
-
-```yaml
-# docker-compose.yml
-
-networks:
-  external_network:
-    # IMPORTANT: Change 'bridge' to the name of the Docker network
-    # where your other services are running.
-    name: my-shared-network # <-- CHANGE THIS
-    external: true
-```
+> **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
 
 ---
 
 ## API-Specific Configuration
 
-This section contains the unique prerequisites, download links, environment variables, and default ports for each API.
+This section contains the unique prerequisites, environment variables, and default ports for each API.
 
 ---
 
 ### Autorisaties API (AC)
 
-- **Description:** Handles authorizations between ZGW services.
-- **Download Link:** [**Download the `standalone/AC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FAC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api)
-- **Prerequisites:** Core Prerequisites only.
+- **Prerequisites:**
+  - Core Prerequisites
 - **Default Port:** `5009`
 
-#### Environment Variables (`.env`)
+#### Required Autorisaties API (AC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+```
 
 ---
 
 ### Besluiten API (BRC)
 
-- **Description:** Manages decisions (`besluiten`).
-- **Download Link:** [**Download the `standalone/BRC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FBRC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/besluiten-api)
-- **Additional Prerequisites:** Autorisaties API (AC), Notificaties API (NRC).
+- **Additional Prerequisites:**
+  - A running **Autorisaties API (AC)** instance
+  - A running **Notificaties API (NRC)** instance
 - **Default Port:** `5013`
 
-#### Environment Variables (`.env`)
+#### Required Besluiten API (BRC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
-| `Services__AC__Api` | The base URL of the Autorisaties API (AC). |
-| `Services__NRC__Api` | The base URL of the Notificaties API (NRC). |
-| `ZgwServiceAccounts__Credentials__0__Rsin` | The RSIN of the service account for inter-service communication. |
-| `ZgwServiceAccounts__Credentials__0__ClientId` | The Client ID of the service account. |
-| `ZgwServiceAccounts__Credentials__0__ClientSecret`| The Client Secret of the service account. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+
+# --- ZGW Service Dependencies ---
+Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
+Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
+
+# --- ZGW Service Account Credentials ---
+ZgwServiceAccounts__Credentials__0__Rsin="000000000"
+ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
+ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+```
 
 ---
 
 ### Catalogi API (ZTC)
 
-- **Description:** Manages catalogs and catalog data.
-- **Download Link:** [**Download the `standalone/ZTC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FZTC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/catalogi-api)
-- **Additional Prerequisites:** Autorisaties API (AC), Notificaties API (NRC).
-- **Default Port:** `5010`
+- **Additional Prerequisites:**
+  - A running **Autorisaties API (AC)** instance
+  - A running **Notificaties API (NRC)** instance
+- **Default Port:** `5011`
 
-#### Environment Variables (`.env`)
+#### Required Catalogi API (ZTC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
-| `Services__AC__Api` | The base URL of the Autorisaties API (AC). |
-| `Services__NRC__Api` | The base URL of the Notificaties API (NRC). |
-| `ZgwServiceAccounts__Credentials__0__Rsin` | The RSIN of the service account for inter-service communication. |
-| `ZgwServiceAccounts__Credentials__0__ClientId` | The Client ID of the service account. |
-| `ZgwServiceAccounts__Credentials__0__ClientSecret`| The Client Secret of the service account. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+
+# --- ZGW Service Dependencies ---
+Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
+Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
+
+# --- ZGW Service Account Credentials ---
+ZgwServiceAccounts__Credentials__0__Rsin="000000000"
+ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
+ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+```
 
 ---
 
 ### Documenten API (DRC)
 
-- **Description:** Manages documents and their metadata.
-- **Download Link:** [**Download the `standalone/DRC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FDRC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/documenten-api)
-- **Additional Prerequisites:** Autorisaties API (AC), Besluiten API (BRC), Catalogi API (ZTC), Notificaties API (NRC), Zaken API (ZRC).
-- **Default Port:** `5011`
+- **Additional Prerequisites:**
+  - A running **Autorisaties API (AC)** instance
+  - A running **Besluiten API (BRC)** instance
+  - A running **Catalogi API (ZTC)** instance
+  - A running **Notificaties API (NRC)** instance
+  - A running **Zaken API (ZRC)** instance
+- **Default Port:** `5007`
 
-#### Environment Variables (`.env`)
+#### Required Documenten API (DRC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
-| `Services__AC__Api` | The base URL of the Autorisaties API (AC). |
-| `Services__BRC__Api` | The base URL of the Besluiten API (BRC). |
-| `Services__ZTC__Api` | The base URL of the Catalogi API (ZTC). |
-| `Services__NRC__Api` | The base URL of the Notificaties API (NRC). |
-| `Services__ZRC__Api` | The base URL of the Zaken API (ZRC). |
-| `ZgwServiceAccounts__Credentials__0__Rsin` | The RSIN of the service account for inter-service communication. |
-| `ZgwServiceAccounts__Credentials__0__ClientId` | The Client ID of the service account. |
-| `ZgwServiceAccounts__Credentials__0__ClientSecret`| The Client Secret of the service account. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+
+# --- ZGW Service Dependencies ---
+Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
+Services__BRC__Api="https://besluiten.oneground.local/api/v1/"
+Services__ZTC__Api="https://catalogi.oneground.local/api/v1/"
+Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
+Services__ZRC__Api="https://zaken.oneground.local/api/v1/"
+
+# --- ZGW Service Account Credentials ---
+ZgwServiceAccounts__Credentials__0__Rsin="000000000"
+ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
+ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+```
 
 ---
 
 ### Notificaties API (NRC)
 
-- **Description:** Consumes events from the event bus and makes them available to other applications.
-- **Download Link:** [**Download the `standalone/NRC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FNRC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/notificaties-api)
-- **Additional Prerequisites:** Autorisaties API (AC).
-- **Default Port:** `5012`
+- **Additional Prerequisites:**
+  - A running **Autorisaties API (AC)** instance
+- **Default Port:** `5015`
 
-#### Environment Variables (`.env`)
+#### Required Notificaties API (NRC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
-| `Services__AC__Api` | The base URL of the Autorisaties API (AC). |
-| `ZgwServiceAccounts__Credentials__0__Rsin` | The RSIN of the service account for inter-service communication. |
-| `ZgwServiceAccounts__Credentials__0__ClientId` | The Client ID of the service account. |
-| `ZgwServiceAccounts__Credentials__0__ClientSecret`| The Client Secret of the service account. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+
+# --- ZGW Service Dependencies ---
+Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
+
+# --- ZGW Service Account Credentials ---
+ZgwServiceAccounts__Credentials__0__Rsin="000000000"
+ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
+ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+```
 
 ---
 
 ### Referentielijsten API (RC)
 
-- **Description:** A self-contained service that serves reference lists and allows anonymous access.
-- **Download Link:** [**Download the `standalone/RC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FRC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/referentielijsten-api)
-- **Prerequisites:** Docker and Docker Compose only.
-- **Default Port:** `5014`
+- **Prerequisites:**
+  - Docker and Docker Compose only.
+- **Default Port:** `5018`
 - **Environment Variables:** None required for basic setup. An optional `.env` file can be used for advanced configuration.
 
 ---
 
 ### Zaken API (ZRC)
 
-- **Description:** Manages cases (`zaken`).
-- **Download Link:** [**Download the `standalone/ZRC` directory**](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FOneGround%2FZGW-APIs%2Ftree%2Fmain%2Fgetting-started%2F%2Fdocker-compose%2F%2Fstandalone%2F%2FZRC)
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/zaken-api)
-- **Additional Prerequisites:** Autorisaties API (AC), Besluiten API (BRC), Catalogi API (ZTC), Documenten API (DRC), Notificaties API (NRC).
-- **Default Port:** `5015`
+- **Additional Prerequisites:**
+  - A running **Autorisaties API (AC)** instance
+  - A running **Besluiten API (BRC)** instance
+  - A running **Catalogi API (ZTC)** instance
+  - A running **Documenten API (DRC)** instance
+  - A running **Notificaties API (NRC)** instance
+- **Default Port:** `5005`
 
-#### Environment Variables (`.env`)
+#### Required Zaken API (ZRC) Environment Variables (`.env`)
 
-| Variable | Description |
-| :--- | :--- |
-| `ConnectionStrings__UserConnectionString` | The full connection string for the standard database user. |
-| `ConnectionStrings__AdminConnectionString`| The full connection string for the database admin user. |
-| `Eventbus__HostName` | The hostname or IP address of your RabbitMQ server. |
-| `Eventbus__VirtualHost` | The virtual host to use on RabbitMQ. |
-| `Eventbus__UserName` | The username for authenticating with RabbitMQ. |
-| `Eventbus__Password` | The password for authenticating with RabbitMQ. |
-| `Redis__ConnectionString` | The connection string for your Redis instance. |
-| `Auth__Authority` | The base URL of your OIDC Identity Provider. |
-| `Auth__ValidIssuer` | The issuer URL of your OIDC Identity Provider. |
-| `Auth__ValidAudience` | The audience value (`aud` claim) for validating JWTs. |
-| `Services__AC__Api` | The base URL of the Autorisaties API (AC). |
-| `Services__BRC__Api` | The base URL of the Besluiten API (BRC). |
-| `Services__DRC__Api` | The base URL of the Documenten API (DRC). |
-| `Services__NRC__Api` | The base URL of the Notificaties API (NRC). |
-| `Services__ZTC__Api` | The base URL of the Catalogi API (ZTC). |
-| `ZgwServiceAccounts__Credentials__0__Rsin` | The RSIN of the service account for inter-service communication. |
-| `ZgwServiceAccounts__Credentials__0__ClientId` | The Client ID of the service account. |
-| `ZgwServiceAccounts__Credentials__0__ClientSecret`| The Client Secret of the service account. |
+Copy the snippet below, paste it into your new `.env` file, and adjust the values to match your configuration.
+
+```ini
+# .env
+
+# --- Database Connection Strings ---
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
+
+# --- RabbitMQ Event Bus Connection ---
+Eventbus__HostName="rabbit_mq"
+Eventbus__VirtualHost="oneground"
+Eventbus__UserName="guest"
+Eventbus__Password="guest"
+
+# --- Redis Cache Connection ---
+Redis__ConnectionString="redis:6379"
+
+# --- Identity Provider (OIDC) Settings ---
+Auth__Authority="http://localhost:8080/realms/OneGround/"
+Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__ValidAudience="account"
+
+# --- ZGW Service Dependencies ---
+Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
+Services__BRC__Api="https://besluiten.oneground.local/api/v1/"
+Services__DRC__Api="https://documenten.oneground.local/api/v1/"
+Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
+Services__ZTC__Api="https://catalogi.oneground.local/api/v1/"
+
+# --- ZGW Service Account Credentials ---
+ZgwServiceAccounts__Credentials__0__Rsin="000000000"
+ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
+ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+```
 
 ---
 
-## Running the Service
+## Configuring and Running the Service
 
-Once you have configured your `.env` file for the chosen API, you can start the service in detached mode from your terminal:
+### Step 1: Create and Configure `.env` File
+
+First, create a new file named `.env` in the same directory as the `docker-compose.yml` file. Follow the instructions for your chosen API in the [API-Specific Configuration](#api-specific-configuration) section to copy the required environment variables into this file. Adjust the values to match your setup.
+
+### Step 2: Configure `docker-compose.yml`
+
+The `docker-compose.yml` file defines how to run the API container. Below is a generic example explaining the key sections you may need to configure.
+
+```yaml
+# docker-compose.yml
+
+# A unique name for the Docker Compose project.
+name: oneground-<service-name>-api
+
+services:
+  # Defines the service for the specific API.
+  oneground.<api-name>.webapi:
+    # The Docker image to use. You can change the tag to use a different version.
+    image: ghcr.io/oneground/<service-name>-api:<tag>
+    restart: unless-stopped
+    ports:
+      # Maps a port on your host machine to the container's internal port.
+      # You can change the host port (e.g., 5009) if it conflicts with another service.
+      - "<host-port>:5000"
+    env_file:
+      # Loads environment variables from the .env file.
+      - ".env"
+    networks:
+      # Connects the service to a Docker network.
+      - external_network
+
+networks:
+  external_network:
+    # For APIs that need to communicate with other services, they must be on the same Docker network.
+    # IMPORTANT: Change 'existing-external-network-name' to the name of your existing external network.
+    name: existing-external-network-name # <-- CHANGE THIS
+    external: true
+```
+
+The most common change you will make is updating the `networks.external_network.name` to match the Docker network where your other services (like PostgreSQL, Redis, and other ZGW APIs) are running.
+
+### Step 3: Run the Service
+
+Once you have configured your `.env` and `docker-compose.yml` files, you can start the service in detached mode from your terminal:
 
 ```bash
 docker compose up -d
@@ -314,7 +409,7 @@ Logging__LogLevel__Default=Warning
 
 ## Contributing
 
-We welcome contributions to improve this project! To get started, please read our [contributing guidelines](https://github.com/OneGround/ZGW-APIs/blob/main/CONTRIBUTING.md).
+We welcome contributions to improve this project! To get started, please read our [contributing guidelines](https://github.com/OneGround/ZGW-APIs#contributing).
 
 ---
 
