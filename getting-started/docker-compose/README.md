@@ -58,7 +58,7 @@ cd ZGW-APIs-main/getting-started/docker-compose
 From the `docker-compose` directory, run the following command to start all the required services in the background:
 
 ```bash
-docker compose --env-file ./.env  up -d
+docker compose --env-file ./.env up -d
 ```
 
 ### 3. Install the Local SSL Certificate
@@ -81,7 +81,7 @@ Follow the steps for your operating system.
 2. **Navigate to the certificate installer directory:**
 
    ```powershell
-   cd ZGW_APIs/tools/oneground-certificates-installer
+   cd ZGW-APIs-main/tools/oneground-certificates-installer
    ```
 
 3. **Run the following command to check your current execution policy:**
@@ -185,7 +185,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 5. Restart the Docker containers to apply the new configuration:
 
    ```bash
-   docker compose --env-file ./.env  up -d
+   docker compose --env-file ./.env up -d
    ```
 
 #### Step 5.3: Request an Access Token
@@ -197,7 +197,6 @@ This process uses the standard OAuth 2.0 Client Credentials grant type to obtain
 - Open Windows PowerShell and execute this command:
 
     ```powershell
-    # Assign the web request result to the $response variable
     $response = Invoke-WebRequest `
         -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
         -Method POST `
@@ -208,7 +207,6 @@ This process uses the standard OAuth 2.0 Client Credentials grant type to obtain
 - Then take an access token from `$response`:
 
     ```powershell
-    # Display the content of the response
     $response.Content
     ```
 
