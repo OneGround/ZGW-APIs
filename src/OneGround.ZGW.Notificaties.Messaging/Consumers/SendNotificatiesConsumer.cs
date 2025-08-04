@@ -202,9 +202,10 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 return true;
             }
 
-            if (IsBooleanFilter(filter.Value))
+            // Note: we support boolean filters now. So handle these if relevant
+            if (bool.TryParse(filter.Value, out var filterAsBool))
             {
-                if (IsBoolenEqual(value, filter.Value))
+                if (bool.TryParse(value, out var featureAsBool) && featureAsBool == filterAsBool)
                 {
                     Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filter.Key, filter.Value);
                     return true;
@@ -217,21 +218,5 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
             }
         }
         return false;
-    }
-
-    private static bool IsBooleanFilter(string value)
-    {
-        return bool.TryParse(value, out var _);
-    }
-
-    private static bool IsBoolenEqual(string value1, string value2)
-    {
-        if (!bool.TryParse(value1, out var boolval1))
-            return false;
-
-        if (!bool.TryParse(value2, out var boolval2))
-            return false;
-
-        return boolval1 == boolval2;
     }
 }
