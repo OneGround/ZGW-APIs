@@ -27,6 +27,7 @@ using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Web.Controllers;
 using OneGround.ZGW.Notificaties.Web.Services;
+using OneGround.ZGW.Notificaties.Web.Validators;
 
 namespace OneGround.ZGW.Notificaties.Web;
 
@@ -100,6 +101,7 @@ public class Startup
         services.AddCommonServices();
 
         services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddScoped<IAbonnementKanaalValidator, AbonnementKanaalValidator>();
 
         services.AddCorrelationId();
         services.AddBatchId();

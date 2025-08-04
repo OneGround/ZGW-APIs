@@ -39,7 +39,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.VerzendDatum)))
             .ForMember(dest => dest.Ondertekening_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum)))
             .ForMember(
-                dest => dest.EnkelvoudigInformatieObject,
+                dest => dest.InformatieObject,
                 opt =>
                     opt.MapFrom(src => new EnkelvoudigInformatieObject
                     {
@@ -65,7 +65,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.Ignore())
             .ForMember(dest => dest.Trefwoorden, opt => opt.Ignore())
             .ForMember(dest => dest.InhoudIsVervallen, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
 
         // Create new version of EnkelvoudigInformatieObject: versie 2, versie 3, etc
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObject>()
@@ -94,7 +94,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.VerzendDatum)))
             .ForMember(
-                dest => dest.EnkelvoudigInformatieObject,
+                dest => dest.InformatieObject,
                 opt =>
                     opt.MapFrom(src => new EnkelvoudigInformatieObject
                     {
@@ -122,7 +122,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.Ignore())
             .ForMember(dest => dest.Trefwoorden, opt => opt.Ignore())
             .ForMember(dest => dest.InhoudIsVervallen, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
 
         CreateMap<GetAllObjectInformatieObjectenQueryParameters, GetAllObjectInformatieObjectenFilter>();
 

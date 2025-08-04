@@ -26,7 +26,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject(),
+            InformatieObject = new EnkelvoudigInformatieObject(),
             Bronorganisatie = "1234",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
@@ -59,7 +59,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject(),
+            InformatieObject = new EnkelvoudigInformatieObject(),
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
@@ -88,7 +88,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject(),
+            InformatieObject = new EnkelvoudigInformatieObject(),
             OntvangstDatum = DateOnly.FromDateTime(DateTime.UtcNow),
             Status = Status.in_bewerking,
             Bronorganisatie = "1234",
@@ -123,7 +123,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
                 Locked = true,
@@ -163,7 +163,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
                 Locked = true,
@@ -196,7 +196,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Locked = true,
@@ -235,7 +235,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Locked = true,
@@ -277,7 +277,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject { Locked = false, Lock = null },
+            InformatieObject = new EnkelvoudigInformatieObject { Locked = false, Lock = null },
             Owner = "813264571",
         };
 
@@ -309,7 +309,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Lock = "99999999999999999999999999999999",
@@ -345,7 +345,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Lock = "e205101a45ab4fb082a35231d63f4151",
@@ -399,7 +399,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
@@ -455,7 +455,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
@@ -504,7 +504,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
@@ -555,7 +555,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
@@ -613,7 +613,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
-            EnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
+            InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },

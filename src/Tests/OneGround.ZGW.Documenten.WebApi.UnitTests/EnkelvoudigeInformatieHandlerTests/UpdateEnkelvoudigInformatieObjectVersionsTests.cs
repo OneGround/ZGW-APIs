@@ -262,8 +262,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(9, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00", addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -341,8 +341,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(8, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f", addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -420,8 +420,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(2_500_000, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked); // Note: No bestandsdelen so there is no lock set
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock); // Note: No bestandsdelen so there is no lock value
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked); // Note: No bestandsdelen so there is no lock set
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock); // Note: No bestandsdelen so there is no lock value
         Assert.Equal("urn:dms:unittest:12f97974-f0b1-47ec-bc43-a22dbc2d14fe", addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -495,8 +495,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(8, addedNewVersionOfDocument.Bestandsomvang); // The orignal document
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f", addedNewVersionOfDocument.Inhoud); // The orignal document urn
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -566,8 +566,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(0, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Null(addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -634,8 +634,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(2_600_000, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.True(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.NotEmpty(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.True(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.NotEmpty(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Null(addedNewVersionOfDocument.Inhoud);
         Assert.Equal(
             "eyJOYW1lIjoiMjAyMTA4IiwiS2V5IjoiYjllZTMyYzktMDUyMy00NTI0LWI1MDEtMzk0NDAwYzUwY2VjIn0=",
@@ -719,8 +719,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(9, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00", addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -783,8 +783,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(2_600_000, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.True(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.NotEmpty(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.True(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.NotEmpty(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Null(addedNewVersionOfDocument.Inhoud);
         Assert.Equal(
             "eyJOYW1lIjoiMjAyMTA4IiwiS2V5IjoiYjllZTMyYzktMDUyMy00NTI0LWI1MDEtMzk0NDAwYzUwY2VjIn0=",
@@ -864,8 +864,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(9, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.False(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.Null(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.False(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.Null(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Equal("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00", addedNewVersionOfDocument.Inhoud);
         Assert.Empty(addedNewVersionOfDocument.BestandsDelen);
 
@@ -932,8 +932,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         Assert.Equal(2, addedNewVersionOfDocument.Versie);
         Assert.Equal(2_600_000, addedNewVersionOfDocument.Bestandsomvang);
-        Assert.True(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Locked);
-        Assert.NotEmpty(addedNewVersionOfDocument.EnkelvoudigInformatieObject.Lock);
+        Assert.True(addedNewVersionOfDocument.InformatieObject.Locked);
+        Assert.NotEmpty(addedNewVersionOfDocument.InformatieObject.Lock);
         Assert.Null(addedNewVersionOfDocument.Inhoud);
         Assert.Equal(
             "eyJOYW1lIjoiMjAyMTA4IiwiS2V5IjoiYjllZTMyYzktMDUyMy00NTI0LWI1MDEtMzk0NDAwYzUwY2VjIn0=",
@@ -1028,7 +1028,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             authorizationContextAccessor: _mockAuthorizationContextAccessor.Object,
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
-            notificatieService: _mockNotificatieService.Object
+            notificatieService: _mockNotificatieService.Object,
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
         );
     }
 

@@ -30,9 +30,10 @@ class GetAllKlantContactenQueryHandler
         IEntityUriService uriService,
         ZrcDbContext zrcDbContext,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService
+        IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = zrcDbContext;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;

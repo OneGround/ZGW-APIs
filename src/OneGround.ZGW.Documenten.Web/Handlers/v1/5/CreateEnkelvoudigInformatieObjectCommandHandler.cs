@@ -44,7 +44,8 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         IAuthorizationContextAccessor authorizationContextAccessor,
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -59,7 +60,8 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             auditTrailFactory,
             lockGenerator,
             formOptions,
-            notificatieService
+            notificatieService,
+            documentKenmerkenResolver
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -73,7 +75,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         if (
             !_authorizationContext.IsAuthorized(
-                request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType,
+                request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
                 request.EnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding,
                 AuthorizationScopes.Documenten.Create
             )
@@ -105,7 +107,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         }
 
         var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-            request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType
+            request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
         );
         if (!informatieobjecttype.Success)
         {
@@ -123,15 +125,15 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Create the new (initial) version of the EnkelvoudigInformatieObject
-            versie.EnkelvoudigInformatieObject.Owner = _rsin;
+            versie.InformatieObject.Owner = _rsin;
             versie.BeginRegistratie = DateTime.UtcNow;
-            versie.Owner = versie.EnkelvoudigInformatieObject.Owner;
+            versie.Owner = versie.InformatieObject.Owner;
 
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
                 // We have enabled (some) metadata fields for the underlying document provider
-                var metadata = new DocumentMeta { Rsin = versie.EnkelvoudigInformatieObject.Owner, Version = versie.Versie };
+                var metadata = new DocumentMeta { Rsin = versie.InformatieObject.Owner, Version = versie.Versie };
 
                 var result = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
 
@@ -174,14 +176,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-            //audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);
-
-            //var enkelvoudigInformatieObjectUrl = _uriService.GetUri(versie.EnkelvoudigInformatieObject);
-
-            //await audittrail.CreatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
-            // ----
-
             try
             {
                 using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -189,14 +183,12 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
                 await _context.SaveChangesAsync(cancellationToken);
 
                 // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-                versie.EnkelvoudigInformatieObject.CatalogusId = catalogusId;
+                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+                versie.InformatieObject.CatalogusId = catalogusId;
 
-                // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);
+                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
-                await audittrail.CreatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
-                // ----
+                await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
 
                 await _context.SaveChangesAsync(cancellationToken);
 
@@ -214,12 +206,12 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             }
         }
 
-        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.EnkelvoudigInformatieObject.Id);
+        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);
 
         // Note: Do not send notification using bestandsdelen (this is done when all bestandsdelen are uploaded an checkin is called)
         if (versie.BestandsDelen.Count == 0)
         {
-            await SendNotificationAsync(Actie.create, versie, cancellationToken);
+            await SendNotificationAsync(Actie.create, versie.InformatieObject, cancellationToken); // TODO: Check older versions how this reacts!!!!!
         }
 
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);

@@ -41,9 +41,10 @@ class UpdateVerzendingCommandHandler
         INotificatieService notificatieService,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IVerzendingBusinessRuleService verzendingBusinessRuleService
+        IVerzendingBusinessRuleService verzendingBusinessRuleService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _entityUpdater = entityUpdater;

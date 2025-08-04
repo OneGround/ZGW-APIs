@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,9 +32,10 @@ class UploadBestandsDeelCommandHandler
         DrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentServicesResolver documentServicesResolver,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
 
@@ -45,12 +46,12 @@ class UploadBestandsDeelCommandHandler
     {
         _logger.LogDebug("Uploading bestandsdeel...");
 
-        var rsinFilter = GetRsinFilterPredicate<BestandsDeel>(o => o.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Owner == _rsin);
+        var rsinFilter = GetRsinFilterPredicate<BestandsDeel>(o => o.EnkelvoudigInformatieObjectVersie.InformatieObject.Owner == _rsin);
 
         var bestandsdeel = await _context
             .BestandsDelen.Where(rsinFilter)
             .Include(d => d.EnkelvoudigInformatieObjectVersie)
-            .ThenInclude(d => d.EnkelvoudigInformatieObject)
+            .ThenInclude(d => d.InformatieObject)
             .SingleOrDefaultAsync(d => d.Id == request.BestandsDeelId, cancellationToken);
 
         if (bestandsdeel == null)
@@ -63,7 +64,7 @@ class UploadBestandsDeelCommandHandler
             return new CommandResult<BestandsDeel>(bestandsdeel, CommandStatus.OK);
         }
 
-        if (string.IsNullOrEmpty(request.Lock) || request.Lock != bestandsdeel.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Lock)
+        if (string.IsNullOrEmpty(request.Lock) || request.Lock != bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject.Lock)
         {
             var error = new ValidationError("nonFieldErrors", ErrorCode.IncorrectLockId, "Incorrect lock ID.");
             return new CommandResult<BestandsDeel>(null, CommandStatus.ValidationError, error);
@@ -132,7 +133,7 @@ class UploadBestandsDeelCommandHandler
             }
 
             // Document successfully added to documentstore so we could fire the notification
-            await SendNotificationAsync(Actie.update, versie, cancellationToken);
+            await SendNotificationAsync(Actie.update, versie.InformatieObject, cancellationToken);
 
             _logger.LogDebug(
                 "Uploaded successfully the last bestandsdeel and merged all bestansdelen and created document {docuemtnUrn}.",

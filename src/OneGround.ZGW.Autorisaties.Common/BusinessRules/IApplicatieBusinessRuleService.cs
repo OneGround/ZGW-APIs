@@ -9,5 +9,4 @@ public interface IApplicatieBusinessRuleService
 {
     Task<bool> ValidateAddAsync(Applicatie applicatie, List<ValidationError> errors, bool checkComponentUrl = true);
     Task<bool> ValidateUpdateAsync(Applicatie existingApp, Applicatie newApp, List<ValidationError> errors, bool checkComponentUrl = true);
-    Task<bool> ValidateApplicatieAsync(Applicatie applicatie, List<ValidationError> errors);
 }

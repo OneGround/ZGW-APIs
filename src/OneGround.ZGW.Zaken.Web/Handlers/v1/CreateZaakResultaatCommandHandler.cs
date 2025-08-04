@@ -38,9 +38,10 @@ class CreateZaakResultaatCommandHandler
         INotificatieService notificatieService,
         ICatalogiServiceAgent catalogiServiceAgent,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
         _catalogiServiceAgent = catalogiServiceAgent;

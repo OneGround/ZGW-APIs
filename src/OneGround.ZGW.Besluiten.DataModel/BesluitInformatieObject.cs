@@ -6,7 +6,7 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Besluiten.DataModel;
 
 [Table("besluitinformatieobjecten")]
-public class BesluitInformatieObject : OwnedEntity, IAuditableEntity, IUrlEntity
+public class BesluitInformatieObject : OwnedEntity, IAuditableEntity, IUrlEntity, IBesluitEntity
 {
     [NotMapped]
     public string Url => $"/besluitinformatieobjecten/{Id}";

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -25,12 +24,14 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
     protected readonly INotificatieService _notificatieService;
     protected readonly ApplicationConfiguration _applicationConfiguration;
     protected readonly AuthorizationContext _authorizationContext;
+    protected readonly IZaakKenmerkenResolver _zaakKenmerkenResolver;
 
     public ZakenBaseHandler(
         ILogger<T> logger,
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IEntityUriService uriService
+        IEntityUriService uriService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
         : base(configuration, authorizationContextAccessor)
     {
@@ -42,6 +43,7 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
             throw new InvalidOperationException("Application section not found in appsettings.");
 
         _authorizationContext = authorizationContextAccessor.AuthorizationContext;
+        _zaakKenmerkenResolver = zaakKenmerkenResolver;
     }
 
     public ZakenBaseHandler(
@@ -49,9 +51,10 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IEntityUriService uriService,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : this(logger, configuration, authorizationContextAccessor, uriService)
+        : this(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _notificatieService = notificatieService;
     }
@@ -72,16 +75,6 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
             _ => throw new ArgumentException(null, nameof(zaakEntity)),
         };
 
-    private static Dictionary<string, string> GetKenmerken(Zaak zaak)
-    {
-        return new Dictionary<string, string>
-        {
-            { "bronorganisatie", zaak.Bronorganisatie },
-            { "zaaktype", zaak.Zaaktype },
-            { "vertrouwelijkheidaanduiding", zaak.VertrouwelijkheidAanduiding.ToString() },
-        };
-    }
-
     public async Task SendNotificationAsync(Actie actie, Zaak zaak, CancellationToken cancellationToken)
     {
         var hoofdObject = _uriService.GetUri(zaak);
@@ -94,7 +87,7 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
                 Resource = Resource.zaak.ToString(),
                 ResourceUrl = hoofdObject,
                 Actie = actie.ToString(),
-                Kenmerken = GetKenmerken(zaak),
+                Kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaak, cancellationToken),
                 Ignore = zaak.HasConversionKenmerk(),
                 Rsin = zaak.Owner,
             },
@@ -102,8 +95,8 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
-    public async Task SendNotificationAsync<K>(Actie actie, K zaakEntity, CancellationToken cancellationToken)
-        where K : IZaakEntity, IUrlEntity
+    public async Task SendNotificationAsync<TZaakEntity>(Actie actie, TZaakEntity zaakEntity, CancellationToken cancellationToken)
+        where TZaakEntity : IZaakEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(zaakEntity.Zaak);
         var resourceUrl = _uriService.GetUri(zaakEntity);
@@ -116,7 +109,7 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
                 Resource = GetEntityResource(zaakEntity).ToString(),
                 ResourceUrl = resourceUrl,
                 Actie = actie.ToString(),
-                Kenmerken = GetKenmerken(zaakEntity.Zaak),
+                Kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaakEntity.Zaak, cancellationToken),
                 Ignore = zaakEntity.HasConversionKenmerk(),
                 Rsin = zaakEntity.Zaak.Owner,
             },

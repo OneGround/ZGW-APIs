@@ -32,9 +32,10 @@ class DeleteGebruiksRechtCommandHandler
         IEntityUriService uriService,
         INotificatieService notificationService,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificationService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

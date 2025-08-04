@@ -10,6 +10,7 @@ using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.BusinessRules;
 using OneGround.ZGW.Besluiten.Web.Controllers;
 using OneGround.ZGW.Besluiten.Web.Expands.v1;
+using OneGround.ZGW.Besluiten.Web.Handlers;
 using OneGround.ZGW.Besluiten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Besluiten.Web.Services;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
@@ -128,6 +129,7 @@ public class Startup
         services.AddSingleton<IEntityUpdater<Besluit>, BesluitUpdater>();
 
         services.AddTransient<IBesluitAuthorizationTempTableService, BesluitAuthorizationTempTableService>();
+        services.AddScoped<IBesluitKenmerkenResolver, BesluitKenmerkenResolver>();
 
         services.AddCorrelationId();
         services.AddBatchId();

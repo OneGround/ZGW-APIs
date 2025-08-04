@@ -33,9 +33,10 @@ class CreateObjectInformatieObjectCommandHandler
         IEntityUriService uriService,
         IObjectInformatieObjectBusinessRuleService objectInformatieObjectBusinessRuleService,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _objectInformatieObjectBusinessRuleService = objectInformatieObjectBusinessRuleService;

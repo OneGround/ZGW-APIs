@@ -44,9 +44,10 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         IDocumentServicesResolver documentServicesResolver,
         IZakenServiceAgent zakenServiceAgent,
         IBesluitenServiceAgent besluitenServiceAgent,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;
@@ -104,12 +105,16 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         //
         // 1. Delete the metadata
 
+        EnkelvoudigInformatieObjectVersie savedLatestEnkelvoudigInformatieObjectVersie;
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             _logger.LogDebug("Deleting EnkelvoudigInformatieObject {Id}....", enkelvoudigInformatieObject.Id);
 
             using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
             {
+                // Note: Save the original LatestEnkelvoudigInformatieObjectVersie because we should set to null to prevent circular dependency while deleting
+                savedLatestEnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
                 enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = null;
 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -173,6 +178,9 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         //
         // 3. Notify...
+
+        // Note: Restore the original LatestEnkelvoudigInformatieObjectVersie because we should resolve and deliver all kenmerken (in SendNotificationAsync)
+        enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = savedLatestEnkelvoudigInformatieObjectVersie;
 
         await SendNotificationAsync(Actie.destroy, enkelvoudigInformatieObject, cancellationToken);
 

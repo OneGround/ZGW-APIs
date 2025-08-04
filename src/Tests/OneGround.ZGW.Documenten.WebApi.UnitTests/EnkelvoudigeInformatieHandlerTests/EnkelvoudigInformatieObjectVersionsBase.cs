@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
+using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
 
@@ -42,6 +44,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
     protected Mock<IAuthorizationContextAccessor> _mockAuthorizationContextAccessor;
     protected Mock<ILockGenerator> _mockLockGenerator;
     protected Mock<INotificatieService> _mockNotificatieService;
+    protected Mock<IDocumentKenmerkenResolver> _mockDocumentKenmerkenResolver;
     protected DrcDbContext _mockDbContext;
     protected IConfiguration _configuration;
     protected Mock<IOptions<FormOptions>> _mockFormOptions;
@@ -127,6 +130,11 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
         // 15.
         _mockNotificatieService = new Mock<INotificatieService>();
         _mockNotificatieService.Setup(m => m.NotifyAsync(It.IsAny<Notification>(), default));
+
+        _mockDocumentKenmerkenResolver = new Mock<IDocumentKenmerkenResolver>();
+        _mockDocumentKenmerkenResolver
+            .Setup(m => m.GetKenmerkenAsync(It.IsAny<EnkelvoudigInformatieObject>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>() { { "bronOrganisatie", "123" } });
     }
 
     protected async Task<DbContextOptions<DrcDbContext>> GetMockedDrcDbContext(

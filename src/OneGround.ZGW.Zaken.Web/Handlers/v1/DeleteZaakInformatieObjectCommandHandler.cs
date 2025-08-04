@@ -50,9 +50,10 @@ class DeleteZaakInformatieObjectCommandHandler
         IClosedZaakModificationBusinessRule closedZaakModificationBusinessRule,
         ICorrelationContextAccessor correlationContextAccessor,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBatchIdAccessor batchIdAccessor
+        IBatchIdAccessor batchIdAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
         _client = client;

@@ -40,7 +40,7 @@ public class DomainToResponseProfile : Profile
             .AfterMap<MapLatestEnkelvoudigInformatieObjectVersieResponse>();
 
         CreateMap<EnkelvoudigInformatieObjectVersie, EnkelvoudigInformatieObjectCreateResponseDto>()
-            .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.EnkelvoudigInformatieObject))
+            .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.InformatieObject))
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.VerzendDatum)))
@@ -52,19 +52,17 @@ public class DomainToResponseProfile : Profile
                 dest => dest.Integriteit,
                 opt => opt.MapFrom(src => EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(src, true))
             )
-            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.IndicatieGebruiksrecht))
-            .ForMember(dest => dest.Locked, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.Locked))
-            .ForMember(dest => dest.Lock, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.Lock))
+            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.InformatieObject.IndicatieGebruiksrecht))
+            .ForMember(dest => dest.Locked, opt => opt.MapFrom(src => src.InformatieObject.Locked))
+            .ForMember(dest => dest.Lock, opt => opt.MapFrom(src => src.InformatieObject.Lock))
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Inhoud, opt => opt.Ignore())
-            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.InformatieObjectType))
-            // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.MapFrom(src => src.LatestEnkelvoudigInformatieObject.Id))
+            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.InformatieObject.InformatieObjectType))
             .AfterMap<MapDownloadLink>();
 
         CreateMap<EnkelvoudigInformatieObjectVersie, EnkelvoudigInformatieObjectUpdateResponseDto>()
-            .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.EnkelvoudigInformatieObject))
+            .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.InformatieObject))
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.VerzendDatum)))
@@ -76,15 +74,13 @@ public class DomainToResponseProfile : Profile
                 dest => dest.Integriteit,
                 opt => opt.MapFrom(src => EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(src, true))
             )
-            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.IndicatieGebruiksrecht))
-            .ForMember(dest => dest.Locked, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.Locked))
-            .ForMember(dest => dest.Lock, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.Lock))
+            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.InformatieObject.IndicatieGebruiksrecht))
+            .ForMember(dest => dest.Locked, opt => opt.MapFrom(src => src.InformatieObject.Locked))
+            .ForMember(dest => dest.Lock, opt => opt.MapFrom(src => src.InformatieObject.Lock))
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Inhoud, opt => opt.Ignore())
-            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.EnkelvoudigInformatieObject.InformatieObjectType))
-            // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.MapFrom(src => src.LatestEnkelvoudigInformatieObject.Id))
+            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.InformatieObject.InformatieObjectType))
             .AfterMap<MapDownloadLink>();
 
         // Note: This map is used to merge an existing ENKELVOUDIGINFORMATIEOBJECT(+VERSIE) with the PATCH operation

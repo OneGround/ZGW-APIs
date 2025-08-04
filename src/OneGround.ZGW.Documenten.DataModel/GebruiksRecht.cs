@@ -6,7 +6,7 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Documenten.DataModel;
 
 [Table("gebruiksrechten")]
-public class GebruiksRecht : IAuditableEntity, IUrlEntity
+public class GebruiksRecht : IAuditableEntity, IUrlEntity, IInformatieObjectEntity
 {
     [NotMapped]
     public string Url => $"/gebruiksrechten/{Id}";

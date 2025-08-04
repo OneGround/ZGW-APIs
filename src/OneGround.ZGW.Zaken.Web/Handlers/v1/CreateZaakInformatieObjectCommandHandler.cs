@@ -61,9 +61,10 @@ class CreateZaakInformatieObjectCommandHandler
         ICachedDocumentenServiceAgent documentenServiceAgent,
         IAuthorizationContextAccessor authorizationContextAccessor,
         ICorrelationContextAccessor correlationContextAccessor,
-        IBatchIdAccessor batchIdAccessor
+        IBatchIdAccessor batchIdAccessor,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakInformatieObjectBusinessRuleService = zaakInformatieObjectBusinessRuleService;

@@ -42,9 +42,10 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
         IAuthorizationContextAccessor authorizationContextAccessor,
         ICorrelationContextAccessor correlationContextAccessor,
         IBatchIdAccessor batchIdAccessor,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
-        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService)
+        : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
         _publishEndpoint = publishEndpoint;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -11,7 +11,7 @@ public static class AuthorizationContextExtensions
     public static bool IsAuthorized(this AuthorizationContext context, EnkelvoudigInformatieObjectVersie informatieObject)
     {
         return context.IsAuthorized(
-            informatieObject.EnkelvoudigInformatieObject.InformatieObjectType,
+            informatieObject.InformatieObject.InformatieObjectType,
             informatieObject.Vertrouwelijkheidaanduiding,
             context.RequestedScopes
         );

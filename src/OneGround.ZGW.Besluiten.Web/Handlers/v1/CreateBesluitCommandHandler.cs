@@ -44,9 +44,10 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         IAuditTrailFactory auditTrailFactory,
         IZakenServiceAgent zakenServiceAgent,
         ICatalogiServiceAgent catalogiServiceAgent,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
+        : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
         _nummerGenerator = nummerGenerator;

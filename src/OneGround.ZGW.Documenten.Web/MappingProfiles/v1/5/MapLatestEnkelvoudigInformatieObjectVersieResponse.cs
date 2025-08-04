@@ -47,13 +47,11 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, true);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, true);
-        dest.InformatieObjectType = latestVersion.EnkelvoudigInformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
+        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
         dest.Verschijningsvorm = latestVersion.Verschijningsvorm;
         dest.Trefwoorden = latestVersion.Trefwoorden;
         dest.InhoudIsVervallen = latestVersion.InhoudIsVervallen;
-        // FUND-1595: latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-        dest.LatestEnkelvoudigInformatieObjectVersieId = latestVersion.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId;
 
         dest.BestandsDelen = latestVersion.BestandsDelen.OrderBy(d => d.Volgnummer).Select(MapBestandsDeel).ToList();
     }
@@ -68,7 +66,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
             Omvang = bestandsdeel.Omvang,
             Volgnummer = bestandsdeel.Volgnummer,
             Voltooid = bestandsdeel.Voltooid,
-            Lock = bestandsdeel.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.Lock,
+            Lock = bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject.Lock,
         };
     }
 }

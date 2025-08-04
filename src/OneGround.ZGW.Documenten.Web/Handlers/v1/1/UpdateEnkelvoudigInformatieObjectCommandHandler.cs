@@ -45,7 +45,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         IAuthorizationContextAccessor authorizationContextAccessor,
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
-        INotificatieService notificatieService
+        INotificatieService notificatieService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -60,7 +61,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             auditTrailFactory,
             lockGenerator,
             formOptions,
-            notificatieService
+            notificatieService,
+            documentKenmerkenResolver
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -106,7 +108,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
 
         versie.Versie = currentVersie.Versie + 1;
-        versie.Owner = currentVersie.EnkelvoudigInformatieObject.Owner;
+        versie.Owner = currentVersie.InformatieObject.Owner;
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
@@ -131,22 +133,22 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             // Add a new version of the existing EnkelvoudigInformatieObject
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(existingEnkelvoudigInformatieObject);
 
-            var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObject.InformatieObjectType;
+            var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType;
 
-            var indicatieGebruiksrecht = versie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
+            var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
 
             versie.BeginRegistratie = DateTime.UtcNow;
             versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId.Value;
             // Clone the EnkelvoudigInformatieObject from previous version
-            versie.EnkelvoudigInformatieObject = existingEnkelvoudigInformatieObject;
-            versie.EnkelvoudigInformatieObject.InformatieObjectType = informatieObjectType;
-            versie.EnkelvoudigInformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
+            versie.InformatieObject = existingEnkelvoudigInformatieObject;
+            versie.InformatieObject.InformatieObjectType = informatieObjectType;
+            versie.InformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
 
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
                 // We have enabled (some) metadata fields for the underlying document provider
-                var metadata = new DocumentMeta { Rsin = versie.EnkelvoudigInformatieObject.Owner, Version = versie.Versie };
+                var metadata = new DocumentMeta { Rsin = versie.InformatieObject.Owner, Version = versie.Versie };
 
                 var result = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
 
@@ -188,17 +190,17 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            versie.EnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
 
-            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.EnkelvoudigInformatieObject);
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
+                await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(versie.EnkelvoudigInformatieObject, versie.EnkelvoudigInformatieObject, cancellationToken);
+                await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
 
             try
@@ -217,12 +219,12 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             }
         }
 
-        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created new version", versie.EnkelvoudigInformatieObject.Id);
+        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created new version", versie.InformatieObject.Id);
 
         // Note: Do not send notification using bestandsdelen (this is done when all bestandsdelen are uploaded an checkin is called)
         if (versie.BestandsDelen.Count == 0)
         {
-            await SendNotificationAsync(Actie.update, versie, cancellationToken);
+            await SendNotificationAsync(Actie.update, versie.InformatieObject, cancellationToken);
         }
 
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);

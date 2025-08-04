@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -28,9 +28,10 @@ class DownloadEnkelvoudigInformatieObjectQueryHandler
         DrcDbContext context,
         IEntityUriService uriService,
         IDocumentServicesResolver documentServicesResolver,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _documentServicesResolver = documentServicesResolver;

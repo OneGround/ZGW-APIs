@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -34,9 +34,10 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         DrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDistributedCacheHelper cache,
-        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService
+        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _cache = cache;

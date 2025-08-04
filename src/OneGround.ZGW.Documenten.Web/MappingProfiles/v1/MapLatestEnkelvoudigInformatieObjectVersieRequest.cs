@@ -33,7 +33,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, false);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, false);
-        dest.InformatieObjectType = latestVersion.EnkelvoudigInformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.EnkelvoudigInformatieObject.IndicatieGebruiksrecht;
+        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
     }
 }

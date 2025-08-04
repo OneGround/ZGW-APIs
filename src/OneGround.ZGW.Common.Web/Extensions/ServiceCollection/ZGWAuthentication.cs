@@ -76,7 +76,7 @@ public static class ZGWAuthenticationServiceCollectionExtensions
             )
             .AddHttpMessageHandler<CorrelationIdHandler>()
             .AddResilienceHandler(
-                "ZGW-IDP-Token-Resilience",
+                "token-resilience",
                 builder =>
                 {
                     builder.AddRetry(
@@ -84,7 +84,6 @@ public static class ZGWAuthenticationServiceCollectionExtensions
                         {
                             MaxRetryAttempts = 3,
                             BackoffType = DelayBackoffType.Exponential,
-                            UseJitter = true,
                             Delay = TimeSpan.FromSeconds(1),
                         }
                     );

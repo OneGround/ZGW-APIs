@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -30,9 +30,10 @@ class GetAllGebruiksRechtenQueryHandler
         IEntityUriService uriService,
         DrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService
+        IInformatieObjectAuthorizationTempTableService informatieObjectAuthorizationTempTableService,
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
-        : base(logger, configuration, uriService, authorizationContextAccessor)
+        : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _informatieObjectAuthorizationTempTableService = informatieObjectAuthorizationTempTableService;

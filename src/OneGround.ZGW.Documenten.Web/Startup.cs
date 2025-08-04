@@ -33,6 +33,7 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Middleware;
@@ -134,6 +135,7 @@ public class Startup
         services.AddScoped<IObjectInformatieObjectBusinessRuleService, ObjectInformatieObjectBusinessRuleService>();
         services.AddScoped<IVerzendingBusinessRuleService, VerzendingBusinessRuleService>();
         services.AddTransient<IInformatieObjectAuthorizationTempTableService, InformatieObjectAuthorizationTempTableService>();
+        services.AddScoped<IDocumentKenmerkenResolver, DocumentKenmerkenResolver>();
 
         services.AddSingleton<ILockGenerator, LockGenerator>();
 
