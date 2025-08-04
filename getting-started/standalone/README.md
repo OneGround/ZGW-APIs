@@ -1,10 +1,10 @@
-# OneGround ZGW APIs - Standalone Deployment Guide
+# OneGround ZGW APIs - Standalone Setup Guide
 
 This guide provides all the necessary steps to run any of the OneGround ZGW APIs as standalone services using the provided Docker Compose setups.
 
 ## Table of Contents
 
-- [OneGround ZGW APIs - Standalone Deployment Guide](#oneground-zgw-apis---standalone-deployment-guide)
+- [OneGround ZGW APIs - Standalone Setup Guide](#oneground-zgw-apis---standalone-setup-guide)
   - [Table of Contents](#table-of-contents)
   - [Core Prerequisites](#core-prerequisites)
   - [API-Specific Configuration](#api-specific-configuration)
