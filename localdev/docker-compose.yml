@@ -5,7 +5,6 @@ services:
     build:
       context: ../tools/oneground-certificates-generator
       dockerfile: Dockerfile
-    image: oneground-certificates-generator
     volumes:
       - ./oneground-certificates:/certs
 
@@ -158,9 +157,11 @@ services:
       dockerfile: src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-services-data/ac-data:/app/data
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Autorisaties.WebApi'
+      - ../oneground-services-data/ac-data:/app/data
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Autorisaties.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -185,8 +186,10 @@ services:
       dockerfile: src/OneGround.ZGW.Besluiten.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Besluiten.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Besluiten.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -210,8 +213,10 @@ services:
       dockerfile: src/OneGround.ZGW.Catalogi.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Catalogi.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Catalogi.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -235,8 +240,10 @@ services:
       dockerfile: src/OneGround.ZGW.Documenten.Messaging.Listener/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Documenten.Messaging.Listener'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Documenten.Messaging.Listener
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -257,8 +264,10 @@ services:
       dockerfile: src/OneGround.ZGW.Documenten.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Documenten.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Documenten.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -283,8 +292,10 @@ services:
       dockerfile: src/OneGround.ZGW.Notificaties.Messaging.Listener/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Notificaties.Messaging.Listener'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Notificaties.Messaging.Listener
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -306,8 +317,10 @@ services:
       dockerfile: src/OneGround.ZGW.Notificaties.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Notificaties.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Notificaties.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
@@ -331,8 +344,10 @@ services:
       dockerfile: src/OneGround.ZGW.Referentielijsten.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Referentielijsten.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Referentielijsten.WebApi
     ports:
       - ${RC_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
@@ -347,8 +362,10 @@ services:
       dockerfile: src/OneGround.ZGW.Zaken.WebApi/Dockerfile
     user: root
     volumes:
-      - ./oneground-certificates/oneground.local.pem:/usr/local/share/ca-certificates/oneground.local.crt:ro
-    entrypoint: sh -c 'update-ca-certificates && ./OneGround.ZGW.Zaken.WebApi'
+      - ./oneground-certificates:/usr/local/share/ca-certificates:ro
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
+    command: ./OneGround.ZGW.Zaken.WebApi
     depends_on:
       postgres_docker_db:
         condition: service_healthy
