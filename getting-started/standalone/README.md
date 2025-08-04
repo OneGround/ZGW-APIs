@@ -40,7 +40,7 @@ Before you begin, ensure you have the following components installed and running
 - A running **PostgreSQL** instance
 - A running **RabbitMQ** instance
 - A running **Redis** instance
-- An **OpenID Connect (OIDC)** compliant Identity Provider
+- An **OAuth2** compliant Identity Provider
 
 > **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
 
@@ -93,7 +93,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
@@ -129,7 +129,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
@@ -174,7 +174,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
@@ -222,7 +222,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
@@ -269,7 +269,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
@@ -326,7 +326,7 @@ Eventbus__Password="guest"
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
-# --- Identity Provider (OIDC) Settings ---
+# --- Identity Provider (OAuth2) Settings ---
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
