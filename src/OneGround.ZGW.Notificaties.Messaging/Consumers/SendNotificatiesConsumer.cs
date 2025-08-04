@@ -202,13 +202,21 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 return true;
             }
 
-            if (value == filter.Value)
+            // Note: we support boolean filters now. So handle these if relevant
+            if (bool.TryParse(filter.Value, out var filterAsBool))
+            {
+                if (bool.TryParse(value, out var featureAsBool) && featureAsBool == filterAsBool)
+                {
+                    Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filter.Key, filter.Value);
+                    return true;
+                }
+            }
+            else if (value == filter.Value)
             {
                 Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
                 return true;
             }
         }
-
         return false;
     }
 }
