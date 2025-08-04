@@ -424,4 +424,4 @@ Logging__LogLevel__Default=Warning
 
 ## License
 
-This project is licensed under the [**BSD 3-Clause License**](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE) file for details.
+This project is licensed under the [**BSD 3-Clause License**](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE).
