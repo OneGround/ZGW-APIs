@@ -28,7 +28,6 @@ This guide provides all the necessary steps to run any of the OneGround ZGW APIs
     - [Step 2: Configure `docker-compose.yml`](#step-2-configure-docker-composeyml)
     - [Step 3: Run the Service](#step-3-run-the-service)
   - [Advanced Configuration](#advanced-configuration)
-  - [Contributing](#contributing)
   - [License](#license)
 
 ---
@@ -420,12 +419,6 @@ For example, to change the default log level, add the following line to your `.e
 # Example: Overriding a nested setting from appsettings.json
 Logging__LogLevel__Default=Warning
 ```
-
----
-
-## Contributing
-
-We welcome contributions to improve this project! To get started, please read our [contributing guidelines](https://github.com/OneGround/ZGW-APIs#contributing).
 
 ---
 
