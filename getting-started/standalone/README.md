@@ -7,6 +7,8 @@ This guide provides all the necessary steps to run any of the OneGround ZGW APIs
 - [OneGround ZGW APIs - Standalone Setup Guide](#oneground-zgw-apis---standalone-setup-guide)
   - [Table of Contents](#table-of-contents)
   - [Core Prerequisites](#core-prerequisites)
+  - [Authentication](#authentication)
+    - [Required JWT Claims](#required-jwt-claims)
   - [API-Specific Configuration](#api-specific-configuration)
     - [Autorisaties API (AC)](#autorisaties-api-ac)
       - [Required Autorisaties API (AC) Environment Variables (`.env`)](#required-autorisaties-api-ac-environment-variables-env)
@@ -42,6 +44,20 @@ Before you begin, ensure you have the following components installed and running
 - An **OpenID Connect (OIDC)** compliant Identity Provider
 
 > **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
+
+---
+
+## Authentication
+
+The ZGW APIs use JWT (JSON Web Tokens) for authentication. To successfully authenticate with the APIs, your identity provider must be configured to include specific claims in the access token.
+
+### Required JWT Claims
+
+The following claim is mandatory for the ZGW APIs:
+
+- `rsin`: The identifier of the organization.
+
+For an example of how to configure Keycloak to include the necessary claims, please refer to the [Keycloak Setup Documentation](https://github.com/OneGround/ZGW-APIs/tree/main/localdev/keycloak/KeycloakSetup#alternative-identity-providers).
 
 ---
 
