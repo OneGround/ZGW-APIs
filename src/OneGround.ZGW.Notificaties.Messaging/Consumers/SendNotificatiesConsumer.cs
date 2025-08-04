@@ -202,13 +202,36 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 return true;
             }
 
-            if (value == filter.Value)
+            if (IsBooleanFilter(filter.Value))
+            {
+                if (IsBoolenEqual(value, filter.Value))
+                {
+                    Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filter.Key, filter.Value);
+                    return true;
+                }
+            }
+            else if (value == filter.Value)
             {
                 Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
                 return true;
             }
         }
-
         return false;
+    }
+
+    private static bool IsBooleanFilter(string value)
+    {
+        return bool.TryParse(value, out var _);
+    }
+
+    private static bool IsBoolenEqual(string value1, string value2)
+    {
+        if (!bool.TryParse(value1, out var boolval1))
+            return false;
+
+        if (!bool.TryParse(value2, out var boolval2))
+            return false;
+
+        return boolval1 == boolval2;
     }
 }
