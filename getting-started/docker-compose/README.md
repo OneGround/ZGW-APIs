@@ -20,6 +20,7 @@
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services](#zgw-api-services)
     - [Hosted Tools](#hosted-tools)
+  - [License](#license)
 
 ## About This Guide
 
@@ -274,3 +275,7 @@ Here is a reference list of all the services and tools running in this Docker se
 | **Keycloak** | [http://localhost:8080](http://localhost:8080) | Identity and Access Management (user: admin, password: admin). |
 | **RabbitMQ** | [http://localhost:15672](http://localhost:15672) | Message broker management UI (user: guest, password: guest). |
 | **PostgreSQL** | `http://localhost:5432` | Database server. Connect with any SQL client. |
+
+## License
+
+This project is licensed under the [**BSD 3-Clause License**](https://github.com/OneGround/ZGW-APIs/blob/main/LICENSE).
