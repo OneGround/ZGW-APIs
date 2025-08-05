@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Catalogi.Contracts.v1._3;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Models;
@@ -16,40 +18,40 @@ public class ZaakObjectenExpander : IObjectExpander<string>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
+    private readonly ICatalogiServiceAgent _catalogiServiceAgent;
 
-    public ZaakObjectenExpander(IServiceProvider serviceProvider, IMapper mapper)
+    public ZaakObjectenExpander(IServiceProvider serviceProvider, IMapper mapper, ICatalogiServiceAgent catalogiServiceAgent)
     {
         _serviceProvider = serviceProvider;
         _mapper = mapper;
+        _catalogiServiceAgent = catalogiServiceAgent;
     }
 
     public string ExpandName => "zaakobjecten";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
         using var scope = _serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        var result = mediator
-            .Send(
-                new GetAllZaakObjectenQuery
+        var result = await mediator.Send(
+            new GetAllZaakObjectenQuery
+            {
+                GetAllZaakObjectenFilter = new Models.v1.GetAllZaakObjectenFilter
                 {
-                    GetAllZaakObjectenFilter = new Models.v1.GetAllZaakObjectenFilter
-                    {
-                        Zaak = zaakUrl, // Filter out on the current zaak
-                    },
-                    Pagination = new PaginationFilter
-                    {
-                        Page = 1,
-                        Size = 10000, // Note: In practice never stored so many for one zaak (which is filtered on it)
-                    },
-                }
-            )
-            .Result;
+                    Zaak = zaakUrl, // Filter out on the current zaak
+                },
+                Pagination = new PaginationFilter
+                {
+                    Page = 1,
+                    Size = 10000, // Note: In practice never stored so many for one zaak (which is filtered on it)
+                },
+            }
+        );
 
         if (result.Status != QueryStatus.OK)
         {
-            return Task.FromResult(ExpandError.Create(result.Errors));
+            return ExpandError.Create(result.Errors);
         }
 
         var zaakobjecten = new List<object>();
@@ -58,29 +60,26 @@ public class ZaakObjectenExpander : IObjectExpander<string>
         {
             var zaakobjectDto = _mapper.Map<ZaakObjectResponseDto>(zaakobject);
 
+            object error = null;
             if (expandLookup.EndsOfAnyOf("zaakobjecttype"))
             {
-                // TODO: Not yet implemented in ZTC v1.0 (we have to implement this in v1.3 soon!)
-                //var zaakobjecttypeResponse = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(zaakobjectDto.ZaakObjectType);
-                //if (!zaakobjecttypeResponse.Success)
-                //{
-                //    error = ExpandError.Create(zaakobjecttypeResponse.Error);
-                //    return null;
-                //}
-
-                var error = ExpandError.Create("ZTC v1 does not implement zaakobjecttypes resource right now.");
+                ZaakObjectTypeDto zaakobjecttypeResponse = null;
+                if (zaakobjectDto.ZaakObjectType != null)
+                {
+                    var _zaakobjecttypeResponse = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(zaakobjectDto.ZaakObjectType);
+                    if (!_zaakobjecttypeResponse.Success)
+                    {
+                        error = ExpandError.Create(_zaakobjecttypeResponse.Error);
+                    }
+                    else
+                    {
+                        zaakobjecttypeResponse = _zaakobjecttypeResponse.Response;
+                    }
+                }
 
                 var zaakobjectDtoExpanded = DtoExpander.Merge(
                     zaakobjectDto,
-                    new
-                    {
-                        _expand = new
-                        {
-                            // TODO: Comment out zaakobjecttypeResponse.Response when ZTC v1.3 is ready
-                            zaakobjecttype = /*zaakobjecttypeResponse.Response ??*/
-                            error ?? new object(),
-                        },
-                    }
+                    new { _expand = new { zaakobjecttype = zaakobjecttypeResponse ?? error ?? new object() } }
                 );
                 zaakobjecten.Add(zaakobjectDtoExpanded);
             }
@@ -90,6 +89,6 @@ public class ZaakObjectenExpander : IObjectExpander<string>
             }
         }
 
-        return Task.FromResult<object>(zaakobjecten);
+        return zaakobjecten;
     }
 }

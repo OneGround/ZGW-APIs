@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Constants;
@@ -153,5 +154,15 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     )
     {
         return GetPagedResponseAsync<ZaakTypeInformatieObjectTypeResponseDto>("/zaaktype-informatieobjecttypen", parameters, page);
+    }
+
+    public async Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl)
+    {
+        if (!EnsureValidResource(ServiceRoleName.ZTC, zaakObjectTypeUrl, "zaakobjecttypen", out var errorResponse))
+            return new ServiceAgentResponse<ZaakObjectTypeResponseDto>(errorResponse);
+
+        Logger.LogDebug("ZaakObjectType bevragen op '{zaakObjectTypeUrl}'....", zaakObjectTypeUrl);
+
+        return await GetAsync<ZaakObjectTypeResponseDto>(new Uri(zaakObjectTypeUrl));
     }
 }

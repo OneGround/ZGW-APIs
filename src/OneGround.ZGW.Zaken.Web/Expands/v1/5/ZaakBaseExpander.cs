@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,31 +23,29 @@ public abstract class ZaakBaseExpander
         _uriService = uriService;
     }
 
-    protected ZaakResponseDto GetZaak(string zaakUrl, out object error)
+    protected async Task<(ZaakResponseDto respone, object error)> GetZaakAsync(string zaakUrl)
     {
-        error = new object();
-
         using var scope = _serviceProvider.CreateScope();
 
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-        var result = mediator.Send(new GetZaakQuery { Id = _uriService.GetId(zaakUrl) }).Result;
+        var result = await mediator.Send(new GetZaakQuery { Id = _uriService.GetId(zaakUrl) });
         if (result.Status == QueryStatus.NotFound)
         {
-            error = ExpandError.Create($"Zaak {zaakUrl} niet gevonden.");
-            return null;
+            var error = ExpandError.Create($"Zaak {zaakUrl} niet gevonden.");
+            return (null, error);
         }
 
         if (result.Status != QueryStatus.OK)
         {
-            error = ExpandError.Create(result.Errors);
-            return null;
+            var error = ExpandError.Create(result.Errors);
+            return (null, error);
         }
 
         var zaakDto = mapper.Map<ZaakResponseDto>(result.Result);
 
-        return zaakDto;
+        return (zaakDto, error: null);
     }
 
     protected static HashSet<string> GetInnerExpandLookup(string outerExpandName, HashSet<string> expandLookup)

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -52,4 +53,7 @@ public interface ICatalogiServiceAgent
         GetAllZaakTypeInformatieObjectTypenQueryParameters parameters,
         int page = 1
     );
+
+    // ZaakObjectTypeDto
+    Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl);
 }

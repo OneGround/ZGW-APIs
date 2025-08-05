@@ -41,28 +41,34 @@ public class ZaakResultaatExpander : IObjectExpander<string>
 
     public string ExpandName => "resultaat";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
     {
         object error = null;
 
         if (string.IsNullOrEmpty(zaak)) // Note: This can be happen when this Expander is used within the context of a hoofdzaak (which is mostly of the time not the case)
-            return Task.FromResult(new object()); // Note: VNG return {} instead of null so create a empty object
+            return new object(); // Note: VNG return {} instead of null so create a empty object
 
-        var resultaatDto = _zaakresultaatCache.GetOrCacheAndGet(
+        var resultaatDto = await _zaakresultaatCache.GetOrCacheAndGetAsync(
             $"key_zaakresultaat_{zaak}",
-            () =>
+            async () =>
             {
-                return GetZaakResultaat(zaak, ref error);
+                var (response, _error) = await GetZaakResultaatAsync(zaak);
+                if (_error != null)
+                {
+                    error = _error;
+                    return null;
+                }
+                return response;
             }
         );
 
         if (expandLookup.ContainsIgnoreCase("resultaat.resultaattype") && resultaatDto?.ResultaatType != null)
         {
-            var resultaattypeResponse = _resultaattypeCache.GetOrCacheAndGet(
+            var resultaattypeResponse = await _resultaattypeCache.GetOrCacheAndGetAsync(
                 $"key_{resultaatDto.ResultaatType}",
-                () =>
+                async () =>
                 {
-                    var _resultaattypeResponse = _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaatDto.ResultaatType).Result;
+                    var _resultaattypeResponse = await _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaatDto.ResultaatType);
                     if (!_resultaattypeResponse.Success)
                     {
                         error = ExpandError.Create(_resultaattypeResponse.Error);
@@ -76,60 +82,63 @@ public class ZaakResultaatExpander : IObjectExpander<string>
                 resultaatDto,
                 new { _expand = new { resultaattype = resultaattypeResponse ?? error ?? new object() } }
             );
-            return Task.FromResult(resultaatDtoExpanded);
+            return resultaatDtoExpanded;
         }
 
-        return Task.FromResult(resultaatDto ?? error ?? new object());
+        return resultaatDto ?? error ?? new object();
     }
 
-    private Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto GetZaakResultaat(string zaak, ref object error)
+    private async Task<(Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto, object)> GetZaakResultaatAsync(string zaak)
     {
+        object error = null;
+
         using var scope = _serviceProvider.CreateScope();
 
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-        var result1 = mediator.Send(new Handlers.v1.GetZaakQuery { Id = _uriService.GetId(zaak) }).Result;
+        var result1 = await mediator.Send(new Handlers.v1.GetZaakQuery { Id = _uriService.GetId(zaak) });
         if (result1.Status == QueryStatus.NotFound)
         {
             error = ExpandError.Create("zaak niet gevonden."); // Should never be landed here
-            return null;
+            return (null, error);
         }
 
         if (result1.Status != QueryStatus.OK)
         {
             error = ExpandError.Create(result1.Errors);
-            return null;
+            return (null, error);
         }
 
         var zaakDto = mapper.Map<ZaakResponseDto>(result1.Result);
         if (zaakDto.Resultaat == null)
         {
-            return null; // Note: zaak-resultaat probably not set this moment!
+            return (null, null); // Note: Zaak-resultaat probably not set this moment (this is not an error) =>  "resultaat": {}
         }
 
-        var result2 = mediator
-            .Send(
-                new Handlers.v1.GetAllZaakResultatenQuery
-                {
-                    GetAllZaakResultatenFilter = new Models.v1.GetAllZaakResultatenFilter { Zaak = zaak },
-                    Pagination = new PaginationFilter { Page = 1, Size = 500 }, // Note: Should not be occur more than 500 zaak-resultaten
-                }
-            )
-            .Result;
+        var result2 = await mediator.Send(
+            new Handlers.v1.GetAllZaakResultatenQuery
+            {
+                GetAllZaakResultatenFilter = new Models.v1.GetAllZaakResultatenFilter { Zaak = zaak },
+                Pagination = new PaginationFilter { Page = 1, Size = 500 }, // Note: Should not be occur more than 500 zaak-resultaten
+            }
+        );
 
         if (result2.Status != QueryStatus.OK)
         {
             error = ExpandError.Create(result2.Errors);
-            return null;
+            return (null, error);
         }
         var zaakresultaten = mapper.Map<List<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>>(result2.Result.PageResult);
 
         var resultaat = zaakresultaten.SingleOrDefault(r => r.Url == zaakDto.Resultaat);
         if (resultaat == null)
         {
-            return null;
+            error = ExpandError.Create($"Could not find zaakresultaat '{zaakDto.Resultaat}'.");
+            return (null, error);
         }
-        return mapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(resultaat);
+        var resultaatDto = mapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(resultaat);
+
+        return (resultaatDto, error);
     }
 }

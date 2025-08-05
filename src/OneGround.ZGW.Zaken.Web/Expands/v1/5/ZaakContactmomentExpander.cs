@@ -43,7 +43,7 @@ public class ZaakContactmomentenExpander : IObjectExpander<string>
         if (result.Status != QueryStatus.OK)
         {
             var error = ExpandError.Create(result.Errors);
-            return Task.FromResult(error);
+            return error;
         }
 
         var contactmomenten = _mapper.Map<List<ZaakContactmomentResponseDto>>(result.Result);

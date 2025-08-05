@@ -36,34 +36,32 @@ public class RollenExpander : IObjectExpander<string>
 
     public string ExpandName => "rollen";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
         object error = null;
 
         using var scope = _serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        var result = mediator
-            .Send(
-                new GetAllZaakRolQuery
+        var result = await mediator.Send(
+            new GetAllZaakRolQuery
+            {
+                GetAllZaakRolFilter = new Models.v1.GetAllZaakRollenFilter
                 {
-                    GetAllZaakRolFilter = new Models.v1.GetAllZaakRollenFilter
-                    {
-                        Zaak = zaakUrl, // Filter out on the current zaak
-                    },
-                    Pagination = new Common.Web.Models.PaginationFilter
-                    {
-                        Page = 1,
-                        Size = 10000, // Note: In practice never stored so many for one zaak (which is filtered on it)
-                    },
-                }
-            )
-            .Result;
+                    Zaak = zaakUrl, // Filter out on the current zaak
+                },
+                Pagination = new Common.Web.Models.PaginationFilter
+                {
+                    Page = 1,
+                    Size = 10000, // Note: In practice never stored so many for one zaak (which is filtered on it)
+                },
+            }
+        );
 
         if (result.Status != QueryStatus.OK)
         {
             error = ExpandError.Create(result.Errors);
-            return Task.FromResult(error);
+            return error;
         }
 
         var rollen = new List<object>();
@@ -74,11 +72,11 @@ public class RollenExpander : IObjectExpander<string>
 
             if (expandLookup.ContainsIgnoreCase("rollen.roltype") && rolDto?.RolType != null)
             {
-                var roltypeResponse = _roltypeCache.GetOrCacheAndGet(
+                var roltypeResponse = await _roltypeCache.GetOrCacheAndGetAsync(
                     $"key_{rolDto.RolType}",
-                    () =>
+                    async () =>
                     {
-                        var _roltypeResponse = _catalogiServiceAgent.GetRolTypeByUrlAsync(rolDto.RolType).Result;
+                        var _roltypeResponse = await _catalogiServiceAgent.GetRolTypeByUrlAsync(rolDto.RolType);
                         if (!_roltypeResponse.Success)
                         {
                             error = ExpandError.Create(_roltypeResponse.Error);
@@ -97,6 +95,6 @@ public class RollenExpander : IObjectExpander<string>
             }
         }
 
-        return Task.FromResult(rollen ?? error ?? new object());
+        return rollen;
     }
 }
