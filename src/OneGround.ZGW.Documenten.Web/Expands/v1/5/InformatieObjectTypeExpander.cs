@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
@@ -27,15 +27,15 @@ public class InformatieObjectTypeExpander : IObjectExpander<string>
 
     public string ExpandName => "informatieobjecttype";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string informatieObjectType)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string informatieObjectType)
     {
         object error = null;
 
-        var informatieObjectTypeDto = _informatieobjecttypeCache.GetOrCacheAndGet(
+        var informatieObjectTypeDto = await _informatieobjecttypeCache.GetOrCacheAndGetAsync(
             $"key_{informatieObjectType}",
-            () =>
+            async () =>
             {
-                var _informatieObjectTypeResponse = _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieObjectType).Result;
+                var _informatieObjectTypeResponse = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieObjectType);
                 if (!_informatieObjectTypeResponse.Success)
                 {
                     error = ExpandError.Create(_informatieObjectTypeResponse.Error);
@@ -47,11 +47,11 @@ public class InformatieObjectTypeExpander : IObjectExpander<string>
 
         if (expandLookup.EndsOfAnyOf($"{ExpandName}.catalogus") && informatieObjectTypeDto != null)
         {
-            var catalogusResponseDto = _catalogusCache.GetOrCacheAndGet(
+            var catalogusResponseDto = await _catalogusCache.GetOrCacheAndGetAsync(
                 $"key_{informatieObjectTypeDto.Catalogus}",
-                () =>
+                async () =>
                 {
-                    var _catalogusResponseDto = _catalogiServiceAgent.GetCatalogusAsync(informatieObjectTypeDto.Catalogus).Result;
+                    var _catalogusResponseDto = await _catalogiServiceAgent.GetCatalogusAsync(informatieObjectTypeDto.Catalogus);
                     if (!_catalogusResponseDto.Success)
                     {
                         error = ExpandError.Create(_catalogusResponseDto.Error);
@@ -66,9 +66,9 @@ public class InformatieObjectTypeExpander : IObjectExpander<string>
                 new { _expand = new { catalogus = catalogusResponseDto ?? error ?? new object() } }
             );
 
-            return Task.FromResult(informatieObjectTypeDtoExpanded);
+            return informatieObjectTypeDtoExpanded;
         }
 
-        return Task.FromResult(informatieObjectTypeDto ?? error ?? new object());
+        return informatieObjectTypeDto ?? error ?? new object();
     }
 }

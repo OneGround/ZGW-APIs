@@ -43,28 +43,34 @@ public class ZaakStatusExpander : IObjectExpander<string>
 
     public string ExpandName => "status";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
     {
         object error = null;
 
         if (string.IsNullOrEmpty(zaak)) // Note: This can be happen when this Expander is used within the context of a hoofdzaak (which is mostly of the time not the case)
-            return Task.FromResult(new object()); // Note: VNG return {} instead of null so create a empty object
+            return new object(); // Note: VNG return {} instead of null so create a empty object
 
-        var statusDto = _zaakstatusCache.GetOrCacheAndGet(
+        var statusDto = await _zaakstatusCache.GetOrCacheAndGetAsync(
             $"key_zaakstatus_{zaak}",
-            () =>
+            async () =>
             {
-                return GetZaakStatus(zaak, ref error);
+                var (response, _error) = await GetZaakStatusAsync(zaak);
+                if (_error != null)
+                {
+                    error = _error;
+                    return null;
+                }
+                return response;
             }
         );
 
         if (expandLookup.ContainsIgnoreCase("status.statustype") && statusDto?.StatusType != null)
         {
-            var statustypeResponse = _statustypeCache.GetOrCacheAndGet(
+            var statustypeResponse = await _statustypeCache.GetOrCacheAndGetAsync(
                 $"key_{statusDto.StatusType}",
-                () =>
+                async () =>
                 {
-                    var _statustypeResponse = _catalogiServiceAgent.GetStatusTypeByUrlAsync(statusDto.StatusType).Result;
+                    var _statustypeResponse = await _catalogiServiceAgent.GetStatusTypeByUrlAsync(statusDto.StatusType);
                     if (!_statustypeResponse.Success)
                     {
                         error = ExpandError.Create(_statustypeResponse.Error);
@@ -75,62 +81,63 @@ public class ZaakStatusExpander : IObjectExpander<string>
             );
 
             var statusDtoExpanded = DtoExpander.Merge(statusDto, new { _expand = new { statustype = statustypeResponse ?? error ?? new object() } });
-            return Task.FromResult(statusDtoExpanded);
+            return statusDtoExpanded;
         }
 
-        return Task.FromResult(statusDto ?? error ?? new object());
+        return statusDto ?? error ?? new object();
     }
 
-    private ZaakStatusGetResponseDto GetZaakStatus(string zaak, ref object error)
+    private async Task<(ZaakStatusGetResponseDto, object)> GetZaakStatusAsync(string zaak)
     {
+        object error = null;
+
         using var scope = _serviceProvider.CreateScope();
 
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-        var result1 = mediator.Send(new GetZaakQuery { Id = _uriService.GetId(zaak) }).Result;
+        var result1 = await mediator.Send(new GetZaakQuery { Id = _uriService.GetId(zaak) });
         if (result1.Status == QueryStatus.NotFound)
         {
             error = ExpandError.Create("zaak niet gevonden."); // Should never be landed here
-            return null;
+            return (null, error);
         }
 
         if (result1.Status != QueryStatus.OK)
         {
             error = ExpandError.Create(result1.Errors);
-            return null;
+            return (null, error);
         }
 
         var zaakDto = mapper.Map<ZaakResponseDto>(result1.Result);
         if (zaakDto.Status == null)
         {
-            return null; // Note: zaak-status probably not set this moment!
+            return (null, null); // Note: Zaak-status probably not set this moment (this is not an error) =>  "status": {}
         }
 
-        var result2 = mediator
-            .Send(
-                new GetAllZaakStatussenQuery
-                {
-                    GetAllZaakStatussenFilter = new GetAllZaakStatussenFilter { Zaak = zaak },
-                    Pagination = new PaginationFilter { Page = 1, Size = 500 }, // Note: Should not be occur more than 500 zaak-statussen
-                }
-            )
-            .Result;
+        var result2 = await mediator.Send(
+            new GetAllZaakStatussenQuery
+            {
+                GetAllZaakStatussenFilter = new GetAllZaakStatussenFilter { Zaak = zaak },
+                Pagination = new PaginationFilter { Page = 1, Size = 500 }, // Note: Should not be occur more than 500 zaak-statussen
+            }
+        );
 
         if (result2.Status != QueryStatus.OK)
         {
             error = ExpandError.Create(result2.Errors);
-            return null;
+            return (null, error);
         }
         var zaakstatussen = mapper.Map<List<ZaakStatusGetResponseDto>>(result2.Result.PageResult);
 
         var status = zaakstatussen.SingleOrDefault(r => r.Url == zaakDto.Status);
         if (status == null)
         {
-            return null;
+            error = ExpandError.Create($"Could not find zaakstatus '{zaakDto.Status}'.");
+            return (null, error);
         }
         var statusDto = mapper.Map<ZaakStatusGetResponseDto>(status);
 
-        return statusDto;
+        return (statusDto, error);
     }
 }

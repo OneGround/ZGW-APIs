@@ -38,7 +38,7 @@ public abstract class ZakenCollectionExpander : ZaakBaseExpander, IObjectExpande
 
         foreach (var innerZaakUrl in innerzaakUrls)
         {
-            var innerZaak = GetZaak(innerZaakUrl, out var error);
+            var (innerZaak, error) = await GetZaakAsync(innerZaakUrl);
             if (innerZaak == null)
             {
                 innerZakenExpanded.Add(error);

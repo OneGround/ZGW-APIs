@@ -21,13 +21,16 @@ public class HoofdZaakExpander : ZaakBaseExpander, IObjectExpander<string>
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string hoofdzaakUrl)
     {
-        var expander = _expanderFactory.Create<ZaakResponseDto>("zaak");
+        if (hoofdzaakUrl == null)
+        {
+            // Most zaken has no hoofdzaak defined (null here) so return empty object
+            return new object();
+        }
 
-        var hoofdzaak = GetZaak(hoofdzaakUrl, out _);
+        var (hoofdzaak, error) = await GetZaakAsync(hoofdzaakUrl);
         if (hoofdzaak == null)
         {
-            // Not really an error because most zaken has no hoofdzaak defined so return empty object
-            return new object();
+            return error;
         }
 
         // Note: Strip off parent expand name "hoofdzaak" and remove non-hoofdzaak pathes, so we can use the generic ZaakExpander (to resolve hoofdzaak data)
@@ -40,6 +43,8 @@ public class HoofdZaakExpander : ZaakBaseExpander, IObjectExpander<string>
         //    innerExpandLookup:
         //      -rollen.roltype
         var innerExpandLookup = GetInnerExpandLookup(ExpandName, expandLookup);
+
+        var expander = _expanderFactory.Create<ZaakResponseDto>("zaak");
 
         var hoofdzaakExpandedDto = await expander.ResolveAsync(innerExpandLookup, hoofdzaak);
 

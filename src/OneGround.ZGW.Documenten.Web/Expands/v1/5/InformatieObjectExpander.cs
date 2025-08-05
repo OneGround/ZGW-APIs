@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -50,16 +50,16 @@ public class InformatieObjectExpander : IObjectExpander<InformatieObjectContext>
         {
             object error = null;
 
-            var enkelvoudiginformatieobjectDto = _enkelvoudiginformatieobjectCache.GetOrCacheAndGet(
+            var enkelvoudiginformatieobjectDto = await _enkelvoudiginformatieobjectCache.GetOrCacheAndGetAsync(
                 $"key_enkelvoudiginformatieobject_{context.InformatieObject}",
-                () =>
+                async () =>
                 {
                     using var scope = _serviceProvider.CreateScope();
 
                     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                     var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-                    var result = mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = _uriService.GetId(context.InformatieObject) }).Result;
+                    var result = await mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = _uriService.GetId(context.InformatieObject) });
                     if (result.Status == QueryStatus.NotFound)
                     {
                         error = ExpandError.Create("Enkelvoudiginformatieobject niet gevonden."); // Should never be landed here
@@ -78,16 +78,25 @@ public class InformatieObjectExpander : IObjectExpander<InformatieObjectContext>
                 }
             );
 
-            var expander = _expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
+            if (enkelvoudiginformatieobjectDto != null)
+            {
+                var expander = _expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
 
-            var enkelvoudiginformatieobjectDtoExpanded = await expander.ResolveAsync(expandLookup, enkelvoudiginformatieobjectDto);
+                var enkelvoudiginformatieobjectDtoExpanded = await expander.ResolveAsync(expandLookup, enkelvoudiginformatieobjectDto);
 
-            var objectDtoExpanded = DtoExpander.Merge(
-                context.ObjectDto,
-                new { _expand = new { informatieobject = enkelvoudiginformatieobjectDtoExpanded ?? error ?? new object() } }
-            );
+                var objectDtoExpanded = DtoExpander.Merge(
+                    context.ObjectDto,
+                    new { _expand = new { informatieobject = enkelvoudiginformatieobjectDtoExpanded ?? error ?? new object() } }
+                );
 
-            return objectDtoExpanded;
+                return objectDtoExpanded;
+            }
+            else
+            {
+                var objectDtoExpanded = DtoExpander.Merge(context.ObjectDto, new { _expand = new { informatieobject = error ?? new object() } });
+
+                return objectDtoExpanded;
+            }
         }
 
         return context.ObjectDto;
