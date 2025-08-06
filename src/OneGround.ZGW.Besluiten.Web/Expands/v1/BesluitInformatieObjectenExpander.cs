@@ -45,14 +45,12 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         // Get all besluit-informatieobjecten
-        var result = mediator
-            .Send(
-                new GetAllBesluitInformatieObjectenQuery
-                {
-                    GetAllBesluitInformatieObjectenFilter = new GetAllBesluitInformatieObjectenFilter { Besluit = besluit },
-                }
-            )
-            .Result;
+        var result = await mediator.Send(
+            new GetAllBesluitInformatieObjectenQuery
+            {
+                GetAllBesluitInformatieObjectenFilter = new GetAllBesluitInformatieObjectenFilter { Besluit = besluit },
+            }
+        );
 
         if (result.Status != QueryStatus.OK)
         {
@@ -94,13 +92,14 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
                     expand = ExpandKeys.InformatieObjectType;
                 }
 
-                var informatieobjectResponse = _informatieobjectResponseCache.GetOrCacheAndGet(
+                var informatieobjectResponse = await _informatieobjectResponseCache.GetOrCacheAndGetAsync(
                     $"key_{besluitInformatieObjectDto.InformatieObject}",
-                    () =>
+                    async () =>
                     {
-                        var _informatieobjectResponse = _documentenServiceAgent
-                            .GetEnkelvoudigInformatieObjectByUrlAsync(besluitInformatieObjectDto.InformatieObject, expand)
-                            .Result;
+                        var _informatieobjectResponse = await _documentenServiceAgent.GetEnkelvoudigInformatieObjectByUrlAsync(
+                            besluitInformatieObjectDto.InformatieObject,
+                            expand
+                        );
                         return _informatieobjectResponse.Success
                             ? _informatieobjectResponse.Response.expandedEnkelvoudigInformatieObject
                             : ExpandError.Create(_informatieobjectResponse.Error);
@@ -109,7 +108,7 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
 
                 var zaakinformatieobjectDtoExpanded = DtoExpander.Merge(
                     besluitInformatieObjectDto,
-                    new { _expand = new { informatieobject = informatieobjectResponse ?? error ?? new object() } }
+                    new { _expand = new { informatieobject = informatieobjectResponse ?? new object() } }
                 );
                 besluitInformatieObjecten.Add(zaakinformatieobjectDtoExpanded);
             }

@@ -44,14 +44,12 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         // Get all zaak-informatieobjecten
-        var result = mediator
-            .Send(
-                new GetAllZaakInformatieObjectenQuery
-                {
-                    GetAllZaakInformatieObjectenFilter = new Models.v1.GetAllZaakInformatieObjectenFilter { Zaak = zaak },
-                }
-            )
-            .Result;
+        var result = await mediator.Send(
+            new GetAllZaakInformatieObjectenQuery
+            {
+                GetAllZaakInformatieObjectenFilter = new Models.v1.GetAllZaakInformatieObjectenFilter { Zaak = zaak },
+            }
+        );
 
         if (result.Status != QueryStatus.OK)
         {
@@ -94,25 +92,23 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
                 if (expandLookup.ContainsAnyOf("zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"))
                     expand = "informatieobjecttype.catalogus";
 
-                var informatieobjectResponse = _informatieobjectResponseCache.GetOrCacheAndGet(
+                var informatieobjectResponse = await _informatieobjectResponseCache.GetOrCacheAndGetAsync(
                     $"key_{zaakinformatieobjectDto.InformatieObject}",
-                    () =>
+                    async () =>
                     {
-                        var _informatieobjectResponse = _documentenServiceAgent
-                            .GetEnkelvoudigInformatieObjectByUrlAsync(zaakinformatieobjectDto.InformatieObject, expand)
-                            .Result;
-                        if (!_informatieobjectResponse.Success)
-                        {
-                            error = ExpandError.Create(_informatieobjectResponse.Error);
-                            return null;
-                        }
-                        return _informatieobjectResponse.Response.expandedEnkelvoudigInformatieObject;
+                        var _informatieobjectResponse = await _documentenServiceAgent.GetEnkelvoudigInformatieObjectByUrlAsync(
+                            zaakinformatieobjectDto.InformatieObject,
+                            expand
+                        );
+                        return _informatieobjectResponse.Success
+                            ? _informatieobjectResponse.Response.expandedEnkelvoudigInformatieObject
+                            : ExpandError.Create(_informatieobjectResponse.Error);
                     }
                 );
 
                 var zaakinformatieobjectDtoExpanded = DtoExpander.Merge(
                     zaakinformatieobjectDto,
-                    new { _expand = new { informatieobject = informatieobjectResponse ?? error ?? new object() } }
+                    new { _expand = new { informatieobject = informatieobjectResponse ?? new object() } }
                 );
                 zaakinformatieobjecten.Add(zaakinformatieobjectDtoExpanded);
             }

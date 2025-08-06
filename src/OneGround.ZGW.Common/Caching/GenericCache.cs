@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace OneGround.ZGW.Common.Caching;
 
@@ -10,6 +11,7 @@ namespace OneGround.ZGW.Common.Caching;
 public interface IGenericCache<T>
 {
     T GetOrCacheAndGet(string key, Func<T> factory);
+    Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory);
 }
 
 /// <summary>
@@ -25,6 +27,16 @@ public class GenericCache<T> : IGenericCache<T>
         if (!_cache.TryGetValue(key, out var value))
         {
             value = factory();
+            _cache.Add(key, value);
+        }
+        return value;
+    }
+
+    public async Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory)
+    {
+        if (!_cache.TryGetValue(key, out var value))
+        {
+            value = await factory();
             _cache.Add(key, value);
         }
         return value;

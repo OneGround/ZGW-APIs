@@ -26,15 +26,15 @@ public class BesluitTypeExpander : IObjectExpander<string>
 
     public string ExpandName => ExpandKeys.BesluitType;
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string besluitType)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string besluitType)
     {
         object error = null;
 
-        var besluitTypeDto = _besluitTypeCache.GetOrCacheAndGet(
+        var besluitTypeDto = await _besluitTypeCache.GetOrCacheAndGetAsync(
             $"key_{besluitType}",
-            () =>
+            async () =>
             {
-                var besluitTypeResponse = _catalogiServiceAgent.GetBesluitTypeByUrlAsync(besluitType).Result;
+                var besluitTypeResponse = await _catalogiServiceAgent.GetBesluitTypeByUrlAsync(besluitType);
                 if (!besluitTypeResponse.Success)
                 {
                     error = ExpandError.Create(besluitTypeResponse.Error);
@@ -46,11 +46,11 @@ public class BesluitTypeExpander : IObjectExpander<string>
 
         if (expandLookup.ContainsAnyOf(ExpandQueries.BesluitType_Catalogus) && besluitTypeDto != null)
         {
-            var catalogusDto = _catalogusCache.GetOrCacheAndGet(
+            var catalogusDto = await _catalogusCache.GetOrCacheAndGetAsync(
                 $"key_{besluitTypeDto.Catalogus}",
-                () =>
+                async () =>
                 {
-                    var catalogusResponse = _catalogiServiceAgent.GetCatalogusAsync(besluitTypeDto.Catalogus).Result;
+                    var catalogusResponse = await _catalogiServiceAgent.GetCatalogusAsync(besluitTypeDto.Catalogus);
 
                     if (!catalogusResponse.Success)
                     {
@@ -66,9 +66,9 @@ public class BesluitTypeExpander : IObjectExpander<string>
                 new { _expand = new { catalogus = catalogusDto ?? error ?? new object() } }
             );
 
-            return Task.FromResult(besluitTypeDtoExpanded);
+            return besluitTypeDtoExpanded;
         }
 
-        return Task.FromResult(besluitTypeDto ?? error ?? new object());
+        return besluitTypeDto ?? error ?? new object();
     }
 }

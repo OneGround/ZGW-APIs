@@ -43,7 +43,7 @@ public class ZaakVerzoekenExpander : IObjectExpander<string>
         if (result.Status != QueryStatus.OK)
         {
             var error = ExpandError.Create(result.Errors);
-            return Task.FromResult(error);
+            return error;
         }
 
         var zaakverzoeken = _mapper.Map<List<ZaakVerzoekResponseDto>>(result.Result);

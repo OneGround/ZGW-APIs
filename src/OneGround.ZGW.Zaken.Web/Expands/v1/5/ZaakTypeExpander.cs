@@ -26,15 +26,15 @@ public class ZaakTypeExpander : IObjectExpander<string>
 
     public string ExpandName => "zaaktype";
 
-    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaaktype)
+    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaaktype)
     {
         object error = null;
 
-        var zaaktypeDto = _zaaktypeCache.GetOrCacheAndGet(
+        var zaaktypeDto = await _zaaktypeCache.GetOrCacheAndGetAsync(
             $"key_{zaaktype}",
-            () =>
+            async () =>
             {
-                var _zaaktypeResponse = _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaaktype).Result;
+                var _zaaktypeResponse = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaaktype);
                 if (!_zaaktypeResponse.Success)
                 {
                     error = ExpandError.Create(_zaaktypeResponse.Error);
@@ -46,11 +46,11 @@ public class ZaakTypeExpander : IObjectExpander<string>
 
         if (expandLookup.ContainsIgnoreCase($"{ExpandName}.catalogus") && zaaktypeDto != null)
         {
-            var catalogusResponseDto = _catalogusCache.GetOrCacheAndGet(
+            var catalogusResponseDto = await _catalogusCache.GetOrCacheAndGetAsync(
                 $"key_{zaaktypeDto.Catalogus}",
-                () =>
+                async () =>
                 {
-                    var _catalogusResponseDto = _catalogiServiceAgent.GetCatalogusAsync(zaaktypeDto.Catalogus).Result;
+                    var _catalogusResponseDto = await _catalogiServiceAgent.GetCatalogusAsync(zaaktypeDto.Catalogus);
                     if (!_catalogusResponseDto.Success)
                     {
                         error = ExpandError.Create(_catalogusResponseDto.Error);
@@ -65,9 +65,9 @@ public class ZaakTypeExpander : IObjectExpander<string>
                 new { _expand = new { catalogus = catalogusResponseDto ?? error ?? new object() } }
             );
 
-            return Task.FromResult(zaaktypeDtoExpanded);
+            return zaaktypeDtoExpanded;
         }
 
-        return Task.FromResult(zaaktypeDto ?? error ?? new object());
+        return zaaktypeDto ?? error ?? new object();
     }
 }
