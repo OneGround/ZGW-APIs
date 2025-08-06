@@ -48,9 +48,9 @@ public class NotificatiesServiceAgent : ZGWServiceAgent<NotificatiesServiceAgent
         return await DeleteAsync(url);
     }
 
-    public async Task<ServiceAgentResponse<NotificatieDto>> NotificeerAsync(NotificatieDto notificatieRequest, CancellationToken ct = default)
+    public async Task<ServiceAgentResponse<NotificatieDto>> NotifyAsync(NotificatieDto request, CancellationToken ct = default)
     {
         var url = new Uri("/notificaties", UriKind.Relative);
-        return await PostAsync<NotificatieDto, NotificatieDto>(url, notificatieRequest);
+        return await PostAsync<NotificatieDto, NotificatieDto>(url, request);
     }
 }

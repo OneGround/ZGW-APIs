@@ -77,7 +77,6 @@ public class Startup
         services.AddTransient<ICatalogEventService, CatalogEventService>();
 
         services.AddAutorisatiesServiceAgent(Configuration);
-        services.AddNotificatiesServiceAgent(Configuration);
         services.AddReferentielijstenServiceAgent(Configuration);
 
         services.AddMassTransit(x =>
@@ -106,7 +105,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddNotificatieService(Configuration);
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IZaakTypeInformatieObjectTypenBusinessRuleService, ZaakTypeInformatieObjectTypenBusinessRuleService>();
         services.AddScoped<IConceptBusinessRule, ConceptBusinessRule>();
         services.AddScoped<IBesluitTypeRelationsValidator, BesluitTypeRelationsValidator>();

@@ -18,7 +18,6 @@
     <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging.Contracts\ZGW.Documenten.Messaging.Contracts.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
-    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
   </ItemGroup>
 </Project>

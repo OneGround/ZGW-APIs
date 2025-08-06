@@ -3,9 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Notificaties.Contracts.v1;
-using OneGround.ZGW.Notificaties.ServiceAgent;
 
-namespace OneGround.ZGW.Notificaties.Web.Services;
+namespace OneGround.ZGW.Notificaties.ServiceAgent;
 
 public class NotificatieHttpService : INotificatieService
 {
@@ -29,6 +28,6 @@ public class NotificatieHttpService : INotificatieService
             Kenmerken = notificatie.Kenmerken,
         };
 
-        await _notificatiesServiceAgent.NotificeerAsync(request, ct);
+        await _notificatiesServiceAgent.NotifyAsync(request, ct);
     }
 }

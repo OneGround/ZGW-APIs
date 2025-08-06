@@ -1,4 +1,4 @@
-namespace OneGround.ZGW.Notificaties.Web.Services;
+namespace OneGround.ZGW.Notificaties.ServiceAgent;
 
 public enum NotificatieServiceType
 {

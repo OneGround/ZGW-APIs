@@ -13,5 +13,5 @@ public interface INotificatiesServiceAgent
     Task<ServiceAgentResponse<KanaalResponseDto>> GetKanaalByUrl(string url);
     Task<ServiceAgentResponse<IEnumerable<KanaalResponseDto>>> GetAllKanalenAsync();
     Task<ServiceAgentResponse> DeleteAbonnementByIdAsync(Guid abonnementId);
-    Task<ServiceAgentResponse<NotificatieDto>> NotificeerAsync(NotificatieDto notificatieRequest, CancellationToken ct = default);
+    Task<ServiceAgentResponse<NotificatieDto>> NotifyAsync(NotificatieDto request, CancellationToken ct = default);
 }

@@ -26,7 +26,6 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
-using OneGround.ZGW.Notificaties.Web.Extensions;
 
 namespace OneGround.ZGW.Autorisaties.Web;
 
@@ -97,13 +96,12 @@ public class Startup
         services.AddCommonServices();
 
         services.AddCatalogiServiceAgent(Configuration);
-        services.AddNotificatiesServiceAgent(Configuration);
 
         services.AddSingleton<IApiMetaData, ApiMetaData>();
 
         services.AddSingleton<IEntityUpdater<Applicatie>, ApplicatieUpdater>();
 
-        services.AddNotificatieService(Configuration);
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IApplicatieBusinessRuleService, ApplicatieBusinessRuleService>();
 
         services.AddServiceEndpoints(Configuration);

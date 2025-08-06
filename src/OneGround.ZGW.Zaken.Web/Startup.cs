@@ -29,7 +29,6 @@ using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
-using OneGround.ZGW.Notificaties.Web.Extensions;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
@@ -95,7 +94,6 @@ public class Startup
 
         services.AddZGWAuditTrail<ZrcDbContext>();
 
-        services.AddNotificatiesServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddDocumentenServiceAgent(Configuration);
@@ -138,7 +136,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<ZrcDbContext>();
 
-        services.AddNotificatieService(Configuration);
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IClosedZaakModificationBusinessRule, ClosedZaakModificationBusinessRule>();
         services.AddScoped<IZaakBusinessRuleService, ZaakBusinessRuleService>();
         services.AddScoped<IZaakInformatieObjectBusinessRuleService, ZaakInformatieObjectBusinessRuleService>();

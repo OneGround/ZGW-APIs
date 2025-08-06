@@ -39,7 +39,6 @@ using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Middleware;
 using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
-using OneGround.ZGW.Notificaties.Web.Extensions;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 
 namespace OneGround.ZGW.Documenten.Web;
@@ -92,7 +91,6 @@ public class Startup
         services.AddBesluitenServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
-        services.AddNotificatiesServiceAgent(Configuration);
 
         services.AddExpandables();
 
@@ -130,7 +128,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<DrcDbContext>();
 
-        services.AddNotificatieService(Configuration);
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IDocumentServicesResolver, DocumentServicesResolver>();
         services.AddScoped<IDocumentService, FileSystemDocumentService>();
         services.AddScoped<IDocumentService, CephDocumentServices>();

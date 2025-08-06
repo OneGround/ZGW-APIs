@@ -75,7 +75,6 @@ public class Startup
         );
 
         services.AddAutorisatiesServiceAgent(Configuration);
-        services.AddNotificatiesServiceAgent(Configuration);
 
         services.AddMassTransit(x =>
         {
@@ -103,7 +102,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddNotificatieService(Configuration);
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IAbonnementKanaalValidator, AbonnementKanaalValidator>();
 
         services.AddCorrelationId();
