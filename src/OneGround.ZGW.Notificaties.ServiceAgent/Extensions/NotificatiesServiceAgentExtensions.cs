@@ -25,7 +25,7 @@ public static class NotificatiesServiceAgentExtensions
         }
         else
         {
-            services.AddScoped<INotificatieService, NotificatieService>();
+            services.AddScoped<INotificatieService, NotificatieMessageQueueService>();
         }
 
         return services;
