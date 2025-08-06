@@ -17,7 +17,7 @@ public static class NotificatiesServiceAgentExtensions
     {
         AddNotificatiesServiceAgent(services, configuration);
 
-        var notificatieServiceConfiguration = configuration.GetSection("NotificatieService").Get<NotificatieServiceConfiguration>();
+        var notificatieServiceConfiguration = configuration.GetSection(NotificatieServiceConfiguration.Key).Get<NotificatieServiceConfiguration>();
 
         if (notificatieServiceConfiguration?.Type == NotificatieServiceType.Http)
         {
