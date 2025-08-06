@@ -29,6 +29,7 @@ using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
+using OneGround.ZGW.Notificaties.Web.Extensions;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
@@ -137,7 +138,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<ZrcDbContext>();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatieService(Configuration);
         services.AddScoped<IClosedZaakModificationBusinessRule, ClosedZaakModificationBusinessRule>();
         services.AddScoped<IZaakBusinessRuleService, ZaakBusinessRuleService>();
         services.AddScoped<IZaakInformatieObjectBusinessRuleService, ZaakInformatieObjectBusinessRuleService>();

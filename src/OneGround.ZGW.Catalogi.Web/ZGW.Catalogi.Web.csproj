@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Referentielijsten.ServiceAgent\ZGW.Referentielijsten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Catalogi.Contracts\ZGW.Catalogi.Contracts.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Catalogi.DataModel\ZGW.Catalogi.DataModel.csproj" />

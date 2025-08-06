@@ -157,7 +157,7 @@ services:
       dockerfile: src/OneGround.ZGW.Autorisaties.WebApi/Dockerfile
     user: root
     volumes:
-      - ../oneground-services-data/ac-data:/app/data
+      - ./oneground-services-data/ac-data:/app/data
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
       - ./entrypoint.sh:/entrypoint.sh
     entrypoint: /entrypoint.sh

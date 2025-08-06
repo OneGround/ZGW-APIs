@@ -25,6 +25,8 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
+using OneGround.ZGW.Notificaties.Web.Extensions;
 using OneGround.ZGW.Referentielijsten.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Catalogi.Web;
@@ -75,6 +77,7 @@ public class Startup
         services.AddTransient<ICatalogEventService, CatalogEventService>();
 
         services.AddAutorisatiesServiceAgent(Configuration);
+        services.AddNotificatiesServiceAgent(Configuration);
         services.AddReferentielijstenServiceAgent(Configuration);
 
         services.AddMassTransit(x =>
@@ -103,7 +106,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatieService(Configuration);
         services.AddScoped<IZaakTypeInformatieObjectTypenBusinessRuleService, ZaakTypeInformatieObjectTypenBusinessRuleService>();
         services.AddScoped<IConceptBusinessRule, ConceptBusinessRule>();
         services.AddScoped<IBesluitTypeRelationsValidator, BesluitTypeRelationsValidator>();

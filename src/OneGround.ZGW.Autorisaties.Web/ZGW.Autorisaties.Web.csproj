@@ -16,5 +16,6 @@
     <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
   </ItemGroup>
 </Project>
