@@ -26,7 +26,6 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
-using OneGround.ZGW.Notificaties.Web.Extensions;
 using OneGround.ZGW.Referentielijsten.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Catalogi.Web;
