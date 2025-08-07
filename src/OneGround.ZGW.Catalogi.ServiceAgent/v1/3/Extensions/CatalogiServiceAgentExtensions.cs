@@ -22,6 +22,7 @@ public static class CatalogiServiceAgentExtensions
                 caching.CacheEntities.Add(CacheEntity.ResultaatType);
                 caching.CacheEntities.Add(CacheEntity.RolType);
                 caching.CacheEntities.Add(CacheEntity.Eigenschap);
+                caching.CacheEntities.Add(CacheEntity.ZaakObjectType);
             }
         );
     }

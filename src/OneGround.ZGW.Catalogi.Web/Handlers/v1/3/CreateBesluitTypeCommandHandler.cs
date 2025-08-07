@@ -109,6 +109,9 @@ class CreateBesluitTypeCommandHandler
 
         await SendNotificationAsync(Actie.create, besluitType, cancellationToken);
 
+        await _cacheInvalidator.InvalidateAsync(besluitType.BesluitTypeZaakTypen.Select(t => t.ZaakType), besluitType.Catalogus.Owner);
+        await _cacheInvalidator.InvalidateAsync(besluitType.BesluitTypeResultaatTypen.Select(t => t.ResultaatType), besluitType.Catalogus.Owner);
+
         return new CommandResult<BesluitType>(besluitType, CommandStatus.OK);
     }
 
