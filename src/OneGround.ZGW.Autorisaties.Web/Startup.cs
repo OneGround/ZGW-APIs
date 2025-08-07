@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Autorisaties.Web;
 
@@ -100,7 +101,7 @@ public class Startup
 
         services.AddSingleton<IEntityUpdater<Applicatie>, ApplicatieUpdater>();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IApplicatieBusinessRuleService, ApplicatieBusinessRuleService>();
 
         services.AddServiceEndpoints(Configuration);

@@ -21,15 +21,15 @@ public class Notification
     public bool Ignore { get; set; }
 }
 
-public class NotificatieService : INotificatieService
+public class NotificatieMessageQueueService : INotificatieService
 {
-    private readonly ILogger<NotificatieService> _logger;
+    private readonly ILogger<NotificatieMessageQueueService> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ICorrelationContextAccessor _correlationContextAccessor;
     private readonly IBatchIdAccessor _batchIdAccessor;
 
-    public NotificatieService(
-        ILogger<NotificatieService> logger,
+    public NotificatieMessageQueueService(
+        ILogger<NotificatieMessageQueueService> logger,
         IPublishEndpoint publishEndpoint,
         ICorrelationContextAccessor correlationContextAccessor,
         IBatchIdAccessor batchIdAccessor

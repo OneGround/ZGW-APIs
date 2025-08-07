@@ -79,7 +79,6 @@ public class Startup
 
         services.AddZGWAuditTrail<BrcDbContext>();
 
-        services.AddNotificatiesServiceAgent(Configuration);
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
@@ -120,7 +119,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<BrcDbContext>();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IBesluitBusinessRuleService, BesluitBusinessRuleService>();
         services.AddScoped<IBesluitInformatieObjectBusinessRuleService, BesluitInformatieObjectBusinessRuleService>();
 
