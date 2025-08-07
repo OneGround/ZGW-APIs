@@ -19,7 +19,7 @@ public class NotificatieHttpService : INotificatieService
     {
         var request = new NotificatieDto
         {
-            Aanmaakdatum = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss"),
+            Aanmaakdatum = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
             Kanaal = notificatie.Kanaal,
             Actie = $"{notificatie.Actie}",
             HoofdObject = notificatie.HoodfObject,
