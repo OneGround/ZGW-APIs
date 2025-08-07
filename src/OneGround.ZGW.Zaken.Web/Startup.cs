@@ -94,7 +94,6 @@ public class Startup
 
         services.AddZGWAuditTrail<ZrcDbContext>();
 
-        services.AddNotificatiesServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddDocumentenServiceAgent(Configuration);
@@ -137,7 +136,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<ZrcDbContext>();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IClosedZaakModificationBusinessRule, ClosedZaakModificationBusinessRule>();
         services.AddScoped<IZaakBusinessRuleService, ZaakBusinessRuleService>();
         services.AddScoped<IZaakInformatieObjectBusinessRuleService, ZaakInformatieObjectBusinessRuleService>();

@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
+using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Contracts.v1.Responses;
 
 namespace OneGround.ZGW.Notificaties.ServiceAgent;
@@ -44,5 +46,11 @@ public class NotificatiesServiceAgent : ZGWServiceAgent<NotificatiesServiceAgent
     {
         var url = new Uri($"/abonnement/{abonnementId}", UriKind.Relative);
         return await DeleteAsync(url);
+    }
+
+    public async Task<ServiceAgentResponse<NotificatieDto>> NotifyAsync(NotificatieDto request, CancellationToken ct = default)
+    {
+        var url = new Uri("/notificaties", UriKind.Relative);
+        return await PostAsync<NotificatieDto, NotificatieDto>(url, request);
     }
 }

@@ -9,6 +9,7 @@ This guide provides all the necessary steps to run any of the OneGround ZGW APIs
   - [Core Prerequisites](#core-prerequisites)
   - [Authentication](#authentication)
     - [Required JWT Claims](#required-jwt-claims)
+  - [Notifications Configuration](#notifications-configuration)
   - [API-Specific Configuration](#api-specific-configuration)
     - [Autorisaties API (AC)](#autorisaties-api-ac)
       - [Required Autorisaties API (AC) Environment Variables (`.env`)](#required-autorisaties-api-ac-environment-variables-env)
@@ -38,9 +39,9 @@ Before you begin, ensure you have the following components installed and running
 
 - [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
 - A running **PostgreSQL** instance
-- A running **RabbitMQ** instance
 - A running **Redis** instance
 - An **OAuth2** compliant Identity Provider
+- A running **RabbitMQ** instance (*only required for the Notificaties API or if using the event bus for notifications*)
 
 > **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
 
@@ -57,6 +58,20 @@ The following claim is mandatory for the ZGW APIs:
 - `rsin`: The identifier of the organization.
 
 For an example of how to configure Keycloak to include the necessary claims, please refer to the [Keycloak Setup Documentation](https://github.com/OneGround/ZGW-APIs/tree/main/localdev/keycloak/KeycloakSetup#alternative-identity-providers).
+
+---
+
+## Notifications Configuration
+
+The OneGround APIs can send notifications using two different methods:
+
+1. **HTTP (Default):** Notifications are sent directly to the Notificaties API (NRC) via an HTTP POST request. This is the standard implementation of ZGW.
+2. **Event Bus (RabbitMQ):** Notifications are published as messages to a RabbitMQ queue. The Notificaties API (NRC) then consumes these messages. This method is more robust and scalable but requires a running RabbitMQ instance.
+
+You can configure the notification method using the `NotificatieService__Type` environment variable in your `.env` file.
+
+- To use HTTP, set `NotificatieService__Type="Http"`.
+- To use RabbitMQ, set `NotificatieService__Type="MessageQueue"` and add Event Bus  configuration(see to [Notificaties API (NRC)](#notificaties-api-nrc) section for example).
 
 ---
 
@@ -84,12 +99,6 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
 
-# --- RabbitMQ Event Bus Connection ---
-Eventbus__HostName="rabbit_mq"
-Eventbus__VirtualHost="oneground"
-Eventbus__UserName="guest"
-Eventbus__Password="guest"
-
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
@@ -97,6 +106,9 @@ Redis__ConnectionString="redis:6379"
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
+
+# --- Notifications Configuration ---
+NotificatieService__Type="Http"
 ```
 
 ---
@@ -120,12 +132,6 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
 
-# --- RabbitMQ Event Bus Connection ---
-Eventbus__HostName="rabbit_mq"
-Eventbus__VirtualHost="oneground"
-Eventbus__UserName="guest"
-Eventbus__Password="guest"
-
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
@@ -133,6 +139,9 @@ Redis__ConnectionString="redis:6379"
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
+
+# --- Notifications Configuration ---
+NotificatieService__Type="Http"
 
 # --- ZGW Service Dependencies ---
 Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
@@ -165,12 +174,6 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
 
-# --- RabbitMQ Event Bus Connection ---
-Eventbus__HostName="rabbit_mq"
-Eventbus__VirtualHost="oneground"
-Eventbus__UserName="guest"
-Eventbus__Password="guest"
-
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
@@ -178,6 +181,9 @@ Redis__ConnectionString="redis:6379"
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
+
+# --- Notifications Configuration ---
+NotificatieService__Type="Http"
 
 # --- ZGW Service Dependencies ---
 Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
@@ -213,12 +219,6 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
 
-# --- RabbitMQ Event Bus Connection ---
-Eventbus__HostName="rabbit_mq"
-Eventbus__VirtualHost="oneground"
-Eventbus__UserName="guest"
-Eventbus__Password="guest"
-
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
@@ -226,6 +226,9 @@ Redis__ConnectionString="redis:6379"
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
+
+# --- Notifications Configuration ---
+NotificatieService__Type="Http"
 
 # --- ZGW Service Dependencies ---
 Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
@@ -247,6 +250,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/notificaties-api)
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
+  - A running **RabbitMQ** instance
 - **Default Port:** `5015`
 
 #### Required Notificaties API (NRC) Environment Variables (`.env`)
@@ -317,12 +321,6 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
 
-# --- RabbitMQ Event Bus Connection ---
-Eventbus__HostName="rabbit_mq"
-Eventbus__VirtualHost="oneground"
-Eventbus__UserName="guest"
-Eventbus__Password="guest"
-
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
 
@@ -330,6 +328,9 @@ Redis__ConnectionString="redis:6379"
 Auth__Authority="http://localhost:8080/realms/OneGround/"
 Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
 Auth__ValidAudience="account"
+
+# --- Notifications Configuration ---
+NotificatieService__Type="Http"
 
 # --- ZGW Service Dependencies ---
 Services__AC__Api="https://autorisaties.oneground.local/api/v1/"

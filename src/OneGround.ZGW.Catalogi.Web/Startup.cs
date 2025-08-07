@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Referentielijsten.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Catalogi.Web;
@@ -103,7 +104,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IZaakTypeInformatieObjectTypenBusinessRuleService, ZaakTypeInformatieObjectTypenBusinessRuleService>();
         services.AddScoped<IConceptBusinessRule, ConceptBusinessRule>();
         services.AddScoped<IBesluitTypeRelationsValidator, BesluitTypeRelationsValidator>();

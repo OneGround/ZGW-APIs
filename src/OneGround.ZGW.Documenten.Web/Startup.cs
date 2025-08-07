@@ -38,6 +38,7 @@ using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Middleware;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 
 namespace OneGround.ZGW.Documenten.Web;
@@ -127,7 +128,7 @@ public class Startup
 
         services.AddZGWNummerGenerator<DrcDbContext>();
 
-        services.AddScoped<INotificatieService, NotificatieService>();
+        services.AddNotificatiesService(Configuration);
         services.AddScoped<IDocumentServicesResolver, DocumentServicesResolver>();
         services.AddScoped<IDocumentService, FileSystemDocumentService>();
         services.AddScoped<IDocumentService, CephDocumentServices>();
