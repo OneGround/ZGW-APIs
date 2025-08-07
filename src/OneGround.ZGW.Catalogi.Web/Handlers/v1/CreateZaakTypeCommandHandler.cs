@@ -122,6 +122,8 @@ class CreateZaakTypeCommandHandler
 
         await SendNotificationAsync(Actie.create, zaakType, cancellationToken);
 
+        await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeInformatieObjectTypen.Select(t => t.InformatieObjectType), zaakType.Catalogus.Owner);
+
         return new CommandResult<ZaakType>(zaakType, CommandStatus.OK);
     }
 

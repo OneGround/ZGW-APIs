@@ -7,8 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.DataModel;
+using OneGround.ZGW.Catalogi.Web.Extensions;
 using OneGround.ZGW.Catalogi.Web.Notificaties;
 using OneGround.ZGW.Catalogi.Web.Services;
+using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
@@ -25,6 +27,7 @@ class CreateInformatieObjectTypeCommandHandler
 {
     private readonly ZtcDbContext _context;
     private readonly IAuditTrailFactory _auditTrailFactory;
+    private readonly ICacheInvalidator _cacheInvalidator;
     private readonly IInformatieObjectTypeDataService _informatieObjectTypeDataService;
 
     public CreateInformatieObjectTypeCommandHandler(
@@ -35,12 +38,14 @@ class CreateInformatieObjectTypeCommandHandler
         ZtcDbContext dbContext,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IAuditTrailFactory auditTrailFactory,
+        ICacheInvalidator cacheInvalidator,
         IInformatieObjectTypeDataService informatieObjectTypeDataService
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService)
     {
         _context = dbContext;
         _auditTrailFactory = auditTrailFactory;
+        _cacheInvalidator = cacheInvalidator;
         _informatieObjectTypeDataService = informatieObjectTypeDataService;
     }
 
@@ -85,6 +90,15 @@ class CreateInformatieObjectTypeCommandHandler
         informatieObjectType = await _informatieObjectTypeDataService.GetAsync(informatieObjectType.Id, cancellationToken);
 
         await SendNotificationAsync(Actie.create, informatieObjectType, cancellationToken);
+
+        await _cacheInvalidator.InvalidateAsync(
+            informatieObjectType.InformatieObjectTypeBesluitTypen.Select(t => t.BesluitType),
+            informatieObjectType.Catalogus.Owner
+        );
+        await _cacheInvalidator.InvalidateAsync(
+            informatieObjectType.InformatieObjectTypeZaakTypen.Select(t => t.ZaakType),
+            informatieObjectType.Catalogus.Owner
+        );
 
         return new CommandResult<InformatieObjectType>(informatieObjectType, CommandStatus.OK);
     }
