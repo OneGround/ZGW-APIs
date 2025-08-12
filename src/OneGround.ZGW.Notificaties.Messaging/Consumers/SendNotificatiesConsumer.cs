@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -52,7 +51,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 var abonnementen = await GetCachedAbonnementenAsync(notificatie, context.CancellationToken);
 
-                var allowedKanaalFilers = await GetAllowedKanaalFilersAsync(context.CancellationToken);
+                var kenmerken = notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
 
                 Logger.LogDebug("Notification owner matched these subscriptions: {@Subscriptions}", abonnementen.Select(s => s.Id));
 
@@ -68,13 +67,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                     foreach (var kanaal in kanalen)
                     {
-                        var validNotificatieKenmerken =
-                            notificatie.Kenmerken != null
-                                ? notificatie
-                                    .Kenmerken.Where(f => allowedKanaalFilers[kanaal.Kanaal.Naam].Contains(f.Key))
-                                    .ToDictionary(k => k.Key.ToLower(), v => v.Value)
-                                : [];
-
                         var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
 
                         Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
@@ -94,7 +86,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                         if (
                             filters.Count != 0
-                            && !filters.Where(f => f.Key != "#actie" && f.Key != "#resource").All(filter => Filter(validNotificatieKenmerken, filter))
+                            && !filters.Where(f => f.Key != "#actie" && f.Key != "#resource").All(filter => Filter(kenmerken, filter))
                         )
                         {
                             continue;
@@ -115,7 +107,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             Resource = notificatie.Resource,
                             ResourceUrl = notificatie.ResourceUrl,
                             Actie = notificatie.Actie,
-                            Kenmerken = validNotificatieKenmerken,
+                            Kenmerken = kenmerken,
                             Rsin = notificatie.Rsin,
                             CorrelationId = notificatie.CorrelationId,
                             // subscriber on THIS channel...
@@ -145,25 +137,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 );
             }
         }
-    }
-
-    private async Task<Dictionary<string, string[]>> GetAllowedKanaalFilersAsync(CancellationToken cancellationToken)
-    {
-        return await _memoryCache.GetOrCreate(
-            $"kanaalfilters",
-            async e =>
-            {
-                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
-
-                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
-
-                var _allowedKanaalFilers = (await dbContext.Kanalen.ToListAsync(cancellationToken)).ToDictionary(k => k.Naam, v => v.Filters);
-
-                Logger.LogDebug("{Count} filters retrieved and cached", _allowedKanaalFilers.Count);
-
-                return _allowedKanaalFilers;
-            }
-        );
     }
 
     private async Task<List<Abonnement>> GetCachedAbonnementenAsync(ISendNotificaties notificatie, CancellationToken cancellationToken)
