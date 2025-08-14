@@ -3,7 +3,7 @@
 set -e
 
 CERT_DIR="/certs"
-DOMAIN="oneground.local"
+DOMAIN="${1:-oneground.local}"
 
 CERT_FILE_PEM="${CERT_DIR}/${DOMAIN}.pem"
 CERT_FILE_CRT="${CERT_DIR}/${DOMAIN}.crt"
