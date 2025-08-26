@@ -11,7 +11,7 @@ public interface INotificatieJob
 
 [DisableConcurrentExecution(10)]
 [AutomaticRetry(Attempts = 5, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
-[Queue("nrc_listener_queue")]
+[Queue(Constants.NrcListenerQueue)]
 public class NotificatieJob : INotificatieJob
 {
     private readonly IPublishEndpoint _publishEndpoint;

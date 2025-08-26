@@ -131,8 +131,8 @@ public class ServiceConfiguration
 
         services.AddHangfireServer(o =>
         {
-            o.ServerName = "nrc_listener_server";
-            o.Queues = ["nrc_listener_queue"];
+            o.ServerName = Constants.NrcListenerServer;
+            o.Queues = [Constants.NrcListenerQueue];
         });
 
         services.AddHangfire(
