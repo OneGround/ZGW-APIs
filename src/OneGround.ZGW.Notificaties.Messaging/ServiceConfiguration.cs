@@ -16,7 +16,6 @@ using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using Polly;
-using Polly.Retry;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
 
@@ -109,7 +108,7 @@ public class ServiceConfiguration
                         }
                     );
 
-                    cfg.UseHangfireScheduler();
+                    cfg.UseHangfireScheduler(queueName: "hangfire_notificaties");
 
                     cfg.UseConsumeFilter(typeof(RsinFilter<>), context);
                     cfg.UseConsumeFilter(typeof(CorrelationIdFilter<>), context);
@@ -121,6 +120,8 @@ public class ServiceConfiguration
                     cfg.ConfigureEndpoints(context);
                 }
             );
+
+            x.AddMessageScheduler(new Uri("queue:hangfire_notificaties"));
         });
 
         services.AddHostedService<FailedQueueInitializationService>();
@@ -128,7 +129,12 @@ public class ServiceConfiguration
         services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
         services.AddNotificatiesServerJobs();
 
-        services.AddHangfireServer();
+        services.AddHangfireServer(o =>
+        {
+            o.ServerName = "nrc_listener_server";
+            o.Queues = ["nrc_listener_queue"];
+        });
+
         services.AddHangfire(
             (s, o) =>
             {
