@@ -2,6 +2,7 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    CREATE USER oneground_admin WITH PASSWORD 'oneground_admin';
     CREATE DATABASE ac_db;
     CREATE DATABASE brc_db;
     CREATE DATABASE drc_db;
@@ -10,6 +11,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE ztc_db;
     CREATE DATABASE keycloak;
 EOSQL
+
+#TODO: FUND-2022 - Set privileges for oneground_admin
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "ac_db" <<-EOSQL
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO postgres;
