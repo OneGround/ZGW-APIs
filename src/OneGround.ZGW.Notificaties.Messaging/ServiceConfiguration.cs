@@ -108,7 +108,7 @@ public class ServiceConfiguration
                         }
                     );
 
-                    cfg.UseHangfireScheduler(queueName: "hangfire_notificaties");
+                    cfg.UseHangfireScheduler(queueName: Constants.NrcHangfireQueue);
 
                     cfg.UseConsumeFilter(typeof(RsinFilter<>), context);
                     cfg.UseConsumeFilter(typeof(CorrelationIdFilter<>), context);
@@ -121,7 +121,7 @@ public class ServiceConfiguration
                 }
             );
 
-            x.AddMessageScheduler(new Uri("queue:hangfire_notificaties"));
+            x.AddMessageScheduler(new Uri($"queue:{Constants.NrcHangfireQueue}"));
         });
 
         services.AddHostedService<FailedQueueInitializationService>();
