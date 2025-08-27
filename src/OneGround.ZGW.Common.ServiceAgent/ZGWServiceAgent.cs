@@ -181,7 +181,7 @@ public abstract class ZGWServiceAgent<T>
             {
                 if (response.Headers.WwwAuthenticate.Count > 0)
                 {
-                    Logger.LogError("Request unauthorized. WWW-Authenticate: {response.Headers.WwwAuthenticate}", response.Headers.WwwAuthenticate);
+                    Logger.LogError("Request unauthorized. WWW-Authenticate: {WwwAuthenticate}", response.Headers.WwwAuthenticate);
                 }
             }
         }
