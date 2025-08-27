@@ -83,6 +83,13 @@ services:
     networks:
       - oneground
 
+  keycloak-provider-downloader:
+    image: alpine:3.22
+    command: sh -c "if [ -f /providers/zgw-token-introspection.jar ]; then echo 'JAR present'; else wget -q -O /providers/zgw-token-introspection.jar https://github.com/OneGround/Keycloak-ZGW-Token-Introspection/releases/download/v1/zgw-token-introspection.jar && chmod 644 /providers/zgw-token-introspection.jar; fi"
+    volumes:
+      - kc-providers:/providers
+    restart: "no"
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.3.1
     restart: unless-stopped
@@ -107,9 +114,13 @@ services:
       retries: 8
       start_period: 5s
     command: ["start-dev"]
+    volumes:
+      - kc-providers:/opt/keycloak/providers:ro
     depends_on:
       postgres_docker_db:
         condition: service_healthy
+      keycloak-provider-downloader:
+        condition: service_completed_successfully
     networks:
       - oneground
 
@@ -363,6 +374,7 @@ services:
 
 volumes:
   postgres:
+  kc-providers:
 
 networks:
   oneground:
