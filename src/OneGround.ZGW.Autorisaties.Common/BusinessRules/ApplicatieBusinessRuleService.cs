@@ -56,7 +56,7 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
     }
 
     //ac-001
-    private async Task ValidateClientIdsUniquenessAsync(Applicatie applicatie, List<ValidationError> errors, Guid existingId = new Guid())
+    private async Task ValidateClientIdsUniquenessAsync(Applicatie applicatie, List<ValidationError> errors, Guid existingId = default)
     {
         var uniqueClientIds = applicatie.ClientIds.Select(c => c.ClientId.ToLower()).Distinct().ToList();
         var duplicateClientIdApplicatie = await _context.Applicaties.FirstOrDefaultAsync(a =>
