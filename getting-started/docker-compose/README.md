@@ -266,7 +266,7 @@ You can quickly test the Zaken API by creating a sample case ("zaak") using Post
 
 4. **Create a Sample Case**
 
-   - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will we created, a case and other types will be added.
+   - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
    - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
 
 > For more details and advanced scenarios, see the documentation in the Postman collection.
