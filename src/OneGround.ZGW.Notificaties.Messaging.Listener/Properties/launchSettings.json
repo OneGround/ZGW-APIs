@@ -1,10 +1,13 @@
 {
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "ZGW.Notificaties.Messaging.Listener": {
       "commandName": "Project",
+      "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Local"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Local"
+      },
+      "applicationUrl": "http://*:5098"
     },
     "Docker": {
       "commandName": "Docker"
