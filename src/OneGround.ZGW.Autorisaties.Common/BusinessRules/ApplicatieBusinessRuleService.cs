@@ -192,18 +192,15 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
         bool checkComponentUrl = true
     )
     {
-        if (applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten.")))
+        if (applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten.")) && checkComponentUrl && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType))
         {
-            if (checkComponentUrl && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType))
-            {
-                validationErrors.Add(
-                    new ValidationError(
-                        $"autorisaties.{index}.besluittype",
-                        ErrorCode.Required,
-                        $"This field is required if `component` is {applicatieAutorisatie.Component}"
-                    )
-                );
-            }
+            validationErrors.Add(
+                new ValidationError(
+                    $"autorisaties.{index}.besluittype",
+                    ErrorCode.Required,
+                    $"This field is required if `component` is {applicatieAutorisatie.Component}"
+                )
+            );
         }
     }
 
