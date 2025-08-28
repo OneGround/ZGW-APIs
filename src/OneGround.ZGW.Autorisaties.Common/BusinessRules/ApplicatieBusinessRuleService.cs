@@ -56,7 +56,7 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
     }
 
     //ac-001
-    private async Task ValidateClientIdsUniquenessAsync(Applicatie applicatie, List<ValidationError> errors, Guid existingId = new Guid())
+    private async Task ValidateClientIdsUniquenessAsync(Applicatie applicatie, List<ValidationError> errors, Guid existingId = default)
     {
         var uniqueClientIds = applicatie.ClientIds.Select(c => c.ClientId.ToLower()).Distinct().ToList();
         var duplicateClientIdApplicatie = await _context.Applicaties.FirstOrDefaultAsync(a =>
@@ -192,18 +192,19 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
         bool checkComponentUrl = true
     )
     {
-        if (applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten.")))
+        if (
+            applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten."))
+            && checkComponentUrl
+            && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType)
+        )
         {
-            if (checkComponentUrl && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType))
-            {
-                validationErrors.Add(
-                    new ValidationError(
-                        $"autorisaties.{index}.besluittype",
-                        ErrorCode.Required,
-                        $"This field is required if `component` is {applicatieAutorisatie.Component}"
-                    )
-                );
-            }
+            validationErrors.Add(
+                new ValidationError(
+                    $"autorisaties.{index}.besluittype",
+                    ErrorCode.Required,
+                    $"This field is required if `component` is {applicatieAutorisatie.Component}"
+                )
+            );
         }
     }
 

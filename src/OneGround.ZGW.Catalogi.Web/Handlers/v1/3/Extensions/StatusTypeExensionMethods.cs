@@ -17,8 +17,8 @@ public static class StatusTypeExensionMethods
             && statustype.VolgNummer == other.VolgNummer
             && statustype.IsEindStatus == other.IsEindStatus
             && statustype.Informeren == other.Informeren
-            && statustype.Doorlooptijd == statustype.Doorlooptijd
-            && statustype.StatusTekst == statustype.StatusTekst
-            && statustype.Toelichting == statustype.Toelichting;
+            && statustype.Doorlooptijd == other.Doorlooptijd
+            && statustype.StatusTekst == other.StatusTekst
+            && statustype.Toelichting == other.Toelichting;
     }
 }

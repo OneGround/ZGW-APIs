@@ -130,7 +130,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
             if (!zaakBesluit.Success)
             {
                 _logger.LogError(
-                    "Could not add zaak-besluit to ZRC. Zaak url={zaak}; Besluit={besluit.Url}. Status={status}. Error={detail}.",
+                    "Could not add zaak-besluit to ZRC. Zaak url={zaak}; Besluit={besluit}. Status={status}. Error={detail}.",
                     besluit.Zaak,
                     besluit.Url,
                     zaakBesluit.Error.Status,
