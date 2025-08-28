@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
@@ -49,19 +50,19 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     }
 
     public Task<ServiceAgentResponse<PagedResponse<CatalogusResponseDto>>> GetCatalogussenAsync(
-        Contracts.v1.Queries.GetAllCatalogussenQueryParameters queryParameters,
+        Contracts.v1.Queries.GetAllCatalogussenQueryParameters parameters,
         int page = 1
     )
     {
-        return GetPagedResponseAsync<CatalogusResponseDto>("/catalogussen", queryParameters, page);
+        return GetPagedResponseAsync<CatalogusResponseDto>("/catalogussen", parameters, page);
     }
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
-        Contracts.v1.Queries.GetAllZaakTypenQueryParameters queryParameters,
+        Contracts.v1.Queries.GetAllZaakTypenQueryParameters parameters,
         int page = 1
     )
     {
-        return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", queryParameters, page);
+        return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", parameters, page);
     }
 
     public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl)

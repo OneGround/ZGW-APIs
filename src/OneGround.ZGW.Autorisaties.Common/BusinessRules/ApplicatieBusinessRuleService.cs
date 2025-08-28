@@ -192,7 +192,11 @@ public class ApplicatieBusinessRuleService : IApplicatieBusinessRuleService
         bool checkComponentUrl = true
     )
     {
-        if (applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten.")) && checkComponentUrl && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType))
+        if (
+            applicatieAutorisatie.Scopes.Any(s => s.StartsWith("besluiten."))
+            && checkComponentUrl
+            && string.IsNullOrEmpty(applicatieAutorisatie.BesluitType)
+        )
         {
             validationErrors.Add(
                 new ValidationError(
