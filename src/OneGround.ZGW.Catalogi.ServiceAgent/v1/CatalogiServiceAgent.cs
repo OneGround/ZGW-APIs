@@ -33,10 +33,7 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return await GetAsync<CatalogusResponseDto>(new Uri(catalogusUrl));
     }
 
-    public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
-        GetAllZaakTypenQueryParameters parameters,
-        int page = 1
-    )
+    public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(GetAllZaakTypenQueryParameters parameters, int page = 1)
     {
         return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", parameters, page);
     }
