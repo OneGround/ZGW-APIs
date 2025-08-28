@@ -9,7 +9,7 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Notificaties.Messaging;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 
-var cts = new CancellationTokenSource();
+using var cts = new CancellationTokenSource();
 
 var builder = WebApplication.CreateBuilder(args);
 
