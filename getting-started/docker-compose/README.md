@@ -16,6 +16,7 @@
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
         - [For Windows (PowerShell)](#for-windows-powershell)
         - [For Linux, macOS, or WSL (cURL)](#for-linux-macos-or-wsl-curl)
+      - [Step 5.4: Creating a Sample Case Using Postman](#step-54-creating-a-sample-case-using-postman)
     - [6. Stopping the Services](#6-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services](#zgw-api-services)
@@ -242,6 +243,33 @@ You will receive a JSON response containing the `access_token`. You can now use 
 > 3. Click **Save**.
 >
 > You will need to request a new token for this change to take effect.
+
+#### Step 5.4: Creating a Sample Case Using Postman
+
+You can quickly test the Zaken API by creating a sample case ("zaak") using Postman and the provided [ZGW-APIs-postman-tests](https://github.com/OneGround/ZGW-APIs-postman-tests) project.
+
+**Steps:**
+
+1. **Import the Create Case project**
+
+   - Open Postman.
+   - Import the Create Case collection and environment files from the [ZGW-APIs-postman-tests](https://github.com/OneGround/ZGW-APIs-postman-tests) repository.
+
+2. **Obtain an Access Token**
+
+   - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
+   - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
+
+3. **Set Up Other Environment Variables**
+
+   - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
+
+4. **Create a Sample Case**
+
+   - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
+   - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
+
+> For more details and advanced scenarios, see the documentation in the Postman collection.
 
 ### 6. Stopping the Services
 
