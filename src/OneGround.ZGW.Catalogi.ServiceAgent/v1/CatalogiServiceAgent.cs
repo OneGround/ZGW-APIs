@@ -34,11 +34,11 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     }
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
-        GetAllZaakTypenQueryParameters queryParameters,
+        GetAllZaakTypenQueryParameters parameters,
         int page = 1
     )
     {
-        return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", queryParameters, page);
+        return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", parameters, page);
     }
 
     public async Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl)
