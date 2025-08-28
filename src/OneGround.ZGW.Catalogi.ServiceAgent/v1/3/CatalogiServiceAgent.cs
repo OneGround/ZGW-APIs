@@ -1,7 +1,6 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
