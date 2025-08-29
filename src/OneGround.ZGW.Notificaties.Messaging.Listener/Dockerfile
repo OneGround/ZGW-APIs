@@ -21,6 +21,12 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+RUN apt-get update -yq \
+    && apt-get install curl -yq \
+    && rm -rf /var/lib/apt/lists/* 
+
 USER $APP_UID
+
+HEALTHCHECK --interval=60s --timeout=5s --retries=3 CMD curl -k -f http://localhost:5000/health || exit 1
 
 ENTRYPOINT ["./OneGround.ZGW.Notificaties.Messaging.Listener"]
