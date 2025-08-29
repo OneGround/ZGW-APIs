@@ -296,7 +296,7 @@ Here is a reference list of all the services and tools running in this Docker se
 | **Notificaties API** | 5015 | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger) | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health) |
 | **Referentielijsten API** | 5018 | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health) |
 | **Zaken API** | 5005 | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger) | [https://zaken.oneground.local/health](https://zaken.oneground.local/health) |
-| **Notificatielistener (message dispatcher)** | 5098 | [https://notificatielistener.oneground.local/health](https://referentielijsten.oneground.local/health) |
+| **Notificatielistener (message dispatcher)** | 5098 | [https://notificatielistener.oneground.local/health](https://notificatielistener.oneground.local/health) |
 | **Documentlistener (message dispatcher)** | 5099 | [https://documentlistener.oneground.local/health](https://documentlistener.oneground.local/health) |
 
 ### Hosted Tools
