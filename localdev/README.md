@@ -14,11 +14,9 @@
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-        - [For Windows (PowerShell)](#for-windows-powershell)
-        - [For Linux, macOS, or WSL (cURL)](#for-linux-macos-or-wsl-curl)
     - [6. Stopping the Services](#6-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
-    - [ZGW API Services](#zgw-api-services)
+    - [ZGW API Services/listeners](#zgw-api-serviceslisteners)
     - [Hosted Tools](#hosted-tools)
 
 ## About This Guide
@@ -163,15 +161,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 #### Step 5.1: Get the Client Secret from Keycloak
 
-1. Navigate to the Keycloak admin console: [http://localhost:8080/admin/master/console/#/OneGround/](http://localhost:8080/admin/master/console/#/OneGround/)
-2. Log in using the credentials:
-   - **Username**: `admin`
-   - **Password**: `admin`
-3. From the navigation on the left, select **Clients**.
-4. Select the `oneground-000000000` client from the list.
-   > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](./keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](./oneground-services-data/ac-data/applicaties.json).
-5. Go to the **Credentials** tab.
-6. Copy the value from the **Client Secret** field. This is your `<oneground-client-secret>`.
+See [AUTHENTICATION.md](../AUTHENTICATION.md).
 
 #### Step 5.2: Update Environment File and Restart Services
 
@@ -197,57 +187,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 #### Step 5.3: Request an Access Token
 
-Now you can exchange the client credentials for a temporary access token. Use the command for your operating system, replacing `<oneground-client-secret>` with your actual secret. The default client ID is `oneground-000000000`.
-
-##### For Windows (PowerShell)
-
-- Open Windows PowerShell and execute this command:
-
-    ```powershell
-    $response = Invoke-WebRequest `
-        -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
-        -Method POST `
-        -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} `
-        -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
-    ```
-
-- Then take an access token from `$response`:
-
-    ```powershell
-    $response.Content
-    ```
-
-##### For Linux, macOS, or WSL (cURL)
-
-- Open terminal and execute this command:
-
-    ```bash
-    curl --location --request POST 'http://localhost:8080/realms/OneGround/protocol/openid-connect/token' \
-    --header 'Content-Type: application/x-www-form-urlencoded' \
-    --data-urlencode 'grant_type=client_credentials' \
-    --data-urlencode 'client_id=oneground-000000000' \
-    --data-urlencode 'client_secret=<oneground-client-secret>'
-    ```
-
-You will receive a JSON response containing the `access_token`. You can now use this token as a `Bearer` token to authorize your API requests.
-
-```json
-{
-    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAi......",
-    "expires_in": 300,
-    "refresh_expires_in": 0,
-    "token_type": "Bearer"
-}
-```
-
-> **Tip: How to Increase Token Expiration Time**
-> By default, the access token expires in 5 minutes (300 seconds). To increase this time:
->
-> 1. Navigate directly to the **Tokens** settings page in Keycloak: [http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens](http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens).
-> 2. In the `Access Token Lifespan` field, set a longer duration (e.g., `30 minutes` or `1 hour`).
-> 3. Click **Save**.
->
-> You will need to request a new token for this change to take effect.
+See [AUTHENTICATION.md](../AUTHENTICATION.md).
 
 ### 6. Stopping the Services
 

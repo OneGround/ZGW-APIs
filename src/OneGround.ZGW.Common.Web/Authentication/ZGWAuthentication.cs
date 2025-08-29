@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using Duende.AspNetCore.Authentication.OAuth2Introspection;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,7 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
 using Polly;
 
-namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
+namespace OneGround.ZGW.Common.Web.Authentication;
 
 public static class ZGWAuthenticationServiceCollectionExtensions
 {
@@ -35,13 +36,33 @@ public static class ZGWAuthenticationServiceCollectionExtensions
         services.AddZGWSecretManager(configuration);
 
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = !hostEnvironment.IsLocal();
-            });
-
+            .AddAuthentication(ZgwAuthenticationConstants.PolicySelectorAuthenticationScheme)
+            .AddJwtBearer(
+                ZgwAuthenticationConstants.OAuth2AuthenticationScheme,
+                options =>
+                {
+                    options.SaveToken = true;
+                    options.RequireHttpsMetadata = !hostEnvironment.IsLocal();
+                }
+            )
+            .AddOAuth2Introspection(
+                ZgwAuthenticationConstants.ZgwTokenIntrospectionAuthenticationScheme,
+                options =>
+                {
+                    options.IntrospectionEndpoint = configuration.GetValue<string>("Auth:ZgwTokenIntrospectionEndpoint");
+                    options.EnableCaching = true;
+                    options.CacheKeyPrefix = "ZGW:TokenIntrospections:";
+                    options.CacheDuration = TimeSpan.FromMinutes(5);
+                }
+            )
+            .AddPolicyScheme(
+                ZgwAuthenticationConstants.PolicySelectorAuthenticationScheme,
+                null,
+                options =>
+                {
+                    options.ForwardDefaultSelector = AuthenticationSchemeSelector.SelectAuthenticationScheme;
+                }
+            );
         services
             .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<IOptions<ZgwAuthConfiguration>>(
