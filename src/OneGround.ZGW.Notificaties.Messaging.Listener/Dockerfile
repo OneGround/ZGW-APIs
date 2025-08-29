@@ -22,7 +22,9 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 RUN apt-get update -yq \
-    && apt-get install curl -yq
+    && apt-get install curl -yq \
+    && rm -rf /var/lib/apt/lists/* \
+    && chmod +x /app/entrypoint.sh
 
 USER $APP_UID
 

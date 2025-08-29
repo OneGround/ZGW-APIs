@@ -1,26 +1,14 @@
-using System.Threading;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Notificaties.Messaging;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 
-using var cts = new CancellationTokenSource();
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.ConfigureHostDefaults(ServiceRoleName.NRC_LISTENER);
-
-builder.WebHost.ConfigureKestrel(
-    (_, options) =>
-    {
-        options.AddServerHeader = false;
-    }
-);
 
 builder.Services.AddHealthChecks();
 
@@ -34,4 +22,4 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
-await app.RunAsync(cts.Token);
+await app.RunAsync();
