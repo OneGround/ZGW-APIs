@@ -3,7 +3,6 @@
   "profiles": {
     "ZGW.Notificaties.Messaging.Listener": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Local"
       },
