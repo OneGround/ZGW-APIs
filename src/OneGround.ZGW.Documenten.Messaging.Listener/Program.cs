@@ -15,8 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.ConfigureHostDefaults(ServiceRoleName.DRC_LISTENER);
 
-builder.Services.AddControllers();
-
 builder.WebHost.ConfigureKestrel(
     (_, options) =>
     {
@@ -34,9 +32,5 @@ builder.Services.RegisterZgwTokenClient(builder.Configuration, builder.Environme
 var app = builder.Build();
 
 app.MapHealthChecks("/health");
-
-app.UseRouting();
-
-app.MapControllers();
 
 await app.RunAsync(cts.Token);

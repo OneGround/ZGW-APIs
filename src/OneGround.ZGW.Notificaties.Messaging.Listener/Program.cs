@@ -15,8 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.ConfigureHostDefaults(ServiceRoleName.NRC_LISTENER);
 
-builder.Services.AddControllers();
-
 builder.WebHost.ConfigureKestrel(
     (_, options) =>
     {
@@ -25,8 +23,6 @@ builder.WebHost.ConfigureKestrel(
 );
 
 builder.Services.AddHealthChecks();
-
-builder.ConfigureHostDefaults(ServiceRoleName.NRC_LISTENER);
 
 var serviceConfiguration = new ServiceConfiguration(builder.Configuration);
 serviceConfiguration.ConfigureServices(builder.Services);
@@ -37,9 +33,5 @@ builder.Services.AddZGWSecretManager(builder.Configuration);
 var app = builder.Build();
 
 app.MapHealthChecks("/health");
-
-app.UseRouting();
-
-app.MapControllers();
 
 await app.RunAsync(cts.Token);
