@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using OneGround.ZGW.Autorisaties.ServiceAgent;
 using OneGround.ZGW.Common.Constants;
+using OneGround.ZGW.Common.Web.Authentication;
 using OneGround.ZGW.Common.Web.Configuration;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Zaken.Web;
