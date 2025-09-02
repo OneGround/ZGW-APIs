@@ -30,6 +30,8 @@ services:
           - notificaties.oneground.local
           - referentielijsten.oneground.local
           - zaken.oneground.local
+          - notificatielistener.oneground.local
+          - documentlistener.oneground.local
 
   rabbit_mq:
     image: rabbitmq:3.13-management
@@ -229,6 +231,8 @@ services:
       redis:
         condition: service_healthy
     env_file: "default.env"
+    ports:
+      - ${DRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     environment:
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
@@ -281,6 +285,8 @@ services:
       redis:
         condition: service_healthy
     env_file: "default.env"
+    ports:
+      - ${NRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     environment:
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"

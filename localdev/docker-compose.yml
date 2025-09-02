@@ -30,6 +30,8 @@ services:
           - ${BRC_HOST}
           - ${RC_HOST}
           - ${AC_HOST}
+          - ${NRC_LISTENER_HOST}
+          - ${DRC_LISTENER_HOST}
 
   rabbit_mq:
     image: rabbitmq:3.13-management
@@ -251,6 +253,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - ${DRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
     environment:
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
@@ -303,6 +307,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - ${NRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
     environment:
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
