@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Web.Authentication;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Documenten.Messaging;
 
