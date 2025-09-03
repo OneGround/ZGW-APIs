@@ -30,6 +30,8 @@ services:
           - ${BRC_HOST}
           - ${RC_HOST}
           - ${AC_HOST}
+          - ${NRC_LISTENER_HOST}
+          - ${DRC_LISTENER_HOST}
 
   rabbit_mq:
     image: rabbitmq:3.13-management
@@ -262,8 +264,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - ${DRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
     environment:
+      ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
@@ -314,8 +319,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - ${NRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
     environment:
+      ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
       ConnectionStrings__HangfireConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
