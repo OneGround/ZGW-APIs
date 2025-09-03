@@ -257,7 +257,7 @@ services:
       - ${DRC_LISTENER_PORT}:${ASPNETCORE_INTERNAL_PORT}
     env_file: "default.env"
     environment:
-      ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"    
+      ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
