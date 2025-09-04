@@ -1,0 +1,92 @@
+[
+  {
+    "Id": "54397C3F-174F-49FE-9EEA-57F96083ED9D",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "autorisaties",
+    "Documentatielink": "https://autorisaties-api.vng.cloud/ref/kanalen/#autorisaties",
+    "filters": []
+  },
+  {
+    "Id": "8A227A8F-4532-4AC1-95C3-E11E1AC6B539",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "zaken",
+    "Documentatielink": "https://zaken-api.vng.cloud/ref/kanalen/#zaken",
+    "filters": [
+      "bronorganisatie",
+      "zaaktype",
+      "vertrouwelijkheidaanduiding",
+      "archiefstatus",
+      "archiefnominatie",
+      "opdrachtgevende_organisatie",
+      "catalogus",
+      "domein",
+      "zaaktype_identificatie",
+      "is_eindzaakstatus"
+    ]
+  },
+  {
+    "Id": "87928D05-3EED-4943-8D6C-2508F864E469",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "besluiten",
+    "Documentatielink": "https://besluiten-api.vng.cloud/ref/kanalen/#besluiten",
+    "filters": [
+      "verantwoordelijke_organisatie",
+      "besluittype",
+      "besluittype_omschrijving",
+      "catalogus,domein"
+    ]
+  },
+  {
+    "Id": "974E273F-14CC-4D63-8C41-EFC95CC5DE32",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "documenten",
+    "Documentatielink": "https://documenten-api.vng.cloud/ref/kanalen/#documenten",
+    "filters": [
+      "bronorganisatie",
+      "informatieobjecttype",
+      "vertrouwelijkheidaanduiding",
+      "informatieobjecttype_omschrijving",
+      "catalogus",
+      "domein",
+      "status",
+      "inhoud_is_vervallen"
+    ]
+  },
+  {
+    "Id": "41C017DA-AD5C-41A6-86C3-BFEF3E3E2A1C",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "zaaktypen",
+    "Documentatielink": "https://catalogi-api.vng.cloud/ref/kanalen/#catalogi",
+    "filters": [
+      "catalogus",
+      "domein"
+    ]
+  },
+  {
+    "Id": "B8B5D858-B297-450E-87BE-0C4C1F0FB094",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "besluittypen",
+    "Documentatielink": "https://catalogi-api.vng.cloud/ref/kanalen/#catalogi",
+    "filters": [
+      "catalogus",
+      "domein"
+    ]
+  },
+  {
+    "Id": "74DD7353-EC07-40F0-8D05-5D03AA0BC3E5",
+    "CreationTime": "2025-09-04T08:00:00Z",
+    "CreatedBy": "data-seed",
+    "Naam": "informatieobjecttypen",
+    "Documentatielink": "https://catalogi-api.vng.cloud/ref/kanalen/#catalogi",
+    "filters": [
+      "catalogus",
+      "domein"
+    ]
+  }
+]

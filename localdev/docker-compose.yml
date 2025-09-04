@@ -336,6 +336,7 @@ services:
       dockerfile: src/OneGround.ZGW.Notificaties.WebApi/Dockerfile
     user: root
     volumes:
+      - ../oneground-services-data/nrc-data:/app/data
       - ./oneground-certificates:/usr/local/share/ca-certificates:ro
       - ./entrypoint.sh:/entrypoint.sh
     entrypoint: /entrypoint.sh
@@ -352,6 +353,7 @@ services:
     env_file: "default.env"
     environment:
       ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
+      SeedData__kanalen: "/app/data/kanalen.json"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_NRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
     networks:
