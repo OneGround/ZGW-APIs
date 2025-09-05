@@ -19,7 +19,7 @@ This guide explains how to authenticate against the ZGW APIs during local develo
 
 ## API Authentication using OAuth2 access tokens
 
-#### Get the Client Secret from Keycloak
+### Get the Client Secret from Keycloak
 
 1. Navigate to the Keycloak admin console: [http://localhost:8080/admin/master/console/#/OneGround/](http://localhost:8080/admin/master/console/#/OneGround/)
 2. Log in using the credentials:
@@ -31,11 +31,11 @@ This guide explains how to authenticate against the ZGW APIs during local develo
 5. Go to the **Credentials** tab.
 6. Copy the value from the **Client Secret** field. This is your `<oneground-client-secret>`.
 
-#### Request an Access Token
+### Request an Access Token
 
 Now you can exchange the client credentials for a temporary access token. Use the command for your operating system, replacing `<oneground-client-secret>` with your actual secret. The default client ID is `oneground-000000000`.
 
-##### For Windows (PowerShell)
+#### For Windows (PowerShell)
 
 - Open Windows PowerShell and execute this command:
 
@@ -53,7 +53,7 @@ $response = Invoke-WebRequest `
 $response.Content
 ```
 
-##### For Linux, macOS, or WSL (cURL)
+#### For Linux, macOS, or WSL (cURL)
 
 - Open terminal and execute this command:
 
