@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
@@ -27,6 +28,7 @@ class CreateZaakObjectCommandHandler
         IRequestHandler<CreateZaakObjectCommand, CommandResult<ZaakObject>>
 {
     private readonly ZrcDbContext _context;
+    private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IClosedZaakModificationBusinessRule _closedZaakModificationBusinessRule;
     private readonly IAuditTrailFactory _auditTrailFactory;
 
@@ -34,6 +36,7 @@ class CreateZaakObjectCommandHandler
         ILogger<CreateZaakObjectCommandHandler> logger,
         IConfiguration configuration,
         ZrcDbContext context,
+        ICatalogiServiceAgent catalogiServiceAgent,
         IEntityUriService uriService,
         INotificatieService notificatieService,
         IClosedZaakModificationBusinessRule closedZaakModificationBusinessRule,
@@ -45,6 +48,7 @@ class CreateZaakObjectCommandHandler
     {
         _closedZaakModificationBusinessRule = closedZaakModificationBusinessRule;
         _context = context;
+        _catalogiServiceAgent = catalogiServiceAgent;
         _auditTrailFactory = auditTrailFactory;
     }
 
@@ -86,12 +90,11 @@ class CreateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        // TODO: Validate ZaakObjectType (url) against the ZTC 1.3 which we currenly don't have
-        //var zaakobjecttype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(zaakObject.ZaakObjectType);
-        //if (!zaakobjecttype.Success)
-        //{
-        //    errors.Add(new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title));
-        //}
+        var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(zaakObject.ZaakObjectType);
+        if (!zaakobjecttype.Success)
+        {
+            errors.Add(new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title));
+        }
 
         if (errors.Count != 0)
         {
