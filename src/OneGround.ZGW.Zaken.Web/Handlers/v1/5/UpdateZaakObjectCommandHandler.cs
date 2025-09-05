@@ -6,7 +6,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Constants;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -26,6 +28,7 @@ class UpdateZaakObjectCommandHandler
         IRequestHandler<UpdateZaakObjectCommand, CommandResult<ZaakObject>>
 {
     private readonly ZrcDbContext _context;
+    private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IEntityUpdater<ZaakObject> _entityUpdater;
     private readonly IAuditTrailFactory _auditTrailFactory;
 
@@ -33,6 +36,7 @@ class UpdateZaakObjectCommandHandler
         ILogger<UpdateZaakObjectCommandHandler> logger,
         IConfiguration configuration,
         ZrcDbContext context,
+        ICatalogiServiceAgent catalogiServiceAgent,
         IEntityUpdater<ZaakObject> entityUpdater,
         IEntityUriService uriService,
         INotificatieService notificatieService,
@@ -43,6 +47,7 @@ class UpdateZaakObjectCommandHandler
         : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
+        _catalogiServiceAgent = catalogiServiceAgent;
         _entityUpdater = entityUpdater;
         _auditTrailFactory = auditTrailFactory;
     }
@@ -78,14 +83,13 @@ class UpdateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.Forbidden);
         }
 
-        // TODO: Validate ZaakObjectType (url) against the ZTC 1.3 which we currenly don't have
-        //var zaakobjecttype = await _catalogiServiceAgent.GetZaakTypeByUrlAsync(request.ZaakObject.ZaakObjectType);
-        //if (!zaakobjecttype.Success)
-        //{
-        //    var error = new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title);
+        var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(request.ZaakObject.ZaakObjectType);
+        if (!zaakobjecttype.Success)
+        {
+            var error = new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title);
 
-        //    return new CommandResult<ZaakObject>(null, CommandStatus.ValidationError, error);
-        //}
+            return new CommandResult<ZaakObject>(null, CommandStatus.ValidationError, error);
+        }
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
