@@ -83,12 +83,15 @@ class UpdateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.Forbidden);
         }
 
-        var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(request.ZaakObject.ZaakObjectType);
-        if (!zaakobjecttype.Success)
+        if (request.ZaakObject.ZaakObjectType != null)
         {
-            var error = new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title);
+            var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(request.ZaakObject.ZaakObjectType);
+            if (!zaakobjecttype.Success)
+            {
+                var error = new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title);
 
-            return new CommandResult<ZaakObject>(null, CommandStatus.ValidationError, error);
+                return new CommandResult<ZaakObject>(null, CommandStatus.ValidationError, error);
+            }
         }
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))

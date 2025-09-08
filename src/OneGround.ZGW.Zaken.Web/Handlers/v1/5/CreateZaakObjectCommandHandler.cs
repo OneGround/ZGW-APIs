@@ -90,10 +90,13 @@ class CreateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(zaakObject.ZaakObjectType);
-        if (!zaakobjecttype.Success)
+        if (zaakObject.ZaakObjectType != null)
         {
-            errors.Add(new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title));
+            var zaakobjecttype = await _catalogiServiceAgent.GetZaakObjectTypeByUrlAsync(zaakObject.ZaakObjectType);
+            if (!zaakobjecttype.Success)
+            {
+                errors.Add(new ValidationError("zaakobjecttype", zaakobjecttype.Error.Code, zaakobjecttype.Error.Title));
+            }
         }
 
         if (errors.Count != 0)
