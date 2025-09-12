@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,4 +10,5 @@ public interface IDocumentUtilitiesService
 
     Task<IEnumerable<string>> EnumFolderNamesAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Document>> EnumDocumentsAsync(string name, CancellationToken cancellationToken = default);
+    Task<bool> DeleteFolderAsync(string name, CancellationToken cancellationToken = default);
 }
