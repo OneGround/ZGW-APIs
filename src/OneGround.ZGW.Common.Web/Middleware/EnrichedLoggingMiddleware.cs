@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OneGround.ZGW.Common.Extensions;
@@ -20,7 +21,7 @@ public class EnrichedLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var apiVersion = context.GetRequestedZgwApiVersion()?.ToString() ?? "";
+        var apiVersion = context.GetRequestedZgwApiVersion()?.ToString() ?? String.Empty;
 
         var rsin = context.GetRsin();
         var clientId = context.GetClientId();
