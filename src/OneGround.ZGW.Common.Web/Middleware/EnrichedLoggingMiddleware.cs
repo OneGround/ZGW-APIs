@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Web.Versioning;
 using Serilog;
 using Serilog.Context;
 
@@ -19,6 +20,8 @@ public class EnrichedLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        var apiVersion = context.GetRequestedZgwApiVersion()?.ToString() ?? "";
+
         var rsin = context.GetRsin();
         var clientId = context.GetClientId();
         var userId = context.GetUserId();
@@ -30,6 +33,7 @@ public class EnrichedLoggingMiddleware
         _diagnosticContext.Set("User", user);
         _diagnosticContext.Set("RequestHost", context.Request.Host.Value);
         _diagnosticContext.Set("RequestScheme", context.Request.Scheme);
+        _diagnosticContext.Set("ApiVersion", apiVersion);
 
         using var logRsin = LogContext.PushProperty("RSIN", rsin);
         using var logClientId = LogContext.PushProperty("ClientId", clientId);
@@ -37,6 +41,7 @@ public class EnrichedLoggingMiddleware
         using var logUser = LogContext.PushProperty("User", user);
         using var logHost = LogContext.PushProperty("RequestHost", context.Request.Host.Value);
         using var logSchema = LogContext.PushProperty("RequestScheme", context.Request.Scheme);
+        using var logApiVersion = LogContext.PushProperty("ApiVersion", apiVersion);
 
         await _next(context);
     }
