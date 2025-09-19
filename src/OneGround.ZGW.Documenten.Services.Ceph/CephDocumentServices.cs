@@ -79,7 +79,7 @@ public class CephDocumentServices : IDocumentService
             ); // When using 'useAsync: true' you get better performance with buffers much larger than the default 4096 bytes.
             var documentSize = content.Length;
 
-            _logger.LogDebug("Streaming data from {validateContentFile} to AmazonS3 object using key {key}...", validatedContentFile, key);
+            _logger.LogDebug("Streaming data from {validatedContentFile} to AmazonS3 object using key {key}...", validatedContentFile, key);
 
             var request = new PutObjectRequest
             {
