@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -54,6 +55,13 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     )
     {
         return GetPagedResponseAsync<CatalogusResponseDto>("/catalogussen", parameters, page);
+    }
+
+    public async Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request)
+    {
+        var url = new Uri("/catalogussen", UriKind.Relative);
+
+        return await PostAsync<CatalogusRequestDto, CatalogusResponseDto>(url, request);
     }
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
