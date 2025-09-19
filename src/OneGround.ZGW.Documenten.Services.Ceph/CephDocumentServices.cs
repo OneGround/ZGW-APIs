@@ -56,7 +56,7 @@ public class CephDocumentServices : IDocumentService
         if (metadata == null || string.IsNullOrEmpty(metadata.Rsin))
             throw new InvalidOperationException("Rsin is required to be filled in metadata");
 
-        var validatedContentFile = TempFileHelper.AssureNotTampered(contentFile);
+        var validatedContentFile = TempFileHelper.GetValidatedPath(contentFile);
 
         if (!File.Exists(validatedContentFile))
             throw new InvalidOperationException($"Content file '{validatedContentFile}' does not exist.");

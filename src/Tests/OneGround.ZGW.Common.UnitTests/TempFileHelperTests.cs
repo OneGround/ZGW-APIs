@@ -18,7 +18,7 @@ public class TempFileHelperTests
         // Act
         var ex = Record.Exception(() =>
         {
-            TempFileHelper.AssureNotTampered(fullFileName: fullFileName);
+            TempFileHelper.GetValidatedPath(fullFileName: fullFileName);
         });
 
         // Assert
@@ -34,7 +34,7 @@ public class TempFileHelperTests
         // Act
         var ex = Record.Exception(() =>
         {
-            TempFileHelper.AssureNotTampered(fullFileName: @"c:\windows\system32\kernel32.dll");
+            TempFileHelper.GetValidatedPath(fullFileName: @"c:\windows\system32\kernel32.dll");
         });
 
         // Assert
@@ -54,7 +54,7 @@ public class TempFileHelperTests
         // Act
         var ex = Record.Exception(() =>
         {
-            TempFileHelper.AssureNotTampered(fullFileName: fullFileName);
+            TempFileHelper.GetValidatedPath(fullFileName: fullFileName);
         });
 
         // Assert

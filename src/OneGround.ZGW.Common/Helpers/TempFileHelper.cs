@@ -5,8 +5,7 @@ namespace OneGround.ZGW.Common.Helpers;
 
 public static class TempFileHelper
 {
-    // Note: Attempt to fix issue 'Filesystem path, filename, or URI manipulation'
-    public static string AssureNotTampered(string fullFileName)
+    public static string GetValidatedPath(string fullFileName)
     {
         if (fullFileName == null)
             return null;
