@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.BusinessRules;
-using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using Xunit;
 
@@ -96,11 +95,7 @@ public class ConceptBusinessRulesTest
     {
         // Setup
 
-        var existingZaakTypeGuids = new List<Guid>
-        {
-            new Guid("16ee54a6-5578-16e0-014d-2ee79069bb55"),
-            new Guid("835827db-e46d-4d84-a41c-ccd80c3f9e4a"),
-        };
+        var existingZaakTypeGuids = new List<Guid> { new("16ee54a6-5578-16e0-014d-2ee79069bb55"), new("835827db-e46d-4d84-a41c-ccd80c3f9e4a") };
 
         var patchZaakTypeUrls = new List<string>
         {
@@ -110,7 +105,7 @@ public class ConceptBusinessRulesTest
         };
 
         // Act
-        bool validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
+        var validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
 
         // Assert
         Assert.False(validated);
@@ -121,11 +116,7 @@ public class ConceptBusinessRulesTest
     {
         // Setup
 
-        var existingZaakTypeGuids = new List<Guid>
-        {
-            new Guid("f6d279e0-3bcb-4263-9585-6448a3690a39"),
-            new Guid("835827db-e46d-4d84-a41c-ccd80c3f9e4a"),
-        };
+        var existingZaakTypeGuids = new List<Guid> { new("f6d279e0-3bcb-4263-9585-6448a3690a39"), new("835827db-e46d-4d84-a41c-ccd80c3f9e4a") };
 
         var patchZaakTypeUrls = new List<string>
         {
@@ -139,7 +130,7 @@ public class ConceptBusinessRulesTest
         _mockedUriService.Setup(m => m.GetId(patchZaakTypeUrls[2])).Returns(Guid.Parse(patchZaakTypeUrls[2].Split('/').Last()));
 
         // Act
-        bool validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
+        var validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
 
         // Assert
         Assert.True(validated);
@@ -150,11 +141,7 @@ public class ConceptBusinessRulesTest
     {
         // Setup
 
-        var existingZaakTypeGuids = new List<Guid>
-        {
-            new Guid("f6d279e0-3bcb-4263-9585-6448a3690a39"),
-            new Guid("835827db-e46d-4d84-a41c-ccd80c3f9e4a"),
-        };
+        var existingZaakTypeGuids = new List<Guid> { new("f6d279e0-3bcb-4263-9585-6448a3690a39"), new("835827db-e46d-4d84-a41c-ccd80c3f9e4a") };
 
         var patchZaakTypeUrls = new List<string>
         {
@@ -168,7 +155,7 @@ public class ConceptBusinessRulesTest
         _mockedUriService.Setup(m => m.GetId(patchZaakTypeUrls[2])).Returns(Guid.Parse(patchZaakTypeUrls[2].Split('/').Last()));
 
         // Act
-        bool validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
+        var validated = _besluitTypeRelationsValidator.Validate(existingZaakTypeGuids, patchZaakTypeUrls);
 
         // Assert
         Assert.True(validated);

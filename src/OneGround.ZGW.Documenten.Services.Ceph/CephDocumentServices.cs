@@ -28,9 +28,7 @@ public class CephDocumentServices : IDocumentService
     public CephDocumentServices(ILogger<CephDocumentServices> logger, IConfiguration configuration)
     {
         _logger = logger;
-
         _lazySettings = new Lazy<CephDocumentServicesSettings>(() => GetSettings(configuration));
-
         _lazyClient = new Lazy<AmazonS3Client>(GetClient);
     }
 
@@ -58,12 +56,12 @@ public class CephDocumentServices : IDocumentService
         if (metadata == null || string.IsNullOrEmpty(metadata.Rsin))
             throw new InvalidOperationException("Rsin is required to be filled in metadata");
 
-        TempFileHelper.AssureNotTampered(contentFile);
+        var validatedContentFile = TempFileHelper.AssureNotTampered(contentFile);
 
-        if (!File.Exists(contentFile))
-            throw new InvalidOperationException($"Content file '{contentFile}' does not exist.");
+        if (!File.Exists(validatedContentFile))
+            throw new InvalidOperationException($"Content file '{validatedContentFile}' does not exist.");
 
-        string bucket = GetOrGenerateBucketName(metadata.Rsin);
+        var bucket = GetOrGenerateBucketName(metadata.Rsin);
 
         await EnsureBucketExistsAsync(bucket, cancellationToken);
 
@@ -71,10 +69,17 @@ public class CephDocumentServices : IDocumentService
 
         try
         {
-            using FileStream content = new FileStream(contentFile, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync: true); // When using 'useAsync: true' you get better performance with buffers much larger than the default 4096 bytes.
-            long documentSize = content.Length;
+            await using var content = new FileStream(
+                validatedContentFile,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize,
+                useAsync: true
+            ); // When using 'useAsync: true' you get better performance with buffers much larger than the default 4096 bytes.
+            var documentSize = content.Length;
 
-            _logger.LogDebug("Streaming data from {contentFile} to AmazonS3 object using key {key}...", contentFile, key);
+            _logger.LogDebug("Streaming data from {validateContentFile} to AmazonS3 object using key {key}...", validatedContentFile, key);
 
             var request = new PutObjectRequest
             {
@@ -85,7 +90,7 @@ public class CephDocumentServices : IDocumentService
 
             request.Metadata.Add(metadata, documentName);
 
-            using (request.InputStream = content)
+            await using (request.InputStream = content)
             {
                 _logger.LogDebug("Writing document '{documentName}' to bucket '{bucket}'...", documentName, bucket);
 
@@ -104,7 +109,7 @@ public class CephDocumentServices : IDocumentService
         {
             if (deleteContentFile)
             {
-                File.Delete(contentFile);
+                File.Delete(validatedContentFile);
             }
         }
     }
@@ -125,13 +130,13 @@ public class CephDocumentServices : IDocumentService
         if (metadata == null || string.IsNullOrEmpty(metadata.Rsin))
             throw new InvalidOperationException("Rsin is required to be filled in metadata");
 
-        string bucket = GetOrGenerateBucketName(metadata.Rsin);
+        var bucket = GetOrGenerateBucketName(metadata.Rsin);
 
         await EnsureBucketExistsAsync(bucket, cancellationToken);
 
         var key = $"{Guid.NewGuid()}";
 
-        long length = content.Length;
+        var length = content.Length;
 
         var request = new PutObjectRequest
         {
@@ -160,7 +165,7 @@ public class CephDocumentServices : IDocumentService
 
         if (await DocumentExistsAsync(urn, cancellationToken))
         {
-            DeleteObjectRequest request = new DeleteObjectRequest { BucketName = urn.Name, Key = urn.ObjectId };
+            var request = new DeleteObjectRequest { BucketName = urn.Name, Key = urn.ObjectId };
 
             await Client.DeleteObjectAsync(request, cancellationToken);
         }
@@ -213,7 +218,7 @@ public class CephDocumentServices : IDocumentService
         if (metadata == null || string.IsNullOrEmpty(metadata.Rsin))
             throw new InvalidOperationException("Rsin is required to be filled in metadata");
 
-        string bucket = GetOrGenerateBucketName(metadata.Rsin);
+        var bucket = GetOrGenerateBucketName(metadata.Rsin);
 
         await EnsureBucketExistsAsync(bucket, cancellationToken);
 
@@ -230,7 +235,7 @@ public class CephDocumentServices : IDocumentService
 
         var response = await Client.InitiateMultipartUploadAsync(request, cancellationToken);
 
-        InternalMultiPartDocument internalMultiPartDocument = new InternalMultiPartDocument(response.UploadId, bucket, key);
+        var internalMultiPartDocument = new InternalMultiPartDocument(response.UploadId, bucket, key);
 
         return ToContext(internalMultiPartDocument);
     }
@@ -245,7 +250,7 @@ public class CephDocumentServices : IDocumentService
     {
         LastError = ("", DocumentError.None);
 
-        InternalMultiPartDocument internalMultiPartDocument = FromContext(multipPartDocument);
+        var internalMultiPartDocument = FromContext(multipPartDocument);
 
         if (content.Length != size)
         {
@@ -282,7 +287,7 @@ public class CephDocumentServices : IDocumentService
     {
         LastError = ("", DocumentError.None);
 
-        InternalMultiPartDocument internalMultiPartDocument = FromContext(multipPartDocument);
+        var internalMultiPartDocument = FromContext(multipPartDocument);
 
         var parts = uploadparts.Select(MapUploadPart).ToList();
 
@@ -300,7 +305,7 @@ public class CephDocumentServices : IDocumentService
 
         var documentUrn = new DocumentUrn(ProviderPrefix, internalMultiPartDocument.Name, internalMultiPartDocument.Key);
 
-        long length = parts.Sum(p => p.Size);
+        var length = parts.Sum(p => p.Size);
 
         return new Document(documentUrn, length);
     }
@@ -311,7 +316,7 @@ public class CephDocumentServices : IDocumentService
 
         try
         {
-            InternalMultiPartDocument internalMultiPartDocument = FromContext(multipPartDocument);
+            var internalMultiPartDocument = FromContext(multipPartDocument);
 
             var request = new AbortMultipartUploadRequest
             {
@@ -429,20 +434,20 @@ public class CephDocumentServices : IDocumentService
 
     private string GetOrGenerateBucketName(string rsin)
     {
-        string buckettemplate = Settings.Bucket ?? "{yyyyMM}"; // Note: When not specified default is: store buckets per year+month
+        var buckettemplate = Settings.Bucket ?? "{yyyyMM}"; // Note: When not specified default is: store buckets per year+month
 
         buckettemplate = buckettemplate.Replace("{rsin}", rsin);
 
-        int posTmplL = buckettemplate.IndexOf('{');
-        int posTmplR = buckettemplate.IndexOf('}');
+        var posTmplL = buckettemplate.IndexOf('{');
+        var posTmplR = buckettemplate.IndexOf('}');
 
         string bucket;
         if (posTmplL > -1 && posTmplR > -1 && posTmplL < posTmplR)
         {
             var template = buckettemplate.Substring(posTmplL + 1, posTmplR - posTmplL - 1);
 
-            string leftPart = buckettemplate.Substring(0, posTmplL);
-            string rightPart = buckettemplate.Substring(posTmplR + 1);
+            var leftPart = buckettemplate.Substring(0, posTmplL);
+            var rightPart = buckettemplate.Substring(posTmplR + 1);
 
             bucket = leftPart + DateTime.UtcNow.ToString(template) + rightPart;
         }
@@ -462,7 +467,7 @@ public class CephDocumentServices : IDocumentService
 
     private static CephDocumentServicesSettings GetSettings(IConfiguration configuration)
     {
-        string key = "CephDocumentServicesSettings";
+        var key = "CephDocumentServicesSettings";
 
         var settings =
             configuration.GetSection(key).Get<CephDocumentServicesSettings>()

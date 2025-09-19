@@ -35,7 +35,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: null,
@@ -68,7 +68,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: null,
@@ -99,7 +99,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: null,
@@ -137,7 +137,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -177,7 +177,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -209,7 +209,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("ccbb1cf4-7f37-4ebc-1a71-be9066086955");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -258,7 +258,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("ccbb1cf4-7f37-4ebc-1a71-be9066086955");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -285,7 +285,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -321,7 +321,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -357,7 +357,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: id,
@@ -372,7 +372,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     [Fact]
     public async Task Add_With_Unknown_InformatieObjectType_Should_Be_Invalid()
     {
-        using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
+        await using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
 
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
@@ -408,7 +408,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: false,
             existingEnkelvoudigInformatieObjectId: null,
@@ -428,7 +428,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     [Fact]
     public async Task Add_With_ServerError_InformatieObjectType_Should_Be_Invalid()
     {
-        using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
+        await using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
 
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
@@ -464,7 +464,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: false,
             existingEnkelvoudigInformatieObjectId: null,
@@ -484,7 +484,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     [Fact]
     public async Task Add_With_Concept_InformatieObjectType_Should_Be_Invalid()
     {
-        using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
+        await using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
 
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
@@ -513,7 +513,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: false,
             existingEnkelvoudigInformatieObjectId: null,
@@ -533,7 +533,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     [Fact]
     public async Task Add_With_Ongeldige_Periode_InformatieObjectType_Should_Be_Invalid()
     {
-        using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
+        await using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
 
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
@@ -564,7 +564,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: false,
             existingEnkelvoudigInformatieObjectId: null,
@@ -584,7 +584,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     [Fact]
     public async Task Add_With_Known_And_Correct_InformatieObjectType_Should_Be_Valid()
     {
-        using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
+        await using var mockDbContext = new DrcDbContext(await GetMockedDrcDbContext());
 
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
@@ -622,7 +622,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        bool valid = await svc.ValidateAsync(
+        var valid = await svc.ValidateAsync(
             enkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: false,
             existingEnkelvoudigInformatieObjectId: null,
@@ -639,78 +639,76 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         var options = new DbContextOptionsBuilder<DrcDbContext>().UseInMemoryDatabase(databaseName: $"drc-{Guid.NewGuid()}").Options;
 
         // Insert seed data into the database using one instance of the context
-        using (var context = new UnitTestDrcDbContext(options))
-        {
-            await context.Database.EnsureDeletedAsync();
-            await context.Database.EnsureCreatedAsync();
+        await using var context = new UnitTestDrcDbContext(options);
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
-            context.EnkelvoudigInformatieObjecten.Add(
-                new EnkelvoudigInformatieObject
-                {
-                    Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
-                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-                    EnkelvoudigInformatieObjectVersies =
-                    [
-                        new EnkelvoudigInformatieObjectVersie
-                        {
-                            Bronorganisatie = "1234",
-                            Identificatie = "DOCUMENT-2020-00000001",
-                            Versie = 1,
-                            Taal = string.Empty,
-                            Owner = "813264571",
-                        },
-                    ],
-                    Owner = "813264571",
-                }
-            );
+        context.EnkelvoudigInformatieObjecten.Add(
+            new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                EnkelvoudigInformatieObjectVersies =
+                [
+                    new EnkelvoudigInformatieObjectVersie
+                    {
+                        Bronorganisatie = "1234",
+                        Identificatie = "DOCUMENT-2020-00000001",
+                        Versie = 1,
+                        Taal = string.Empty,
+                        Owner = "813264571",
+                    },
+                ],
+                Owner = "813264571",
+            }
+        );
 
-            context.EnkelvoudigInformatieObjecten.Add(
-                new EnkelvoudigInformatieObject
-                {
-                    Id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911"),
-                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-                    EnkelvoudigInformatieObjectVersies =
-                    [
-                        new EnkelvoudigInformatieObjectVersie
-                        {
-                            Bronorganisatie = "1234",
-                            Identificatie = "DOCUMENT-2020-00000002",
-                            Versie = 1,
-                            Taal = string.Empty,
-                            Owner = "813264571",
-                        },
-                    ],
-                    Owner = "813264571",
-                    Locked = true,
-                    Lock = "e205101a45ab4fb082a35231d63f4151",
-                }
-            );
+        context.EnkelvoudigInformatieObjecten.Add(
+            new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                EnkelvoudigInformatieObjectVersies =
+                [
+                    new EnkelvoudigInformatieObjectVersie
+                    {
+                        Bronorganisatie = "1234",
+                        Identificatie = "DOCUMENT-2020-00000002",
+                        Versie = 1,
+                        Taal = string.Empty,
+                        Owner = "813264571",
+                    },
+                ],
+                Owner = "813264571",
+                Locked = true,
+                Lock = "e205101a45ab4fb082a35231d63f4151",
+            }
+        );
 
-            context.EnkelvoudigInformatieObjecten.Add(
-                new EnkelvoudigInformatieObject
-                {
-                    Id = new Guid("ccbb1cf4-7f37-4ebc-1a71-be9066086955"),
-                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-                    EnkelvoudigInformatieObjectVersies =
-                    [
-                        new EnkelvoudigInformatieObjectVersie
-                        {
-                            Bronorganisatie = "1234",
-                            Identificatie = "DOCUMENT-2020-00000003",
-                            Versie = 1,
-                            Status = Status.definitief,
-                            Taal = string.Empty,
-                            Owner = "813264571",
-                        },
-                    ],
-                    Owner = "813264571",
-                    Locked = true,
-                    Lock = "e205101a45ab4fb082a35231d63f4151",
-                }
-            );
+        context.EnkelvoudigInformatieObjecten.Add(
+            new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("ccbb1cf4-7f37-4ebc-1a71-be9066086955"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                EnkelvoudigInformatieObjectVersies =
+                [
+                    new EnkelvoudigInformatieObjectVersie
+                    {
+                        Bronorganisatie = "1234",
+                        Identificatie = "DOCUMENT-2020-00000003",
+                        Versie = 1,
+                        Status = Status.definitief,
+                        Taal = string.Empty,
+                        Owner = "813264571",
+                    },
+                ],
+                Owner = "813264571",
+                Locked = true,
+                Lock = "e205101a45ab4fb082a35231d63f4151",
+            }
+        );
 
-            await context.SaveChangesAsync();
-        }
+        await context.SaveChangesAsync();
 
         return options;
     }
@@ -724,7 +722,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         mockCatalogiServiceAgent ??= new Mock<ICatalogiServiceAgent>();
 
-        inMemorySettings ??= new Dictionary<string, string>() { { "Application:", null } };
+        inMemorySettings ??= new Dictionary<string, string> { { "Application:", null } };
 
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
