@@ -27,7 +27,6 @@ public static class ZaakTypeExensionMethods
             && zaaktype.PublicatieIndicatie == other.PublicatieIndicatie
             && zaaktype.PublicatieTekst == other.PublicatieTekst
             && zaaktype.SelectielijstProcestype == other.SelectielijstProcestype
-            && zaaktype.HandelingBehandelaar == other.HandelingBehandelaar
             && zaaktype.BeginGeldigheid == other.BeginGeldigheid
             && // Note: For field EindeGeldigheid it is allowed to change
             zaaktype.VersieDatum == other.VersieDatum
