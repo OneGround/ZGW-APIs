@@ -188,14 +188,15 @@ See [AUTHENTICATION.md](../../AUTHENTICATION.md).
 
 #### Step 5.4: Creating a Sample Case Using Postman
 
-You can quickly test the Zaken API by creating a sample case ("zaak") using Postman and the provided [ZGW-APIs-postman-tests](https://github.com/OneGround/ZGW-APIs-postman-tests) project.
+You can quickly use the Zaken API by creating a sample case ("zaak") using Postman and the provided [Create Case Postman collection](https://github.com/OneGround/ZGW-APIs-postman-tests).
 
 **Steps:**
 
-1. **Import the Create Case project**
+1. **Import the Create Case collection and environment**
 
-   - Open Postman.
-   - Import the Create Case collection and environment files from the [ZGW-APIs-postman-tests](https://github.com/OneGround/ZGW-APIs-postman-tests) repository.
+   - Open Postman;
+   - Go to the Collections tab. Import  [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
+   - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
 
 2. **Obtain an Access Token**
 
