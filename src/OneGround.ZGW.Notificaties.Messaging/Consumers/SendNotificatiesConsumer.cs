@@ -1,3 +1,4 @@
+using Hangfire;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Consumers;
 
@@ -14,7 +16,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _memoryCache;
-    private readonly IPublishEndpoint _publishEndpoint;
     private readonly INotificationFilterService _notificationFilterService;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
@@ -30,7 +31,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     {
         _serviceProvider = serviceProvider;
         _memoryCache = memoryCache;
-        _publishEndpoint = publishEndpoint;
         _notificationFilterService = notificationFilterService;
 
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
@@ -97,9 +97,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             continue;
                         }
 
-                        const byte priority = (byte)MessagePriority.Normal;
-
-                        // Post notificatie message on notificatie-subscriber message queue (for each subscriber on channel)
+                        // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
                         var subscriberNotificatie = new SubscriberNotificatie
                         {
                             Kanaal = notificatie.Kanaal,
@@ -115,14 +113,20 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             ChannelAuth = abonnement.Auth,
                             // First time creation
                             CreationTime = DateTime.Now,
-                            // Rescheduling not active this moment
+                            // Re-scheduling not active this moment (set after failed job)
                             RescheduledAt = null,
                             NextScheduled = null,
                         };
 
-                        await _publishEndpoint.Publish<INotifySubscriber>(
-                            subscriberNotificatie,
-                            publishContext => publishContext.SetPriority(priority)
+                        var job = BackgroundJob.Enqueue<NotificatieJob>(h => h.ReQueueNotificatieAsync(subscriberNotificatie));
+
+                        Logger.LogInformation(
+                            "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
+                            nameof(SendNotificatiesConsumer),
+                            job,
+                            notificatie.Rsin,
+                            notificatie.Kanaal,
+                            abonnement.CallbackUrl
                         );
                     }
                 }

@@ -73,7 +73,6 @@ public class ServiceConfiguration
             x.SetKebabCaseEndpointNameFormatter();
 
             x.AddConsumer<SendNotificatiesConsumer>();
-            x.AddConsumer<NotifySubscriberConsumer>();
 
             x.UsingRabbitMq(
                 (context, cfg) =>
@@ -95,16 +94,6 @@ public class ServiceConfiguration
                             e.PrefetchCount = eventbusConfiguration.ReceivePrefetchCount;
                             e.EnablePriority(2);
                             e.ConfigureConsumer<SendNotificatiesConsumer>(context);
-                        }
-                    );
-
-                    cfg.ReceiveEndpoint(
-                        "notificatie-subscriber",
-                        e =>
-                        {
-                            e.PrefetchCount = eventbusConfiguration.ReceivePrefetchCount;
-                            e.EnablePriority(2);
-                            e.ConfigureConsumer<NotifySubscriberConsumer>(context);
                         }
                     );
 

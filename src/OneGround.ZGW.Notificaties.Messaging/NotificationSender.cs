@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Notificaties.Messaging;
 
 public interface INotificationSender
 {
-    public Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken);
+    public Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default);
 }
 
 public class NotificationSender : INotificationSender
@@ -28,7 +28,7 @@ public class NotificationSender : INotificationSender
         _client.Timeout = _applicationConfiguration.CallbackTimeout;
     }
 
-    public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken)
+    public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(notificatie);
 
