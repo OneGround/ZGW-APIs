@@ -15,6 +15,8 @@ namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 
 public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICatalogiServiceAgent
 {
+    private const string CatalogussenController = "catalogussen";
+
     public CatalogiServiceAgent(
         ILogger<CatalogiServiceAgent> logger,
         HttpClient client,
@@ -34,14 +36,14 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
 
         Logger.LogDebug("Getting catalog by id: {catalogusId}", catalogusId);
 
-        var url = new Uri($"/catalogussen/{catalogusId}", UriKind.Relative);
+        var url = new Uri($"/{CatalogussenController}/{catalogusId}", UriKind.Relative);
 
         return GetAsync<CatalogusResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl)
     {
-        if (!EnsureValidResource(ServiceRoleName.ZTC, catalogusUrl, "catalogussen", out var errorResponse))
+        if (!EnsureValidResource(ServiceRoleName.ZTC, catalogusUrl, CatalogussenController, out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<CatalogusResponseDto>(errorResponse));
 
         Logger.LogDebug("Catalogus bevragen op '{catalogusUrl}'....", catalogusUrl);
@@ -54,12 +56,12 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         int page = 1
     )
     {
-        return GetPagedResponseAsync<CatalogusResponseDto>("/catalogussen", parameters, page);
+        return GetPagedResponseAsync<CatalogusResponseDto>($"/{CatalogussenController}", parameters, page);
     }
 
     public async Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request)
     {
-        var url = new Uri("/catalogussen", UriKind.Relative);
+        var url = new Uri($"/{CatalogussenController}", UriKind.Relative);
 
         return await PostAsync<CatalogusRequestDto, CatalogusResponseDto>(url, request);
     }
