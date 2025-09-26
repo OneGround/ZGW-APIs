@@ -55,21 +55,10 @@ DATABASES="ac_db brc_db drc_db nrc_db zrc_db ztc_db"
 
 for db in $DATABASES; do
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "CREATE DATABASE $db;"
-done
-
-for db in $DATABASES; do
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<-EOSQL
         CREATE EXTENSION IF NOT EXISTS postgis;
-EOSQL
-done
-
-for db in $DATABASES; do
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<-EOSQL
         CREATE EXTENSION IF NOT EXISTS pgcrypto;
 EOSQL
-done
-
-for db in $DATABASES; do
     grant_permissions "$db"
 done
 
