@@ -1,9 +1,12 @@
 using Hangfire;
-using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
@@ -13,25 +16,30 @@ public interface INotificatieJob
     Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie);
 }
 
-[DisableConcurrentExecution(10)]
 [Queue(Constants.NrcListenerQueue)]
 public class NotificatieJob : INotificatieJob
 {
     private readonly INotificationSender _notificationSender;
-    private readonly NrcDbContext _context;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IMemoryCache _memoryCache;
     private readonly ILogger<NotificatieJob> _logger;
+    private readonly ApplicationConfiguration _applicationConfiguration;
 
     public NotificatieJob(
         INotificationSender notificationSender,
-        ISendEndpointProvider sendEndpointProvider,
+        IServiceProvider serviceProvider,
         IConfiguration configuration,
         NrcDbContext context,
+        IMemoryCache memoryCache,
         ILogger<NotificatieJob> logger
     )
     {
         _notificationSender = notificationSender;
-        _context = context;
+        _serviceProvider = serviceProvider;
+        _memoryCache = memoryCache;
         _logger = logger;
+
+        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
     }
 
     public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie)
@@ -41,7 +49,7 @@ public class NotificatieJob : INotificatieJob
         using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId))
         {
             // Get deliver data for this subscriber like callback url and auth
-            var subscriber = _context.Abonnementen.SingleOrDefault(a => a.Id == abonnementId);
+            var subscriber = await GetCachedAbonnementByIdAsync(abonnementId, CancellationToken.None);
             if (subscriber == null)
             {
                 throw new GeneralException(
@@ -69,6 +77,27 @@ public class NotificatieJob : INotificatieJob
     private IDisposable GetLoggingScope(string rsin, Guid correlationId)
     {
         return _logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId, ["RSIN"] = rsin });
+    }
+
+    private async Task<Abonnement> GetCachedAbonnementByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var abonnementen = await _memoryCache.GetOrCreate(
+            $"abonnementen",
+            async e =>
+            {
+                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+
+                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
+
+                var _abonnementen = await dbContext.Abonnementen.AsNoTracking().ToDictionaryAsync(k => k.Id, v => v, cancellationToken);
+
+                _logger.LogDebug("{Count} abonnementen retrieved and all cached", _abonnementen.Count);
+
+                return _abonnementen;
+            }
+        );
+
+        return abonnementen[id];
     }
 }
 
