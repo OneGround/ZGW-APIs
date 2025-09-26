@@ -2,7 +2,7 @@ using OneGround.ZGW.Common.Messaging;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
 
-public class SubscriberNotificatie : INotifySubscriber
+public class SubscriberNotificatie : INotificatie
 {
     public string Rsin { get; set; }
     public Guid CorrelationId { get; set; }
