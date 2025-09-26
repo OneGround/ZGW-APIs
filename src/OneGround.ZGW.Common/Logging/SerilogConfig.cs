@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Hosting;
@@ -49,9 +49,10 @@ public static class SerilogConfig
                         a.File(
                             formatter: new JsonFormatter(renderMessage: true, formatProvider: CultureInfo.CurrentCulture),
                             path: logPath,
-                            fileSizeLimitBytes: null,
+                            fileSizeLimitBytes: 100 * 1024 * 1024,
+                            rollOnFileSizeLimit: true,
                             rollingInterval: RollingInterval.Day,
-                            retainedFileCountLimit: 2,
+                            retainedFileCountLimit: 3,
                             shared: true
                         )
                     );
