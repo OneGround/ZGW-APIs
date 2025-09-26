@@ -14,6 +14,9 @@ internal class HangfireConfiguration
         }
     }
 
+    public string ExpireFailedJobsScanAt { get; set; } = "07:00";
+    public TimeSpan ExpireFailedJobAfter { get; set; } = TimeSpan.FromDays(7);
+
     private static void AssurValid(TimeSpan[] value)
     {
         // Note: Timespan serie sometimes difficult to understand. You can have 00:00:00:05 or 00:00:05 or 1.00:00:00 but the ordering is important for correct working

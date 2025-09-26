@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Hangfire;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,24 @@ using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Consumers;
 
+public interface INotificatieScheduler
+{
+    string Enqueue<T>(Expression<Func<T, Task>> methodCall);
+}
+
+public class NotificatieScheduler : INotificatieScheduler
+{
+    public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
+    {
+        return BackgroundJob.Enqueue(methodCall);
+    }
+}
+
 public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, IConsumer<ISendNotificaties>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _memoryCache;
+    private readonly INotificatieScheduler _notificatieScheduler;
     private readonly INotificationFilterService _notificationFilterService;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
@@ -23,7 +38,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         ILogger<SendNotificatiesConsumer> logger,
         IServiceProvider serviceProvider,
         IMemoryCache memoryCache,
-        IPublishEndpoint publishEndpoint,
+        INotificatieScheduler notificatieScheduler,
         IConfiguration configuration,
         INotificationFilterService notificationFilterService
     )
@@ -31,6 +46,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     {
         _serviceProvider = serviceProvider;
         _memoryCache = memoryCache;
+        _notificatieScheduler = notificatieScheduler;
         _notificationFilterService = notificationFilterService;
 
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
@@ -49,7 +65,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 // Notify abonnees (subscribers)....
                 var notificatie = context.Message;
 
-                var abonnementen = await GetCachedAbonnementenAsync(notificatie, context.CancellationToken);
+                var abonnementen = await GetCachedAbonnementenAsync(notificatie.Rsin, context.CancellationToken);
 
                 var kenmerken = notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
 
@@ -98,27 +114,9 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                         }
 
                         // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
-                        var subscriberNotificatie = new SubscriberNotificatie
-                        {
-                            Kanaal = notificatie.Kanaal,
-                            HoofdObject = notificatie.HoofdObject,
-                            Resource = notificatie.Resource,
-                            ResourceUrl = notificatie.ResourceUrl,
-                            Actie = notificatie.Actie,
-                            Kenmerken = kenmerken,
-                            Rsin = notificatie.Rsin,
-                            CorrelationId = notificatie.CorrelationId,
-                            // subscriber on THIS channel...
-                            ChannelUrl = abonnement.CallbackUrl,
-                            ChannelAuth = abonnement.Auth,
-                            // First time creation
-                            CreationTime = DateTime.Now,
-                            // Re-scheduling not active this moment (set after failed job)
-                            RescheduledAt = null,
-                            NextScheduled = null,
-                        };
-
-                        var job = BackgroundJob.Enqueue<NotificatieJob>(h => h.ReQueueNotificatieAsync(subscriberNotificatie));
+                        var job = _notificatieScheduler.Enqueue<NotificatieJob>(h =>
+                            h.ReQueueNotificatieAsync(abonnement.Id, notificatie.ToInstance())
+                        );
 
                         Logger.LogInformation(
                             "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
@@ -143,10 +141,10 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         }
     }
 
-    private async Task<List<Abonnement>> GetCachedAbonnementenAsync(ISendNotificaties notificatie, CancellationToken cancellationToken)
+    private async Task<List<Abonnement>> GetCachedAbonnementenAsync(string rsin, CancellationToken cancellationToken)
     {
         return await _memoryCache.GetOrCreate(
-            $"abonnementen_{notificatie.Rsin}",
+            $"abonnementen_{rsin}",
             async e =>
             {
                 e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
@@ -155,14 +153,14 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 var _abonnementen = await dbContext
                     .Abonnementen.AsNoTracking()
-                    .Where(a => a.Owner == notificatie.Rsin)
+                    .Where(a => a.Owner == rsin)
                     .Include(a => a.AbonnementKanalen)
                     .ThenInclude(a => a.Kanaal)
                     .Include(a => a.AbonnementKanalen)
                     .ThenInclude(a => a.Filters)
                     .ToListAsync(cancellationToken);
 
-                Logger.LogDebug("{Count} abonnementen retrieved and cached for {Rsin}", _abonnementen.Count, notificatie.Rsin);
+                Logger.LogDebug("{Count} abonnementen retrieved and cached for {Rsin}", _abonnementen.Count, rsin);
 
                 return _abonnementen;
             }
