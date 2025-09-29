@@ -27,7 +27,7 @@ The system automatically manages disk space by keeping a maximum of the **3 most
 ## Summary of Behavior
 
 - **Trigger for New File:** A new file is created either at the start of a new day or when the current file hits 100 MB.
-- **Maximum Local Storage:** The total disk space used by logs will not exceed approximately **300 MB** (100 MB per file &times; 3 files).
+- **Maximum Local Storage:** The total disk space used by logs will not exceed approximately **300 MB** (100 MB per file x 3 files).
 - **File Location:** `/var/log/app/{logFileName}` (Linux production environments only)
 - **Format:** JSON with one object per line for structured logging
 
