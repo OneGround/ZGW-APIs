@@ -37,15 +37,15 @@ Here is the C# configuration code implementing this strategy:
 
 ```csharp
 .WriteTo.Async(a =>
-    a.File(
-        formatter: new JsonFormatter(renderMessage: true, formatProvider: CultureInfo.CurrentCulture),
-        path: logPath,
-        fileSizeLimitBytes: 100 * 1024 * 1024,      // 100 MB
-        rollOnFileSizeLimit: true,
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 3,                  // Keep 3 files
-        shared: true
-    )
+  a.File(
+    formatter: new JsonFormatter(renderMessage: true, formatProvider: CultureInfo.CurrentCulture),
+    path: logPath,
+    fileSizeLimitBytes: 100 * 1024 * 1024,      // 100 MB
+    rollOnFileSizeLimit: true,
+    rollingInterval: RollingInterval.Day,
+    retainedFileCountLimit: 3,                  // Keep 3 files
+    shared: true
+  )
 );
 ```
 

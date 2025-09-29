@@ -49,9 +49,9 @@ Before you begin, ensure you have the following software installed:
 2. Unzip the downloaded file. This will create a folder named `ZGW-APIs-main`.
 3. Open your terminal and navigate into the `docker-compose` directory:
 
-```bash
-cd ZGW-APIs-main/getting-started/docker-compose
-```
+    ```bash
+    cd ZGW-APIs-main/getting-started/docker-compose
+    ```
 
 ### 2. Start the ZGW API Services
 
@@ -76,54 +76,55 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
+
    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
 
-   ```powershell
-   cd ZGW-APIs-main/tools/oneground-certificates-installer
-   ```
+    ```powershell
+    cd ZGW-APIs-main/tools/oneground-certificates-installer
+    ```
 
 3. **Run the following command to check your current execution policy:**
 
-   ```powershell
-   Get-ExecutionPolicy -List
-   ```
+    ```powershell
+    Get-ExecutionPolicy -List
+    ```
 
 4. **To allow the script to run just for this session, execute the following command. This bypasses the policy for the current process only:**
 
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-   ```
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+    ```
 
 5. **Run the installation script:**
 
-   ```powershell
-   .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\getting-started\docker-compose\oneground-certificates\oneground.local.pem"
-   ```
+    ```powershell
+    .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\getting-started\docker-compose\oneground-certificates\oneground.local.pem"
+    ```
 
-   The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
+    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
 #### For macOS and Linux (using Bash)
 
 1. **Open your terminal.**
 2. **Navigate to the certificate installer directory:**
 
-   ```bash
-   cd ZGW-APIs-main/tools/oneground-certificates-installer
-   ```
+    ```bash
+    cd ZGW-APIs-main/tools/oneground-certificates-installer
+    ```
 
 3. **Make the script executable** (you only need to do this once):
 
-   ```bash
-   chmod +x ./install-oneground-certificate.sh
-   ```
+    ```bash
+    chmod +x ./install-oneground-certificate.sh
+    ```
 
 4. **Run the installation script.** (you may be prompted for your password):
 
-   ```bash
-   ./install-oneground-certificate.sh ../../getting-started/docker-compose/oneground-certificates/oneground.local.pem
-   ```
+    ```bash
+    ./install-oneground-certificate.sh ../../getting-started/docker-compose/oneground-certificates/oneground.local.pem
+    ```
 
    This script installs the certificate into your system's keychain or trust store.
 
@@ -134,23 +135,23 @@ Follow the steps for your operating system.
 To ensure all services can communicate with each other and are accessible in your browser, you need to map the service hostnames to your local machine. This is a crucial step for the local domain names (e.g., `zaken.oneground.local`) to work correctly.
 
 1. Open your `hosts` file as an administrator.
-   - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-   - **macOS/Linux:** `/etc/hosts`
+    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+    - **macOS/Linux:** `/etc/hosts`
 2. Add the following lines to the end of the file and save it:
 
-   ```txt
-   127.0.0.1 zaken.oneground.local
-   127.0.0.1 catalogi.oneground.local
-   127.0.0.1 notificaties.oneground.local
-   127.0.0.1 notificaties-receiver.oneground.local
-   127.0.0.1 besluiten.oneground.local
-   127.0.0.1 documenten.oneground.local
-   127.0.0.1 autorisaties.oneground.local
-   127.0.0.1 referentielijsten.oneground.local
-   127.0.0.1 notificatielistener.oneground.local
-   127.0.0.1 documentlistener.oneground.local
-   127.0.0.1 haproxy.oneground.local
-   ```
+    ```txt
+    127.0.0.1 zaken.oneground.local
+    127.0.0.1 catalogi.oneground.local
+    127.0.0.1 notificaties.oneground.local
+    127.0.0.1 notificaties-receiver.oneground.local
+    127.0.0.1 besluiten.oneground.local
+    127.0.0.1 documenten.oneground.local
+    127.0.0.1 autorisaties.oneground.local
+    127.0.0.1 referentielijsten.oneground.local
+    127.0.0.1 notificatielistener.oneground.local
+    127.0.0.1 documentlistener.oneground.local
+    127.0.0.1 haproxy.oneground.local
+    ```
 
 ### 5. Configure API Authentication
 
@@ -158,7 +159,7 @@ To make authorized requests to the APIs, you first need to get a client secret f
 
 #### Step 5.1: Get the Client Secret from Keycloak
 
-See [AUTHENTICATION.md](../../AUTHENTICATION.md).
+See [AUTHENTICATION.md](../../docs/AUTHENTICATION.md).
 
 #### Step 5.2: Update Environment File and Restart Services
 
@@ -171,20 +172,20 @@ See [AUTHENTICATION.md](../../AUTHENTICATION.md).
 2. Open the [ZGW-APIs-main/getting-started/docker-compose/default.env](./default.env) file in a text editor.
 3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
-   ```text
-   ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
-   ```
+    ```text
+    ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
+    ```
 
 4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
-   ```bash
-   docker compose --env-file ./.env up -d
-   ```
+    ```bash
+    docker compose --env-file ./.env up -d
+    ```
 
 #### Step 5.3: Request an Access Token
 
-See [AUTHENTICATION.md](../../AUTHENTICATION.md).
+See [AUTHENTICATION.md](../../docs/AUTHENTICATION.md).
 
 #### Step 5.4: Creating a Sample Case Using Postman
 
@@ -194,23 +195,23 @@ You can quickly use the Zaken API by creating a sample case ("zaak") using Postm
 
 1. **Import the Create Case collection and environment**
 
-   - Open Postman;
-   - Go to the Collections tab. Import  [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
-   - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
+    - Open Postman;
+    - Go to the Collections tab. Import [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
+    - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
 
 2. **Obtain an Access Token**
 
-   - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
-   - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
+    - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
+    - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
 
 3. **Set Up Other Environment Variables**
 
-   - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
+    - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
 
 4. **Create a Sample Case**
 
-   - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
-   - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
+    - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
+    - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
 
 > For more details and advanced scenarios, see the documentation in the Postman collection.
 
@@ -228,26 +229,26 @@ Here is a reference list of all the services and tools running in this Docker se
 
 ### ZGW API Services/Listeners
 
-| Service | Port | Swagger UI | Health Check |
-| :--- | :--- | :--- | :--- |
-| **Autorisaties API** | 5009 | [https://autorisaties.oneground.local/swagger](https://autorisaties.oneground.local/swagger) | [https://autorisaties.oneground.local/health](https://autorisaties.oneground.local/health) |
-| **Besluiten API** | 5013 | [https://besluiten.oneground.local/swagger](https://besluiten.oneground.local/swagger) | [https://besluiten.oneground.local/health](https://besluiten.oneground.local/health) |
-| **Catalogi API** | 5011 | [https://catalogi.oneground.local/swagger](https://catalogi.oneground.local/swagger) | [https://catalogi.oneground.local/health](https://catalogi.oneground.local/health) |
-| **Documenten API** | 5007 | [https://documenten.oneground.local/swagger](https://documenten.oneground.local/swagger) | [https://documenten.oneground.local/health](https://documenten.oneground.local/health) |
-| **Notificaties API** | 5015 | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger) | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health) |
-| **Referentielijsten API** | 5018 | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health) |
-| **Zaken API** | 5005 | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger) | [https://zaken.oneground.local/health](https://zaken.oneground.local/health) |
-| **Notificatielistener (message dispatcher)** | 5098 | n/a | [https://notificatielistener.oneground.local/health](https://notificatielistener.oneground.local/health) |
-| **Documentlistener (message dispatcher)** | 5099 | n/a |[https://documentlistener.oneground.local/health](https://documentlistener.oneground.local/health) |
+| Service                                      | Port | Swagger UI                                                                                             | Health Check                                                                                             |
+| :------------------------------------------- | :--- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| **Autorisaties API**                         | 5009 | [https://autorisaties.oneground.local/swagger](https://autorisaties.oneground.local/swagger)           | [https://autorisaties.oneground.local/health](https://autorisaties.oneground.local/health)               |
+| **Besluiten API**                            | 5013 | [https://besluiten.oneground.local/swagger](https://besluiten.oneground.local/swagger)                 | [https://besluiten.oneground.local/health](https://besluiten.oneground.local/health)                     |
+| **Catalogi API**                             | 5011 | [https://catalogi.oneground.local/swagger](https://catalogi.oneground.local/swagger)                   | [https://catalogi.oneground.local/health](https://catalogi.oneground.local/health)                       |
+| **Documenten API**                           | 5007 | [https://documenten.oneground.local/swagger](https://documenten.oneground.local/swagger)               | [https://documenten.oneground.local/health](https://documenten.oneground.local/health)                   |
+| **Notificaties API**                         | 5015 | [https://notificaties.oneground.local/swagger](https://notificaties.oneground.local/swagger)           | [https://notificaties.oneground.local/health](https://notificaties.oneground.local/health)               |
+| **Referentielijsten API**                    | 5018 | [https://referentielijsten.oneground.local/swagger](https://referentielijsten.oneground.local/swagger) | [https://referentielijsten.oneground.local/health](https://referentielijsten.oneground.local/health)     |
+| **Zaken API**                                | 5005 | [https://zaken.oneground.local/swagger](https://zaken.oneground.local/swagger)                         | [https://zaken.oneground.local/health](https://zaken.oneground.local/health)                             |
+| **Notificatielistener (message dispatcher)** | 5098 | n/a                                                                                                    | [https://notificatielistener.oneground.local/health](https://notificatielistener.oneground.local/health) |
+| **Documentlistener (message dispatcher)**    | 5099 | n/a                                                                                                    | [https://documentlistener.oneground.local/health](https://documentlistener.oneground.local/health)       |
 
 ### Hosted Tools
 
-| Tool | URL | Notes |
-| :--- | :--- | :--- |
-| **HAProxy Stats** | [https://haproxy.oneground.local](https://haproxy.oneground.local) | View statistics for the reverse proxy. |
-| **Keycloak** | [http://localhost:8080](http://localhost:8080) | Identity and Access Management (user: admin, password: admin). |
-| **RabbitMQ** | [http://localhost:15672](http://localhost:15672) | Message broker management UI (user: guest, password: guest). |
-| **PostgreSQL** | `http://localhost:5432` | Database server. Connect with any SQL client. |
+| Tool              | URL                                                                | Notes                                                          |
+| :---------------- | :----------------------------------------------------------------- | :------------------------------------------------------------- |
+| **HAProxy Stats** | [https://haproxy.oneground.local](https://haproxy.oneground.local) | View statistics for the reverse proxy.                         |
+| **Keycloak**      | [http://localhost:8080](http://localhost:8080)                     | Identity and Access Management (user: admin, password: admin). |
+| **RabbitMQ**      | [http://localhost:15672](http://localhost:15672)                   | Message broker management UI (user: guest, password: guest).   |
+| **PostgreSQL**    | `http://localhost:5432`                                            | Database server. Connect with any SQL client.                  |
 
 ## License
 

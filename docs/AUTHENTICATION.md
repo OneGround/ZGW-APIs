@@ -23,11 +23,11 @@ This guide explains how to authenticate against the ZGW APIs during local develo
 
 1. Navigate to the Keycloak admin console: [http://localhost:8080/admin/master/console/#/OneGround/](http://localhost:8080/admin/master/console/#/OneGround/)
 2. Log in using the credentials:
-   - **Username**: `admin`
-   - **Password**: `admin`
+    - **Username**: `admin`
+    - **Password**: `admin`
 3. From the navigation on the left, select **Clients**.
 4. Select the `oneground-000000000` client from the list.
-   > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](./localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](./localdev/oneground-services-data/ac-data/applicaties.json).
+    > **Note on the Default Client:** This local setup is configured with a single default client, `oneground-000000000`, which has full administrative access to all APIs. If you wish to add more clients with specific permissions, you must first create them in Keycloak by following the [Keycloak Setup Guide](./localdev/keycloak/KeycloakSetup/README.md). After creating a new client, you must also configure its permissions using the Autorisaties API or by updating the [autorisaties service's seed data](./localdev/oneground-services-data/ac-data/applicaties.json).
 5. Go to the **Credentials** tab.
 6. Copy the value from the **Client Secret** field. This is your `<oneground-client-secret>`.
 
@@ -39,19 +39,19 @@ Now you can exchange the client credentials for a temporary access token. Use th
 
 - Open Windows PowerShell and execute this command:
 
-```powershell
-$response = Invoke-WebRequest `
-    -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
-    -Method POST `
-    -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} `
-    -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
-```
+    ```powershell
+    $response = Invoke-WebRequest `
+        -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
+        -Method POST `
+        -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} `
+        -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
+    ```
 
 - Then take an access token from `$response`:
 
-```powershell
-$response.Content
-```
+    ```powershell
+    $response.Content
+    ```
 
 #### For Linux, macOS, or WSL (cURL)
 
