@@ -64,7 +64,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_SUPER_USER_PASSWORD}
       TZ: "Europe/Amsterdam"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_SUPER_USER}", "-d", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_SUPER_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
