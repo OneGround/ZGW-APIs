@@ -96,8 +96,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ac_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -129,8 +129,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=brc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -171,8 +171,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=ztc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -216,8 +216,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=drc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -261,8 +261,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=nrc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- RabbitMQ Event Bus Connection ---
 Eventbus__HostName="rabbit_mq"
@@ -318,8 +318,8 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # .env
 
 # --- Database Connection Strings ---
-ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
-ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=postgres;Password=postgres"
+ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_user;Password=oneground_user"
+ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
