@@ -22,8 +22,11 @@ public class ManagementJob : IManagementJob
 
         for (int from = 0; from < total; from += pageSize)
         {
-            var batch = monitor.FailedJobs(from, (int)Math.Min(pageSize, total - from));
-            foreach (var kv in batch)
+            var failedJobsBatch = monitor.FailedJobs(from, (int)Math.Min(pageSize, total - from));
+
+            var filteredFailedJobsBatch = failedJobsBatch.Where(kvp => kvp.Value.Job.Type == typeof(NotificatieJob));
+
+            foreach (var kv in filteredFailedJobsBatch)
             {
                 var jobId = kv.Key;
                 var dto = kv.Value;
