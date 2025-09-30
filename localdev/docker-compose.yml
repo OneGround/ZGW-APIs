@@ -60,11 +60,11 @@ services:
     ports:
       - ${POSTGRES_PORT}:5432
     environment:
-      POSTGRES_USER: "${POSTGRES_ADMIN}"
-      POSTGRES_PASSWORD: "${POSTGRES_ADMIN_PASSWORD}"
+      POSTGRES_USER: ${POSTGRES_SUPER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPER_USER_PASSWORD}
       TZ: "Europe/Amsterdam"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_ADMIN}"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_SUPER_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -126,8 +126,8 @@ services:
       - KEYCLOAK_LOGLEVEL=debug
       - KC_DB=postgres
       - KC_DB_DATABASE=keycloak
-      - KC_DB_USERNAME=${POSTGRES_ADMIN}
-      - KC_DB_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - KC_DB_USERNAME=${POSTGRES_SUPER_USER}
+      - KC_DB_PASSWORD=${POSTGRES_SUPER_USER_PASSWORD}
       - KC_DB_URL=jdbc:postgresql://postgres_docker_db:5432/keycloak?currentSchema=keycloak
       - KC_HEALTH_ENABLED=true
     ports:
