@@ -141,7 +141,7 @@ public class ServiceConfiguration
                 {
                     var expireFailedJobsScanAtCronExpr = GetExpireFailedJobsScanAtCronExpr();
 
-                    RecurringJob.AddOrUpdate<ManagementJob>(
+                    RecurringJob.AddOrUpdate<NotificatieManagementJob>(
                         "expire-failed-jobs",
                         h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter),
                         expireFailedJobsScanAtCronExpr
