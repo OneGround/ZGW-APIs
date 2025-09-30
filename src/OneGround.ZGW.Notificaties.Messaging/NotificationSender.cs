@@ -30,7 +30,7 @@ public class NotificationSender : INotificationSender
 
     public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(notificatie);
+        ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
 
         try
         {

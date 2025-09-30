@@ -14,7 +14,7 @@ internal class HangfireConfiguration
         }
     }
 
-    public string ExpireFailedJobsScanAt { get; set; } = "07:00";
+    public string ExpireFailedJobsScanAt { get; set; } = "05:00"; // UTC
     public TimeSpan ExpireFailedJobAfter { get; set; } = TimeSpan.FromDays(7);
 
     private static void AssurValid(TimeSpan[] value)

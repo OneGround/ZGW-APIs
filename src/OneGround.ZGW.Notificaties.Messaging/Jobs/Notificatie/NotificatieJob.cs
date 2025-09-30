@@ -29,7 +29,6 @@ public class NotificatieJob : INotificatieJob
         INotificationSender notificationSender,
         IServiceProvider serviceProvider,
         IConfiguration configuration,
-        NrcDbContext context,
         IMemoryCache memoryCache,
         ILogger<NotificatieJob> logger
     )
@@ -44,7 +43,7 @@ public class NotificatieJob : INotificatieJob
 
     public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie)
     {
-        ArgumentNullException.ThrowIfNull(nameof(notificatie));
+        ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
 
         using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId))
         {
