@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
@@ -17,6 +17,7 @@ public interface ICatalogiServiceAgent
         Contracts.v1.Queries.GetAllCatalogussenQueryParameters parameters,
         int page = 1
     );
+    Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request);
 
     // BesluitType
     Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl);

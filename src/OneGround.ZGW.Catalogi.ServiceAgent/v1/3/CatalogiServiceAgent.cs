@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -14,6 +15,8 @@ namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 
 public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICatalogiServiceAgent
 {
+    private const string CatalogussenBasePath = "catalogussen";
+
     public CatalogiServiceAgent(
         ILogger<CatalogiServiceAgent> logger,
         HttpClient client,
@@ -33,14 +36,14 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
 
         Logger.LogDebug("Getting catalog by id: {catalogusId}", catalogusId);
 
-        var url = new Uri($"/catalogussen/{catalogusId}", UriKind.Relative);
+        var url = new Uri($"/{CatalogussenBasePath}/{catalogusId}", UriKind.Relative);
 
         return GetAsync<CatalogusResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl)
     {
-        if (!EnsureValidResource(ServiceRoleName.ZTC, catalogusUrl, "catalogussen", out var errorResponse))
+        if (!EnsureValidResource(ServiceRoleName.ZTC, catalogusUrl, CatalogussenBasePath, out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<CatalogusResponseDto>(errorResponse));
 
         Logger.LogDebug("Catalogus bevragen op '{catalogusUrl}'....", catalogusUrl);
@@ -53,7 +56,14 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         int page = 1
     )
     {
-        return GetPagedResponseAsync<CatalogusResponseDto>("/catalogussen", parameters, page);
+        return GetPagedResponseAsync<CatalogusResponseDto>($"/{CatalogussenBasePath}", parameters, page);
+    }
+
+    public async Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request)
+    {
+        var url = new Uri($"/{CatalogussenBasePath}", UriKind.Relative);
+
+        return await PostAsync<CatalogusRequestDto, CatalogusResponseDto>(url, request);
     }
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
