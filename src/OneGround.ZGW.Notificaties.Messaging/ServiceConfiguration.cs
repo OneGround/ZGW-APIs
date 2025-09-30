@@ -137,16 +137,29 @@ public class ServiceConfiguration
                 var retryPolicy = GetRetryPolicyFromConfig();
                 o.UseFilter(retryPolicy);
 
-                var expireFailedJobsScanAtCronExpr = GetExpireFailedJobsScanAtCronExpr();
+                if (IsExpireFailedJobsScannerEnabled)
+                {
+                    var expireFailedJobsScanAtCronExpr = GetExpireFailedJobsScanAtCronExpr();
 
-                RecurringJob.AddOrUpdate<ManagementJob>(
-                    "expire-failed-jobs",
-                    h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter),
-                    expireFailedJobsScanAtCronExpr
-                );
+                    RecurringJob.AddOrUpdate<ManagementJob>(
+                        "expire-failed-jobs",
+                        h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter),
+                        expireFailedJobsScanAtCronExpr
+                    );
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists("expire-failed-jobs");
+                }
             }
         );
     }
+
+    private bool IsExpireFailedJobsScannerEnabled =>
+        !string.IsNullOrWhiteSpace(_hangfireConfiguration.ExpireFailedJobsScanAt)
+        && !DisabledValues.Contains(_hangfireConfiguration.ExpireFailedJobsScanAt.Trim());
+
+    private static readonly HashSet<string> DisabledValues = new(StringComparer.OrdinalIgnoreCase) { "never", "disabled", "n/a" };
 
     private string GetExpireFailedJobsScanAtCronExpr()
     {
