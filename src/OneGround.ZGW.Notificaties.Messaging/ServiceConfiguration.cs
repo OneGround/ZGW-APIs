@@ -15,6 +15,7 @@ using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 using Polly;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
@@ -22,10 +23,13 @@ namespace OneGround.ZGW.Notificaties.Messaging;
 public class ServiceConfiguration
 {
     private readonly IConfiguration _configuration;
+    private readonly HangfireConfiguration _hangfireConfiguration;
 
     public ServiceConfiguration(IConfiguration configuration)
     {
         _configuration = configuration;
+
+        _hangfireConfiguration = _configuration.GetSection("Hangfire").Get<HangfireConfiguration>() ?? new HangfireConfiguration();
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -73,7 +77,6 @@ public class ServiceConfiguration
             x.SetKebabCaseEndpointNameFormatter();
 
             x.AddConsumer<SendNotificatiesConsumer>();
-            x.AddConsumer<NotifySubscriberConsumer>();
 
             x.UsingRabbitMq(
                 (context, cfg) =>
@@ -95,16 +98,6 @@ public class ServiceConfiguration
                             e.PrefetchCount = eventbusConfiguration.ReceivePrefetchCount;
                             e.EnablePriority(2);
                             e.ConfigureConsumer<SendNotificatiesConsumer>(context);
-                        }
-                    );
-
-                    cfg.ReceiveEndpoint(
-                        "notificatie-subscriber",
-                        e =>
-                        {
-                            e.PrefetchCount = eventbusConfiguration.ReceivePrefetchCount;
-                            e.EnablePriority(2);
-                            e.ConfigureConsumer<NotifySubscriberConsumer>(context);
                         }
                     );
 
@@ -140,7 +133,69 @@ public class ServiceConfiguration
             {
                 var connectionFactory = s.GetRequiredService<NotificatiesHangfireConnectionFactory>();
                 o.UsePostgreSqlStorage(o => o.UseConnectionFactory(connectionFactory));
+
+                var retryPolicy = GetRetryPolicyFromConfig();
+                o.UseFilter(retryPolicy);
+
+                if (IsExpireFailedJobsScannerEnabled)
+                {
+                    var expireFailedJobsScanAtCronExpr = GetExpireFailedJobsScanAtCronExpr();
+
+                    RecurringJob.AddOrUpdate<NotificatieManagementJob>(
+                        "expire-failed-jobs",
+                        h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter),
+                        expireFailedJobsScanAtCronExpr
+                    );
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists("expire-failed-jobs");
+                }
             }
         );
+    }
+
+    private bool IsExpireFailedJobsScannerEnabled =>
+        !string.IsNullOrWhiteSpace(_hangfireConfiguration.ExpireFailedJobsScanAt)
+        && !DisabledValues.Contains(_hangfireConfiguration.ExpireFailedJobsScanAt.Trim());
+
+    private static readonly HashSet<string> DisabledValues = new(StringComparer.OrdinalIgnoreCase) { "never", "disabled", "n/a" };
+
+    private string GetExpireFailedJobsScanAtCronExpr()
+    {
+        // Set default cron expression weekly each Monday
+        string cronExpression = Cron.Weekly(DayOfWeek.Monday);
+
+        if (Enum.TryParse<DayOfWeek>(_hangfireConfiguration.ExpireFailedJobsScanAt, out var dayOfWeek))
+        {
+            // For example: "ExpireFailedJobsScanAt": "Thursday"
+            cronExpression = Cron.Weekly(dayOfWeek);
+        }
+        else if (TimeOnly.TryParseExact(_hangfireConfiguration.ExpireFailedJobsScanAt, "HH:mm", out var dailyAt))
+        {
+            // For example: "ExpireFailedJobsScanAt": "13:30"
+            cronExpression = Cron.Daily(dailyAt.Hour, dailyAt.Minute);
+        }
+        else
+        {
+            // For example: "ExpireFailedJobsScanAt": "Thursday 12:00"
+            var parts = _hangfireConfiguration.ExpireFailedJobsScanAt.Split(' ');
+            if (parts.Length == 2 && Enum.TryParse<DayOfWeek>(parts[0], out var day) && TimeOnly.TryParse(parts[1], out var at))
+            {
+                cronExpression = Cron.Weekly(day, at.Hour, at.Minute);
+            }
+        }
+        return cronExpression;
+    }
+
+    private AutomaticRetryAttribute GetRetryPolicyFromConfig()
+    {
+        return new AutomaticRetryAttribute
+        {
+            ExceptOn = [typeof(GeneralException)],
+            OnAttemptsExceeded = AttemptsExceededAction.Fail,
+            Attempts = _hangfireConfiguration.ScheduledRetries.Length,
+            DelaysInSeconds = _hangfireConfiguration.ScheduledRetries.Select(c => (int)c.TotalSeconds).ToArray(),
+        };
     }
 }

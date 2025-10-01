@@ -2,13 +2,12 @@ namespace OneGround.ZGW.Notificaties.Messaging.Consumers;
 
 public class NotDeliveredException : Exception
 {
-    public NotDeliveredException(string message, string channelUrl, bool maxRetriesExceeded = false)
-        : base(message)
-    {
-        ChannelUrl = channelUrl;
-        MaxRetriesExeeded = maxRetriesExceeded;
-    }
+    public NotDeliveredException(string message)
+        : base(message) { }
+}
 
-    public string ChannelUrl { get; }
-    public bool MaxRetriesExeeded { get; }
+public class GeneralException : Exception
+{
+    public GeneralException(string message)
+        : base(message) { }
 }
