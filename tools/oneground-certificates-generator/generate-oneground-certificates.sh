@@ -32,7 +32,7 @@ cp "${CERT_FILE_PEM}" "${CERT_FILE_CRT}"
 cat "${CERT_FILE_PEM}" "${KEY_FILE}" > "${COMBINED_FILE}"
 
 # Set permissions to be readable by all users (for cross-platform compatibility)
-chmod 644 "${CERT_FILE_PEM}" "${CERT_FILE_CRT}" "${KEY_FILE}" "${COMBINED_FILE}"
+chmod 666 "${CERT_FILE_PEM}" "${CERT_FILE_CRT}" "${KEY_FILE}" "${COMBINED_FILE}"
 
 echo "Certificates generated successfully!"
 echo "  - Key: ${KEY_FILE}"
