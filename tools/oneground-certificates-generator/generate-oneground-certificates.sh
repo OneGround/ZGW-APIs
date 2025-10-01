@@ -17,6 +17,7 @@ fi
 
 echo "Generating certificates for ${DOMAIN} and *.${DOMAIN}..."
 
+# Create certificate directory with proper permissions
 mkdir -p "$CERT_DIR"
 
 openssl req -x509 -newkey rsa:4096 \
@@ -29,6 +30,9 @@ openssl req -x509 -newkey rsa:4096 \
 cp "${CERT_FILE_PEM}" "${CERT_FILE_CRT}"
 
 cat "${CERT_FILE_PEM}" "${KEY_FILE}" > "${COMBINED_FILE}"
+
+# Set permissions to be readable by all users (for cross-platform compatibility)
+chmod 644 "${CERT_FILE_PEM}" "${CERT_FILE_CRT}" "${KEY_FILE}" "${COMBINED_FILE}"
 
 echo "Certificates generated successfully!"
 echo "  - Key: ${KEY_FILE}"
