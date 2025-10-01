@@ -22,7 +22,11 @@ public class NotificatieManagementJob : INotificatieManagementJob
 
         for (int from = 0; from < total; from += pageSize)
         {
-            var failedJobsBatch = monitor.FailedJobs(from, (int)Math.Min(pageSize, total - from));
+            int count = (int)Math.Min(pageSize, total - from);
+            if (count <= 0)
+                break;
+
+            var failedJobsBatch = monitor.FailedJobs(from, count);
 
             var filteredFailedJobsBatch = failedJobsBatch.Where(kvp => kvp.Value.Job.Type == typeof(NotificatieJob));
 
