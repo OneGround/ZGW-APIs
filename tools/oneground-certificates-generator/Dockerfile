@@ -19,4 +19,4 @@ RUN chown -R certgen:certgen /app
 
 USER certgen
 
-CMD ./generate-oneground-certificates.sh "$DOMAIN"
+CMD ["sh", "-c", "./generate-oneground-certificates.sh \"$DOMAIN\""]
