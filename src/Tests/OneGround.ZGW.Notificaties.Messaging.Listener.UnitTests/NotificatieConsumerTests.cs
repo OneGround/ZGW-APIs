@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoFixture;
 using MassTransit;
@@ -13,8 +13,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.DataModel;
-using OneGround.ZGW.Notificaties.Messaging;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 using Xunit;
 
 namespace OneGround.ZGW.Notificaties.Listener.UnitTests;
@@ -32,7 +32,7 @@ public class SendNotificatiesConsumerTests
 {
     private readonly Fixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<ILogger<SendNotificatiesConsumer>> _logger;
-    private readonly Mock<IPublishEndpoint> _publishEndpoint;
+    private readonly Mock<INotificatieScheduler> _notificatieScheduler;
     private readonly IMemoryCache _memoryCache;
     private readonly IConfiguration _configuration;
     private readonly Mock<INotificationFilterService> _notificationFilterService;
@@ -41,11 +41,9 @@ public class SendNotificatiesConsumerTests
     {
         _logger = new Mock<ILogger<SendNotificatiesConsumer>>();
 
-        _publishEndpoint = new Mock<IPublishEndpoint>();
+        _notificatieScheduler = new Mock<INotificatieScheduler>();
 
-        _publishEndpoint.Setup(m =>
-            m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>())
-        );
+        _notificatieScheduler.Setup(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()));
 
         _notificationFilterService = new Mock<INotificationFilterService>();
         _notificationFilterService
@@ -96,7 +94,7 @@ public class SendNotificatiesConsumerTests
             _logger.Object,
             serviceProvider,
             _memoryCache,
-            _publishEndpoint.Object,
+            _notificatieScheduler.Object,
             _configuration,
             _notificationFilterService.Object
         );
@@ -112,10 +110,7 @@ public class SendNotificatiesConsumerTests
 
         await consumer.Consume(message.Object);
 
-        _publishEndpoint.Verify(
-            m => m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>()),
-            Times.Once
-        );
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
     }
 
     [Fact]
@@ -151,7 +146,7 @@ public class SendNotificatiesConsumerTests
             _logger.Object,
             serviceProvider,
             _memoryCache,
-            _publishEndpoint.Object,
+            _notificatieScheduler.Object,
             _configuration,
             _notificationFilterService.Object
         );
@@ -169,10 +164,7 @@ public class SendNotificatiesConsumerTests
 
         await consumer.Consume(message.Object);
 
-        _publishEndpoint.Verify(
-            m => m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>()),
-            Times.Once
-        );
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
     }
 
     [Fact]
@@ -208,7 +200,7 @@ public class SendNotificatiesConsumerTests
             _logger.Object,
             serviceProvider,
             _memoryCache,
-            _publishEndpoint.Object,
+            _notificatieScheduler.Object,
             _configuration,
             _notificationFilterService.Object
         );
@@ -223,10 +215,7 @@ public class SendNotificatiesConsumerTests
 
         await consumer.Consume(message.Object);
 
-        _publishEndpoint.Verify(
-            m => m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>()),
-            Times.Never
-        );
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
     }
 
     [Fact]
@@ -262,7 +251,7 @@ public class SendNotificatiesConsumerTests
             _logger.Object,
             serviceProvider,
             _memoryCache,
-            _publishEndpoint.Object,
+            _notificatieScheduler.Object,
             _configuration,
             _notificationFilterService.Object
         );
@@ -281,10 +270,7 @@ public class SendNotificatiesConsumerTests
 
         await consumer.Consume(message.Object);
 
-        _publishEndpoint.Verify(
-            m => m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>()),
-            Times.Once
-        );
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
     }
 
     [Fact]
@@ -338,7 +324,7 @@ public class SendNotificatiesConsumerTests
             _logger.Object,
             serviceProvider,
             _memoryCache,
-            _publishEndpoint.Object,
+            _notificatieScheduler.Object,
             _configuration,
             _notificationFilterService.Object
         );
@@ -353,10 +339,7 @@ public class SendNotificatiesConsumerTests
 
         await consumer.Consume(message.Object);
 
-        _publishEndpoint.Verify(
-            m => m.Publish(It.IsAny<INotifySubscriber>(), It.IsAny<IPipe<PublishContext<INotifySubscriber>>>(), It.IsAny<CancellationToken>()),
-            Times.Once
-        );
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
     }
 
     private static ServiceProvider BuildServiceCollection(NrcDbContext context)

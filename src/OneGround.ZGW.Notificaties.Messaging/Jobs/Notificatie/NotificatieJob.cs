@@ -1,49 +1,119 @@
 using Hangfire;
-using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Messaging.Configuration;
+using OneGround.ZGW.Notificaties.Messaging.Consumers;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieJob
 {
-    Task ReQueueNotificatieAsync(SubscriberNotificatie notificatie, TimeSpan? next);
+    Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie);
 }
 
-[DisableConcurrentExecution(10)]
-[AutomaticRetry(Attempts = 5, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
 [Queue(Constants.NrcListenerQueue)]
 public class NotificatieJob : INotificatieJob
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly INotificationSender _notificationSender;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IMemoryCache _memoryCache;
     private readonly ILogger<NotificatieJob> _logger;
+    private readonly ApplicationConfiguration _applicationConfiguration;
 
-    public NotificatieJob(IPublishEndpoint publishEndpoint, ILogger<NotificatieJob> logger)
+    public NotificatieJob(
+        INotificationSender notificationSender,
+        IServiceProvider serviceProvider,
+        IConfiguration configuration,
+        IMemoryCache memoryCache,
+        ILogger<NotificatieJob> logger
+    )
     {
-        _publishEndpoint = publishEndpoint;
+        _notificationSender = notificationSender;
+        _serviceProvider = serviceProvider;
+        _memoryCache = memoryCache;
         _logger = logger;
+
+        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
     }
 
-    public Task ReQueueNotificatieAsync(SubscriberNotificatie notificatie, TimeSpan? next)
+    public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie)
     {
+        ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
+
         using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId))
         {
-            _logger.LogInformation(
-                "{NotificatieJob}: Re-queue on channel '{Kanaal}' subscriber '{ChannelUrl}'",
-                nameof(NotificatieJob),
-                notificatie.Kanaal,
-                notificatie.ChannelUrl
-            );
+            // Get deliver data for this subscriber like callback url and auth
+            var subscriber = await GetCachedAbonnementByIdAsync(abonnementId, CancellationToken.None);
+            if (subscriber == null)
+            {
+                throw new GeneralException(
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Could not find abonnement with id '{abonnementId}'"
+                );
+            }
+            if (string.IsNullOrWhiteSpace(subscriber.CallbackUrl))
+            {
+                throw new GeneralException(
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Abonnement with id '{abonnementId}' has no valid callback url"
+                );
+            }
 
-            // Adjust the RescheduledAt and Next NextScheduled til we reached all appsetting.ScheduledRetries, eg. [ "00:05:00", "00:15:00", "02:00:00", "1.00:00:00" ]
-            notificatie.RescheduledAt = DateTime.Now;
-            notificatie.NextScheduled = next;
-
-            return _publishEndpoint.Publish<INotifySubscriber>(notificatie, cancellationToken: CancellationToken.None);
+            // Notify subscriber on channel....
+            var result = await _notificationSender.SendAsync(notificatie, subscriber.CallbackUrl, subscriber.Auth);
+            if (!result.Success)
+            {
+                throw new NotDeliveredException(
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Could not deliver notificatie to subscriber '{notificatie.Rsin}', channel '{notificatie.Kanaal}', endpoint '{subscriber.CallbackUrl}'"
+                );
+            }
         }
     }
 
     private IDisposable GetLoggingScope(string rsin, Guid correlationId)
     {
         return _logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId, ["RSIN"] = rsin });
+    }
+
+    private async Task<Abonnement> GetCachedAbonnementByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var abonnementen = await _memoryCache.GetOrCreate(
+            $"abonnementen",
+            async e =>
+            {
+                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+
+                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
+
+                var _abonnementen = await dbContext.Abonnementen.AsNoTracking().ToDictionaryAsync(k => k.Id, v => v, cancellationToken);
+
+                _logger.LogDebug("{Count} abonnementen retrieved and all cached", _abonnementen.Count);
+
+                return _abonnementen;
+            }
+        );
+
+        return abonnementen[id];
+    }
+}
+
+public static class NotificatieExtensions
+{
+    public static SubscriberNotificatie ToInstance(this INotificatie notificatie)
+    {
+        return new SubscriberNotificatie
+        {
+            Kanaal = notificatie.Kanaal,
+            HoofdObject = notificatie.HoofdObject,
+            Resource = notificatie.Resource,
+            ResourceUrl = notificatie.ResourceUrl,
+            Actie = notificatie.Actie,
+            Kenmerken = notificatie.Kenmerken,
+            CorrelationId = notificatie.CorrelationId,
+            Rsin = notificatie.Rsin,
+        };
     }
 }
