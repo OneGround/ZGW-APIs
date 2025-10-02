@@ -9,6 +9,9 @@ WORKDIR /app
 
 ENV DOMAIN=oneground.local
 
+RUN mkdir -p /certs && \
+    chown -R certgen:certgen /certs
+
 COPY generate-oneground-certificates.sh .
 
 RUN sed -i 's/\r$//' generate-oneground-certificates.sh
