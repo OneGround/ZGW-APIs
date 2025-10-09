@@ -1,0 +1,39 @@
+# .NET Aspire specific gitignore
+
+# Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Generated certificates (will be copied from localdev)
+OneGround.Aspire.AppHost/haproxy/certs/*.pem
+OneGround.Aspire.AppHost/haproxy/certs/*.key
+OneGround.Aspire.AppHost/haproxy/certs/*.crt
+
+# Keep the .gitkeep file
+!OneGround.Aspire.AppHost/haproxy/certs/.gitkeep
+
+# User secrets
+secrets.json
+
+# Aspire specific
+.aspire/

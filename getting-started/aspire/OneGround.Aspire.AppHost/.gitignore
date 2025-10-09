@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+.idea/
+haproxy/certs/*.pem
+!haproxy/certs/.gitkeep

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>oneground-aspire-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.0" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="8.0.0" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Project references for running from source - only included when UseDockerImages is false -->
+  <ItemGroup Condition="'$(UseDockerImages)' == 'false'">
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Autorisaties.WebApi\OneGround.ZGW.Autorisaties.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Besluiten.WebApi\OneGround.ZGW.Besluiten.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Catalogi.WebApi\OneGround.ZGW.Catalogi.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Documenten.WebApi\OneGround.ZGW.Documenten.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Notificaties.WebApi\OneGround.ZGW.Notificaties.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Referentielijsten.WebApi\OneGround.ZGW.Referentielijsten.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Zaken.WebApi\OneGround.ZGW.Zaken.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Documenten.Messaging.Listener\OneGround.ZGW.Documenten.Messaging.Listener.csproj" />
+    <ProjectReference Include="..\..\..\src\OneGround.ZGW.Notificaties.Messaging.Listener\OneGround.ZGW.Notificaties.Messaging.Listener.csproj" />
+  </ItemGroup>
+
+</Project>

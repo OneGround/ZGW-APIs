@@ -1,0 +1,2 @@
+# This directory contains SSL certificates for HAProxy
+# A self-signed certificate will be generated automatically on first run
