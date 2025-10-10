@@ -12,4 +12,4 @@ RUN sed -i 's/\r$//' generate-oneground-certificates.sh
 
 RUN chmod +x generate-oneground-certificates.sh
 
-CMD "./generate-oneground-certificates.sh" $DOMAIN
+CMD ["sh", "-c", "./generate-oneground-certificates.sh \"$DOMAIN\""]
