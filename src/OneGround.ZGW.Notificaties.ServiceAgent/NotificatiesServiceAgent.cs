@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
@@ -52,5 +53,44 @@ public class NotificatiesServiceAgent : ZGWServiceAgent<NotificatiesServiceAgent
     {
         var url = new Uri("/notificaties", UriKind.Relative);
         return await PostAsync<NotificatieDto, NotificatieDto>(url, request);
+    }
+
+    public async Task<ServiceAgentResponse<IEnumerable<AbonnementResponseDto>>> GetAllAbonnementenAsync()
+    {
+        Logger.LogDebug("Getting all abonnementen");
+
+        var url = new Uri("/abonnement", UriKind.Relative);
+
+        return await GetAsync<IEnumerable<AbonnementResponseDto>>(url);
+    }
+
+    public async Task<ServiceAgentResponse<AbonnementDto>> GetAbonnementByUrlAsync(string url)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+
+        if (!EnsureValidResource(ServiceRoleName.NRC, url, "notificaties", out var errorResponse))
+            return new ServiceAgentResponse<AbonnementDto>(errorResponse);
+
+        Logger.LogDebug("Getting abonnement: '{url}'....", url);
+
+        return await GetAsync<AbonnementDto>(new Uri(url));
+    }
+
+    public Task<ServiceAgentResponse<AbonnementDto>> AddAbonnementAsync(AbonnementDto abonnement)
+    {
+        var url = new Uri("/abonnement", UriKind.Relative);
+        return PostAsync<AbonnementDto, AbonnementDto>(url, abonnement);
+    }
+
+    public async Task<ServiceAgentResponse<AbonnementDto>> PatchAbonnementByUrlAsync(string url, JObject abonnementPatchRequest)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+
+        if (!EnsureValidResource(ServiceRoleName.NRC, url, "abonnement", out var errorResponse))
+            return new ServiceAgentResponse<AbonnementDto>(errorResponse);
+
+        Logger.LogDebug("Patching abonnement: '{abonnementUrl}'....", url);
+
+        return await PatchAsync<AbonnementDto>(new Uri(url), abonnementPatchRequest);
     }
 }

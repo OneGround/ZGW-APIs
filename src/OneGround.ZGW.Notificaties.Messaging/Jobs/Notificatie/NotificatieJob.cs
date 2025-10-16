@@ -4,7 +4,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.Batching;
+using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
@@ -13,7 +14,7 @@ namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieJob
 {
-    Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie);
+    Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null);
 }
 
 [Queue(Constants.NrcListenerQueue)]
@@ -22,6 +23,8 @@ public class NotificatieJob : INotificatieJob
     private readonly INotificationSender _notificationSender;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _memoryCache;
+    private readonly IBatchIdAccessor _batchIdAccessor;
+    private readonly ICorrelationContextAccessor _correlationIdAccessor;
     private readonly ILogger<NotificatieJob> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
@@ -30,30 +33,36 @@ public class NotificatieJob : INotificatieJob
         IServiceProvider serviceProvider,
         IConfiguration configuration,
         IMemoryCache memoryCache,
+        IBatchIdAccessor batchIdAccessor,
+        ICorrelationContextAccessor correlationIdAccessor,
         ILogger<NotificatieJob> logger
     )
     {
         _notificationSender = notificationSender;
         _serviceProvider = serviceProvider;
         _memoryCache = memoryCache;
+        _batchIdAccessor = batchIdAccessor;
+        _correlationIdAccessor = correlationIdAccessor;
         _logger = logger;
 
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
     }
 
-    public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie)
+    public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null)
     {
         ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
 
-        using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId))
+        using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId, batchId))
         {
             // Get deliver data for this subscriber like callback url and auth
             var subscriber = await GetCachedAbonnementByIdAsync(abonnementId, CancellationToken.None);
             if (subscriber == null)
             {
-                throw new GeneralException(
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Could not find abonnement with id '{abonnementId}'"
+                _logger.LogWarning(
+                    "Abonnement with id {abonnementId} not found. Probably deleted withing the retry period of the job.",
+                    abonnementId
                 );
+                return; // Job Ignored->Succeeded
             }
             if (string.IsNullOrWhiteSpace(subscriber.CallbackUrl))
             {
@@ -62,7 +71,11 @@ public class NotificatieJob : INotificatieJob
                 );
             }
 
+            SetBatchIdOrDefault(batchId);
+            SetCorrelationId(notificatie);
+
             // Notify subscriber on channel....
+
             var result = await _notificationSender.SendAsync(notificatie, subscriber.CallbackUrl, subscriber.Auth);
             if (!result.Success)
             {
@@ -73,9 +86,33 @@ public class NotificatieJob : INotificatieJob
         }
     }
 
-    private IDisposable GetLoggingScope(string rsin, Guid correlationId)
+    private void SetCorrelationId(SubscriberNotificatie notificatie)
     {
-        return _logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId, ["RSIN"] = rsin });
+        _correlationIdAccessor.SetCorrelationId(notificatie.CorrelationId.ToString());
+    }
+
+    private void SetBatchIdOrDefault(Guid? batchId)
+    {
+        _batchIdAccessor.Id = batchId.HasValue ? batchId.ToString() : null;
+    }
+
+    private IDisposable GetLoggingScope(string rsin, Guid correlationId, Guid? batchId)
+    {
+        if (batchId.HasValue)
+        {
+            return _logger.BeginScope(
+                new Dictionary<string, object>
+                {
+                    ["CorrelationId"] = correlationId,
+                    ["RSIN"] = rsin,
+                    ["BatchId"] = batchId,
+                }
+            );
+        }
+        else
+        {
+            return _logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId, ["RSIN"] = rsin });
+        }
     }
 
     private async Task<Abonnement> GetCachedAbonnementByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -97,23 +134,5 @@ public class NotificatieJob : INotificatieJob
         );
 
         return abonnementen[id];
-    }
-}
-
-public static class NotificatieExtensions
-{
-    public static SubscriberNotificatie ToInstance(this INotificatie notificatie)
-    {
-        return new SubscriberNotificatie
-        {
-            Kanaal = notificatie.Kanaal,
-            HoofdObject = notificatie.HoofdObject,
-            Resource = notificatie.Resource,
-            ResourceUrl = notificatie.ResourceUrl,
-            Actie = notificatie.Actie,
-            Kenmerken = notificatie.Kenmerken,
-            CorrelationId = notificatie.CorrelationId,
-            Rsin = notificatie.Rsin,
-        };
     }
 }
