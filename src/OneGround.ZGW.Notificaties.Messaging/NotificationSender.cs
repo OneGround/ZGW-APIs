@@ -82,7 +82,6 @@ public class NotificationSender : INotificationSender
 
             if (!string.IsNullOrEmpty(_batchIdAccessor?.Id))
             {
-                _client.DefaultRequestHeaders.Add("X-Batch-Id", _batchIdAccessor.Id);
                 httpRequest.Headers.Add("X-Batch-Id", _batchIdAccessor.Id);
             }
 

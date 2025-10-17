@@ -58,10 +58,7 @@ public class NotificatieJob : INotificatieJob
             var subscriber = await GetCachedAbonnementByIdAsync(abonnementId, CancellationToken.None);
             if (subscriber == null)
             {
-                _logger.LogWarning(
-                    "Abonnement with id {abonnementId} not found. Probably deleted withing the retry period of the job.",
-                    abonnementId
-                );
+                _logger.LogWarning("Abonnement with id {abonnementId} not found. Probably deleted within the retry period of the job.", abonnementId);
                 return; // Job Ignored->Succeeded
             }
             if (string.IsNullOrWhiteSpace(subscriber.CallbackUrl))
