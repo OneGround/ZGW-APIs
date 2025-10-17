@@ -113,9 +113,12 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             continue;
                         }
 
+                        // Get optional BatchId header
+                        context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
+
                         // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
                         var job = _notificatieScheduler.Enqueue<NotificatieJob>(h =>
-                            h.ReQueueNotificatieAsync(abonnement.Id, notificatie.ToInstance())
+                            h.ReQueueNotificatieAsync(abonnement.Id, notificatie.ToInstance(), null, batchId)
                         );
 
                         Logger.LogInformation(

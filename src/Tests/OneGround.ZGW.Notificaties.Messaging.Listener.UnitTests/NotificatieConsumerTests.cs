@@ -108,6 +108,9 @@ public class SendNotificatiesConsumerTests
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
 
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
         await consumer.Consume(message.Object);
 
         _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
@@ -162,6 +165,9 @@ public class SendNotificatiesConsumerTests
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
 
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
         await consumer.Consume(message.Object);
 
         _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
@@ -212,6 +218,9 @@ public class SendNotificatiesConsumerTests
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
 
         await consumer.Consume(message.Object);
 
@@ -267,6 +276,9 @@ public class SendNotificatiesConsumerTests
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
 
         await consumer.Consume(message.Object);
 
@@ -336,6 +348,9 @@ public class SendNotificatiesConsumerTests
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
 
         await consumer.Consume(message.Object);
 
