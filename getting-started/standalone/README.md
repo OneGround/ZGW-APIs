@@ -103,8 +103,8 @@ ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Data
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
@@ -136,8 +136,8 @@ ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Data
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
@@ -178,8 +178,8 @@ ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Data
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
@@ -223,8 +223,8 @@ ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Data
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
@@ -274,8 +274,8 @@ Eventbus__Password="guest"
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- ZGW Service Dependencies ---
@@ -325,8 +325,8 @@ ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Data
 Redis__ConnectionString="redis:6379"
 
 # --- Identity Provider (OAuth2) Settings ---
-Auth__Authority="http://localhost:8080/realms/OneGround/"
-Auth__ValidIssuer="http://localhost:8080/realms/OneGround"
+Auth__Authority="https://keycloak-tool.oneground.local/realms/OneGround/"
+Auth__ValidIssuer="https://keycloak-tool.oneground.local/realms/OneGround"
 Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
