@@ -126,6 +126,8 @@ services:
       - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_HTTP_ENABLED=true
       - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME=https://${KEYCLOAK_HOST}
+      - KC_PROXY_HEADERS=xforwarded
       - KEYCLOAK_LOGLEVEL=debug
       - KC_DB=postgres
       - KC_DB_DATABASE=keycloak
