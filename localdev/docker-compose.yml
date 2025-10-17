@@ -23,15 +23,17 @@ services:
     networks:
       oneground:
         aliases:
-          - ${NRC_HOST}
-          - ${ZTC_HOST}
-          - ${ZRC_HOST}
-          - ${DRC_HOST}
-          - ${BRC_HOST}
-          - ${RC_HOST}
           - ${AC_HOST}
-          - ${NRC_LISTENER_HOST}
+          - ${BRC_HOST}
+          - ${ZTC_HOST}
+          - ${DRC_HOST}
+          - ${NRC_HOST}
+          - ${RC_HOST}
+          - ${ZRC_HOST}
           - ${DRC_LISTENER_HOST}
+          - ${NRC_LISTENER_HOST}
+          - ${HAPROXY_HOST}
+          - ${KEYCLOAK_HOST}
 
   rabbit_mq:
     image: rabbitmq:3.13-management
