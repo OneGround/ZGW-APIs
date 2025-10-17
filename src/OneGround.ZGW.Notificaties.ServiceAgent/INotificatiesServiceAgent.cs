@@ -17,7 +17,6 @@ public interface INotificatiesServiceAgent
     Task<ServiceAgentResponse<NotificatieDto>> NotifyAsync(NotificatieDto request, CancellationToken ct = default);
 
     Task<ServiceAgentResponse<IEnumerable<AbonnementResponseDto>>> GetAllAbonnementenAsync();
-    Task<ServiceAgentResponse<AbonnementDto>> GetAbonnementByUrlAsync(string url);
     Task<ServiceAgentResponse<AbonnementDto>> AddAbonnementAsync(AbonnementDto abonnement);
     Task<ServiceAgentResponse<AbonnementDto>> PatchAbonnementByUrlAsync(string url, JObject abonnementPatchRequest);
 }

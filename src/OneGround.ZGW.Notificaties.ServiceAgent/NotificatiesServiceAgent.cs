@@ -64,18 +64,6 @@ public class NotificatiesServiceAgent : ZGWServiceAgent<NotificatiesServiceAgent
         return await GetAsync<IEnumerable<AbonnementResponseDto>>(url);
     }
 
-    public async Task<ServiceAgentResponse<AbonnementDto>> GetAbonnementByUrlAsync(string url)
-    {
-        ArgumentNullException.ThrowIfNull(url);
-
-        if (!EnsureValidResource(ServiceRoleName.NRC, url, "notificaties", out var errorResponse))
-            return new ServiceAgentResponse<AbonnementDto>(errorResponse);
-
-        Logger.LogDebug("Getting abonnement: '{url}'....", url);
-
-        return await GetAsync<AbonnementDto>(new Uri(url));
-    }
-
     public Task<ServiceAgentResponse<AbonnementDto>> AddAbonnementAsync(AbonnementDto abonnement)
     {
         var url = new Uri("/abonnement", UriKind.Relative);
