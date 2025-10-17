@@ -23,17 +23,18 @@ services:
     networks:
       oneground:
         aliases:
-          - ${AC_HOST}
-          - ${BRC_HOST}
-          - ${ZTC_HOST}
-          - ${DRC_HOST}
           - ${NRC_HOST}
-          - ${RC_HOST}
+          - ${ZTC_HOST}
           - ${ZRC_HOST}
-          - ${DRC_LISTENER_HOST}
+          - ${DRC_HOST}
+          - ${BRC_HOST}
+          - ${RC_HOST}
+          - ${AC_HOST}
           - ${NRC_LISTENER_HOST}
+          - ${DRC_LISTENER_HOST}
           - ${HAPROXY_HOST}
           - ${KEYCLOAK_HOST}
+          - ${RABBIT_MQ_HOST}
 
   rabbit_mq:
     image: rabbitmq:3.13-management
@@ -415,3 +416,4 @@ volumes:
 networks:
   oneground:
     driver: bridge
+    
