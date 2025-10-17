@@ -1,4 +1,6 @@
 using Hangfire;
+using Hangfire.Console;
+using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -14,7 +16,9 @@ namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieJob
 {
+    [Obsolete("Use overload with PerformContext (which adds functionality like logging")] // Note: Keep the old one for backward compatibility
     Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null);
+    Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, PerformContext context = null, Guid? batchId = null);
 }
 
 [Queue(Constants.NrcListenerQueue)]
@@ -48,7 +52,17 @@ public class NotificatieJob : INotificatieJob
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
     }
 
-    public async Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null)
+    public Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null)
+    {
+        return ReQueueNotificatieAsync(abonnementId, notificatie, null, batchId);
+    }
+
+    public async Task ReQueueNotificatieAsync(
+        Guid abonnementId,
+        SubscriberNotificatie notificatie,
+        PerformContext context = null,
+        Guid? batchId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
 
@@ -72,14 +86,28 @@ public class NotificatieJob : INotificatieJob
             SetCorrelationId(notificatie);
 
             // Notify subscriber on channel....
+            context.WriteLineColored(
+                ConsoleTextColor.Blue,
+                $"Try to deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
+            );
 
             var result = await _notificationSender.SendAsync(notificatie, subscriber.CallbackUrl, subscriber.Auth);
             if (!result.Success)
             {
+                context.WriteLineColored(
+                    ConsoleTextColor.Red,
+                    $"Could not deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
+                );
+
                 throw new NotDeliveredException(
                     $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Could not deliver notificatie to subscriber '{notificatie.Rsin}', channel '{notificatie.Kanaal}', endpoint '{subscriber.CallbackUrl}'"
                 );
             }
+
+            context.WriteLineColored(
+                ConsoleTextColor.Blue,
+                $"Successfully delivered notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
+            );
         }
     }
 
