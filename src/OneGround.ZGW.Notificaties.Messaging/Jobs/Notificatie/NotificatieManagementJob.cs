@@ -1,8 +1,6 @@
 using Hangfire;
 using Hangfire.Console;
 using Hangfire.Server;
-using OneGround.ZGW.Notificaties.DataModel;
-using StackExchange.Redis;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
