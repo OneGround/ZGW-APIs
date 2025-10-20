@@ -57,11 +57,11 @@ public class NotificatieManagementJob : INotificatieManagementJob
 
         if (jobsToDelete.Any())
         {
-            context.WriteLineColored(ConsoleTextColor.Blue, $"{jobsToDelete.Count} failed Notificatie jobs older than {maxAgeFailedJob} deleted.");
+            context.WriteLineColored(ConsoleTextColor.Yellow, $"{jobsToDelete.Count} failed Notificatie jobs older than {maxAgeFailedJob} deleted.");
         }
         else
         {
-            context.WriteLineColored(ConsoleTextColor.Blue, $"No Failed Notificatie jobs older than {maxAgeFailedJob} found to delete.");
+            context.WriteLineColored(ConsoleTextColor.Yellow, $"No Failed Notificatie jobs older than {maxAgeFailedJob} found to delete.");
         }
     }
 }

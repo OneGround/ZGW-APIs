@@ -10,7 +10,7 @@ public static class ContextExtensions
         if (context != null)
         {
             context.SetTextColor(color);
-            context.WriteLine($"\t{message}");
+            context.WriteLine(message);
             context.ResetTextColor();
         }
     }

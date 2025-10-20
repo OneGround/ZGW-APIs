@@ -87,7 +87,7 @@ public class NotificatieJob : INotificatieJob
 
             // Notify subscriber on channel....
             context.WriteLineColored(
-                ConsoleTextColor.Blue,
+                ConsoleTextColor.Yellow,
                 $"Try to deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
             );
 
@@ -105,7 +105,7 @@ public class NotificatieJob : INotificatieJob
             }
 
             context.WriteLineColored(
-                ConsoleTextColor.Blue,
+                ConsoleTextColor.Yellow,
                 $"Successfully delivered notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
             );
         }
