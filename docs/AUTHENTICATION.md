@@ -21,7 +21,7 @@ This guide explains how to authenticate against the ZGW APIs during local develo
 
 ### Get the Client Secret from Keycloak
 
-1. Navigate to the Keycloak admin console: [http://localhost:8080/admin/master/console/#/OneGround/](http://localhost:8080/admin/master/console/#/OneGround/)
+1. Navigate to the Keycloak admin console: [https://keycloak-tool.oneground.local/admin/master/console/#/OneGround/](https://keycloak-tool.oneground.local/admin/master/console/#/OneGround/)
 2. Log in using the credentials:
     - **Username**: `admin`
     - **Password**: `admin`
@@ -41,7 +41,7 @@ Now you can exchange the client credentials for a temporary access token. Use th
 
     ```powershell
     $response = Invoke-WebRequest `
-        -Uri "http://localhost:8080/realms/OneGround/protocol/openid-connect/token" `
+        -Uri "https://keycloak-tool.oneground.local/realms/OneGround/protocol/openid-connect/token" `
         -Method POST `
         -Headers @{"Content-Type" = "application/x-www-form-urlencoded"} `
         -Body "grant_type=client_credentials&client_id=oneground-000000000&client_secret=<oneground-client-secret>"
@@ -58,7 +58,7 @@ Now you can exchange the client credentials for a temporary access token. Use th
 - Open terminal and execute this command:
 
 ```bash
-curl --location --request POST 'http://localhost:8080/realms/OneGround/protocol/openid-connect/token' \
+curl --location --request POST 'https://keycloak-tool.oneground.local/realms/OneGround/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'grant_type=client_credentials' \
 --data-urlencode 'client_id=oneground-000000000' \
@@ -81,7 +81,7 @@ You will receive a JSON response containing the `access_token`. You can now use 
 > **Warning:** Extending access token lifespans reduces security. Long-lived tokens are easier to steal and misuse and increase the impact of any leak because they remain valid for longer. Only increase token lifespans for local testing in non-production environments.
 > By default, the access token expires in 5 minutes (300 seconds). To increase this time:
 >
-> 1. Navigate directly to the **Tokens** settings page in Keycloak: [http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens](http://localhost:8080/admin/master/console/#/OneGround/realm-settings/tokens).
+> 1. Navigate directly to the **Tokens** settings page in Keycloak: [https://keycloak-tool.oneground.local/admin/master/console/#/OneGround/realm-settings/tokens](https://keycloak-tool.oneground.local/admin/master/console/#/OneGround/realm-settings/tokens).
 > 2. In the `Access Token Lifespan` field, set a longer duration (e.g., `30 minutes` or `1 hour`).
 > 3. Click **Save**.
 >
