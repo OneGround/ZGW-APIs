@@ -87,7 +87,7 @@ public class NotificationSender : INotificationSender
 
             if (!string.IsNullOrEmpty(_correlationIdAccessor?.CorrelationId))
             {
-                httpRequest.Headers.Add("X-Correlation-Id", _correlationIdAccessor?.CorrelationId);
+                httpRequest.Headers.Add("X-Correlation-Id", _correlationIdAccessor.CorrelationId);
             }
 
             var response = await _client.SendAsync(httpRequest, cancellationToken);
