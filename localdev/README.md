@@ -145,17 +145,20 @@ To ensure all services can communicate with each other and are accessible in you
 2. Add the following lines to the end of the file and save it:
 
     ```txt
-    127.0.0.1 zaken.oneground.local
+    127.0.0.1 autorisaties.oneground.local
+    127.0.0.1 besluiten.oneground.local
     127.0.0.1 catalogi.oneground.local
+    127.0.0.1 documenten.oneground.local
+    127.0.0.1 documentlistener.oneground.local
     127.0.0.1 notificaties.oneground.local
     127.0.0.1 notificaties-receiver.oneground.local
-    127.0.0.1 besluiten.oneground.local
-    127.0.0.1 documenten.oneground.local
-    127.0.0.1 autorisaties.oneground.local
-    127.0.0.1 referentielijsten.oneground.local
     127.0.0.1 notificatielistener.oneground.local
-    127.0.0.1 documentlistener.oneground.local
-    127.0.0.1 haproxy.oneground.local
+    127.0.0.1 referentielijsten.oneground.local
+    127.0.0.1 zaken.oneground.local
+    127.0.0.1 haproxy-tool.oneground.local
+    127.0.0.1 keycloak-tool.oneground.local
+    127.0.0.1 rabbitmq-tool.oneground.local
+
     ```
 
 ### 5. Configure API Authentication
@@ -220,9 +223,9 @@ Here is a reference list of all the services and tools running in this Docker se
 
 ### Hosted Tools
 
-| Tool              | URL                                                                | Notes                                                          |
-| :---------------- | :----------------------------------------------------------------- | :------------------------------------------------------------- |
-| **HAProxy Stats** | [https://haproxy.oneground.local](https://haproxy.oneground.local) | View statistics for the reverse proxy.                         |
-| **Keycloak**      | [http://localhost:8080](http://localhost:8080)                     | Identity and Access Management (user: admin, password: admin). |
-| **RabbitMQ**      | [http://localhost:15672](http://localhost:15672)                   | Message broker management UI (user: guest, password: guest).   |
-| **PostgreSQL**    | `http://localhost:5432`                                            | Database server. Connect with any SQL client.                  |
+| Tool              | URL                                                                              | Notes                                                          |
+| :---------------- | :------------------------------------------------------------------------------- | :------------------------------------------------------------- |
+| **HAProxy Stats** | [https://haproxy-tool.oneground.local/](https://haproxy-tool.oneground.local/)   | View statistics for the reverse proxy.                         |
+| **Keycloak**      | [https://keycloak-tool.oneground.local/](https://keycloak-tool.oneground.local/) | Identity and Access Management (user: admin, password: admin). |
+| **RabbitMQ**      | [https://rabbitmq-tool.oneground.local/](https://rabbitmq-tool.oneground.local/) | Message broker management UI (user: guest, password: guest).   |
+| **PostgreSQL**    | `http://localhost:5432`                                                          | Database server. Connect with any SQL client.                  |
