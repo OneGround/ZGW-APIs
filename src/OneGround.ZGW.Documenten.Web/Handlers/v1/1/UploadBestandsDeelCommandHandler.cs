@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Documenten.Web.Services;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -24,6 +25,7 @@ class UploadBestandsDeelCommandHandler
 {
     private readonly DrcDbContext _context;
     private readonly IDocumentService _documentService;
+    private readonly IFileValidationService _fileValidationService;
 
     public UploadBestandsDeelCommandHandler(
         ILogger<UploadBestandsDeelCommandHandler> logger,
@@ -33,13 +35,14 @@ class UploadBestandsDeelCommandHandler
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentServicesResolver documentServicesResolver,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IFileValidationService fileValidationService
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
-
         _documentService = documentServicesResolver.GetDefault();
+        _fileValidationService = fileValidationService;
     }
 
     public async Task<CommandResult<BestandsDeel>> Handle(UploadBestandsDeelCommand request, CancellationToken cancellationToken)
@@ -83,15 +86,18 @@ class UploadBestandsDeelCommandHandler
         try
         {
             // Upload bestandsdeel
-            using (var content = request.Inhoud.OpenReadStream())
+            await using (var stream = request.Inhoud.OpenReadStream())
             {
+                await _fileValidationService.ValidateAsync(stream, bestandsdeel.EnkelvoudigInformatieObjectVersie.Formaat, cancellationToken);
+
                 var result = await _documentService.TryUploadPartAsync(
                     multipartdocument,
-                    content,
+                    stream,
                     bestandsdeel.Volgnummer,
                     bestandsdeel.Omvang,
                     cancellationToken
                 );
+
                 if (result == null)
                 {
                     var error = new ValidationError("nonFieldErrors", ErrorCode.FileSize, _documentService.LastError.error);

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -7,6 +6,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Moq;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
@@ -202,6 +202,63 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         Assert.NotNull(addedNewVersionOfDocument);
 
         _mockNotificatieService.Verify(m => m.NotifyAsync(It.IsAny<Notification>(), default), Times.Never);
+    }
+
+    [Fact]
+    public async Task Existing_Document_Update_With_Base64_Inhoud_Should_And_Invalid_File_Signature_Returns_Error()
+    {
+        // Setup
+
+        await SetupMocksAsync();
+
+        _mockDocumentService
+            .Setup(m =>
+                m.AddDocumentAsync(
+                    "VW5pdFRlc3Qy",
+                    "updated_smalldocument_1.txt",
+                    It.IsAny<string>(),
+                    It.IsAny<DocumentMeta>(),
+                    true,
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00"), 9));
+
+        _mockFileValidationService
+            .Setup(x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OneGroundException("Invalid file signature"));
+
+        var handler = CreateHandler();
+
+        var current = await SetupCurrentEnkelvoudigInformatieObject(
+            "added_smalldocument.txt",
+            "urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f",
+            8
+        );
+
+        var merged = MergeWithCurrentEnkelvoudigInformatieObject(
+            current,
+            partialEnkelvoudigInformatieObjectRequest: JsonConvert.DeserializeObject(
+                "{ 'inhoud': 'VW5pdFRlc3Qy', 'bestandsomvang': 9, 'bestandsnaam': 'updated_smalldocument_1.txt'}"
+            )
+        );
+
+        var command = new UpdateEnkelvoudigInformatieObjectCommand
+        {
+            EnkelvoudigInformatieObjectVersie = merged,
+            ExistingEnkelvoudigInformatieObjectId = current.Id,
+        };
+
+        // Act
+
+        CommandResult<EnkelvoudigInformatieObjectVersie> result = await handler.Handle(command, new CancellationToken());
+
+        // Assert
+
+        // Assert
+        Assert.Equal(CommandStatus.ValidationError, result.Status);
+        Assert.Contains(result.Errors, e => e.Name == "inhoud");
+        Assert.Contains(result.Errors, e => e.Reason.Contains("Inhoud is invalid."));
     }
 
     [Fact]
@@ -1029,7 +1086,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            fileValidationService: _mockFileValidationService.Object
         );
     }
 

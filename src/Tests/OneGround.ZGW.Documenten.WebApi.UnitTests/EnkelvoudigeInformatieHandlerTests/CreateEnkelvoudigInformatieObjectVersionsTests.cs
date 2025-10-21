@@ -3,9 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -19,7 +18,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [Fact]
     public async Task Create_Base64_Document_Should_Send_Notification()
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -78,7 +77,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_MetaOnly_Document_Should_Send_Notification(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -138,7 +137,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_Large_Document_Should_Not_send_Notification(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -186,7 +185,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [Fact]
     public async Task Create_Base64_Document_Should_Add_Document_v1_In_Document_Store()
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -257,12 +256,67 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         );
     }
 
+    [Fact]
+    public async Task Create_Base64_Document_With_Invalid_Signature_Should_Return_Error()
+    {
+        // Arrange
+        await SetupMocksAsync();
+
+        _mockDocumentService
+            .Setup(m =>
+                m.AddDocumentAsync(
+                    "VW5pdFRlc3Q=",
+                    "added_smalldocument.txt",
+                    It.IsAny<string>(),
+                    It.IsAny<DocumentMeta>(),
+                    true,
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f"), 8));
+
+        _mockFileValidationService
+            .Setup(x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OneGroundException("Invalid file signature"));
+
+        var handler = CreateHandler();
+
+        // Act
+        CreateEnkelvoudigInformatieObjectCommand command = new CreateEnkelvoudigInformatieObjectCommand
+        {
+            EnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+            {
+                // Test-part
+                Inhoud = "VW5pdFRlc3Q=",
+                Bestandsomvang = 8,
+                Bestandsnaam = "added_smalldocument.txt",
+                // Other
+                Bronorganisatie = "000001375",
+                Formaat = "raw",
+                Taal = "eng",
+                Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
+                // Parent EnkelvoudigInformatieObject
+                InformatieObject = new EnkelvoudigInformatieObject
+                {
+                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
+                },
+            },
+        };
+
+        CommandResult<EnkelvoudigInformatieObjectVersie> result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(CommandStatus.ValidationError, result.Status);
+        Assert.Contains(result.Errors, e => e.Name == "inhoud");
+        Assert.Contains(result.Errors, e => e.Reason.Contains("Inhoud is invalid."));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(null)]
     public async Task Create_MetaOnly_Document_Should_Add_Document_v1_Only_In_Database(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -339,7 +393,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_Large_Document_Should_Add_Document_v1_And_Add_Bestandsdelen_In_Database(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -423,7 +477,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            fileValidationService: _mockFileValidationService.Object
         );
     }
 }

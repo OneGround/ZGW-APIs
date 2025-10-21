@@ -137,6 +137,8 @@ public class Startup
         services.AddScoped<IVerzendingBusinessRuleService, VerzendingBusinessRuleService>();
         services.AddTransient<IInformatieObjectAuthorizationTempTableService, InformatieObjectAuthorizationTempTableService>();
         services.AddScoped<IDocumentKenmerkenResolver, DocumentKenmerkenResolver>();
+        services.AddScoped<IFileValidationService, FileValidationService>();
+        services.AddScoped<IFileSignatureValidator, FileSignatureValidator>();
 
         services.AddSingleton<ILockGenerator, LockGenerator>();
 

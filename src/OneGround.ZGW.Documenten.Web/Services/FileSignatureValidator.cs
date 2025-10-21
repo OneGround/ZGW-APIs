@@ -10,17 +10,41 @@ namespace OneGround.ZGW.Documenten.Web.Services;
 
 public class FileSignatureValidator : IFileSignatureValidator
 {
+    public async Task EnsureFileSignatureIsValidAsync(string tempFilePath, string contentType, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(tempFilePath))
+            throw new OneGroundException("Temp file path is null or empty");
+
+        if (!File.Exists(tempFilePath))
+            throw new OneGroundException("Temp file does not exist");
+
+        if (string.IsNullOrEmpty(contentType))
+            throw new OneGroundException("Content type is null or empty");
+
+        await using var stream = File.OpenRead(tempFilePath);
+        await EnsureFileSignatureIsValidAsync(stream, contentType, ct);
+    }
+
     public async Task<Stream> EnsureFileSignatureIsValidAsync(Stream stream, string contentType, CancellationToken ct = default)
     {
+        if (string.IsNullOrEmpty(contentType))
+            throw new OneGroundException("Content type is null or empty");
+
         var fileSignatures = FileSignatures.GetFileSignatures(contentType);
         var byteCountToValidate = fileSignatures.Max(s => s.Length);
         var readBytes = new byte[byteCountToValidate];
 
-        await stream.ReadAsync(readBytes, 0, byteCountToValidate, ct);
+        await stream.ReadAsync(readBytes.AsMemory(0, byteCountToValidate), ct);
 
         var isValid = IsValid(fileSignatures, byteCountToValidate, readBytes);
         if (!isValid)
             throw new OneGroundException("Invalid file");
+
+        if (stream.CanSeek)
+        {
+            stream.Position = 0;
+            return stream;
+        }
 
         var combinedStream = PrependReadBytesToOriginalStream(readBytes, stream);
 

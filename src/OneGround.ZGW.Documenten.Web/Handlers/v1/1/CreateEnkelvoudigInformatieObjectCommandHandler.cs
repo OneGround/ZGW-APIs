@@ -45,7 +45,8 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IFileValidationService fileValidationService
     )
         : base(
             logger,
@@ -61,7 +62,8 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             lockGenerator,
             formOptions,
             notificatieService,
-            documentKenmerkenResolver
+            documentKenmerkenResolver,
+            fileValidationService
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -88,6 +90,8 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         versie.EscapeBestandsNaamWhenInvalid();
 
         var errors = new List<ValidationError>();
+
+        await ValidateFileAsync(versie, errors, cancellationToken);
 
         versie.Versie = 1;
 
