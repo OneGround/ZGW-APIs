@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Hangfire" />
+    <PackageReference Include="Hangfire.Console.Extensions" />
     <PackageReference Include="Hangfire.PostgreSql" />
     <PackageReference Include="MassTransit.Hangfire" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />

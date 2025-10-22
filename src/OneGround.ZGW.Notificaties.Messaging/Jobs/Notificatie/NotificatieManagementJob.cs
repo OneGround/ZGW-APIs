@@ -1,17 +1,25 @@
 using Hangfire;
+using Hangfire.Console;
+using Hangfire.Server;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieManagementJob
 {
+    [Obsolete("Use overload with PerformContext (which adds functionality like logging")] // Note: Keep the old one for backward compatibility
     void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob);
+    void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null);
 }
 
-[DisableConcurrentExecution(10)]
 [Queue(Constants.NrcListenerQueue)]
 public class NotificatieManagementJob : INotificatieManagementJob
 {
     public void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob)
+    {
+        ExpireFailedJobsScanAt(maxAgeFailedJob, null);
+    }
+
+    public void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null)
     {
         const int pageSize = 100;
 
@@ -45,6 +53,15 @@ public class NotificatieManagementJob : INotificatieManagementJob
         foreach (var jobId in jobsToDelete)
         {
             BackgroundJob.Delete(jobId); // Set Job state Deleted -> will expire afterward automatically
+        }
+
+        if (jobsToDelete.Any())
+        {
+            context.WriteLineColored(ConsoleTextColor.Yellow, $"{jobsToDelete.Count} failed Notificatie jobs older than {maxAgeFailedJob} deleted.");
+        }
+        else
+        {
+            context.WriteLineColored(ConsoleTextColor.Yellow, $"No Failed Notificatie jobs older than {maxAgeFailedJob} found to delete.");
         }
     }
 }

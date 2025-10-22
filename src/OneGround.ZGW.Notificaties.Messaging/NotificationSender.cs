@@ -3,6 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Batching;
+using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
@@ -19,13 +21,23 @@ public class NotificationSender : INotificationSender
     private readonly ILogger<NotificationSender> _logger;
     private readonly HttpClient _client;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly IBatchIdAccessor _batchIdAccessor;
+    private readonly ICorrelationContextAccessor _correlationIdAccessor;
 
-    public NotificationSender(IConfiguration configuration, ILogger<NotificationSender> logger, HttpClient client)
+    public NotificationSender(
+        IConfiguration configuration,
+        ILogger<NotificationSender> logger,
+        HttpClient client,
+        IBatchIdAccessor batchIdAccessor,
+        ICorrelationContextAccessor correlationIdAccessor
+    )
     {
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _logger = logger;
         _client = client;
         _client.Timeout = _applicationConfiguration.CallbackTimeout;
+        _batchIdAccessor = batchIdAccessor;
+        _correlationIdAccessor = correlationIdAccessor;
     }
 
     public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default)
@@ -67,6 +79,16 @@ public class NotificationSender : INotificationSender
             httpRequest.Method = HttpMethod.Post;
             httpRequest.RequestUri = new Uri(url);
             httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+            if (!string.IsNullOrEmpty(_batchIdAccessor?.Id))
+            {
+                httpRequest.Headers.Add("X-Batch-Id", _batchIdAccessor.Id);
+            }
+
+            if (!string.IsNullOrEmpty(_correlationIdAccessor?.CorrelationId))
+            {
+                httpRequest.Headers.Add("X-Correlation-Id", _correlationIdAccessor.CorrelationId);
+            }
 
             var response = await _client.SendAsync(httpRequest, cancellationToken);
 
