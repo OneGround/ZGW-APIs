@@ -22,6 +22,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -35,6 +36,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
     protected readonly Lazy<IDocumentService> _lazyDocumentService;
     protected readonly ILockGenerator _lockGenerator;
     protected readonly IOptions<FormOptions> _formOptions;
+    private readonly IFileValidationService _fileValidationService;
 
     protected MutatieEnkelvoudigInformatieObjectCommandHandler(
         ILogger<T> logger,
@@ -50,7 +52,8 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IFileValidationService fileValidationService
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -61,6 +64,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         _auditTrailFactory = auditTrailFactory;
         _lockGenerator = lockGenerator;
         _formOptions = formOptions;
+        _fileValidationService = fileValidationService;
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
     }
 
@@ -78,6 +82,31 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         return !_context
             .EnkelvoudigInformatieObjectVersies.AsNoTracking()
             .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
+    }
+
+    protected async Task ValidateFileAsync(
+        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie,
+        List<ValidationError> errors,
+        CancellationToken cancellationToken
+    )
+    {
+        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
+            return;
+
+        try
+        {
+            await _fileValidationService.ValidateAsync(
+                enkelvoudigInformatieObjectVersie.Inhoud,
+                enkelvoudigInformatieObjectVersie.Bestandsnaam,
+                cancellationToken
+            );
+        }
+        catch (Exception)
+        {
+            //TODO: update to proper error code and message
+            var error = new ValidationError("inhoud", ErrorCode.Invalid, "Inhoud is invalid.");
+            errors.Add(error);
+        }
     }
 
     protected async Task<(string inhoud, long bestandsomvang)> TryAddDocumentToDocumentStore(

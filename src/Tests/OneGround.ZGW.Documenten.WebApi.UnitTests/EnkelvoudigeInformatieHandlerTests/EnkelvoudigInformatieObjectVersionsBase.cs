@@ -23,6 +23,7 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
@@ -48,6 +49,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
     protected DrcDbContext _mockDbContext;
     protected IConfiguration _configuration;
     protected Mock<IOptions<FormOptions>> _mockFormOptions;
+    protected Mock<IFileValidationService> _mockFileValidationService;
 
     protected async Task SetupMocksAsync(List<EnkelvoudigInformatieObjectVersie> enkelvoudigeInformatieObjectVersies = null)
     {
@@ -135,6 +137,8 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
         _mockDocumentKenmerkenResolver
             .Setup(m => m.GetKenmerkenAsync(It.IsAny<EnkelvoudigInformatieObject>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>() { { "bronOrganisatie", "123" } });
+
+        _mockFileValidationService = new Mock<IFileValidationService>();
     }
 
     protected async Task<DbContextOptions<DrcDbContext>> GetMockedDrcDbContext(
