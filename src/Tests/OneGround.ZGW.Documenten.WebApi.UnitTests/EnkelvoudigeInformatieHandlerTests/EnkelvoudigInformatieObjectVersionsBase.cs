@@ -23,6 +23,7 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;

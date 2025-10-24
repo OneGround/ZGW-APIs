@@ -16,6 +16,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -88,7 +89,7 @@ class UploadBestandsDeelCommandHandler
             // Upload bestandsdeel
             await using (var stream = request.Inhoud.OpenReadStream())
             {
-                await _fileValidationService.ValidateAsync(stream, bestandsdeel.EnkelvoudigInformatieObjectVersie.Formaat, cancellationToken);
+                await _fileValidationService.ValidateAsync(stream, bestandsdeel.EnkelvoudigInformatieObjectVersie.Bestandsnaam, cancellationToken);
 
                 var result = await _documentService.TryUploadPartAsync(
                     multipartdocument,

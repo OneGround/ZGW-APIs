@@ -22,6 +22,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -96,7 +97,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         {
             await _fileValidationService.ValidateAsync(
                 enkelvoudigInformatieObjectVersie.Inhoud,
-                enkelvoudigInformatieObjectVersie.Formaat,
+                enkelvoudigInformatieObjectVersie.Bestandsnaam,
                 cancellationToken
             );
         }
