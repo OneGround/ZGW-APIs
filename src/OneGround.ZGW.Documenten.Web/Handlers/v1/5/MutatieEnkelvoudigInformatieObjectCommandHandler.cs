@@ -84,24 +84,18 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
     }
 
-    protected async Task ValidateFileAsync(
+    protected void ValidateFile(
         EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie,
         List<ValidationError> errors,
         CancellationToken cancellationToken
     )
     {
         if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
-        {
             return;
-        }
 
         try
         {
-            await _fileValidationService.ValidateAsync(
-                enkelvoudigInformatieObjectVersie.Inhoud,
-                enkelvoudigInformatieObjectVersie.Bestandsnaam,
-                cancellationToken
-            );
+            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam, cancellationToken);
         }
         catch (Exception)
         {

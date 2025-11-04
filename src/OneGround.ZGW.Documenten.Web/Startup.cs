@@ -139,7 +139,6 @@ public class Startup
         services.AddTransient<IInformatieObjectAuthorizationTempTableService, InformatieObjectAuthorizationTempTableService>();
         services.AddScoped<IDocumentKenmerkenResolver, DocumentKenmerkenResolver>();
         services.AddScoped<IFileValidationService, FileValidationService>();
-        services.AddScoped<IFileSignatureValidator, FileSignatureValidator>();
         services.AddScoped<IFileExtensionValidator, FileExtensionValidator>();
 
         services.AddSingleton<ILockGenerator, LockGenerator>();

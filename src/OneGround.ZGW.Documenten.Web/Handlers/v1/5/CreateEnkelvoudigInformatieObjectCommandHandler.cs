@@ -92,7 +92,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         var errors = new List<ValidationError>();
 
-        await ValidateFileAsync(versie, errors, cancellationToken);
+        ValidateFile(versie, errors, cancellationToken);
 
         versie.Versie = 1;
 

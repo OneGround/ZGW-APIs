@@ -225,8 +225,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00"), 9));
 
         _mockFileValidationService
-            .Setup(x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new OneGroundException("Invalid file signature"));
+            .Setup(x => x.Validate(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Throws(new OneGroundException("Invalid file signature"));
 
         var handler = CreateHandler();
 
