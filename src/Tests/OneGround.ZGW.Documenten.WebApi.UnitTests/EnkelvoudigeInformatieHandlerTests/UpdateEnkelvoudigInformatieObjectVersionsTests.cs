@@ -254,8 +254,6 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         CommandResult<EnkelvoudigInformatieObjectVersie> result = await handler.Handle(command, new CancellationToken());
 
         // Assert
-
-        // Assert
         Assert.Equal(CommandStatus.ValidationError, result.Status);
         Assert.Contains(result.Errors, e => e.Name == "inhoud");
         Assert.Contains(result.Errors, e => e.Reason.Contains("Inhoud is invalid."));
