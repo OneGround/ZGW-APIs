@@ -13,6 +13,7 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
@@ -97,7 +98,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         {
             _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam, cancellationToken);
         }
-        catch (Exception)
+        catch (OneGroundException)
         {
             var error = new ValidationError(
                 "inhoud",
