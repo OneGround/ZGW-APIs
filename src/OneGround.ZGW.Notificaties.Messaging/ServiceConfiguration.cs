@@ -1,4 +1,5 @@
 using Hangfire;
+using Hangfire.Console;
 using Hangfire.PostgreSql;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
@@ -117,8 +118,6 @@ public class ServiceConfiguration
             x.AddMessageScheduler(new Uri($"queue:{Constants.NrcHangfireQueue}"));
         });
 
-        services.AddHostedService<FailedQueueInitializationService>();
-
         services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
         services.AddNotificatiesServerJobs();
 
@@ -143,7 +142,7 @@ public class ServiceConfiguration
 
                     RecurringJob.AddOrUpdate<NotificatieManagementJob>(
                         "expire-failed-jobs",
-                        h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter),
+                        h => h.ExpireFailedJobsScanAt(_hangfireConfiguration.ExpireFailedJobAfter, null),
                         expireFailedJobsScanAtCronExpr
                     );
                 }
@@ -151,6 +150,8 @@ public class ServiceConfiguration
                 {
                     RecurringJob.RemoveIfExists("expire-failed-jobs");
                 }
+
+                o.UseConsole();
             }
         );
     }
@@ -190,6 +191,12 @@ public class ServiceConfiguration
 
     private AutomaticRetryAttribute GetRetryPolicyFromConfig()
     {
+        if (_hangfireConfiguration.ScheduledRetries == null || _hangfireConfiguration.ScheduledRetries.Length == 0)
+        {
+            // No retries
+            return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
+        }
+
         return new AutomaticRetryAttribute
         {
             ExceptOn = [typeof(GeneralException)],
