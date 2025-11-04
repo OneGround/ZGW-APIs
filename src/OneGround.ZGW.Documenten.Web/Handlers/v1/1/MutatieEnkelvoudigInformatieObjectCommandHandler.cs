@@ -99,8 +99,11 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         }
         catch (Exception)
         {
-            //TODO: update to proper error code and message
-            var error = new ValidationError("inhoud", ErrorCode.Invalid, "Inhoud is invalid.");
+            var error = new ValidationError(
+                "inhoud",
+                ErrorCode.Invalid,
+                "Het document is geweigerd omdat het type van het bestand niet is toegestaan.");
+
             errors.Add(error);
         }
     }
