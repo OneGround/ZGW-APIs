@@ -103,7 +103,8 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             var error = new ValidationError(
                 "bestandsnaam",
                 ErrorCode.Invalid,
-                "Het document is geweigerd omdat het type van het bestand niet is toegestaan.");
+                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
+            );
 
             errors.Add(error);
         }
