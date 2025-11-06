@@ -101,7 +101,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         catch (OneGroundException)
         {
             var error = new ValidationError(
-                "inhoud",
+                "bestandsnaam",
                 ErrorCode.Invalid,
                 "Het document is geweigerd omdat het type van het bestand niet is toegestaan.");
 
