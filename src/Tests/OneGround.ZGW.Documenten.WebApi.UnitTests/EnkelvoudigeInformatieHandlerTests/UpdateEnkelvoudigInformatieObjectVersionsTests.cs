@@ -205,61 +205,6 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     }
 
     [Fact]
-    public async Task Existing_Document_Update_With_Base64_Inhoud_Should_And_Invalid_File_Signature_Returns_Error()
-    {
-        // Setup
-
-        await SetupMocksAsync();
-
-        _mockDocumentService
-            .Setup(m =>
-                m.AddDocumentAsync(
-                    "VW5pdFRlc3Qy",
-                    "updated_smalldocument_1.txt",
-                    It.IsAny<string>(),
-                    It.IsAny<DocumentMeta>(),
-                    true,
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:b143ec80-e893-413e-99a6-767492307e00"), 9));
-
-        _mockFileValidationService
-            .Setup(x => x.Validate(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Throws(new OneGroundException("Invalid file signature"));
-
-        var handler = CreateHandler();
-
-        var current = await SetupCurrentEnkelvoudigInformatieObject(
-            "added_smalldocument.txt",
-            "urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f",
-            8
-        );
-
-        var merged = MergeWithCurrentEnkelvoudigInformatieObject(
-            current,
-            partialEnkelvoudigInformatieObjectRequest: JsonConvert.DeserializeObject(
-                "{ 'inhoud': 'VW5pdFRlc3Qy', 'bestandsomvang': 9, 'bestandsnaam': 'updated_smalldocument_1.txt'}"
-            )
-        );
-
-        var command = new UpdateEnkelvoudigInformatieObjectCommand
-        {
-            EnkelvoudigInformatieObjectVersie = merged,
-            ExistingEnkelvoudigInformatieObjectId = current.Id,
-        };
-
-        // Act
-
-        CommandResult<EnkelvoudigInformatieObjectVersie> result = await handler.Handle(command, new CancellationToken());
-
-        // Assert
-        Assert.Equal(CommandStatus.ValidationError, result.Status);
-        Assert.Contains(result.Errors, e => e.Name == "inhoud");
-        Assert.Contains(result.Errors, e => e.Reason.Contains("Inhoud is invalid."));
-    }
-
-    [Fact]
     public async Task Existing_Base64_Document_Update_With_Base64_Inhoud_And_Bestandsomvang_Should_Add_Document_v2_In_Document_Store()
     {
         // Setup

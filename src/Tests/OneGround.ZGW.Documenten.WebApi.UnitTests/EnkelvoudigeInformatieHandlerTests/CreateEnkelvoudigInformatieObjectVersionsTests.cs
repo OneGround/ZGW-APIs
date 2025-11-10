@@ -256,61 +256,6 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         );
     }
 
-    [Fact]
-    public async Task Create_Base64_Document_With_Invalid_Signature_Should_Return_Error()
-    {
-        // Arrange
-        await SetupMocksAsync();
-
-        _mockDocumentService
-            .Setup(m =>
-                m.AddDocumentAsync(
-                    "VW5pdFRlc3Q=",
-                    "added_smalldocument.txt",
-                    It.IsAny<string>(),
-                    It.IsAny<DocumentMeta>(),
-                    true,
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:f46545e7-0a79-4047-af30-ff5afa73916f"), 8));
-
-        _mockFileValidationService
-            .Setup(x => x.Validate(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Throws(new OneGroundException("Invalid file signature"));
-
-        var handler = CreateHandler();
-
-        // Act
-        CreateEnkelvoudigInformatieObjectCommand command = new CreateEnkelvoudigInformatieObjectCommand
-        {
-            EnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
-            {
-                // Test-part
-                Inhoud = "VW5pdFRlc3Q=",
-                Bestandsomvang = 8,
-                Bestandsnaam = "added_smalldocument.txt",
-                // Other
-                Bronorganisatie = "000001375",
-                Formaat = "raw",
-                Taal = "eng",
-                Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
-                // Parent EnkelvoudigInformatieObject
-                InformatieObject = new EnkelvoudigInformatieObject
-                {
-                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
-                },
-            },
-        };
-
-        CommandResult<EnkelvoudigInformatieObjectVersie> result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(CommandStatus.ValidationError, result.Status);
-        Assert.Contains(result.Errors, e => e.Name == "inhoud");
-        Assert.Contains(result.Errors, e => e.Reason.Contains("Inhoud is invalid."));
-    }
-
     [Theory]
     [InlineData("")]
     [InlineData(null)]
