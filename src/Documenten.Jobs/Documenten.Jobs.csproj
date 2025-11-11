@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <AssemblyName>Roxit.ZGW.Documenten.Jobs</AssemblyName>
     <RootNamespace>Roxit.ZGW.Documenten.Jobs</RootNamespace>
   </PropertyGroup>

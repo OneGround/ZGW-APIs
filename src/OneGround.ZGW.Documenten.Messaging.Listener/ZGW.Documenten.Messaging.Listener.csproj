@@ -12,6 +12,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Hangfire.PostgreSql" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging\ZGW.Documenten.Messaging.csproj" />
   </ItemGroup>
