@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Roxit.ZGW.Documenten.Jobs</AssemblyName>
+    <RootNamespace>Roxit.ZGW.Documenten.Jobs</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hangfire" />
+    <PackageReference Include="Hangfire.Console.Extensions" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\backend\src\Common\ZGW.Internal.Common\ZGW.Internal.Common.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
+  </ItemGroup>
+</Project>

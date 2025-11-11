@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -62,9 +63,17 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
             _ => throw new ArgumentException(null, nameof(besluitEntity)),
         };
 
-    public async Task SendNotificationAsync(Actie actie, Besluit besluit, CancellationToken cancellationToken)
+    public async Task SendNotificationAsync(
+        Actie actie,
+        Besluit besluit,
+        CancellationToken cancellationToken,
+        Dictionary<string, string> extraKenmerken = null
+    )
     {
         var hoofdObject = _uriService.GetUri(besluit);
+
+        var kenmerken = await _besluitKenmerkenResolver.GetKenmerkenAsync(besluit, cancellationToken);
+        AddExtraKenmerken(kenmerken, extraKenmerken);
 
         await SendNotificationAsync(
             new Notification
@@ -74,18 +83,26 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
                 Resource = Resource.besluit.ToString(),
                 ResourceUrl = hoofdObject,
                 Actie = actie.ToString(),
-                Kenmerken = await _besluitKenmerkenResolver.GetKenmerkenAsync(besluit, cancellationToken),
+                Kenmerken = kenmerken,
                 Rsin = besluit.Owner,
             },
             cancellationToken
         );
     }
 
-    public async Task SendNotificationAsync<TBesluitEntity>(Actie actie, TBesluitEntity besluitEntity, CancellationToken cancellationToken)
+    public async Task SendNotificationAsync<TBesluitEntity>(
+        Actie actie,
+        TBesluitEntity besluitEntity,
+        CancellationToken cancellationToken,
+        Dictionary<string, string> extraKenmerken = null
+    )
         where TBesluitEntity : IBesluitEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(besluitEntity.Besluit);
         var resourceUrl = _uriService.GetUri(besluitEntity);
+
+        var kenmerken = await _besluitKenmerkenResolver.GetKenmerkenAsync(besluitEntity.Besluit, cancellationToken);
+        AddExtraKenmerken(kenmerken, extraKenmerken);
 
         await SendNotificationAsync(
             new Notification
@@ -95,7 +112,7 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
                 Resource = GetEntityResource(besluitEntity).ToString(),
                 ResourceUrl = resourceUrl,
                 Actie = actie.ToString(),
-                Kenmerken = await _besluitKenmerkenResolver.GetKenmerkenAsync(besluitEntity.Besluit, cancellationToken),
+                Kenmerken = kenmerken,
                 Rsin = besluitEntity.Besluit.Owner,
             },
             cancellationToken
@@ -111,6 +128,17 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
         else
         {
             _logger.LogDebug("Warning: Notifications are disabled. Notification {@Notification} will not be sent.", notification);
+        }
+    }
+
+    private static void AddExtraKenmerken(Dictionary<string, string> kenmerken, Dictionary<string, string> extraKenmerken)
+    {
+        if (extraKenmerken != null)
+        {
+            foreach (var kvp in extraKenmerken)
+            {
+                kenmerken[kvp.Key] = kvp.Value;
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneGround.ZGW.Besluiten.Contracts.v1.Queries;
@@ -12,4 +13,5 @@ public interface IBesluitenServiceAgent
     Task<ServiceAgentResponse<IEnumerable<BesluitInformatieObjectResponseDto>>> GetBesluitInformatieObjectenAsync(
         GetAllBesluitInformatieObjectenQueryParameters parameters
     );
+    Task<ServiceAgentResponse> DeleteBesluitInformatieObjectByIdAsync(Guid besluitInformatieObjectId);
 }
