@@ -89,7 +89,7 @@ class UploadBestandsDeelCommandHandler
             // Upload bestandsdeel
             await using (var stream = request.Inhoud.OpenReadStream())
             {
-                _fileValidationService.Validate(bestandsdeel.EnkelvoudigInformatieObjectVersie.Bestandsnaam, cancellationToken);
+                _fileValidationService.Validate(bestandsdeel.EnkelvoudigInformatieObjectVersie.Bestandsnaam);
 
                 var result = await _documentService.TryUploadPartAsync(
                     multipartdocument,

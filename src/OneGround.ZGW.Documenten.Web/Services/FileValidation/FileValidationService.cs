@@ -11,7 +11,7 @@ public class FileValidationService : IFileValidationService
         _fileExtensionValidator = fileExtensionValidator;
     }
 
-    public void Validate(string fileName, CancellationToken ct = default)
+    public void Validate(string fileName)
     {
         _fileExtensionValidator.EnsureFileExtensionIsAllowed(fileName);
     }

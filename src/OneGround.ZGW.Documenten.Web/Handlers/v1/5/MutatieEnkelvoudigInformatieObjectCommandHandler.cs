@@ -96,7 +96,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
 
         try
         {
-            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam, cancellationToken);
+            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
         }
         catch (OneGroundException)
         {
