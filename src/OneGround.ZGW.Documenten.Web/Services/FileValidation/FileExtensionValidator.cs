@@ -12,6 +12,8 @@ public class FileExtensionValidator : IFileExtensionValidator
             throw new ArgumentException("File name must not be null or empty.", nameof(fileName));
 
         var extension = Path.GetExtension(fileName);
+        if (string.IsNullOrWhiteSpace(extension))
+            return;
 
         if (FileExtensions.DisallowedExtensions.Contains(extension))
             throw new OneGroundException($"File extension '{extension}' is not allowed.");
