@@ -121,7 +121,7 @@ public class Startup
         services.Configure<FormOptions>(opt =>
         {
             // NOTE: also KestrelServerLimits.MaxRequestBodySize limit is removed in Program.cs
-            opt.MultipartBodyLengthLimit = Configuration.GetValue("Application:UploadLargeDocumentChunkSizeMB", defaultValue: 128) * 1024 * 1024;
+            opt.MultipartBodyLengthLimit = Configuration.GetValue("Application:UploadLargeDocumentChunkSizeMB", defaultValue: 128) * 1024L * 1024L;
         });
 
         services.AddCommonServices();

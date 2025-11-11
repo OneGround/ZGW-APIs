@@ -37,4 +37,10 @@ public class BesluitenServiceAgent : ZGWServiceAgent<BesluitenServiceAgent>, IBe
     {
         return await GetAsync<BesluitInformatieObjectResponseDto>("/besluitinformatieobjecten", parameters);
     }
+
+    public async Task<ServiceAgentResponse> DeleteBesluitInformatieObjectByIdAsync(Guid besluitInformatieObjectId)
+    {
+        var url = new Uri($"/besluitinformatieobjecten/{besluitInformatieObjectId}", UriKind.Relative);
+        return await DeleteAsync(url);
+    }
 }

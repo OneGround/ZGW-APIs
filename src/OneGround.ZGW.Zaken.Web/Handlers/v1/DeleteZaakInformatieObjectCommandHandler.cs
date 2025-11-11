@@ -3,22 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
-using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
@@ -31,37 +26,25 @@ class DeleteZaakInformatieObjectCommandHandler
         IRequestHandler<DeleteZaakInformatieObjectCommand, CommandResult>
 {
     private readonly ZrcDbContext _context;
-    private readonly IRequestClient<IDeleteObjectInformatieObject> _client;
-    private readonly IPublishEndpoint _publishEndpoint;
     private readonly IAuditTrailFactory _auditTrailFactory;
-    private readonly ICorrelationContextAccessor _correlationContextAccessor;
     private readonly IClosedZaakModificationBusinessRule _closedZaakModificationBusinessRule;
-    private readonly IBatchIdAccessor _batchIdAccessor;
 
     public DeleteZaakInformatieObjectCommandHandler(
         ILogger<DeleteZaakInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
         ZrcDbContext context,
         INotificatieService notificatieService,
-        IRequestClient<IDeleteObjectInformatieObject> client,
-        IPublishEndpoint publishEndpoint,
         IAuditTrailFactory auditTrailFactory,
         IEntityUriService uriService,
         IClosedZaakModificationBusinessRule closedZaakModificationBusinessRule,
-        ICorrelationContextAccessor correlationContextAccessor,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBatchIdAccessor batchIdAccessor,
         IZaakKenmerkenResolver zaakKenmerkenResolver
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
-        _client = client;
-        _publishEndpoint = publishEndpoint;
         _auditTrailFactory = auditTrailFactory;
         _closedZaakModificationBusinessRule = closedZaakModificationBusinessRule;
-        _correlationContextAccessor = correlationContextAccessor;
-        _batchIdAccessor = batchIdAccessor;
     }
 
     public async Task<CommandResult> Handle(DeleteZaakInformatieObjectCommand request, CancellationToken cancellationToken)
@@ -105,84 +88,11 @@ class DeleteZaakInformatieObjectCommandHandler
             _logger.LogDebug("ZaakInformatieObject {Id} successfully deleted.", zaakInformatieObject.Id);
         }
 
-        await SynchronizeObjectInformatieObjectInDrc(zaak, zaakInformatieObject, cancellationToken);
+        var extraKenmerken = new Dictionary<string, string> { { "zaakinformatieobject.informatieobject", zaakInformatieObject.InformatieObject } };
 
-        await SendNotificationAsync(Actie.destroy, zaakInformatieObject, cancellationToken);
+        await SendNotificationAsync(Actie.destroy, zaakInformatieObject, cancellationToken, extraKenmerken);
 
         return new CommandResult(CommandStatus.OK);
-    }
-
-    private async Task SynchronizeObjectInformatieObjectInDrc(
-        Zaak zaak,
-        ZaakInformatieObject zaakInformatieObject,
-        CancellationToken cancellationToken
-    )
-    {
-        bool asyncOnly = _applicationConfiguration.DrcSynchronizationAsyncOnlyMode;
-
-        //
-        // Note: The mirrored relationship in the Documents API is removed by the Business API. Consumers cannot do this manually.
-
-        bool timeout = false;
-        if (!asyncOnly && string.IsNullOrEmpty(_batchIdAccessor.Id))
-        {
-            // Only non-batch messages should be called synchroneously
-            try
-            {
-                // Non-batch messages should be handled first so try to handle synchroneously
-                // Try to get ObjectInformatieObject synchronized into the DRC
-                var response = await _client.GetResponse<DeleteObjectInformatieObjectResult>(
-                    new
-                    {
-                        Object = _uriService.GetUri(zaak),
-                        ObjectDestroy = true,
-                        zaakInformatieObject.InformatieObject,
-                        Rsin = _rsin,
-                        _correlationContextAccessor.CorrelationId,
-                    },
-                    timeout: _applicationConfiguration.DrcSynchronizationTimeoutSeconds * 1000
-                );
-
-                _logger.LogDebug(
-                    "Successfully removed the mirrored relationship from DRC. Url was {ObjectInformatieObjectUrl}",
-                    response.Message.ObjectInformatieObjectUrl
-                );
-                return;
-            }
-            catch (RequestTimeoutException ex)
-            {
-                _logger.LogWarning(ex, "Timeout error removing the mirrored relationship from DRC. Message is put on the queue and processed later.");
-
-                timeout = true;
-            }
-        }
-
-        if (!string.IsNullOrEmpty(_batchIdAccessor.Id) || asyncOnly || timeout)
-        {
-            byte priority = (byte)(string.IsNullOrEmpty(_batchIdAccessor.Id) ? MessagePriority.Normal : MessagePriority.Low);
-
-            try
-            {
-                // Handle it a-synchroneously in case of batch messages or in case of an error (timeout)
-                await _publishEndpoint.Publish<IDeleteObjectInformatieObject>(
-                    new
-                    {
-                        Object = _uriService.GetUri(zaak),
-                        ObjectDestroy = true,
-                        zaakInformatieObject.InformatieObject,
-                        Rsin = _rsin,
-                        _correlationContextAccessor.CorrelationId,
-                    },
-                    context => context.SetPriority(priority),
-                    cancellationToken
-                );
-            }
-            catch (Exception ex)
-            {
-                // TEST issue
-                _logger.LogError(ex, "Publishing: Error removing the mirrored relationship from DRC.");
-            }
-        }
     }
 
     private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakinformatieobject" };

@@ -16,8 +16,6 @@ namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieJob
 {
-    [Obsolete("Use overload with PerformContext (which adds functionality like logging")] // Note: Keep the old one for backward compatibility
-    Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null);
     Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, PerformContext context = null, Guid? batchId = null);
 }
 
@@ -50,11 +48,6 @@ public class NotificatieJob : INotificatieJob
         _logger = logger;
 
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
-    }
-
-    public Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, Guid? batchId = null)
-    {
-        return ReQueueNotificatieAsync(abonnementId, notificatie, null, batchId);
     }
 
     public async Task ReQueueNotificatieAsync(

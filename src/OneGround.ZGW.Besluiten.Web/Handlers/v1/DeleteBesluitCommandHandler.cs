@@ -2,24 +2,21 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.DataModel;
+using OneGround.ZGW.Besluiten.ServiceAgent.v1;
 using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Besluiten.Web.Notificaties;
-using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.Constants;
-using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 
 namespace OneGround.ZGW.Besluiten.Web.Handlers.v1;
@@ -27,34 +24,28 @@ namespace OneGround.ZGW.Besluiten.Web.Handlers.v1;
 class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHandler>, IRequestHandler<DeleteBesluitCommand, CommandResult>
 {
     private readonly BrcDbContext _context;
-    private readonly IPublishEndpoint _publishEndpoint;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly IZakenServiceAgent _zakenServiceAgent;
-    private readonly ICorrelationContextAccessor _correlationContextAccessor;
-    private readonly IBatchIdAccessor _batchIdAccessor;
+    private readonly IBesluitenServiceAgent _besluitenServiceAgent;
 
     public DeleteBesluitCommandHandler(
         ILogger<DeleteBesluitCommandHandler> logger,
         IConfiguration configuration,
         BrcDbContext context,
         INotificatieService notificatieService,
-        IPublishEndpoint publishEndpoint,
         IAuditTrailFactory auditTrailFactory,
         IEntityUriService uriService,
         IZakenServiceAgent zakenServiceAgent,
-        ICorrelationContextAccessor correlationContextAccessor,
-        IBatchIdAccessor batchIdAccessor,
+        IBesluitenServiceAgent besluitenServiceAgent,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, besluitKenmerkenResolver)
     {
         _context = context;
-        _publishEndpoint = publishEndpoint;
         _auditTrailFactory = auditTrailFactory;
         _zakenServiceAgent = zakenServiceAgent;
-        _correlationContextAccessor = correlationContextAccessor;
-        _batchIdAccessor = batchIdAccessor;
+        _besluitenServiceAgent = besluitenServiceAgent;
     }
 
     public async Task<CommandResult> Handle(DeleteBesluitCommand request, CancellationToken cancellationToken)
@@ -81,30 +72,7 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Note: This also implies: Vernietigen van besluiten (brc-008)
-            foreach (var besluitInformatieObject in besluit.BesluitInformatieObjecten)
-            {
-                _logger.LogDebug("Synchronizing BesluitInformatieObject {Id}....", besluitInformatieObject.Id);
-
-                byte priority = (byte)(string.IsNullOrEmpty(_batchIdAccessor.Id) ? MessagePriority.Normal : MessagePriority.Low);
-
-                // Note: During deletion, the mirrored relationship is also deleted from the Documents API.
-
-                // Synchroniseren relaties met informatieobjecten (brc-005)
-                await _publishEndpoint.Publish<IDeleteObjectInformatieObject>(
-                    new
-                    {
-                        Object = _uriService.GetUri(besluitInformatieObject.Besluit),
-                        ObjectDestroy = true,
-                        besluitInformatieObject.InformatieObject,
-                        Rsin = _rsin,
-                        _correlationContextAccessor.CorrelationId,
-                    },
-                    context => context.SetPriority(priority),
-                    cancellationToken
-                );
-
-                _context.BesluitInformatieObjecten.Remove(besluitInformatieObject);
-            }
+            await DeleteAndSyncBesluitInformatieObjectenAsync(besluit, cancellationToken);
 
             _logger.LogDebug("Deleting Besluit {Id}....", besluit.Id);
 
@@ -130,6 +98,27 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
         await SendNotificationAsync(Actie.destroy, besluit, cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
+    }
+
+    private async Task DeleteAndSyncBesluitInformatieObjectenAsync(Besluit besluit, CancellationToken cancellationToken)
+    {
+        // Note: Before deleting the besluit, delete all related besluitinformatieobjecten from BRC via the BesluitenServiceAgent!
+        //   Doing so triggers the synchronization with DRC (the DocumentListener notificatie-receiver deletes the mirrored relation-ships)
+        foreach (var besluitInformatieObject in besluit.BesluitInformatieObjecten)
+        {
+            _logger.LogDebug("Deleting and synchronizing BesluitInformatieObject {Id}....", besluitInformatieObject.Id);
+
+            var result = await _besluitenServiceAgent.DeleteBesluitInformatieObjectByIdAsync(besluitInformatieObject.Id);
+            if (!result.Success)
+            {
+                var errors = result.GetErrorsFromResponse();
+                _logger.LogError(
+                    "Failed to delete besluitinformatieobject {besluitInformatieObjectUrl}. {errors}",
+                    besluitInformatieObject.Url,
+                    errors
+                );
+            }
+        }
     }
 
     private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.BRC, Resource = "besluit" };

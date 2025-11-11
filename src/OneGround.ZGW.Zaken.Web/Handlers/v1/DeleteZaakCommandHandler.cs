@@ -3,22 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.Constants;
-using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.ServiceAgent.v1;
 using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.Notificaties;
 
@@ -27,31 +24,25 @@ namespace OneGround.ZGW.Zaken.Web.Handlers.v1;
 class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRequestHandler<DeleteZaakCommand, CommandResult>
 {
     private readonly ZrcDbContext _context;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IZakenServiceAgent _zakenServiceAgent;
     private readonly IAuditTrailFactory _auditTrailFactory;
-    private readonly ICorrelationContextAccessor _correlationContextAccessor;
-    private readonly IBatchIdAccessor _batchIdAccessor;
 
     public DeleteZaakCommandHandler(
         ILogger<DeleteZaakCommandHandler> logger,
         IConfiguration configuration,
         ZrcDbContext context,
         IEntityUriService uriService,
-        IPublishEndpoint publishEndpoint,
+        IZakenServiceAgent zakenServiceAgent,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        ICorrelationContextAccessor correlationContextAccessor,
-        IBatchIdAccessor batchIdAccessor,
         INotificatieService notificatieService,
         IZaakKenmerkenResolver zaakKenmerkenResolver
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, notificatieService, zaakKenmerkenResolver)
     {
         _context = context;
-        _publishEndpoint = publishEndpoint;
+        _zakenServiceAgent = zakenServiceAgent;
         _auditTrailFactory = auditTrailFactory;
-        _correlationContextAccessor = correlationContextAccessor;
-        _batchIdAccessor = batchIdAccessor;
     }
 
     public async Task<CommandResult> Handle(DeleteZaakCommand request, CancellationToken cancellationToken)
@@ -62,6 +53,12 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
             if (!zakenAndDeelZaken.Any())
             {
                 return new CommandResult(CommandStatus.NotFound);
+            }
+
+            // Synchroniseren relaties met informatieobjecten (zrc-005)
+            foreach (var zaak in zakenAndDeelZaken)
+            {
+                await DeleteAndSyncZaakInformatieObjectenAsync(zaak, cancellationToken);
             }
 
             foreach (var zaak in zakenAndDeelZaken)
@@ -77,8 +74,6 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
             // Note: After successfull commit
             foreach (var zaak in zakenAndDeelZaken)
             {
-                await SynchronizeZaakInformatieObjectenAsync(zaak, cancellationToken);
-
                 await SendNotificationAsync(Actie.destroy, zaak, cancellationToken);
             }
         }
@@ -123,46 +118,27 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        RemoveZaakInformatieObjecten(zaak);
         RemoveZaak(zaak);
         RemoveAudit(zaak);
 
         return new CommandResult(CommandStatus.OK);
     }
 
-    private void RemoveZaakInformatieObjecten(Zaak zaak)
+    private async Task DeleteAndSyncZaakInformatieObjectenAsync(Zaak zaak, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Deleting ZaakInformatieObjecten from zaak {Id}....", zaak.Id);
-
-        var zaakInformatieObjecten = _context.ZaakInformatieObjecten.Where(a => a.ZaakId == zaak.Id);
-
-        _context.ZaakInformatieObjecten.RemoveRange(zaakInformatieObjecten);
-    }
-
-    private async Task SynchronizeZaakInformatieObjectenAsync(Zaak zaak, CancellationToken cancellationToken)
-    {
+        // Note: Before deleting the zaak, delete all related zaakinformatieobjecten from ZRC via the ZakenServiceAgent!
+        //   Doing so triggers the synchronization with DRC (the DocumentListener notificatie-receiver deletes the mirrored relation-ships)
         foreach (var zaakInformatieObject in zaak.ZaakInformatieObjecten)
         {
-            _logger.LogDebug("Synchronizing ZaakInformatieObject {Id}....", zaakInformatieObject.Id);
+            _logger.LogDebug("Deleting and synchronizing ZaakInformatieObject {Id}....", zaakInformatieObject.Id);
 
-            byte priority = (byte)(string.IsNullOrEmpty(_batchIdAccessor.Id) ? MessagePriority.Normal : MessagePriority.Low);
+            var result = await _zakenServiceAgent.DeleteZaakInformatieObjectByIdAsync(zaakInformatieObject.Id);
+            if (!result.Success)
+            {
+                var errors = result.GetErrorsFromResponse();
 
-            //
-            // Note: During deletion, the mirrored relationship is also deleted from the Documents API.
-
-            // Synchroniseren relaties met informatieobjecten (zrc-005)
-            await _publishEndpoint.Publish<IDeleteObjectInformatieObject>(
-                new
-                {
-                    Object = _uriService.GetUri(zaakInformatieObject.Zaak),
-                    ObjectDestroy = true,
-                    zaakInformatieObject.InformatieObject,
-                    Rsin = _rsin,
-                    _correlationContextAccessor.CorrelationId,
-                },
-                context => context.SetPriority(priority),
-                cancellationToken
-            );
+                _logger.LogError("Failed to delete zaakinformatieobject {zaakInformatieObjectUrl}. {errors}", zaakInformatieObject.Url, errors);
+            }
         }
     }
 
