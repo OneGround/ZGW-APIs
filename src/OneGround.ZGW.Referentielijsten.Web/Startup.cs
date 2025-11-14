@@ -72,6 +72,6 @@ public class Startup
         app.UseBatchId();
 
         app.ConfigureZGWApi(env, dontRegisterLogBadRequestMiddleware: true);
-        app.ConfigureZGWSwagger();
+        app.ConfigureZgwSwagger();
     }
 }
