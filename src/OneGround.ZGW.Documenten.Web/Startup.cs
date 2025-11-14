@@ -175,6 +175,6 @@ public class Startup
             registerMiddleware: a => a.UseMiddleware<InterceptBase64ContentMiddleware>()
         );
 
-        app.ConfigureZGWSwagger();
+        app.ConfigureZgwSwagger();
     }
 }

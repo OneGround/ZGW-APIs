@@ -129,6 +129,6 @@ public class Startup
         app.UseBatchId();
 
         app.ConfigureZGWApi(env);
-        app.ConfigureZGWSwagger();
+        app.ConfigureZgwSwagger();
     }
 }
