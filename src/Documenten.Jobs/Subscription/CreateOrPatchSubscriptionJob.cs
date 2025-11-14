@@ -1,14 +1,17 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.ServiceAgent;
-using Roxit.ZGW.Internal.Common.Consul.Secrets.ConsulAuthManager;
 
 namespace Roxit.ZGW.Documenten.Jobs.Subscription;
 
@@ -16,9 +19,9 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 {
     private const int ExpiresMinutesBefore = 10;
 
-    private readonly IZgwAuthManager _zgwAuthManager;
-    private readonly IZgwTokenService _zgwTokenService;
     private readonly INotificatiesServiceAgent _notificatieServiceAgent;
+    private readonly ICachedZGWSecrets _cachedSecrets;
+    private readonly IZgwTokenCacheService _zgwTokenCacheService;
 
     public CreateOrPatchSubscriptionJob(
         ILogger<CreateOrPatchSubscriptionJob> logger,
@@ -27,8 +30,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         IOrganisationContextFactory organisationContextFactory,
         INotificatiesServiceAgent notificatieServiceAgent,
         IServiceDiscovery serviceDiscovery,
-        IZgwAuthManager zgwAuthManager,
-        IZgwTokenService zgwTokenService
+        ICachedZGWSecrets cachedSecrets,
+        IZgwTokenCacheService zgwTokenCacheService
     )
         : base(
             logger,
@@ -38,12 +41,14 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             serviceDiscovery: serviceDiscovery
         )
     {
-        _zgwAuthManager = zgwAuthManager;
-        _zgwTokenService = zgwTokenService;
+        _cachedSecrets = cachedSecrets;
+        _zgwTokenCacheService = zgwTokenCacheService;
         _notificatieServiceAgent = notificatieServiceAgent;
     }
 
-    [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    // TODO: Set retries when NRC API is more stable
+    // [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public async Task ExecuteAsync(string rsin)
     {
@@ -59,7 +64,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             var token = await TryGetTokenAsync(rsin);
 
             //
-            // 1. Create a new or patch an existing DRC_LISTEBER subscription for this Rsin
+            // 1. Create a new or patch an existing DRC_LISTENER subscription for this Rsin
 
             var abonnementen = await _notificatieServiceAgent.GetAllAbonnementenAsync();
             if (!abonnementen.Success)
@@ -103,8 +108,19 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Naam = "zaken", // Channel 'zaken'
                                 Filters = new Dictionary<string, string>
                                 {
-                                    // Note: define a filter to receive a notification only if resource is 'zaakinformatieobject' (action is 'create' or 'destroy')
+                                    // Note: define a filter to receive a notification only if resource is 'zaakinformatieobject' and actie is 'create'
                                     { "#resource", "zaakinformatieobject" },
+                                    { "#actie", "create" },
+                                },
+                            },
+                            new AbonnementKanaalDto
+                            {
+                                Naam = "zaken", // Channel 'zaken'
+                                Filters = new Dictionary<string, string>
+                                {
+                                    // Note: define a filter to receive a notification only if resource is 'zaakinformatieobject' and actie is 'destroy'
+                                    { "#resource", "zaakinformatieobject" },
+                                    { "#actie", "destroy" },
                                 },
                             },
                             new AbonnementKanaalDto
@@ -112,8 +128,19 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Naam = "besluiten", // Channel 'besluiten'
                                 Filters = new Dictionary<string, string>
                                 {
-                                    // Note: define a filter to receive a notification only if resource is 'besluitinformatieobject' (action is 'create' or 'destroy')
+                                    // Note: define a filter to receive a notification only if resource is 'besluitinformatieobject' and actie is 'create'
                                     { "#resource", "besluitinformatieobject" },
+                                    { "#actie", "create" },
+                                },
+                            },
+                            new AbonnementKanaalDto
+                            {
+                                Naam = "besluiten", // Channel 'besluiten'
+                                Filters = new Dictionary<string, string>
+                                {
+                                    // Note: define a filter to receive a notification only if resource is 'besluitinformatieobject' and actie is 'destroy'
+                                    { "#resource", "besluitinformatieobject" },
+                                    { "#actie", "destroy" },
                                 },
                             },
                         },
@@ -151,30 +178,26 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 
     private async Task<(string bearer, TimeSpan expiresIn)> TryGetTokenAsync(string rsin)
     {
-        // Note: we can have multiple ClientIs's for one Rsin (DEV-651621343, oneground-651621343, rx.mission-651621343), take the "oneground" one
-        var allClientIds = await _zgwAuthManager.ListOrganizationClientSecretsAsync(rsin, CancellationToken.None);
-
-        var clientId = allClientIds.FirstOrDefault(c => c.ClientId.Contains("oneground"))?.ClientId;
-        if (clientId == null)
+        var value = await _cachedSecrets.GetServiceSecretAsync(rsin, ServiceRoleName.DRC, CancellationToken.None);
+        if (value == null)
         {
-            throw new InvalidOperationException($"No client ID found for RSIN {rsin}. Cannot schedule token refresh job.");
+            throw new InvalidOperationException($"No service secret configured for rsin: {rsin}");
         }
 
-        var clientSecret = await _zgwAuthManager.GetClientSecretAsync(clientId, CancellationToken.None);
-        if (clientSecret == null)
-        {
-            throw new InvalidOperationException($"Client secret not found for clientId {clientId}. Cannot schedule token refresh job.");
-        }
+        var response = await _zgwTokenCacheService.GetCachedTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
 
-        var token = await _zgwTokenService.GetTokenAsync(clientId, clientSecret.Secret, CancellationToken.None);
-        if (token == null)
-        {
-            // Http request failed or invalid client credentials. By throwing Hangfire does a retry
-            throw new InvalidOperationException($"Token retrieval failed for clientId {clientId}. Cannot schedule token refresh job.");
-        }
+        var token = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, response);
 
-        var expiresIn = TimeSpan.FromSeconds(token.ExpiresIn);
+        var handler = new JwtSecurityTokenHandler();
 
-        return ($"Bearer {token.AccessToken}", expiresIn);
+        // ReadJwtToken does NOT validate signature — it only parses the token
+        var jwt = handler.ReadJwtToken(token.ToString().Replace("Bearer ", ""));
+
+        // Use the convenience property (UTC)
+        DateTime expiryUtc = jwt.ValidTo;
+
+        var expiresIn = jwt.ValidTo - DateTime.UtcNow;
+
+        return (token.ToString(), expiresIn);
     }
 }

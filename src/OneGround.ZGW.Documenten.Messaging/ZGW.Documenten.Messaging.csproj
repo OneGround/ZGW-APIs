@@ -10,12 +10,12 @@
     <PackageReference Include="Hangfire.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\backend\src\Common\ZGW.Internal.Common.Web\ZGW.Internal.Common.Web.csproj" />
     <ProjectReference Include="..\Documenten.Jobs\Documenten.Jobs.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.DataModel\ZGW.Documenten.DataModel.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.Contracts\ZGW.Notificaties.Contracts.csproj" />
   </ItemGroup>

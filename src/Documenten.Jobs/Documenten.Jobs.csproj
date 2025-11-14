@@ -12,7 +12,6 @@
     <PackageReference Include="Hangfire.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\backend\src\Common\ZGW.Internal.Common\ZGW.Internal.Common.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
   </ItemGroup>
