@@ -139,7 +139,7 @@ public class Startup
         app.UseCorrelationId();
         app.UseBatchId();
         app.ConfigureZGWApi(env);
-        app.ConfigureZGWSwagger();
+        app.ConfigureZgwSwagger();
 
 #if DEBUG
         app.UseNotificatiesHangfireDashboard();

@@ -18,7 +18,6 @@ public class VersionDescriptionDetails
     public string ApiName { get; set; }
     public ApiVersionDescription ApiVersionDescription { get; set; }
     public string ZgwVersion { get; set; }
-    public bool UseVNGVersioning { get; set; }
 }
 
 public class AddSwaggerOptions
@@ -39,7 +38,7 @@ public class AddSwaggerOptions
 
     private static string DefaultDescriptionBuilder(VersionDescriptionDetails details)
     {
-        return $"ZGW Version: {details.ZgwVersion}{(details.UseVNGVersioning ? $" | VNG Version: {details.ApiVersionDescription.ApiVersion}" : "")}";
+        return $"ZGW Version: {details.ZgwVersion} | VNG Version: {details.ApiVersionDescription.ApiVersion}";
     }
 }
 
@@ -49,7 +48,6 @@ public static class SwaggerServiceCollectionExtensions
         this IServiceCollection services,
         string apiName,
         string zgwVersion,
-        bool useVNGVersioning,
         Action<SwaggerGenOptions> swaggerGenOptions = null,
         Action<AddSwaggerOptions> configureAddSwaggerOptions = null
     )
@@ -63,7 +61,7 @@ public static class SwaggerServiceCollectionExtensions
             x.MapType<Geometry>(() => new OpenApiSchema { Type = "object" });
 
             x.CustomOperationIds(SwaggerCustomOperationIdsSelector.OperationIdSelector);
-            x.CustomSchemaIds(type => DefaultSchemaIdSelector(type));
+            x.CustomSchemaIds(DefaultSchemaIdSelector);
             x.ExampleFilters();
 
             var apiVersionDescriptionProvider = services.BuildServiceProvider().GetRequiredService<IApiVersionDescriptionProvider>();
@@ -73,7 +71,6 @@ public static class SwaggerServiceCollectionExtensions
                 {
                     ApiName = apiName,
                     ApiVersionDescription = versionDescription,
-                    UseVNGVersioning = useVNGVersioning,
                     ZgwVersion = zgwVersion,
                 };
 
@@ -117,7 +114,7 @@ public static class SwaggerServiceCollectionExtensions
     }
 
     // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/752
-    private static string DefaultSchemaIdSelector(Type modelType)
+    public static string DefaultSchemaIdSelector(Type modelType)
     {
         if (!modelType.IsConstructedGenericType)
             return modelType.ToString(); //Can also be modelType.Name
