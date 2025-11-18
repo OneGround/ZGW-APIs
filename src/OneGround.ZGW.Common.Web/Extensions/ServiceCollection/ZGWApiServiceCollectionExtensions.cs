@@ -30,6 +30,7 @@ public class ZGWApiOptions
     public Action<MvcNewtonsoftJsonOptions> NewtonsoftJsonOptions { get; set; } = null;
     public Action<MvcOptions> MvcOptions { get; set; } = null;
     public Action<SwaggerGenOptions> SwaggerGenOptions { get; set; } = null;
+    public Action<AddSwaggerOptions> AddSwaggerOptions { get; set; } = null;
 }
 
 public class ZGWApiServiceSettings
@@ -126,7 +127,7 @@ public static class ZGWApiServiceCollectionExtensions
         services.AddRouting(options => options.LowercaseUrls = true);
 
         var zgwVersion = ApplicationInformation.GetVersion();
-        services.AddSwagger(apiName, zgwVersion, zgwApiOptions.SwaggerGenOptions);
+        services.AddSwagger(apiName, zgwVersion, zgwApiOptions.SwaggerGenOptions, zgwApiOptions.AddSwaggerOptions);
     }
 
     public static void AddAutoMapper(this IServiceCollection services, Assembly callingAssembly)

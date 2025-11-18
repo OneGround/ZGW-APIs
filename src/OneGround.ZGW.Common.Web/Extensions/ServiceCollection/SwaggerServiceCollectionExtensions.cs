@@ -44,14 +44,16 @@ public class AddSwaggerOptions
 
 public static class SwaggerServiceCollectionExtensions
 {
-    public static void AddSwagger(
+    public static IServiceCollection AddSwagger(
         this IServiceCollection services,
         string apiName,
         string zgwVersion,
-        Action<SwaggerGenOptions> swaggerGenOptions = null
+        Action<SwaggerGenOptions> swaggerGenOptions = null,
+        Action<AddSwaggerOptions> configureAddSwaggerOptions = null
     )
     {
         var addSwaggerOptions = new AddSwaggerOptions();
+        configureAddSwaggerOptions?.Invoke(addSwaggerOptions);
 
         services.AddSwaggerGen(x =>
         {
@@ -107,6 +109,8 @@ public static class SwaggerServiceCollectionExtensions
 
         services.AddSwaggerExamples();
         services.AddSwaggerGenNewtonsoftSupport();
+
+        return services;
     }
 
     // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/752
