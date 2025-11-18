@@ -89,7 +89,7 @@ public class NotificatieJob : INotificatieJob
             {
                 context.WriteLineColored(
                     ConsoleTextColor.Red,
-                    $"Could not deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
+                    $"Could not deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'. Statuscode={result.StatusCode}"
                 );
 
                 throw new NotDeliveredException(
@@ -99,7 +99,7 @@ public class NotificatieJob : INotificatieJob
 
             context.WriteLineColored(
                 ConsoleTextColor.Yellow,
-                $"Successfully delivered notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
+                $"Successfully delivered notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'. Statuscode={result.StatusCode}"
             );
         }
     }
