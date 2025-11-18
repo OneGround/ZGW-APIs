@@ -76,7 +76,8 @@ public class ServiceConfiguration
         services.AddHangfireServer(o =>
         {
             o.ServerName = Constants.DrcListenerServer;
-            o.Queues = [Constants.DrcListenerQueue, Constants.DrcListenerLowPriorityQueue, Constants.DrcSubscriptionsQueue]; // TODO: DrcSubscriptionsQueue Internal only!!!!
+            // TODO: DrcSubscriptionsQueue differs from Internal and OSS?
+            o.Queues = [Constants.DrcListenerQueue, Constants.DrcListenerLowPriorityQueue, Constants.DrcSubscriptionsQueue];
         });
 
         services.AddHangfire(
