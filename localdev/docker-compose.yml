@@ -1,6 +1,38 @@
 name: oneground-local
 
 services:
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - 5051:80
+    environment:
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_SERVER_JSON_FILE: "/pgadmin4/servers.json"
+      PGADMIN_DEFAULT_EMAIL: "pgadmin4@pgadmin.org"
+      PGADMIN_DEFAULT_PASSWORD: "pgadmin4"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - oneground
+    configs:
+      - source: pgadmin_config
+        target: /pgadmin4/servers.json
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+    environment:
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "example"
+    networks:
+      - oneground
+
   oneground-certificates-generator:
     build:
       context: ../tools/oneground-certificates-generator
@@ -276,6 +308,7 @@ services:
       ASPNETCORE_URLS: "http://*:${ASPNETCORE_INTERNAL_PORT}"
       ConnectionStrings__UserConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_USER};Password=${POSTGRES_USER_PASSWORD}"
       ConnectionStrings__AdminConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"
+      ConnectionStrings__HangfireConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DRC_DB};Username=${POSTGRES_ADMIN};Password=${POSTGRES_ADMIN_PASSWORD}"      
     networks:
       - oneground
 
@@ -409,11 +442,31 @@ services:
     networks:
       - oneground
 
+configs:
+  pgadmin_config:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "PostgreSQL",
+            "Group": "Servers",
+            "Host": "postgres_docker_db",
+            "Port": 5432,
+            "MaintenanceDB": "postgres",
+            "Username": "oneground_admin",
+            "Password": "oneground_admin",
+            "PasswordExecCommand": "echo 'oneground_admin'",
+            "SSLMode": "prefer"
+          }
+        }
+      }
+
 volumes:
   postgres:
   ceph-etc:
   ceph-lib:
   kc-providers:
+  pgadmin-data:
 
 networks:
   oneground:
