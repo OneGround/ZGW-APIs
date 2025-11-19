@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -7,6 +6,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Moq;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
@@ -1029,7 +1029,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            fileValidationService: _mockFileValidationService.Object
         );
     }
 

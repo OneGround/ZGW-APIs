@@ -3,9 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -19,7 +18,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [Fact]
     public async Task Create_Base64_Document_Should_Send_Notification()
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -78,7 +77,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_MetaOnly_Document_Should_Send_Notification(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -138,7 +137,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_Large_Document_Should_Not_send_Notification(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -186,7 +185,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [Fact]
     public async Task Create_Base64_Document_Should_Add_Document_v1_In_Document_Store()
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -262,7 +261,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_MetaOnly_Document_Should_Add_Document_v1_Only_In_Database(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -339,7 +338,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     [InlineData(null)]
     public async Task Create_Large_Document_Should_Add_Document_v1_And_Add_Bestandsdelen_In_Database(string inhoud)
     {
-        // Setup
+        // Arrange
 
         await SetupMocksAsync();
 
@@ -423,7 +422,8 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            fileValidationService: _mockFileValidationService.Object
         );
     }
 }
