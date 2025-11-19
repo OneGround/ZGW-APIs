@@ -23,7 +23,7 @@ public class Abonnement : OwnedEntity, IBaseEntity, IUrlEntity
 
     [Required]
     [Column("auth")]
-    [MaxLength(1000)]
+    [MaxLength(5000)] // TODO: We should make a migration for (Note: Not VNG standard after this fix)
     public string Auth { get; set; }
 
     public IList<AbonnementKanaal> AbonnementKanalen { get; set; }

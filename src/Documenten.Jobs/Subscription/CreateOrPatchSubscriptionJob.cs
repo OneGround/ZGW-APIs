@@ -46,9 +46,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         _notificatieServiceAgent = notificatieServiceAgent;
     }
 
-    // TODO: Set retries when NRC API is more stable
-    // [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
-    [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public async Task ExecuteAsync(string rsin)
     {

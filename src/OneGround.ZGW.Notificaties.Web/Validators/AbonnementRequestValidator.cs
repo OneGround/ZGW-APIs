@@ -9,7 +9,7 @@ public class AbonnementRequestValidator : ZGWValidator<AbonnementRequestDto>
     public AbonnementRequestValidator()
     {
         CascadeRuleFor(r => r.CallbackUrl).NotNull().NotEmpty().IsUri().MaximumLength(200);
-        CascadeRuleFor(r => r.Auth).NotNull().NotEmpty().MaximumLength(1000);
+        CascadeRuleFor(r => r.Auth).NotNull().NotEmpty().MaximumLength(5000);
         CascadeRuleFor(r => r.Kanalen).NotNull().NotEmpty();
         CascadeRuleForEach(r => r.Kanalen)
             .ChildRules(v =>
