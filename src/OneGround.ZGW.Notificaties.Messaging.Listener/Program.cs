@@ -1,4 +1,7 @@
+using Hangfire;
+using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
@@ -22,4 +25,25 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
+if (app.Environment.IsLocal())
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
+}
+
 await app.RunAsync();
+
+// Hangfire Dashboard Authorization Filter
+public class HangfireDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize(DashboardContext context)
+    {
+        var httpContext = context.GetHttpContext();
+
+        // TODO: We can make a feature-toggle: UseHangfireDashbord in .env, Default.env and/or appsettings.json
+
+        // Allow authenticated users
+        //return httpContext.User.Identity?.IsAuthenticated ?? false;
+
+        return true;
+    }
+}
