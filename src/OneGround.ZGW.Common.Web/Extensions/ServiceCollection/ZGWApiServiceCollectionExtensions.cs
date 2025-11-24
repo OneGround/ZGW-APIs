@@ -8,7 +8,6 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,15 +29,13 @@ public class ZGWApiOptions
     public ZGWApiServiceSettings ApiServiceSettings { get; set; } = new();
     public Action<MvcNewtonsoftJsonOptions> NewtonsoftJsonOptions { get; set; } = null;
     public Action<MvcOptions> MvcOptions { get; set; } = null;
-    public Action<AddSwaggerOptions> AddSwaggerOptions { get; set; } = null;
     public Action<SwaggerGenOptions> SwaggerGenOptions { get; set; } = null;
+    public Action<AddSwaggerOptions> AddSwaggerOptions { get; set; } = null;
 }
 
 public class ZGWApiServiceSettings
 {
     public bool RegisterSharedAudittrailHandlers = false;
-    public bool UseVNGVersioning = true;
-    public bool AddXmlSerializerOutputFormatter = false;
     public string ApiGroupNameFormat = "'v'VVV";
 }
 
@@ -56,6 +53,99 @@ public static class ZGWApiServiceCollectionExtensions
         configureZgwApiOptions?.Invoke(zgwApiOptions);
 
         services.AddLocalization();
+        services.ConfigureForwardedHeaders(configuration);
+
+        var callingAssembly = Assembly.GetCallingAssembly();
+
+        services.AddHealthChecks();
+
+        services.AddMediatR(x =>
+        {
+            x.RegisterServicesFromAssemblies(callingAssembly);
+        });
+
+        if (zgwApiOptions.ApiServiceSettings.RegisterSharedAudittrailHandlers)
+        {
+            services.AddMediatR(x =>
+            {
+                x.RegisterServicesFromAssemblies(typeof(LogAuditTrailGetObjectListCommand).GetTypeInfo().Assembly); // The shared command handlers for audittrail for some API's not all
+            });
+        }
+
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(HandlerLoggingBehavior<,>));
+
+        services.AddAutoMapper(callingAssembly);
+
+        // Replace the default IApiVersionParser implementation with our own implementation which supports patch numbr (like 1.3.1)
+        services.Replace(ServiceDescriptor.Transient<IApiVersionParser, ZgwApiVersionParser>());
+
+        services
+            .AddControllers()
+            .AddNewtonsoftJson(options =>
+            {
+                zgwApiOptions.NewtonsoftJsonOptions?.Invoke(options);
+            });
+
+        services
+            .AddMvcCore(options =>
+            {
+                options.Filters.Add<ApiExceptionFilter>();
+                options.Filters.Add<OneGroundFluentValidationActionFilter>();
+
+                // asp.net core model binding validation and NetTopologySuite geometry does not like each other,
+                // so we ignore validation on Geometry type
+                options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Geometry)));
+                options.ModelBinderProviders.Insert(0, new GuidBinderProvider());
+                options.ReturnHttpNotAcceptable = true;
+
+                zgwApiOptions.MvcOptions?.Invoke(options);
+            })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.Create;
+            });
+
+        ValidatorOptions.Global.PropertyNameResolver = PropertyNameResolver.Default;
+        services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
+
+        services
+            .AddApiVersioning(options =>
+            {
+                var forceDefaultApiVersion = configuration.GetValue<string>("Application:ForceDefaultApiVersion", null);
+                defaultApiVersion = forceDefaultApiVersion ?? defaultApiVersion;
+
+                options.ApiVersionReader = new ZgwHeaderApiVersionReader("Api-Version", defaultApiVersion);
+                options.ReportApiVersions = false; // Note: we have customized the way on how current/supported versions are reported in ApiVersionMiddleware class
+                options.UnsupportedApiVersionStatusCode = (int)HttpStatusCode.MethodNotAllowed; // Note: We override the default BadRequest into MethodNotAllowed so it behaves as before
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = zgwApiOptions.ApiServiceSettings.ApiGroupNameFormat;
+                options.SubstituteApiVersionInUrl = false;
+            });
+
+        services.AddRouting(options => options.LowercaseUrls = true);
+
+        var zgwVersion = ApplicationInformation.GetVersion();
+        services.AddSwagger(apiName, zgwVersion, zgwApiOptions.SwaggerGenOptions, zgwApiOptions.AddSwaggerOptions);
+    }
+
+    public static void AddAutoMapper(this IServiceCollection services, Assembly callingAssembly)
+    {
+        var executingAssembly = Assembly.GetExecutingAssembly();
+        services.AddAutoMapper(
+            mappingConfiguration =>
+            {
+                mappingConfiguration.ShouldMapMethod = m => false;
+                mappingConfiguration.Internal().Mappers.Insert(0, new NullableEnumMapper());
+            },
+            callingAssembly,
+            executingAssembly
+        );
+    }
+
+    public static void ConfigureForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
+    {
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
@@ -92,104 +182,11 @@ public static class ZGWApiServiceCollectionExtensions
                 }
             }
 
-            bool resolverForwardedHeader = configuration.GetValue("Application:ResolveForwardedHost", false);
+            var resolverForwardedHeader = configuration.GetValue("Application:ResolveForwardedHost", false);
             if (resolverForwardedHeader)
             {
                 options.ForwardedHeaders |= ForwardedHeaders.XForwardedHost;
             }
         });
-
-        var callingAssembly = Assembly.GetCallingAssembly();
-        var executingAssembly = Assembly.GetExecutingAssembly();
-
-        services.AddHealthChecks();
-
-        services.AddMediatR(x =>
-        {
-            x.RegisterServicesFromAssemblies(callingAssembly);
-        });
-        if (zgwApiOptions.ApiServiceSettings.RegisterSharedAudittrailHandlers)
-        {
-            services.AddMediatR(x =>
-            {
-                x.RegisterServicesFromAssemblies(typeof(LogAuditTrailGetObjectListCommand).GetTypeInfo().Assembly); // The shared command handlers for audittrail for some API's not all
-            });
-        }
-
-        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(HandlerLoggingBehavior<,>));
-
-        services.AddAutoMapper(
-            mappingConfiguration =>
-            {
-                mappingConfiguration.ShouldMapMethod = m => false;
-                mappingConfiguration.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            },
-            callingAssembly,
-            executingAssembly
-        );
-
-        // Replace the default IApiVersionParser implementation with our own implementation which supports patch numbr (like 1.3.1)
-        services.Replace(ServiceDescriptor.Transient<IApiVersionParser, ZgwApiVersionParser>());
-
-        services
-            .AddControllers()
-            .AddNewtonsoftJson(options =>
-            {
-                zgwApiOptions.NewtonsoftJsonOptions?.Invoke(options);
-            });
-
-        services
-            .AddMvcCore(options =>
-            {
-                options.Filters.Add<ApiExceptionFilter>();
-                options.Filters.Add<OneGroundFluentValidationActionFilter>();
-
-                // asp.net core model binding validation and NetTopologySuite geometry does not like each other,
-                // so we ignore validation on Geometry type
-                options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Geometry)));
-                options.ModelBinderProviders.Insert(0, new GuidBinderProvider());
-                options.ReturnHttpNotAcceptable = true;
-
-                if (zgwApiOptions.ApiServiceSettings.AddXmlSerializerOutputFormatter)
-                {
-                    options.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
-                }
-
-                zgwApiOptions.MvcOptions?.Invoke(options);
-            })
-            .ConfigureApiBehaviorOptions(options =>
-            {
-                options.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.Create;
-            });
-
-        ValidatorOptions.Global.PropertyNameResolver = PropertyNameResolver.Default;
-        services.AddValidatorsFromAssembly(callingAssembly, lifetime: ServiceLifetime.Singleton);
-
-        services
-            .AddApiVersioning(options =>
-            {
-                var forceDefaultApiVersion = configuration.GetValue<string>("Application:ForceDefaultApiVersion", null);
-                defaultApiVersion = forceDefaultApiVersion ?? defaultApiVersion;
-
-                options.ApiVersionReader = new ZgwHeaderApiVersionReader("Api-Version", defaultApiVersion);
-                options.ReportApiVersions = false; // Note: we have customized the way on how current/supported versions are reported in ApiVersionMiddleware class
-                options.UnsupportedApiVersionStatusCode = (int)HttpStatusCode.MethodNotAllowed; // Note: We override the default BadRequest into MethodNotAllowed so it behaves as before
-            })
-            .AddApiExplorer(options =>
-            {
-                options.GroupNameFormat = zgwApiOptions.ApiServiceSettings.ApiGroupNameFormat;
-                options.SubstituteApiVersionInUrl = false;
-            });
-
-        services.AddRouting(options => options.LowercaseUrls = true);
-
-        var zgwVersion = ApplicationInformation.GetVersion();
-        services.AddSwagger(
-            apiName,
-            zgwVersion,
-            zgwApiOptions.ApiServiceSettings.UseVNGVersioning,
-            zgwApiOptions.SwaggerGenOptions,
-            zgwApiOptions.AddSwaggerOptions
-        );
     }
 }
