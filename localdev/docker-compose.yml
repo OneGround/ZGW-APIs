@@ -410,31 +410,11 @@ services:
     networks:
       - oneground
 
-configs:
-  pgadmin_config:
-    content: |
-      {
-        "Servers": {
-          "1": {
-            "Name": "PostgreSQL",
-            "Group": "Servers",
-            "Host": "postgres_docker_db",
-            "Port": 5432,
-            "MaintenanceDB": "postgres",
-            "Username": "oneground_admin",
-            "Password": "oneground_admin",
-            "PasswordExecCommand": "echo 'oneground_admin'",
-            "SSLMode": "prefer"
-          }
-        }
-      }
-
 volumes:
   postgres:
   ceph-etc:
   ceph-lib:
   kc-providers:
-  pgadmin-data:
 
 networks:
   oneground:
