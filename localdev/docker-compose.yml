@@ -1,38 +1,6 @@
 name: oneground-local
 
 services:
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4_container
-    restart: always
-    ports:
-      - 5051:80
-    environment:
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
-      PGADMIN_SERVER_JSON_FILE: "/pgadmin4/servers.json"
-      PGADMIN_DEFAULT_EMAIL: "pgadmin4@pgadmin.org"
-      PGADMIN_DEFAULT_PASSWORD: "pgadmin4"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    networks:
-      - oneground
-    configs:
-      - source: pgadmin_config
-        target: /pgadmin4/servers.json
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8081:8080
-    environment:
-      POSTGRES_USER: "root"
-      POSTGRES_PASSWORD: "example"
-    networks:
-      - oneground
-
   oneground-certificates-generator:
     build:
       context: ../tools/oneground-certificates-generator
