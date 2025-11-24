@@ -24,7 +24,7 @@ class AddObjectInformatieObjectHandler : IRequestHandler<AddObjectInformatieObje
     {
         var batchId = request.BatchId;
 
-        // Enqueue Hangfire job which deletes the related zaak- or besluit-informatieobject (objectinformatieobject) from the DRC
+        // Enqueue Hangfire job which adds the related zaak- or besluit-informatieobject (objectinformatieobject) to the DRC
         //   Note: Zaak- or Besluit-informatieobjecten added with a batchid should be handled with low priority (so choose a different queue)
         var job = BackgroundJob.Enqueue<AddObjectInformatieObjectJob>(
             queue: batchId.HasValue ? Constants.DrcListenerLowPriorityQueue : Constants.DrcListenerQueue,
