@@ -1,7 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
 using Hangfire;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Authentication;
