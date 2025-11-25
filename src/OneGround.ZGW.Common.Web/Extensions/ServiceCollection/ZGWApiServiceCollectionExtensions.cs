@@ -98,10 +98,8 @@ public static class ZGWApiServiceCollectionExtensions
                 defaultApiVersion = forceDefaultApiVersion ?? defaultApiVersion;
 
                 options.ApiVersionReader = new ZgwHeaderApiVersionReader("Api-Version", defaultApiVersion);
-                options.ReportApiVersions =
-                    false; // Note: we have customized the way on how current/supported versions are reported in ApiVersionMiddleware class
-                options.UnsupportedApiVersionStatusCode =
-                    (int)HttpStatusCode.MethodNotAllowed; // Note: We override the default BadRequest into MethodNotAllowed so it behaves as before
+                options.ReportApiVersions = false; // Note: we have customized the way on how current/supported versions are reported in ApiVersionMiddleware class
+                options.UnsupportedApiVersionStatusCode = (int)HttpStatusCode.MethodNotAllowed; // Note: We override the default BadRequest into MethodNotAllowed so it behaves as before
             })
             .AddApiExplorer(options =>
             {

@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 
-public static class ConfigureForwardedHeadersServiceCollectionExtensions
+public static class ForwardedHeadersServiceCollectionExtensions
 {
     public static IServiceCollection ConfigureForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
     {

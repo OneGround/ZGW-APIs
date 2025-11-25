@@ -18,8 +18,7 @@ public static class MediatorServiceCollectionExtensions
         {
             services.AddMediatR(x =>
             {
-                x.RegisterServicesFromAssemblies(typeof(LogAuditTrailGetObjectListCommand).GetTypeInfo()
-                    .Assembly); // The shared command handlers for audit trail for some APIs, not all
+                x.RegisterServicesFromAssemblies(typeof(LogAuditTrailGetObjectListCommand).GetTypeInfo().Assembly); // The shared command handlers for audit trail for some APIs, not all
             });
         }
 
