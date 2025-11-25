@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -5,5 +6,9 @@ namespace OneGround.ZGW.Common.Authentication;
 
 public interface IZgwTokenCacheService
 {
-    Task<string> GetCachedTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken = default);
+    Task<(string token, TimeSpan expiration)> GetCachedTokenAsync(
+        string clientId,
+        string clientSecret,
+        CancellationToken cancellationToken = default
+    );
 }
