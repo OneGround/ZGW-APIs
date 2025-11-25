@@ -55,7 +55,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService)
+        IFileValidationService fileValidationService
+    )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
