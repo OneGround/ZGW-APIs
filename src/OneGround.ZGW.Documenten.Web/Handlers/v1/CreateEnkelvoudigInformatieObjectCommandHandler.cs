@@ -12,6 +12,7 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -25,6 +26,7 @@ using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -38,6 +40,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly Lazy<IDocumentService> _lazyDocumentService;
+    private readonly IFileValidationService _fileValidationService;
 
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -51,8 +54,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         ICatalogiServiceAgent catalogiServiceAgent,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
-    )
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IFileValidationService fileValidationService)
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
@@ -60,6 +63,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         _nummerGenerator = nummerGenerator;
         _catalogiServiceAgent = catalogiServiceAgent;
         _auditTrailFactory = auditTrailFactory;
+        _fileValidationService = fileValidationService;
 
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
     }
@@ -86,6 +90,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         versie.EscapeBestandsNaamWhenInvalid();
 
         var errors = new List<ValidationError>();
+
+        ValidateFile(versie, errors);
 
         // Set version first because business-rule wants to verify against
         EnkelvoudigInformatieObject existingEnkelvoudigInformatieObject = null;
@@ -354,6 +360,27 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         _logger.LogWarning("-{labelVersieBronorganisatie}: {versieBronorganisatie}", nameof(versie.Bronorganisatie), versie.Bronorganisatie);
         _logger.LogWarning("-{labelVersieIdentificatie}: {versieIdentificatie}", nameof(versie.Identificatie), versie.Identificatie);
         _logger.LogWarning("-{labelVersieVersie}: {versieVersie}", nameof(versie.Versie), versie.Versie);
+    }
+
+    private void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
+    {
+        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
+            return;
+
+        try
+        {
+            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
+        }
+        catch (OneGroundException)
+        {
+            var error = new ValidationError(
+                "bestandsnaam",
+                ErrorCode.Invalid,
+                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
+            );
+
+            errors.Add(error);
+        }
     }
 
     private IDocumentService DocumentService => _lazyDocumentService.Value;

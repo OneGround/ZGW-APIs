@@ -85,11 +85,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
     }
 
-    protected void ValidateFile(
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie,
-        List<ValidationError> errors,
-        CancellationToken cancellationToken
-    )
+    protected void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
     {
         if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
             return;

@@ -79,7 +79,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
         var errors = new List<ValidationError>();
 
-        ValidateFile(versie, errors, cancellationToken);
+        ValidateFile(versie, errors);
 
         // Add new version of the EnkelvoudigInformatieObject
         var existingEnkelvoudigInformatieObject = await _context
