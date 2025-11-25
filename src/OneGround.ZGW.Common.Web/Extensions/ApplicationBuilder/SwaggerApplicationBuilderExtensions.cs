@@ -9,7 +9,7 @@ namespace OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 
 public static class SwaggerApplicationBuilderExtensions
 {
-    public static void ConfigureZGWSwagger(this IApplicationBuilder app, Action<SwaggerUIOptions> config = null)
+    public static void ConfigureZgwSwagger(this IApplicationBuilder app, Action<SwaggerUIOptions> config = null)
     {
         app.UseSwagger(option =>
         {

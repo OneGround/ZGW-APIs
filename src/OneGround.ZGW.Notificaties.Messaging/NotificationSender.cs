@@ -103,7 +103,7 @@ public class NotificationSender : INotificationSender
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             return response.IsSuccessStatusCode
-                ? new SubscriberResult { Success = true }
+                ? new SubscriberResult { Success = true, StatusCode = response.StatusCode }
                 : new SubscriberResult
                 {
                     Success = false,
