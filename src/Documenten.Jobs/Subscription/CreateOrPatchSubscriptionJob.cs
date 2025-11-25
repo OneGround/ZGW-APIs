@@ -78,7 +78,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 {
                     var patched = await _notificatieServiceAgent.PatchAbonnementByUrlAsync(
                         subscriber.Url,
-                        new JObject(new JProperty("auth", token.bearer))
+                        new JObject(new JProperty("auth", $"Bearer {token.bearer}"))
                     );
 
                     if (!patched.Success)
@@ -97,7 +97,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 var added = await _notificatieServiceAgent.AddAbonnementAsync(
                     new AbonnementDto
                     {
-                        Auth = token.bearer,
+                        Auth = $"Bearer {token.bearer}",
                         CallbackUrl = callback,
                         Kanalen = new List<AbonnementKanaalDto>
                         {
@@ -184,18 +184,6 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 
         var response = await _zgwTokenCacheService.GetCachedTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
 
-        var token = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, response);
-
-        var handler = new JwtSecurityTokenHandler();
-
-        // ReadJwtToken does NOT validate signature — it only parses the token
-        var jwt = handler.ReadJwtToken(token.ToString().Replace("Bearer ", ""));
-
-        // Use the convenience property (UTC)
-        DateTime expiryUtc = jwt.ValidTo;
-
-        var expiresIn = jwt.ValidTo - DateTime.UtcNow;
-
-        return (token.ToString(), expiresIn);
+        return response;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,7 +40,7 @@ public class ServiceAgentAuthenticationHandler : DelegatingHandler
         if (value != null)
         {
             var response = await _zgwTokenCacheService.GetCachedTokenAsync(value.ClientId, value.Secret, cancellationToken);
-            request.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, response);
+            request.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, response.token);
         }
         else
         {

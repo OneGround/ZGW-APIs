@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
@@ -16,11 +16,15 @@ public class ZgwTokenCacheService : IZgwTokenCacheService
         _memoryCache = memoryCache;
     }
 
-    public async Task<string> GetCachedTokenAsync(string clientId, string clientSecret, CancellationToken cancellationToken = default)
+    public async Task<(string token, TimeSpan expiration)> GetCachedTokenAsync(
+        string clientId,
+        string clientSecret,
+        CancellationToken cancellationToken = default
+    )
     {
         var cacheKey = $"ZGW-token-{clientId}";
 
-        var token = await _memoryCache.GetOrCreateAsync(
+        var tokenWithExpiration = await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async entry =>
             {
@@ -30,10 +34,10 @@ public class ZgwTokenCacheService : IZgwTokenCacheService
 
                 entry.AbsoluteExpirationRelativeToNow = expiration;
 
-                return tokenResponse.AccessToken;
+                return (tokenResponse.AccessToken, expiration);
             }
         );
 
-        return token;
+        return (tokenWithExpiration.AccessToken, tokenWithExpiration.expiration);
     }
 }
