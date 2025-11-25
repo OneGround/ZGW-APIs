@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -13,8 +13,8 @@ namespace OneGround.ZGW.Notificaties.DataModel.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "auth",
                 table: "abonnementen",
-                type: "character varying(5000)",
-                maxLength: 5000,
+                type: "character varying(8192)",
+                maxLength: 8192,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(1000)",
@@ -32,8 +32,8 @@ namespace OneGround.ZGW.Notificaties.DataModel.Migrations
                 maxLength: 1000,
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "character varying(5000)",
-                oldMaxLength: 5000
+                oldType: "character varying(8192)",
+                oldMaxLength: 8192
             );
         }
     }
