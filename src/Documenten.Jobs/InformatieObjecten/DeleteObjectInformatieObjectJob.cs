@@ -74,7 +74,7 @@ public class DeleteObjectInformatieObjectJob : InformatieObjectHandlerBase<Delet
                 return;
             }
 
-            context.WriteLineColored(ConsoleTextColor.Yellow, "Succesfully deleted objectinformatieobject from DRC.");
+            context.WriteLineColored(ConsoleTextColor.Yellow, "Successfully deleted objectinformatieobject from DRC.");
         }
     }
 }
