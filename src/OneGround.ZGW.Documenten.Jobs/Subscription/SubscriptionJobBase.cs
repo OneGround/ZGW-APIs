@@ -4,7 +4,7 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Services;
 
-namespace Roxit.ZGW.Documenten.Jobs.Subscription;
+namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
 public abstract class SubscriptionJobBase<TLogger>
     where TLogger : class

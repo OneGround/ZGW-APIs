@@ -10,7 +10,7 @@ using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.ServiceAgent;
 
-namespace Roxit.ZGW.Documenten.Jobs.Subscription;
+namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
 public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSubscriptionJob>
 {

@@ -3,9 +3,10 @@ using Hangfire.Server;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Common.ServiceAgent.Extensions;
+using OneGround.ZGW.Documenten.Jobs.Extensions;
 using OneGround.ZGW.Documenten.ServiceAgent.v1;
 
-namespace Roxit.ZGW.Documenten.Jobs.InformatieObjecten;
+namespace OneGround.ZGW.Documenten.Jobs.InformatieObjecten;
 
 public class DeleteObjectInformatieObjectJob : InformatieObjectHandlerBase<DeleteObjectInformatieObjectJob>
 {

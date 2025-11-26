@@ -1,4 +1,4 @@
-namespace Roxit.ZGW.Documenten.Jobs;
+namespace OneGround.ZGW.Documenten.Jobs;
 
 public static class Constants
 {

@@ -14,11 +14,11 @@ using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Jobs;
 using OneGround.ZGW.Documenten.Messaging.Configuration;
 using OneGround.ZGW.Documenten.Messaging.Services;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
-using Roxit.ZGW.Documenten.Jobs;
 
 namespace OneGround.ZGW.Documenten.Messaging;
 
@@ -76,7 +76,6 @@ public class ServiceConfiguration
         services.AddHangfireServer(o =>
         {
             o.ServerName = Constants.DrcListenerServer;
-            // TODO: DrcSubscriptionsQueue differs from Internal and OSS?
             o.Queues = [Constants.DrcListenerQueue, Constants.DrcListenerLowPriorityQueue, Constants.DrcSubscriptionsQueue];
         });
 
@@ -106,7 +105,6 @@ public class ServiceConfiguration
 
         return new AutomaticRetryAttribute
         {
-            // ExceptOn = [typeof(GeneralException)],
             OnAttemptsExceeded = AttemptsExceededAction.Fail,
             Attempts = _hangfireConfiguration.ScheduledRetries.Length,
             DelaysInSeconds = _hangfireConfiguration.ScheduledRetries.Select(c => (int)c.TotalSeconds).ToArray(),

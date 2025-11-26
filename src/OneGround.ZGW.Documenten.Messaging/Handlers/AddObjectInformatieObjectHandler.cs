@@ -6,8 +6,8 @@ using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
-using Roxit.ZGW.Documenten.Jobs;
-using Roxit.ZGW.Documenten.Jobs.InformatieObjecten;
+using OneGround.ZGW.Documenten.Jobs;
+using OneGround.ZGW.Documenten.Jobs.InformatieObjecten;
 
 namespace OneGround.ZGW.Documenten.Messaging.Handlers;
 
