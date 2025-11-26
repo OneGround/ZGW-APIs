@@ -10,7 +10,7 @@
     <PackageReference Include="Hangfire.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Documenten.Jobs\Documenten.Jobs.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Documenten.Jobs\ZGW.Documenten.Jobs.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common.Messaging\ZGW.Common.Messaging.csproj" />

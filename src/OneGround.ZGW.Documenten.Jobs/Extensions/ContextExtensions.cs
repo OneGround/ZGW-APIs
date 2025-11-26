@@ -1,7 +1,7 @@
 using Hangfire.Console;
 using Hangfire.Server;
 
-namespace Roxit.ZGW.Documenten.Jobs.InformatieObjecten;
+namespace OneGround.ZGW.Documenten.Jobs.Extensions;
 
 public static class ContextExtensions
 {

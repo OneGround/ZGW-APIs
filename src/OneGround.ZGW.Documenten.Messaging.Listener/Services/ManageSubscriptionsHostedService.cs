@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.Extensions.Hosting;
-using Roxit.ZGW.Documenten.Jobs.Subscription;
+using OneGround.ZGW.Documenten.Jobs.Subscription;
 
 namespace OneGround.ZGW.Documenten.Messaging.Listener.Services;
 

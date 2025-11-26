@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Documenten.ServiceAgent.v1;
 
-namespace Roxit.ZGW.Documenten.Jobs.InformatieObjecten;
+namespace OneGround.ZGW.Documenten.Jobs.InformatieObjecten;
 
 public abstract class InformatieObjectHandlerBase<TLogger>
 {

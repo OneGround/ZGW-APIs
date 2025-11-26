@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <AssemblyName>Roxit.ZGW.Documenten.Jobs</AssemblyName>
-    <RootNamespace>Roxit.ZGW.Documenten.Jobs</RootNamespace>
+    <AssemblyName>OneGround.ZGW.Documenten.Jobs</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Documenten.Jobs</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Hangfire" />
