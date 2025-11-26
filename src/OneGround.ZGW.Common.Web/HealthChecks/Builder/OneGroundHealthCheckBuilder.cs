@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Web.HealthChecks.Checks;
 using OneGround.ZGW.Common.Web.HealthChecks.Options;
 
@@ -9,8 +10,9 @@ namespace OneGround.ZGW.Common.Web.HealthChecks.Builder;
 
 public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChecksBuilder healthChecksBuilder)
 {
-    private readonly List<string> _healthChecksList = [];
     private IHealthChecksBuilder _healthChecksBuilder = healthChecksBuilder;
+    private readonly OptionsBuilder<OneGroundHealthChecksOptions> _optionsBuilder = services.AddOptions<OneGroundHealthChecksOptions>();
+    private readonly List<string> _healthChecksList = [];
 
     public OneGroundHealthCheckBuilder AddRedisCheck()
     {
@@ -34,18 +36,18 @@ public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChe
         return this;
     }
 
+    public OneGroundHealthCheckBuilder Configure(Action<OneGroundHealthChecksOptions> configureOptions)
+    {
+        _optionsBuilder.Configure(configureOptions);
+        return this;
+    }
+
     public void Build(Action<OneGroundHealthChecksOptions> configureOptions = null)
     {
-        services
-            .AddOptions<OneGroundHealthChecksOptions>()
-            .Configure(x =>
-            {
-                if (configureOptions != null)
-                {
-                    configureOptions(x);
-                }
-
-                x.RegisteredHealthChecks = _healthChecksList;
-            });
+        _optionsBuilder.Configure(x =>
+        {
+            configureOptions?.Invoke(x);
+            x.RegisteredHealthChecks = _healthChecksList;
+        });
     }
 }

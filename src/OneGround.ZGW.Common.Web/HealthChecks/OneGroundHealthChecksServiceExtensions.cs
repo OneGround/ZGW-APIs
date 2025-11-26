@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Web.HealthChecks.Builder;
@@ -17,11 +18,15 @@ public static class OneGroundHealthChecksServiceExtensions
         return new OneGroundHealthCheckBuilder(services, healthChecksBuilder);
     }
 
-    private static void RegisterEndpoints(this WebApplication app, OneGroundHealthChecksEndpointOptions endpointsOptions, HealthCheckOptions options)
+    private static void RegisterHealthEndpoints(
+        this IEndpointRouteBuilder endpoints,
+        OneGroundHealthChecksEndpointOptions endpointsOptions,
+        HealthCheckOptions options
+    )
     {
         foreach (var endpoint in endpointsOptions.Endpoints)
         {
-            var healthEndpoint = app.MapHealthChecks(endpoint, options);
+            var healthEndpoint = endpoints.MapHealthChecks(endpoint, options);
 
             if (!endpointsOptions.RequireAuthorization)
             {
@@ -38,16 +43,18 @@ public static class OneGroundHealthChecksServiceExtensions
         }
     }
 
-    public static WebApplication UseOneGroundHealthChecks(this WebApplication app)
+    public static IEndpointRouteBuilder UseOneGroundHealthChecks(this IEndpointRouteBuilder endpoints)
     {
-        var optionsService = app.Services.GetService<IOptions<OneGroundHealthChecksOptions>>();
+        var optionsService = endpoints.ServiceProvider.GetService<IOptions<OneGroundHealthChecksOptions>>();
         if (optionsService == null)
         {
-            throw new InvalidOperationException("OneGroundHealthChecksOptions is not configured. Please make sure to call AddOneGroundHealthChecks().Build() and configure the options before using UseOneGroundHealthChecks.");
+            throw new InvalidOperationException(
+                "OneGroundHealthChecksOptions is not configured. Please make sure to call AddOneGroundHealthChecks().Build() and configure the options before using UseOneGroundHealthChecks."
+            );
         }
         var options = optionsService.Value;
 
-        app.RegisterEndpoints(
+        endpoints.RegisterHealthEndpoints(
             options.DetailedEndpoints,
             new HealthCheckOptions()
             {
@@ -57,7 +64,7 @@ public static class OneGroundHealthChecksServiceExtensions
             }
         );
 
-        app.RegisterEndpoints(
+        endpoints.RegisterHealthEndpoints(
             options.CheckEndpoints,
             new HealthCheckOptions()
             {
@@ -66,7 +73,7 @@ public static class OneGroundHealthChecksServiceExtensions
             }
         );
 
-        app.RegisterEndpoints(
+        endpoints.RegisterHealthEndpoints(
             options.PingEndpoints,
             new HealthCheckOptions()
             {
@@ -75,6 +82,6 @@ public static class OneGroundHealthChecksServiceExtensions
             }
         );
 
-        return app;
+        return endpoints;
     }
 }

@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using OneGround.ZGW.Common.Configuration;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Middleware;
 using Serilog;
 
@@ -50,7 +51,7 @@ public static class ZGWApiApplicationBuilderExtensions
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapHealthChecks("/health");
+            endpoints.UseOneGroundHealthChecks();
             endpoints.MapControllers();
         });
     }

@@ -13,6 +13,8 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.ErrorHandling;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 using OneGround.ZGW.Common.Web.Filters;
+using OneGround.ZGW.Common.Web.HealthChecks;
+using OneGround.ZGW.Common.Web.HealthChecks.Builder;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
@@ -42,7 +44,8 @@ public static class ZGWApiServiceCollectionExtensions
         string apiName,
         IConfiguration configuration,
         string defaultApiVersion,
-        Action<ZGWApiOptions> configureZgwApiOptions = null
+        Action<ZGWApiOptions> configureZgwApiOptions = null,
+        Action<OneGroundHealthCheckBuilder> buildHealthChecks = null
     )
     {
         var zgwApiOptions = new ZGWApiOptions();
@@ -53,7 +56,13 @@ public static class ZGWApiServiceCollectionExtensions
 
         var callingAssembly = Assembly.GetCallingAssembly();
 
-        services.AddHealthChecks();
+        var healthChecksBuilder = services.AddOneGroundHealthChecks().AddRedisCheck();
+        buildHealthChecks?.Invoke(healthChecksBuilder);
+        healthChecksBuilder.Build(c =>
+        {
+            // Note: backwards compatibility with the old health check endpoint
+            c.PingEndpoints.Endpoints.Add("/health");
+        });
 
         services.AddMediator(callingAssembly, zgwApiOptions.ApiServiceSettings);
 
