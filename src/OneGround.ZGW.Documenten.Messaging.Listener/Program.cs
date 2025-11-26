@@ -1,7 +1,5 @@
 using Hangfire;
-using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Autorisaties.ServiceAgent;
 using OneGround.ZGW.Common.Configuration;
@@ -36,7 +34,7 @@ app.UseAuthorization();
 
 if (app.Environment.IsLocal())
 {
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions());
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireLocalAuthFilter() } });
 }
 
 app.MapControllers();
