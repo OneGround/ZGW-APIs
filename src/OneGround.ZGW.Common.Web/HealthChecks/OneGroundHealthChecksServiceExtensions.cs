@@ -18,7 +18,51 @@ public static class OneGroundHealthChecksServiceExtensions
         return new OneGroundHealthCheckBuilder(services, healthChecksBuilder);
     }
 
-    private static void RegisterHealthEndpoints(
+    public static IEndpointRouteBuilder MapOneGroundHealthChecks(this IEndpointRouteBuilder endpoints, Action<OneGroundHealthChecksOptions> configureOptions = null)
+    {
+        var optionsService = endpoints.ServiceProvider.GetService<IOptions<OneGroundHealthChecksOptions>>();
+        if (optionsService == null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(OneGroundHealthChecksOptions)} is not configured. Please make sure to call {nameof(AddOneGroundHealthChecks)}().${nameof(OneGroundHealthCheckBuilder.Build)}() and configure the options before using {nameof(MapOneGroundHealthChecks)}()."
+            );
+        }
+
+        var options = optionsService.Value;
+        configureOptions?.Invoke(options);
+
+        endpoints.MapHealthEndpointsGroup(
+            options.DetailedEndpoints,
+            new HealthCheckOptions()
+            {
+                ResponseWriter = OneGroundHealthChecksResponseWriter.ResponseWriter,
+                Predicate = x => options.RegisteredHealthChecks.Any(y => x.Name.Equals(y)),
+                ResultStatusCodes = options.DetailedEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
+            }
+        );
+
+        endpoints.MapHealthEndpointsGroup(
+            options.CheckEndpoints,
+            new HealthCheckOptions()
+            {
+                Predicate = x => options.RegisteredHealthChecks.Any(y => x.Name.Equals(y)),
+                ResultStatusCodes = options.CheckEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
+            }
+        );
+
+        endpoints.MapHealthEndpointsGroup(
+            options.PingEndpoints,
+            new HealthCheckOptions()
+            {
+                Predicate = _ => false,
+                ResultStatusCodes = options.PingEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
+            }
+        );
+
+        return endpoints;
+    }
+
+    private static void MapHealthEndpointsGroup(
         this IEndpointRouteBuilder endpoints,
         OneGroundHealthChecksEndpointOptions endpointsOptions,
         HealthCheckOptions options
@@ -41,48 +85,5 @@ public static class OneGroundHealthChecksServiceExtensions
                 healthEndpoint.RequireAuthorization();
             }
         }
-    }
-
-    public static IEndpointRouteBuilder UseOneGroundHealthChecks(this IEndpointRouteBuilder endpoints)
-    {
-        var optionsService = endpoints.ServiceProvider.GetService<IOptions<OneGroundHealthChecksOptions>>();
-        if (optionsService == null)
-        {
-            throw new InvalidOperationException(
-                $"{nameof(OneGroundHealthChecksOptions)} is not configured. Please make sure to call {nameof(AddOneGroundHealthChecks)}().${nameof(OneGroundHealthCheckBuilder.Build)}() and configure the options before using {nameof(UseOneGroundHealthChecks)}()."
-            );
-        }
-
-        var options = optionsService.Value;
-
-        endpoints.RegisterHealthEndpoints(
-            options.DetailedEndpoints,
-            new HealthCheckOptions()
-            {
-                ResponseWriter = OneGroundHealthChecksResponseWriter.ResponseWriter,
-                Predicate = x => options.RegisteredHealthChecks.Any(y => x.Name.Equals(y)),
-                ResultStatusCodes = options.DetailedEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
-            }
-        );
-
-        endpoints.RegisterHealthEndpoints(
-            options.CheckEndpoints,
-            new HealthCheckOptions()
-            {
-                Predicate = x => options.RegisteredHealthChecks.Any(y => x.Name.Equals(y)),
-                ResultStatusCodes = options.CheckEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
-            }
-        );
-
-        endpoints.RegisterHealthEndpoints(
-            options.PingEndpoints,
-            new HealthCheckOptions()
-            {
-                Predicate = _ => false,
-                ResultStatusCodes = options.PingEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
-            }
-        );
-
-        return endpoints;
     }
 }

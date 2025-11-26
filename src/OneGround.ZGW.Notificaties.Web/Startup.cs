@@ -78,10 +78,7 @@ public class Startup
         services
             .AddOneGroundHealthChecks()
             .AddRedisCheck()
-            .Build(c =>
-            {
-                c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
-            });
+            .Build();
 
         services.AddAutorisatiesServiceAgent(Configuration);
 
@@ -149,7 +146,11 @@ public class Startup
         app.UseBatchId();
         app.ConfigureZgwApi(env);
         app.ConfigureZgwSwagger();
-        app.UseOneGroundHealthChecks();
+        app.MapOneGroundHealthChecks(c =>
+        {
+            // Note: backwards compatibility with the old health check endpoint
+            c.PingEndpoints.Endpoints.Add("/health");
+        });
 
 #if DEBUG
         app.UseNotificatiesHangfireDashboard();

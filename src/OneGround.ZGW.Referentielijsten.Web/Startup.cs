@@ -51,10 +51,7 @@ public class Startup
         services
             .AddOneGroundHealthChecks()
             .AddRedisCheck()
-            .Build(c =>
-            {
-                c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
-            });
+            .Build();
 
         services
             .AddOptions<ApplicationConfiguration>()
@@ -82,6 +79,9 @@ public class Startup
 
         app.ConfigureZgwApi(env, dontRegisterLogBadRequestMiddleware: true);
         app.ConfigureZgwSwagger();
-        app.UseOneGroundHealthChecks();
+        app.MapOneGroundHealthChecks(c =>
+        {
+            c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
+        });
     }
 }
