@@ -56,10 +56,10 @@ public class DeleteObjectInformatieObjectJob : InformatieObjectHandlerBase<Delet
             }
 
             // Note: On one Object (zaak or besluit) only one informatieobject relation exists (unique index on informatieobjecten)
-            var resultInformatieObjecten = objectinformatieobjecten.Response.SingleOrDefault(i => i.InformatieObject == informatieobject);
-            if (resultInformatieObjecten != null)
+            var resultInformatieObject = objectinformatieobjecten.Response.SingleOrDefault(i => i.InformatieObject == informatieobject);
+            if (resultInformatieObject != null)
             {
-                var resultDelete = await _documentenServiceAgent.DeleteObjectInformatieObjectByUrlAsync(resultInformatieObjecten.Url);
+                var resultDelete = await _documentenServiceAgent.DeleteObjectInformatieObjectByUrlAsync(resultInformatieObject.Url);
                 if (!resultDelete.Success)
                 {
                     throw new InvalidOperationException("Failed to delete objectinformatieobject from DRC." + resultDelete.GetErrorsFromResponse());
