@@ -6,7 +6,7 @@ namespace OneGround.ZGW.Common.Web.HealthChecks.Options;
 public class OneGroundHealthChecksEndpointOptions
 {
     public List<string> Endpoints { get; set; } = [];
-    public bool RequireAuthorization { get; set; } = true;
+    public bool RequireAuthorization { get; set; } = false;
     public string AuthorizationSchema { get; set; } = null;
     public Dictionary<HealthStatus, int> ResultStatusCode = null;
 }
@@ -19,7 +19,7 @@ public class OneGroundHealthChecksOptions
         new()
         {
             Endpoints = ["/health"],
-            RequireAuthorization = true,
+            RequireAuthorization = false,
             AuthorizationSchema = null,
         };
 
