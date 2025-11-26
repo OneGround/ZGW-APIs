@@ -152,13 +152,13 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 //
                 // 2. Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
 
-                double refeshInMinutes =
+                double refreshInMinutes =
                     token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
                         ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
                         : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
 
                 // Create a cron expression (using minute segment)
-                var refreshCronExpression = CronHelper.CreateCronForIntervalMinutes((int)refeshInMinutes);
+                var refreshCronExpression = CronHelper.CreateCronForIntervalMinutes((int)refreshInMinutes);
 
                 RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(
                     $"create-or-patch-subscription-{rsin}-job",
