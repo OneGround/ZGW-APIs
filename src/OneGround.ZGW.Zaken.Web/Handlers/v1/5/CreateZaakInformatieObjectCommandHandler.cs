@@ -166,7 +166,7 @@ class CreateZaakInformatieObjectCommandHandler
 
         var extraKenmerken = new Dictionary<string, string> { { "zaakinformatieobject.informatieobject", zaakInformatieObject.InformatieObject } };
 
-        await SendNotificationAsync(Actie.create, zaakInformatieObject, cancellationToken, extraKenmerken);
+        await SendNotificationAsync(Actie.create, zaakInformatieObject, extraKenmerken, cancellationToken);
 
         return new CommandResult<ZaakInformatieObject>(zaakInformatieObject, CommandStatus.OK);
     }
