@@ -38,6 +38,6 @@ public class ZgwTokenCacheService : IZgwTokenCacheService
             }
         );
 
-        return (tokenWithExpiration.AccessToken, tokenWithExpiration.expiration);
+        return tokenWithExpiration;
     }
 }
