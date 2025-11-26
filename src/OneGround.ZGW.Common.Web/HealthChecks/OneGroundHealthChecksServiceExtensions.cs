@@ -49,9 +49,10 @@ public static class OneGroundHealthChecksServiceExtensions
         if (optionsService == null)
         {
             throw new InvalidOperationException(
-                "OneGroundHealthChecksOptions is not configured. Please make sure to call AddOneGroundHealthChecks().Build() and configure the options before using UseOneGroundHealthChecks."
+                $"{nameof(OneGroundHealthChecksOptions)} is not configured. Please make sure to call {nameof(AddOneGroundHealthChecks)}().${nameof(OneGroundHealthCheckBuilder.Build)}() and configure the options before using {nameof(UseOneGroundHealthChecks)}()."
             );
         }
+
         var options = optionsService.Value;
 
         endpoints.RegisterHealthEndpoints(

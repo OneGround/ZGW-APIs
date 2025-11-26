@@ -20,6 +20,7 @@ using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -68,6 +69,14 @@ public class Startup
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = false;
             }
         );
+
+        services
+            .AddOneGroundHealthChecks()
+            .AddRedisCheck()
+            .Build(c =>
+            {
+                c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
+            });
 
         services.AddMassTransit(x =>
         {
@@ -123,12 +132,13 @@ public class Startup
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
     }
 
-    public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public static void Configure(WebApplication app, IWebHostEnvironment env)
     {
         app.UseCorrelationId();
         app.UseBatchId();
 
-        app.ConfigureZGWApi(env);
+        app.ConfigureZgwApi(env);
         app.ConfigureZgwSwagger();
+        app.UseOneGroundHealthChecks();
     }
 }

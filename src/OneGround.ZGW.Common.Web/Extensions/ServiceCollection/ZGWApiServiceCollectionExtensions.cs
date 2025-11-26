@@ -44,8 +44,7 @@ public static class ZGWApiServiceCollectionExtensions
         string apiName,
         IConfiguration configuration,
         string defaultApiVersion,
-        Action<ZGWApiOptions> configureZgwApiOptions = null,
-        Action<OneGroundHealthCheckBuilder> buildHealthChecks = null
+        Action<ZGWApiOptions> configureZgwApiOptions = null
     )
     {
         var zgwApiOptions = new ZGWApiOptions();
@@ -55,14 +54,6 @@ public static class ZGWApiServiceCollectionExtensions
         services.ConfigureForwardedHeaders(configuration);
 
         var callingAssembly = Assembly.GetCallingAssembly();
-
-        var healthChecksBuilder = services.AddOneGroundHealthChecks().AddRedisCheck();
-        buildHealthChecks?.Invoke(healthChecksBuilder);
-        healthChecksBuilder.Build(c =>
-        {
-            // Note: backwards compatibility with the old health check endpoint
-            c.PingEndpoints.Endpoints.Add("/health");
-        });
 
         services.AddMediator(callingAssembly, zgwApiOptions.ApiServiceSettings);
 

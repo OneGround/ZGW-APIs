@@ -3,7 +3,6 @@ using OneGround.ZGW.Autorisaties.ServiceAgent;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Web.Authentication;
 using OneGround.ZGW.Common.Web.Configuration;
-using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Documenten.Web;
 
 var builder = WebApplication.CreateBuilder(args);

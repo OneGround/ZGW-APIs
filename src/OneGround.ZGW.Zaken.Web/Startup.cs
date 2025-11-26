@@ -20,6 +20,7 @@ using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -91,6 +92,14 @@ public class Startup
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
             }
         );
+
+        services
+            .AddOneGroundHealthChecks()
+            .AddRedisCheck()
+            .Build(c =>
+            {
+                c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
+            });
 
         services.AddZGWAuditTrail<ZrcDbContext>();
 
@@ -176,12 +185,13 @@ public class Startup
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public static void Configure(WebApplication app, IWebHostEnvironment env)
     {
         app.UseCorrelationId();
         app.UseBatchId();
 
-        app.ConfigureZGWApi(env);
+        app.ConfigureZgwApi(env);
         app.ConfigureZgwSwagger();
+        app.UseOneGroundHealthChecks();
     }
 }
