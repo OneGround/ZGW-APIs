@@ -1,7 +1,5 @@
 using Hangfire;
-using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
@@ -27,7 +25,7 @@ app.MapHealthChecks("/health");
 
 if (app.Environment.IsLocal())
 {
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions());
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireLocalAuthFilter() } });
 }
 
 await app.RunAsync();
