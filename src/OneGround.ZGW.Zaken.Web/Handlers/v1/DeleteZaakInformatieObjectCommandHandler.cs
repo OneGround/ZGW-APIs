@@ -90,7 +90,7 @@ class DeleteZaakInformatieObjectCommandHandler
 
         var extraKenmerken = new Dictionary<string, string> { { "zaakinformatieobject.informatieobject", zaakInformatieObject.InformatieObject } };
 
-        await SendNotificationAsync(Actie.destroy, zaakInformatieObject, cancellationToken, extraKenmerken);
+        await SendNotificationAsync(Actie.destroy, zaakInformatieObject, extraKenmerken, cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }

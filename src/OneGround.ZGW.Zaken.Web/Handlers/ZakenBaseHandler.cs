@@ -76,11 +76,16 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
             _ => throw new ArgumentException(null, nameof(zaakEntity)),
         };
 
+    public async Task SendNotificationAsync(Actie actie, Zaak zaak, CancellationToken cancellationToken = default)
+    {
+        await SendNotificationAsync(actie, zaak, null, cancellationToken);
+    }
+
     public async Task SendNotificationAsync(
         Actie actie,
         Zaak zaak,
-        CancellationToken cancellationToken,
-        Dictionary<string, string> extraKenmerken = null
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
     )
     {
         var hoofdObject = _uriService.GetUri(zaak);
@@ -104,11 +109,17 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
+    public async Task SendNotificationAsync<TZaakEntity>(Actie actie, TZaakEntity zaakEntity, CancellationToken cancellationToken = default)
+        where TZaakEntity : IZaakEntity, IUrlEntity
+    {
+        await SendNotificationAsync(actie, zaakEntity, extraKenmerken: null, cancellationToken: cancellationToken);
+    }
+
     public async Task SendNotificationAsync<TZaakEntity>(
         Actie actie,
         TZaakEntity zaakEntity,
-        CancellationToken cancellationToken,
-        Dictionary<string, string> extraKenmerken = null
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
     )
         where TZaakEntity : IZaakEntity, IUrlEntity
     {

@@ -63,11 +63,16 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
             _ => throw new ArgumentException(null, nameof(besluitEntity)),
         };
 
+    public async Task SendNotificationAsync(Actie actie, Besluit besluit, CancellationToken cancellationToken = default)
+    {
+        await SendNotificationAsync(actie, besluit, null, cancellationToken);
+    }
+
     public async Task SendNotificationAsync(
         Actie actie,
         Besluit besluit,
-        CancellationToken cancellationToken,
-        Dictionary<string, string> extraKenmerken = null
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
     )
     {
         var hoofdObject = _uriService.GetUri(besluit);
@@ -93,8 +98,8 @@ public abstract class BesluitenBaseHandler<T> : ZGWBaseHandler
     public async Task SendNotificationAsync<TBesluitEntity>(
         Actie actie,
         TBesluitEntity besluitEntity,
-        CancellationToken cancellationToken,
-        Dictionary<string, string> extraKenmerken = null
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
     )
         where TBesluitEntity : IBesluitEntity, IUrlEntity
     {

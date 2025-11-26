@@ -110,7 +110,7 @@ class CreateBesluitInformatieObjectCommandHandler
             { "besluitinformatieobject.informatieobject", besluitInformatieObject.InformatieObject },
         };
 
-        await SendNotificationAsync(Actie.create, besluitInformatieObject, cancellationToken, extraKenmerken);
+        await SendNotificationAsync(Actie.create, besluitInformatieObject, extraKenmerken, cancellationToken);
 
         return new CommandResult<BesluitInformatieObject>(besluitInformatieObject, CommandStatus.OK);
     }

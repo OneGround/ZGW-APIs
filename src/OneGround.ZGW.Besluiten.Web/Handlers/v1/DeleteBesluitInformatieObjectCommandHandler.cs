@@ -81,7 +81,7 @@ class DeleteBesluitInformatieObjectCommandHandler
             { "besluitinformatieobject.informatieobject", besluitInformatieObject.InformatieObject },
         };
 
-        await SendNotificationAsync(Actie.destroy, besluitInformatieObject, cancellationToken, extraKenmerken);
+        await SendNotificationAsync(Actie.destroy, besluitInformatieObject, extraKenmerken, cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }
