@@ -26,7 +26,7 @@ on:
       - 'src/OneGround.ZGW.DataAccess/**'
       - 'src/OneGround.ZGW.Documenten.Contracts/**'
       - 'src/OneGround.ZGW.Documenten.DataModel/**'
-      - 'src/OneGround.ZGW.Documenten.Messaging.Contracts/**'
+      - 'src/OneGround.ZGW.Documenten.Jobs/**'
       - 'src/OneGround.ZGW.Documenten.Messaging.Listener/**'
       - 'src/OneGround.ZGW.Documenten.Messaging/**'
       - 'src/OneGround.ZGW.Documenten.ServiceAgent/**'
