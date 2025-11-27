@@ -26,6 +26,7 @@ public interface IZakenServiceAgent
     Task<ServiceAgentResponse<IEnumerable<ZaakInformatieObjectResponseDto>>> GetZaakInformatieObjectenAsync(
         GetAllZaakInformatieObjectenQueryParameters parameters
     );
+    Task<ServiceAgentResponse> DeleteZaakInformatieObjectByIdAsync(Guid zaakInformatieObjectId);
 
     // ZaakBesluit
     Task<ServiceAgentResponse<ZaakBesluitResponseDto>> AddZaakBesluitByUrlAsync(Guid zaakId, string besluitUrl);

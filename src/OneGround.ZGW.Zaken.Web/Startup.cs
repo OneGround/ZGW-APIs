@@ -26,7 +26,6 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
@@ -134,8 +133,6 @@ public class Startup
             );
 
             x.AddRequestClient<ISendNotificaties>();
-            x.AddRequestClient<IAddObjectInformatieObject>();
-            x.AddRequestClient<IDeleteObjectInformatieObject>();
         });
 
         services.AddCommonServices();

@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Common.Constants
         public const string RL = "RL";
         public const string IDP = "IDP";
 
-        // RabbitMQ Listeners
+        // Hangfire Listeners
         public const string DRC_LISTENER = "DRC_LISTENER";
         public const string NRC_LISTENER = "NRC_LISTENER";
     }

@@ -12,10 +12,10 @@
     <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Besluiten.Contracts\ZGW.Besluiten.Contracts.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Besluiten.DataModel\ZGW.Besluiten.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Besluiten.ServiceAgent\ZGW.Besluiten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Catalogi.ServiceAgent\ZGW.Catalogi.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
-    <ProjectReference Include="..\OneGround.ZGW.Documenten.Messaging.Contracts\ZGW.Documenten.Messaging.Contracts.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
