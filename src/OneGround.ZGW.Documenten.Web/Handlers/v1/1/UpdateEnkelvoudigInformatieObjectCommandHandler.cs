@@ -25,6 +25,7 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -46,7 +47,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IFileValidationService fileValidationService
     )
         : base(
             logger,
@@ -62,7 +64,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             lockGenerator,
             formOptions,
             notificatieService,
-            documentKenmerkenResolver
+            documentKenmerkenResolver,
+            fileValidationService
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -75,6 +78,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         var versie = request.EnkelvoudigInformatieObjectVersie;
 
         var errors = new List<ValidationError>();
+
+        ValidateFile(versie, errors);
 
         // Add new version of the EnkelvoudigInformatieObject
         var existingEnkelvoudigInformatieObject = await _context

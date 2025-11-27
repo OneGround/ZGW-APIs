@@ -38,6 +38,7 @@ using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Middleware;
 using OneGround.ZGW.Documenten.Web.Services;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 
@@ -137,6 +138,8 @@ public class Startup
         services.AddScoped<IVerzendingBusinessRuleService, VerzendingBusinessRuleService>();
         services.AddTransient<IInformatieObjectAuthorizationTempTableService, InformatieObjectAuthorizationTempTableService>();
         services.AddScoped<IDocumentKenmerkenResolver, DocumentKenmerkenResolver>();
+        services.AddScoped<IFileValidationService, FileValidationService>();
+        services.AddScoped<IFileExtensionValidator, FileExtensionValidator>();
 
         services.AddSingleton<ILockGenerator, LockGenerator>();
 
