@@ -15,10 +15,10 @@ public class OneGroundHealthChecksOptions
 {
     internal List<string> RegisteredHealthChecks { get; set; } = [];
 
-    public OneGroundHealthChecksEndpointOptions DetailedEndpoints { get; set; } =
+    public OneGroundHealthChecksEndpointOptions ReadyEndpoints { get; set; } =
         new()
         {
-            Endpoints = ["/health"],
+            Endpoints = ["/health/ready"],
             RequireAuthorization = false,
             AuthorizationPolicies = null,
         };
@@ -34,7 +34,7 @@ public class OneGroundHealthChecksOptions
     public OneGroundHealthChecksEndpointOptions PingEndpoints { get; set; } =
         new()
         {
-            Endpoints = ["/health/ping"],
+            Endpoints = ["/health"],
             RequireAuthorization = false,
             AuthorizationPolicies = null,
         };

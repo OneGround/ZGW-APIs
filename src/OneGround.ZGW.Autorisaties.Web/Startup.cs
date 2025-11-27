@@ -70,16 +70,14 @@ public class Startup
             }
         );
 
-        services
-            .AddOneGroundHealthChecks()
-            .AddRedisCheck()
-            .Build();
+        services.AddOneGroundHealthChecks().AddRedisCheck().Build();
 
         services.AddMassTransit(x =>
         {
             x.DisableUsageTelemetry();
 
-            x.UsingRabbitMq((bus, conf) =>
+            x.UsingRabbitMq(
+                (bus, conf) =>
                 {
                     conf.Host(
                         _rabbitMqConfiguration.HostName,
@@ -135,10 +133,6 @@ public class Startup
 
         app.ConfigureZgwApi(env);
         app.ConfigureZgwSwagger();
-        app.MapOneGroundHealthChecks(c =>
-        {
-            // Note: backwards compatibility with the old health check endpoint
-            c.PingEndpoints.Endpoints.Add("/health");
-        });
+        app.MapOneGroundHealthChecks();
     }
 }

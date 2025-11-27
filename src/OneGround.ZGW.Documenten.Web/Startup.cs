@@ -86,10 +86,7 @@ public class Startup
             }
         );
 
-        services
-            .AddOneGroundHealthChecks()
-            .AddRedisCheck()
-            .Build();
+        services.AddOneGroundHealthChecks().AddRedisCheck().Build();
 
         services.AddZGWAuditTrail<DrcDbContext>();
 
@@ -185,10 +182,6 @@ public class Startup
         );
 
         app.ConfigureZgwSwagger();
-        app.MapOneGroundHealthChecks(c =>
-        {
-            // Note: backwards compatibility with the old health check endpoint
-            c.PingEndpoints.Endpoints.Add("/health");
-        });
+        app.MapOneGroundHealthChecks();
     }
 }

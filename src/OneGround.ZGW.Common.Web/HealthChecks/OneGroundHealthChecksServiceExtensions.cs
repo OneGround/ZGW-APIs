@@ -35,12 +35,12 @@ public static class OneGroundHealthChecksServiceExtensions
         configureOptions?.Invoke(options);
 
         endpoints.MapHealthEndpointsGroup(
-            options.DetailedEndpoints,
+            options.ReadyEndpoints,
             new HealthCheckOptions()
             {
                 ResponseWriter = OneGroundHealthChecksResponseWriter.ResponseWriter,
                 Predicate = x => options.RegisteredHealthChecks.Any(y => x.Name.Equals(y)),
-                ResultStatusCodes = options.DetailedEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
+                ResultStatusCodes = options.ReadyEndpoints.ResultStatusCode ?? options.DefaultResultStatusCode,
             }
         );
 
