@@ -18,7 +18,10 @@ public static class OneGroundHealthChecksServiceExtensions
         return new OneGroundHealthCheckBuilder(services, healthChecksBuilder);
     }
 
-    public static IEndpointRouteBuilder MapOneGroundHealthChecks(this IEndpointRouteBuilder endpoints, Action<OneGroundHealthChecksOptions> configureOptions = null)
+    public static IEndpointRouteBuilder MapOneGroundHealthChecks(
+        this IEndpointRouteBuilder endpoints,
+        Action<OneGroundHealthChecksOptions> configureOptions = null
+    )
     {
         var optionsService = endpoints.ServiceProvider.GetService<IOptions<OneGroundHealthChecksOptions>>();
         if (optionsService == null)
@@ -76,9 +79,9 @@ public static class OneGroundHealthChecksServiceExtensions
             {
                 healthEndpoint.AllowAnonymous();
             }
-            else if (endpointsOptions.AuthorizationSchema != null)
+            else if (endpointsOptions.AuthorizationPolicies != null)
             {
-                healthEndpoint.RequireAuthorization(endpointsOptions.AuthorizationSchema);
+                healthEndpoint.RequireAuthorization(endpointsOptions.AuthorizationPolicies);
             }
             else
             {

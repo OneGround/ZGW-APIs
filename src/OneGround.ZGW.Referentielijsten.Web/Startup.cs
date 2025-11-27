@@ -81,7 +81,8 @@ public class Startup
         app.ConfigureZgwSwagger();
         app.MapOneGroundHealthChecks(c =>
         {
-            c.PingEndpoints.Endpoints.Add("/health"); // Note: backwards compatibility with the old health check endpoint
+            // Note: backwards compatibility with the old health check endpoint
+            c.PingEndpoints.Endpoints.Add("/health");
         });
     }
 }

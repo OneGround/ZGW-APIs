@@ -7,7 +7,7 @@ public class OneGroundHealthChecksEndpointOptions
 {
     public List<string> Endpoints { get; set; } = [];
     public bool RequireAuthorization { get; set; } = false;
-    public string AuthorizationSchema { get; set; } = null;
+    public string[] AuthorizationPolicies { get; set; } = null;
     public Dictionary<HealthStatus, int> ResultStatusCode = null;
 }
 
@@ -20,7 +20,7 @@ public class OneGroundHealthChecksOptions
         {
             Endpoints = ["/health"],
             RequireAuthorization = false,
-            AuthorizationSchema = null,
+            AuthorizationPolicies = null,
         };
 
     public OneGroundHealthChecksEndpointOptions CheckEndpoints { get; set; } =
@@ -28,7 +28,7 @@ public class OneGroundHealthChecksOptions
         {
             Endpoints = ["/health/check"],
             RequireAuthorization = false,
-            AuthorizationSchema = null,
+            AuthorizationPolicies = null,
         };
 
     public OneGroundHealthChecksEndpointOptions PingEndpoints { get; set; } =
@@ -36,7 +36,7 @@ public class OneGroundHealthChecksOptions
         {
             Endpoints = ["/health/ping"],
             RequireAuthorization = false,
-            AuthorizationSchema = null,
+            AuthorizationPolicies = null,
         };
 
     public Dictionary<HealthStatus, int> DefaultResultStatusCode = new()
