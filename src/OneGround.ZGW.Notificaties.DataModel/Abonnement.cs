@@ -23,7 +23,7 @@ public class Abonnement : OwnedEntity, IBaseEntity, IUrlEntity
 
     [Required]
     [Column("auth")]
-    [MaxLength(1000)]
+    [MaxLength(8192)]
     public string Auth { get; set; }
 
     public IList<AbonnementKanaal> AbonnementKanalen { get; set; }

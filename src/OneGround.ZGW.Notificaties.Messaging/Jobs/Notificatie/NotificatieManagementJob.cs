@@ -6,19 +6,12 @@ namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
 public interface INotificatieManagementJob
 {
-    [Obsolete("Use overload with PerformContext (which adds functionality like logging")] // Note: Keep the old one for backward compatibility
-    void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob);
     void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null);
 }
 
 [Queue(Constants.NrcListenerQueue)]
 public class NotificatieManagementJob : INotificatieManagementJob
 {
-    public void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob)
-    {
-        ExpireFailedJobsScanAt(maxAgeFailedJob, null);
-    }
-
     public void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null)
     {
         const int pageSize = 100;
@@ -36,7 +29,7 @@ public class NotificatieManagementJob : INotificatieManagementJob
 
             var failedJobsBatch = monitor.FailedJobs(from, count);
 
-            var filteredFailedJobsBatch = failedJobsBatch.Where(kvp => kvp.Value.Job.Type == typeof(NotificatieJob));
+            var filteredFailedJobsBatch = failedJobsBatch.Where(kvp => kvp.Value.Job?.Type == typeof(NotificatieJob));
 
             foreach (var kv in filteredFailedJobsBatch)
             {

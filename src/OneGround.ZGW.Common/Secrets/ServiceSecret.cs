@@ -1,4 +1,4 @@
-﻿namespace OneGround.ZGW.Common.Secrets;
+namespace OneGround.ZGW.Common.Secrets;
 
 public class ServiceSecret
 {

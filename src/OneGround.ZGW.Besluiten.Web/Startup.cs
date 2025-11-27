@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.DataModel;
+using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Besluiten.Web.BusinessRules;
 using OneGround.ZGW.Besluiten.Web.Controllers;
 using OneGround.ZGW.Besluiten.Web.Expands.v1;
@@ -28,7 +29,6 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Documenten.Messaging.Contracts;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
@@ -81,6 +81,7 @@ public class Startup
 
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
+        services.AddBesluitenServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddDocumentenServiceAgent(Configuration);
@@ -110,9 +111,6 @@ public class Startup
                     conf.UsePublishFilter(typeof(BatchIdPublishFilter<>), bus);
                 }
             );
-
-            x.AddRequestClient<IAddObjectInformatieObject>();
-            x.AddRequestClient<IDeleteObjectInformatieObject>();
         });
 
         services.AddCommonServices();

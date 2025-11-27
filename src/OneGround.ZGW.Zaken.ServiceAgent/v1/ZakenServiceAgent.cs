@@ -78,6 +78,12 @@ public class ZakenServiceAgent : ZGWServiceAgent<ZakenServiceAgent>, IZakenServi
         return await GetAsync<ZaakInformatieObjectResponseDto>("/zaakinformatieobjecten", parameters);
     }
 
+    public async Task<ServiceAgentResponse> DeleteZaakInformatieObjectByIdAsync(Guid zaakInformatieObjectId)
+    {
+        var url = new Uri($"/zaakinformatieobjecten/{zaakInformatieObjectId}", UriKind.Relative);
+        return await DeleteAsync(url);
+    }
+
     public async Task<ServiceAgentResponse<IDictionary<string, object>>> GetZaakObjectByUrlAsync(string zaakObjectUrl)
     {
         if (!EnsureValidResource(ServiceRoleName.ZRC, zaakObjectUrl, "zaakobjecten", out var errorResponse))

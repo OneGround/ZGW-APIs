@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -75,9 +76,22 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
             _ => throw new ArgumentException(null, nameof(zaakEntity)),
         };
 
-    public async Task SendNotificationAsync(Actie actie, Zaak zaak, CancellationToken cancellationToken)
+    public async Task SendNotificationAsync(Actie actie, Zaak zaak, CancellationToken cancellationToken = default)
+    {
+        await SendNotificationAsync(actie, zaak, null, cancellationToken);
+    }
+
+    public async Task SendNotificationAsync(
+        Actie actie,
+        Zaak zaak,
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var hoofdObject = _uriService.GetUri(zaak);
+
+        var kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaak, cancellationToken);
+        AddExtraKenmerken(kenmerken, extraKenmerken);
 
         await SendNotificationAsync(
             new Notification
@@ -87,7 +101,7 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
                 Resource = Resource.zaak.ToString(),
                 ResourceUrl = hoofdObject,
                 Actie = actie.ToString(),
-                Kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaak, cancellationToken),
+                Kenmerken = kenmerken,
                 Ignore = zaak.HasConversionKenmerk(),
                 Rsin = zaak.Owner,
             },
@@ -95,11 +109,25 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
-    public async Task SendNotificationAsync<TZaakEntity>(Actie actie, TZaakEntity zaakEntity, CancellationToken cancellationToken)
+    public async Task SendNotificationAsync<TZaakEntity>(Actie actie, TZaakEntity zaakEntity, CancellationToken cancellationToken = default)
+        where TZaakEntity : IZaakEntity, IUrlEntity
+    {
+        await SendNotificationAsync(actie, zaakEntity, extraKenmerken: null, cancellationToken: cancellationToken);
+    }
+
+    public async Task SendNotificationAsync<TZaakEntity>(
+        Actie actie,
+        TZaakEntity zaakEntity,
+        Dictionary<string, string> extraKenmerken = null,
+        CancellationToken cancellationToken = default
+    )
         where TZaakEntity : IZaakEntity, IUrlEntity
     {
         var hoofdObject = _uriService.GetUri(zaakEntity.Zaak);
         var resourceUrl = _uriService.GetUri(zaakEntity);
+
+        var kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaakEntity.Zaak, cancellationToken);
+        AddExtraKenmerken(kenmerken, extraKenmerken);
 
         await SendNotificationAsync(
             new Notification
@@ -109,7 +137,7 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
                 Resource = GetEntityResource(zaakEntity).ToString(),
                 ResourceUrl = resourceUrl,
                 Actie = actie.ToString(),
-                Kenmerken = await _zaakKenmerkenResolver.GetKenmerkenAsync(zaakEntity.Zaak, cancellationToken),
+                Kenmerken = kenmerken,
                 Ignore = zaakEntity.HasConversionKenmerk(),
                 Rsin = zaakEntity.Zaak.Owner,
             },
@@ -126,6 +154,17 @@ public abstract class ZakenBaseHandler<T> : ZGWBaseHandler
         else
         {
             _logger.LogDebug("Warning: Notifications are disabled. Notification {@Notification} will not be sent.", notification);
+        }
+    }
+
+    private static void AddExtraKenmerken(Dictionary<string, string> kenmerken, Dictionary<string, string> extraKenmerken)
+    {
+        if (extraKenmerken != null)
+        {
+            foreach (var kvp in extraKenmerken)
+            {
+                kenmerken[kvp.Key] = kvp.Value;
+            }
         }
     }
 }
