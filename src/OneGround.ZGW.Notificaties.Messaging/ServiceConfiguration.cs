@@ -47,7 +47,7 @@ public class ServiceConfiguration
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
 
-        services.AddOneGroundHealthChecks().Build();
+        services.AddOneGroundHealthChecks();
 
         const string serviceName = "NotificatiesSender";
         var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);

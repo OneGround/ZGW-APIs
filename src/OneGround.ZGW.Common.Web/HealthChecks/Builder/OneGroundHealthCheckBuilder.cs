@@ -12,19 +12,18 @@ public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChe
 {
     private IHealthChecksBuilder _healthChecksBuilder = healthChecksBuilder;
     private readonly OptionsBuilder<OneGroundHealthChecksOptions> _optionsBuilder = services.AddOptions<OneGroundHealthChecksOptions>();
-    private readonly List<string> _healthChecksList = [];
 
     public OneGroundHealthCheckBuilder AddRedisCheck()
     {
         _healthChecksBuilder = _healthChecksBuilder.AddCheck<RedisHealthCheck>(RedisHealthCheck.HealthCheckName);
-        _healthChecksList.Add(RedisHealthCheck.HealthCheckName);
+        AddRegisteredHealthCheck(RedisHealthCheck.HealthCheckName);
         return this;
     }
 
     public OneGroundHealthCheckBuilder AddEventBusCheck()
     {
         _healthChecksBuilder = _healthChecksBuilder.AddCheck<EventBusHealthCheck>(EventBusHealthCheck.HealthCheckName);
-        _healthChecksList.Add(EventBusHealthCheck.HealthCheckName);
+        AddRegisteredHealthCheck(EventBusHealthCheck.HealthCheckName);
         return this;
     }
 
@@ -32,7 +31,7 @@ public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChe
         where T : class, IHealthCheck
     {
         _healthChecksBuilder = _healthChecksBuilder.AddCheck<T>(healthCheckName);
-        _healthChecksList.Add(healthCheckName);
+        AddRegisteredHealthCheck(EventBusHealthCheck.HealthCheckName);
         return this;
     }
 
@@ -42,12 +41,15 @@ public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChe
         return this;
     }
 
-    public void Build(Action<OneGroundHealthChecksOptions> configureOptions = null)
+    private void AddRegisteredHealthCheck(string healthCheckName)
     {
         _optionsBuilder.Configure(x =>
         {
-            configureOptions?.Invoke(x);
-            x.RegisteredHealthChecks = _healthChecksList;
+            if (x.RegisteredHealthChecks.Contains(healthCheckName))
+            {
+                throw new InvalidOperationException($"HealthCheck with name {healthCheckName} is already registered");
+            }
+            x.RegisteredHealthChecks.Add(RedisHealthCheck.HealthCheckName);
         });
     }
 }

@@ -48,7 +48,7 @@ public class Startup
             }
         );
 
-        services.AddOneGroundHealthChecks().AddRedisCheck().Build();
+        services.AddOneGroundHealthChecks().AddRedisCheck();
 
         services
             .AddOptions<ApplicationConfiguration>()

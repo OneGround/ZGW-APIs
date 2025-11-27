@@ -72,7 +72,7 @@ public class Startup
             }
         );
 
-        services.AddOneGroundHealthChecks().AddRedisCheck().Build();
+        services.AddOneGroundHealthChecks().AddRedisCheck();
 
         services.AddZGWAuditTrail<ZtcDbContext>();
 
