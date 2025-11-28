@@ -9,28 +9,29 @@ namespace OneGround.ZGW.Common.Web.HealthChecks.Builder;
 
 public class OneGroundHealthCheckBuilder(IServiceCollection services, IHealthChecksBuilder healthChecksBuilder)
 {
-    private readonly IHealthChecksBuilder _healthChecksBuilder = healthChecksBuilder;
     private readonly OptionsBuilder<OneGroundHealthChecksOptions> _optionsBuilder = services.AddOptions<OneGroundHealthChecksOptions>();
 
     public OneGroundHealthCheckBuilder AddRedisCheck()
     {
-        _healthChecksBuilder.AddCheck<RedisHealthCheck>(RedisHealthCheck.HealthCheckName);
-        AddRegisteredHealthCheck(RedisHealthCheck.HealthCheckName);
+        var healthCheckName = RedisHealthCheck.HealthCheckName;
+        healthChecksBuilder.AddCheck<RedisHealthCheck>(healthCheckName);
+        AddRegisteredHealthCheck(healthCheckName);
         return this;
     }
 
     public OneGroundHealthCheckBuilder AddEventBusCheck()
     {
-        _healthChecksBuilder.AddCheck<EventBusHealthCheck>(EventBusHealthCheck.HealthCheckName);
-        AddRegisteredHealthCheck(EventBusHealthCheck.HealthCheckName);
+        var healthCheckName = EventBusHealthCheck.HealthCheckName;
+        healthChecksBuilder.AddCheck<EventBusHealthCheck>(healthCheckName);
+        AddRegisteredHealthCheck(healthCheckName);
         return this;
     }
 
     public OneGroundHealthCheckBuilder AddCheck<T>(string healthCheckName)
         where T : class, IHealthCheck
     {
-        _healthChecksBuilder.AddCheck<T>(healthCheckName);
-        AddRegisteredHealthCheck(EventBusHealthCheck.HealthCheckName);
+        healthChecksBuilder.AddCheck<T>(healthCheckName);
+        AddRegisteredHealthCheck(healthCheckName);
         return this;
     }
 

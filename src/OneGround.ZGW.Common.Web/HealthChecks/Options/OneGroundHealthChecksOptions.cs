@@ -8,7 +8,7 @@ public class OneGroundHealthChecksEndpointOptions
     public List<string> Endpoints { get; set; } = [];
     public bool RequireAuthorization { get; set; } = false;
     public string[] AuthorizationPolicies { get; set; } = null;
-    public Dictionary<HealthStatus, int> ResultStatusCode = null;
+    public Dictionary<HealthStatus, int> ResultStatusCode { get; set; } = null;
 }
 
 public class OneGroundHealthChecksOptions
