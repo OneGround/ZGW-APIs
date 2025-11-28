@@ -39,10 +39,11 @@ public class OneGroundHealthChecksOptions
             AuthorizationPolicies = null,
         };
 
-    public Dictionary<HealthStatus, int> DefaultResultStatusCode = new()
-    {
-        [HealthStatus.Healthy] = 200,
-        [HealthStatus.Degraded] = 207,
-        [HealthStatus.Unhealthy] = 503,
-    };
+    public Dictionary<HealthStatus, int> DefaultResultStatusCode { get; set; } =
+        new()
+        {
+            [HealthStatus.Healthy] = 200,
+            [HealthStatus.Degraded] = 207,
+            [HealthStatus.Unhealthy] = 503,
+        };
 }
