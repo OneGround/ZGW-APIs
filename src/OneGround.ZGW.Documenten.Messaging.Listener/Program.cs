@@ -6,6 +6,7 @@ using OneGround.ZGW.Common.Configuration;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authentication;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Documenten.Messaging;
 using OneGround.ZGW.Documenten.Messaging.Listener.Services;
 
@@ -25,12 +26,12 @@ builder.Services.AddHostedService<ManageSubscriptionsHostedService>();
 
 var app = builder.Build();
 
-app.MapHealthChecks("/health");
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapOneGroundHealthChecks();
 
 if (app.Environment.IsLocal())
 {

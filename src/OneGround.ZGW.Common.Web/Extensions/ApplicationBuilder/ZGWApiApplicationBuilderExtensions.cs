@@ -9,8 +9,8 @@ namespace OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 
 public static class ZGWApiApplicationBuilderExtensions
 {
-    public static void ConfigureZGWApi(
-        this IApplicationBuilder app,
+    public static void ConfigureZgwApi(
+        this WebApplication app,
         IWebHostEnvironment env,
         bool dontRegisterLogBadRequestMiddleware = false,
         Action<IApplicationBuilder> registerMiddleware = null
@@ -48,10 +48,6 @@ public static class ZGWApiApplicationBuilderExtensions
         // Register additional (API specific) Middleware. Should be done after Authentication, Authorization and Logging but before mapping the controllers, etc!
         registerMiddleware?.Invoke(app);
 
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapHealthChecks("/health");
-            endpoints.MapControllers();
-        });
+        app.MapControllers();
     }
 }

@@ -11,6 +11,7 @@ using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.ServiceAgent;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
@@ -39,7 +40,6 @@ public class ServiceConfiguration
         services.AddZGWDbContext<DrcDbContext>(_configuration);
 
         services.AddHttpContextAccessor();
-        services.AddHealthChecks();
 
         var callingAssembly = Assembly.GetCallingAssembly();
         var executingAssembly = Assembly.GetExecutingAssembly();
@@ -92,6 +92,7 @@ public class ServiceConfiguration
             }
         );
 
+        services.AddOneGroundHealthChecks();
         services.AddControllers();
     }
 

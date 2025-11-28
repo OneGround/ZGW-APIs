@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Configuration;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
@@ -45,6 +46,8 @@ public class ServiceConfiguration
         services.AddServiceEndpoints(_configuration);
         services.AddTransient<CorrelationIdHandler>();
         services.AddScoped<BatchIdHandler>();
+
+        services.AddOneGroundHealthChecks();
 
         const string serviceName = "NotificatiesSender";
         var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);

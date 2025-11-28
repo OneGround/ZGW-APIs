@@ -20,6 +20,7 @@ using OneGround.ZGW.Common.Messaging.Filters;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
+using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -70,6 +71,8 @@ public class Startup
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
             }
         );
+
+        services.AddOneGroundHealthChecks().AddRedisCheck();
 
         services.AddZGWAuditTrail<ZtcDbContext>();
 
@@ -146,12 +149,13 @@ public class Startup
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
     }
 
-    public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public static void Configure(WebApplication app, IWebHostEnvironment env)
     {
         app.UseCorrelationId();
         app.UseBatchId();
 
-        app.ConfigureZGWApi(env);
+        app.ConfigureZgwApi(env);
         app.ConfigureZgwSwagger();
+        app.MapOneGroundHealthChecks();
     }
 }
