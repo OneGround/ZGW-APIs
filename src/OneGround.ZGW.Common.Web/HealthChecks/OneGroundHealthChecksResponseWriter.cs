@@ -35,6 +35,10 @@ public static class OneGroundHealthChecksResponseWriter
             if (entry.Value.Status < responseModel.Status)
             {
                 responseModel.Status = entry.Value.Status;
+            }
+
+            if (entry.Value.Status != HealthStatus.Healthy)
+            {
                 reasons.Add(entry.Value.Description);
             }
         }
