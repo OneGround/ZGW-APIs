@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,12 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.DataModel;
-using OneGround.ZGW.Besluiten.ServiceAgent.v1;
 using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Besluiten.Web.Notificaties;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
@@ -26,7 +25,6 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
     private readonly BrcDbContext _context;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly IZakenServiceAgent _zakenServiceAgent;
-    private readonly IBesluitenServiceAgent _besluitenServiceAgent;
 
     public DeleteBesluitCommandHandler(
         ILogger<DeleteBesluitCommandHandler> logger,
@@ -36,7 +34,6 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
         IAuditTrailFactory auditTrailFactory,
         IEntityUriService uriService,
         IZakenServiceAgent zakenServiceAgent,
-        IBesluitenServiceAgent besluitenServiceAgent,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IBesluitKenmerkenResolver besluitKenmerkenResolver
     )
@@ -45,7 +42,6 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
         _context = context;
         _auditTrailFactory = auditTrailFactory;
         _zakenServiceAgent = zakenServiceAgent;
-        _besluitenServiceAgent = besluitenServiceAgent;
     }
 
     public async Task<CommandResult> Handle(DeleteBesluitCommand request, CancellationToken cancellationToken)
@@ -71,8 +67,7 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
-            // Note: This also implies: Vernietigen van besluiten (brc-008)
-            await DeleteAndSyncBesluitInformatieObjectenAsync(besluit, cancellationToken);
+            RemoveBesluitInformatieObject(besluit);
 
             _logger.LogDebug("Deleting Besluit {Id}....", besluit.Id);
 
@@ -95,29 +90,29 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
             await _zakenServiceAgent.DeleteZaakBesluitByUrlAsync(besluit.ZaakBesluitUrl);
         }
 
+        await SendInformationObjectNotificationAsync(besluit, cancellationToken);
         await SendNotificationAsync(Actie.destroy, besluit, cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }
 
-    private async Task DeleteAndSyncBesluitInformatieObjectenAsync(Besluit besluit, CancellationToken cancellationToken)
+    private void RemoveBesluitInformatieObject(Besluit besluit)
     {
-        // Note: Before deleting the besluit, delete all related besluitinformatieobjecten from BRC via the BesluitenServiceAgent!
-        //   Doing so triggers the synchronization with DRC (the DocumentListener notificatie-receiver deletes the mirrored relation-ships)
+        _logger.LogDebug("Deleting {BesluitInformatieObject} from besluit {Id}....", nameof(BesluitInformatieObject), besluit.Id);
         foreach (var besluitInformatieObject in besluit.BesluitInformatieObjecten)
         {
-            _logger.LogDebug("Deleting and synchronizing BesluitInformatieObject {Id}....", besluitInformatieObject.Id);
+            _context.BesluitInformatieObjecten.Remove(besluitInformatieObject);
+        }
+    }
 
-            var result = await _besluitenServiceAgent.DeleteBesluitInformatieObjectByIdAsync(besluitInformatieObject.Id);
-            if (!result.Success)
-            {
-                var errors = result.GetErrorsFromResponse();
-                _logger.LogError(
-                    "Failed to delete besluitinformatieobject {besluitInformatieObjectUrl}. {errors}",
-                    besluitInformatieObject.Url,
-                    errors
-                );
-            }
+    private async Task SendInformationObjectNotificationAsync(Besluit besluit, CancellationToken cancellationToken)
+    {
+        const string besluitinformatieobjectKenmerken = "besluitinformatieobject.informatieobject";
+        foreach (var besluitInformatieObject in besluit.BesluitInformatieObjecten)
+        {
+            var extraKenmerken = new Dictionary<string, string> { { besluitinformatieobjectKenmerken, besluitInformatieObject.InformatieObject } };
+
+            await SendNotificationAsync(Actie.destroy, besluitInformatieObject, extraKenmerken, cancellationToken);
         }
     }
 
