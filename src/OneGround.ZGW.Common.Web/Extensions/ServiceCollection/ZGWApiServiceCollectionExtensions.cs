@@ -13,6 +13,8 @@ using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.ErrorHandling;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 using OneGround.ZGW.Common.Web.Filters;
+using OneGround.ZGW.Common.Web.HealthChecks;
+using OneGround.ZGW.Common.Web.HealthChecks.Builder;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
@@ -52,8 +54,6 @@ public static class ZGWApiServiceCollectionExtensions
         services.ConfigureForwardedHeaders(configuration);
 
         var callingAssembly = Assembly.GetCallingAssembly();
-
-        services.AddHealthChecks();
 
         services.AddMediator(callingAssembly, zgwApiOptions.ApiServiceSettings);
 
