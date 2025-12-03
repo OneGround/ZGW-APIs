@@ -11,7 +11,7 @@ public static class ProfileHelper
     public static string SortableStringDateFromDate(DateTime date)
     {
         // Convert to UTC and format as ISO 8601 with 'Z' (Zulu/GMT)
-        return date != default ? date.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture) : null;
+        return date != default ? date.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z" : null;
     }
 
     public static string Fix0Period(Period period)

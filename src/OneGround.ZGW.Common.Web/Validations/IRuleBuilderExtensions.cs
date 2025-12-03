@@ -340,7 +340,7 @@ public static class IRuleBuilderExtensions
                         out var parsedDate
                     )
                 )
-                    return true;
+                    return false;
 
                 return parsedDate < DateTime.UtcNow;
             })
