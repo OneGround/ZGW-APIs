@@ -16,6 +16,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 {
     private const int ExpiresMinutesBefore = 10;
 
+    public static string GetJobId(string rsin) => $"create-or-patch-subscription-{rsin}-job";
+
     private readonly INotificatiesServiceAgent _notificatieServiceAgent;
     private readonly ICachedZGWSecrets _cachedSecrets;
     private readonly IZgwTokenCacheService _zgwTokenCacheService;
@@ -160,11 +162,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 // Create a cron expression (using minute segment)
                 var refreshCronExpression = CronHelper.CreateCronForIntervalMinutes((int)refreshInMinutes);
 
-                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(
-                    $"create-or-patch-subscription-{rsin}-job",
-                    h => h.ExecuteAsync(rsin),
-                    refreshCronExpression
-                );
+                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
             }
         }
 
