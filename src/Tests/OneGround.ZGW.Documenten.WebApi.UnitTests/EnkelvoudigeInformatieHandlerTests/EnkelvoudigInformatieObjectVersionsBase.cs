@@ -68,7 +68,6 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
             { "Application:DontSendNotificaties", "false" },
             { "Application:EnkelvoudigInformatieObjectenPageSize", "50" },
             { "Application:CachedSecretExpirationTime", "00:03:00" },
-            { "Application:AuthorizedRsins", "813264571" },
             { "Application:ResolveForwardedHost", "false" },
             { "Application:DefaultDocumentenService", "unittest_documentservice" },
         };
