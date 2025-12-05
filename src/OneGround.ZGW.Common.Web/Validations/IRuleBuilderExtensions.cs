@@ -327,7 +327,23 @@ public static class IRuleBuilderExtensions
     public static IRuleBuilderOptions<T, string> NotInTheFuture<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
         return ruleBuilder
-            .Must(value => value == null || (DateTime.TryParse(value, out var parsedDate) && parsedDate < DateTime.UtcNow))
+            .Must(value =>
+            {
+                if (value == null)
+                    return true;
+
+                if (
+                    !DateTime.TryParse(
+                        value,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                        out var parsedDate
+                    )
+                )
+                    return false;
+
+                return parsedDate < DateTime.UtcNow;
+            })
             .WithMessage("Deze waarde mag niet in de toekomst liggen.")
             .WithErrorCode(ErrorCode.FuturenotAllowed);
     }

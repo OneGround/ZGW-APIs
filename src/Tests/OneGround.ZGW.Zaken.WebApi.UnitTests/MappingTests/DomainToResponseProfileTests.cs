@@ -85,7 +85,7 @@ public class DomainToResponseProfileTests
 
         Assert.Equal(value.Zaak.Url, result.Zaak);
         Assert.Equal(value.StatusType, result.StatusType);
-        Assert.Equal(value.DatumStatusGezet.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ss"), result.DatumStatusGezet);
+        Assert.Equal(value.DatumStatusGezet.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"), result.DatumStatusGezet);
         Assert.Equal(value.StatusToelichting, result.StatusToelichting);
         Assert.Equal(value.Url, result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
