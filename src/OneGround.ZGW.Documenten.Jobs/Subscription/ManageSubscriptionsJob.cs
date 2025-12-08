@@ -63,6 +63,6 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         {
             x.Rsin,
             x.ClientId,
-            x.ClientSecret
+            x.ClientSecret,
         });
 }
