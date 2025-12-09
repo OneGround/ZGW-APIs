@@ -30,7 +30,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.Bronorganisatie = latestVersion.Bronorganisatie;
         dest.Identificatie = latestVersion.Identificatie;
         dest.Bestandsomvang = latestVersion.Bestandsomvang;
-        dest.BeginRegistratie = latestVersion.BeginRegistratie;
+        dest.BeginRegistratie = ProfileHelper.StringDateFromDateTime(latestVersion.BeginRegistratie, withTime: true);
         dest.CreatieDatum = ProfileHelper.StringDateFromDate(latestVersion.CreatieDatum);
         dest.Titel = latestVersion.Titel;
         dest.Vertrouwelijkheidaanduiding = $"{latestVersion.Vertrouwelijkheidaanduiding}";

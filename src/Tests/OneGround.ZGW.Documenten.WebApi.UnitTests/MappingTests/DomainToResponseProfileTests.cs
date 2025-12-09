@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using AutoFixture;
 using AutoMapper;
@@ -23,6 +24,7 @@ public class ResponseToDomainProfileTests
     public ResponseToDomainProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
+        _fixture.Register<DateTime>(() => DateTime.UtcNow);
 
         var configuration = new MapperConfiguration(config =>
         {
@@ -77,7 +79,10 @@ public class ResponseToDomainProfileTests
         Assert.Equal(value.Url, result.Url);
         Assert.Equal(latest.Versie, result.Versie);
 
-        Assert.Equal(latest.BeginRegistratie, result.BeginRegistratie);
+        Assert.Equal(
+            latest.BeginRegistratie.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            result.BeginRegistratie
+        );
         Assert.Equal(latest.Bestandsomvang, result.Bestandsomvang);
 
         Assert.Equal(latest.Identificatie, result.Identificatie);
@@ -203,7 +208,7 @@ public class ResponseToDomainProfileTests
         // Assert
         Assert.Equal(value.InformatieObject.Url, result.InformatieObject);
         Assert.Equal(value.OmschrijvingVoorwaarden, result.OmschrijvingVoorwaarden);
-        Assert.Equal(value.Startdatum.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Startdatum);
+        Assert.Equal(value.Startdatum.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture), result.Startdatum);
         Assert.Equal(value.Einddatum.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Einddatum);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OneGround.ZGW.Common.Helpers;
 using Xunit;
 
@@ -29,7 +29,7 @@ public class ProfileHelperTests
         var regular = ProfileHelper.StringDateFromDateTime(regularDateTime, withTime: true);
 
         var expectedUtcString = utcDateTime.ToString(UtcFormat);
-        var expectedRegularString = regularDateTime.ToString(UtcFormat);
+        var expectedRegularString = regularDateTime.ToUniversalTime().ToString(UtcFormat);
 
         Assert.Equal(expectedUtcString, utc);
         Assert.Equal(expectedRegularString, regular);

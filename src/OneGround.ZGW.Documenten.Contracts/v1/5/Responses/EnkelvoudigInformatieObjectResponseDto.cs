@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -13,7 +12,7 @@ public class EnkelvoudigInformatieObjectResponseDto : EnkelvoudigInformatieObjec
     public int Versie { get; set; }
 
     [JsonProperty(PropertyName = "beginRegistratie", Order = 71)]
-    public DateTime BeginRegistratie { get; set; }
+    public string BeginRegistratie { get; set; }
 
     [JsonProperty(PropertyName = "locked", Order = 72)]
     public bool Locked { get; set; }
