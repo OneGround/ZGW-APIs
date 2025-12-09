@@ -44,7 +44,9 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         // 1. Add missing subscriptions for service accounts that do not have one yet
         foreach (var serviceaccount in currentServiceAccountCredentials)
         {
-            if (!currentRecurringHangfireTokenRefreshJobs.Any(job => job.Id == $"create-or-patch-subscription-{serviceaccount.Rsin}-job"))
+            var jobId = CreateOrPatchSubscriptionJob.GetJobId(serviceaccount.Rsin);
+
+            if (currentRecurringHangfireTokenRefreshJobs.All(job => job.Id != jobId))
             {
                 BackgroundJob.Enqueue<CreateOrPatchSubscriptionJob>(job => job.ExecuteAsync(serviceaccount.Rsin));
             }
