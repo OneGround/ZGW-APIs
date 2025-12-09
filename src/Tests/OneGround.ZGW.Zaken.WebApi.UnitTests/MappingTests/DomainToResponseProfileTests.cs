@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using AutoFixture;
 using AutoMapper;
@@ -128,7 +128,10 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.EinddatumGepland?.ToString("yyyy-MM-dd"), result.EinddatumGepland);
         Assert.Equal(value.UiterlijkeEinddatumAfdoening?.ToString("yyyy-MM-dd"), result.UiterlijkeEinddatumAfdoening);
         Assert.Equal(value.Publicatiedatum?.ToString("yyyy-MM-dd"), result.Publicatiedatum);
-        Assert.Equal(value.LaatsteBetaaldatum?.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.LaatsteBetaaldatum);
+        Assert.Equal(
+            value.LaatsteBetaaldatum?.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            result.LaatsteBetaaldatum
+        );
         Assert.Equal(value.Archiefactiedatum?.ToString("yyyy-MM-dd"), result.Archiefactiedatum);
         Assert.Equal(value.Archiefnominatie.ToString(), result.Archiefnominatie);
         Assert.Equal(value.Archiefstatus.ToString(), result.Archiefstatus);

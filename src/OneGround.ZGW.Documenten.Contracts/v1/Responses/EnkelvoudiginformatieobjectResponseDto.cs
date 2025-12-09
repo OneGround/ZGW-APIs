@@ -1,4 +1,3 @@
-using System;
 using Newtonsoft.Json;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1.Responses;
@@ -12,7 +11,7 @@ public class EnkelvoudigInformatieObjectResponseDto : EnkelvoudigInformatieObjec
     public int Versie { get; set; }
 
     [JsonProperty(PropertyName = "beginRegistratie")]
-    public DateTime BeginRegistratie { get; set; }
+    public string BeginRegistratie { get; set; }
 
     [JsonProperty(PropertyName = "bestandsomvang")]
     public long Bestandsomvang { get; set; }

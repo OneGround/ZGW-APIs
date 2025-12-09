@@ -103,13 +103,13 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Url, opt => opt.MapFrom<UrlResolver>())
             .ForMember(dest => dest.Uuid, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Zaak, opt => opt.MapFrom<MemberUrlResolver, Zaak>(src => src.Zaak))
-            .ForMember(dest => dest.DatumStatusGezet, opt => opt.MapFrom(src => ProfileHelper.SortableStringDateFromDate(src.DatumStatusGezet)));
+            .ForMember(dest => dest.DatumStatusGezet, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.DatumStatusGezet, true)));
 
         CreateMap<ZaakStatus, ZaakStatusGetResponseDto>()
             .ForMember(dest => dest.Url, opt => opt.MapFrom<UrlResolver>())
             .ForMember(dest => dest.Uuid, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Zaak, opt => opt.MapFrom<MemberUrlResolver, Zaak>(src => src.Zaak))
-            .ForMember(dest => dest.DatumStatusGezet, opt => opt.MapFrom(src => ProfileHelper.SortableStringDateFromDate(src.DatumStatusGezet)))
+            .ForMember(dest => dest.DatumStatusGezet, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.DatumStatusGezet, true)))
             .ForMember(
                 dest => dest.ZaakInformatieObjecten,
                 opt => opt.MapFrom<MemberUrlsResolver, IEnumerable<ZaakInformatieObject>>(src => src.Zaak.ZaakInformatieObjecten)

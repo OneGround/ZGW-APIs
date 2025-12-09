@@ -44,6 +44,7 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.InformatieObject))
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.OntvangstDatum)))
+            .ForMember(dest => dest.BeginRegistratie, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.BeginRegistratie, true)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.VerzendDatum)))
             .ForMember(
                 dest => dest.Ondertekening,
@@ -62,6 +63,7 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObject>(src => src.InformatieObject))
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.OntvangstDatum)))
+            .ForMember(dest => dest.BeginRegistratie, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.BeginRegistratie, true)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.VerzendDatum)))
             .ForMember(
                 dest => dest.Ondertekening,

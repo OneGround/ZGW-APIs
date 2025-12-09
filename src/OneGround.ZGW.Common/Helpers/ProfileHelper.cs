@@ -8,12 +8,6 @@ namespace OneGround.ZGW.Common.Helpers;
 
 public static class ProfileHelper
 {
-    public static string SortableStringDateFromDate(DateTime date)
-    {
-        // Convert to UTC and format as ISO 8601 with 'Z' (Zulu/GMT)
-        return date != default ? date.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z" : null;
-    }
-
     public static string Fix0Period(Period period)
     {
         if (period == null)
@@ -35,9 +29,14 @@ public static class ProfileHelper
 
     public static string StringDateFromDateTime(DateTime date, bool withTime = false)
     {
+        if (date == default)
+        {
+            return null;
+        }
+
         return withTime
-            ? date.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
-            : date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            ? date.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z"
+            : date.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     public static bool? BooleanFromString(string boolean)
