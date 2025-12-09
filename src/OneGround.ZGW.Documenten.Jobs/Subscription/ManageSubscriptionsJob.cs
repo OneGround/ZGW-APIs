@@ -32,6 +32,7 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _optionsMonitor = optionsMonitor;
     }
 
+    [DisableConcurrentExecution(timeoutInSeconds: 300)]
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public Task ExecuteAsync()
