@@ -5,16 +5,16 @@ namespace OneGround.ZGW.Common.Helpers;
 
 public static class TempFileHelper
 {
-    public static string GetValidatedPath(string fullFileName, bool trustedPath = false)
+    public static string GetValidatedPath(string fullFileName, bool bypassSecurityCheck = false)
     {
-        if (fullFileName == null)
-            return null;
-
-        if (fullFileName.Contains(".."))
-            throw new SecurityException("Full file name contains not allowed characters.");
-
-        if (!trustedPath)
+        if (!bypassSecurityCheck)
         {
+            if (fullFileName == null)
+                return null;
+
+            if (fullFileName.Contains(".."))
+                throw new SecurityException("Full file name contains not allowed characters.");
+        
             var directory = Path.GetDirectoryName(fullFileName);
 
             if (directory == null)
