@@ -389,6 +389,9 @@ public class FileSystemDocumentService : IDocumentService
     // Validates if the specified fullFileName is located in the Root folder of the DMS of (FS), like "c:\MyDMS\202503\~1dd9f469-d2a7-4aad-94c6-903367cce815"
     private void AssureNotTampered(string fullFileName)
     {
+        if (!Settings.SecurityCheckOnFilePath)
+            return;
+
         if (fullFileName == null)
             return;
 
