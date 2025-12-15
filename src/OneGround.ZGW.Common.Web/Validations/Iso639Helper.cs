@@ -15,7 +15,7 @@ public static class Iso639Helper
     public static IReadOnlyList<string> GetAllThreeLetterCodes() =>
         _languages
             .Value
-            // Note: Ignore meta data ["B" (bibliogaphic) or "T" (terminology)]. So take first 3-character code from column-value. An example of this is these two lines:
+            // Note: Ignore meta data ["B" (bibliographic) or "T" (terminology)]. So take first 3-character code from column-value. An example of this is these two lines:
             //  dut (B)
             //  nld (T)\tnl\tDutch; Flemish\tnéerlandais; flamand\tNiederländisch
             .Select(l => l.ISO6392Code.Split(' ')[0])
