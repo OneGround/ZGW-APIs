@@ -390,4 +390,36 @@ public static class IRuleBuilderExtensions
             .WithMessage($"De waarde dient te liggen tussen {minValue} en {maxValue}.")
             .WithErrorCode(ErrorCode.Invalid);
     }
+
+    /// <summary>
+    /// Validates if value is a valid ISO 639 language code (3 letter code supported only).
+    /// </summary>
+    public static IRuleBuilderOptions<T, string> IsIso639LanguageCode<T>(this IRuleBuilderInitial<T, string> ruleBuilderInitial, bool required)
+    {
+        return ruleBuilderInitial
+            .Cascade(CascadeMode.Stop)
+            .NotNull()
+            .When(_ => required, ApplyConditionTo.CurrentValidator)
+            .NotEmpty()
+            .When(_ => required, ApplyConditionTo.CurrentValidator)
+            .Must(value =>
+            {
+                if (string.IsNullOrEmpty(value))
+                    return !required;
+
+                // Check if the length is exactly 3 characters long
+                if (value.Length != 3)
+                    return false;
+
+                // Check if all characters are letters
+                if (!value.All(char.IsLetter))
+                    return false;
+
+                bool valid = Iso639Helper.GetAllThreeLetterCodes().Any(c => c.Equals(value, StringComparison.OrdinalIgnoreCase));
+
+                return valid;
+            })
+            .WithMessage("Waarde is geen geldige ISO 639 drieletterige taalcode.")
+            .WithErrorCode(ErrorCode.Invalid);
+    }
 }
