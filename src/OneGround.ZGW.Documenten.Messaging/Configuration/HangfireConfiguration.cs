@@ -5,7 +5,7 @@ namespace OneGround.ZGW.Documenten.Messaging.Configuration;
 
 internal class HangfireConfiguration
 {
-    public TimeSpan[] RetryScheduleTimeSpanList;
+    public TimeSpan[] RetryScheduleTimeSpanList { get; private set; }
 
     public string RetrySchedule
     {
