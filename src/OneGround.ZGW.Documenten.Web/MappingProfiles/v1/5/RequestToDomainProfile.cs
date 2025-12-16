@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AutoMapper;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
@@ -82,7 +83,13 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
-            .ForMember(dest => dest.Taal, opt => opt.MapFrom(src => src.Taal.ToLower()))
+            .ForMember(
+                dest => dest.Taal,
+                opt =>
+                    opt.MapFrom(src =>
+                        ProfileHelper.Convert2letterTo3Letter(src.Taal, new Dictionary<string, string> { { "nl", "nld" }, { "en", "eng" } })
+                    )
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
@@ -131,7 +138,13 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
-            .ForMember(dest => dest.Taal, opt => opt.MapFrom(src => src.Taal.ToLower()))
+            .ForMember(
+                dest => dest.Taal,
+                opt =>
+                    opt.MapFrom(src =>
+                        ProfileHelper.Convert2letterTo3Letter(src.Taal, new Dictionary<string, string> { { "nl", "nld" }, { "en", "eng" } })
+                    )
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())

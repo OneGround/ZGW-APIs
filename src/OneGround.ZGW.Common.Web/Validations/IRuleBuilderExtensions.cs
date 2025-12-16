@@ -394,7 +394,11 @@ public static class IRuleBuilderExtensions
     /// <summary>
     /// Validates if value is a valid ISO 639 language code (3 letter code supported only).
     /// </summary>
-    public static IRuleBuilderOptions<T, string> IsIso639LanguageCode<T>(this IRuleBuilderInitial<T, string> ruleBuilderInitial, bool required)
+    public static IRuleBuilderOptions<T, string> IsIso639LanguageCode<T>(
+        this IRuleBuilderInitial<T, string> ruleBuilderInitial,
+        bool required,
+        Dictionary<string, string> dictionary = null
+    )
     {
         return ruleBuilderInitial
             .Cascade(CascadeMode.Stop)
@@ -406,6 +410,11 @@ public static class IRuleBuilderExtensions
             {
                 if (string.IsNullOrEmpty(value))
                     return !required;
+
+                if (dictionary != null && dictionary.TryGetValue(value.ToLower(), out var result))
+                {
+                    value = result;
+                }
 
                 // Check if the length is exactly 3 characters long
                 if (value.Length != 3)

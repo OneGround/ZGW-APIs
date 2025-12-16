@@ -133,4 +133,16 @@ public static class ProfileHelper
     {
         return value ?? string.Empty;
     }
+
+    public static string Convert2letterTo3Letter(string taal, Dictionary<string, string> dictionary)
+    {
+        if (dictionary.TryGetValue(taal.ToLower(), out var result))
+        {
+            return result;
+        }
+        else
+        {
+            return taal.ToLower();
+        }
+    }
 }
