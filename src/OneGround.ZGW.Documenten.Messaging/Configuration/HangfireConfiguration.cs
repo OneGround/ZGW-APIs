@@ -1,20 +1,24 @@
 using System;
+using System.Linq;
 
 namespace OneGround.ZGW.Documenten.Messaging.Configuration;
 
 internal class HangfireConfiguration
 {
-    private TimeSpan[] _scheduledRetries;
+    public TimeSpan[] RetryScheduleTimeSpanList;
 
-    public TimeSpan[] ScheduledRetries
+    public string RetrySchedule
     {
-        get { return _scheduledRetries; }
         set
         {
-            AssurValid(value);
-            _scheduledRetries = value;
+            var val = value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(TimeSpan.Parse).ToArray();
+            AssurValid(val);
+            RetryScheduleTimeSpanList = val;
         }
     }
+
+    public string ExpireFailedJobsScanAt { get; set; } = "05:00"; // UTC
+    public TimeSpan ExpireFailedJobAfter { get; set; } = TimeSpan.FromDays(7);
 
     private static void AssurValid(TimeSpan[] value)
     {
@@ -25,9 +29,10 @@ internal class HangfireConfiguration
             if (previous.TotalSeconds >= current.TotalSeconds)
             {
                 throw new InvalidOperationException(
-                    $"{nameof(ScheduledRetries)} of {nameof(HangfireConfiguration)} should be an ordered set of timespans."
+                    $"{nameof(RetrySchedule)} of {nameof(HangfireConfiguration)} should be an ordered set of timespans."
                 );
             }
+
             previous = current;
         }
     }
