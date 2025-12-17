@@ -26,11 +26,4 @@ public class CircuitBreakerOptions
     /// </summary>
     [Range(1, 60)]
     public int CacheExpirationMinutes { get; set; } = 10;
-
-    /// <summary>
-    /// Timeout for HTTP calls to subscriber endpoints.
-    /// Default: 30 seconds.
-    /// </summary>
-    [Required]
-    public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromSeconds(30);
 }

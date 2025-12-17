@@ -15,23 +15,7 @@ public static class CircuitBreakerServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // var redisConnectionString = configuration["Redis:ConnectionString"];
-        // if (!string.IsNullOrEmpty(redisConnectionString))
-        // {
-        //     services.AddStackExchangeRedisCache(options =>
-        //     {
-        //         options.Configuration = redisConnectionString;
-        //         options.InstanceName = "NRC:";
-        //     });
-        // }
-        // else
-        // {
-        //     // Fallback to in-memory cache for local development without Redis
-        //     services.AddDistributedMemoryCache();
-        // }
-
         services.AddSingleton<ICircuitBreakerSubscriberHealthTracker, RedisCircuitBreakerSubscriberHealthTracker>();
-        // services.AddSingleton<CircuitBreakerSubscriberHealthJobFilter>();
 
         return services;
     }
