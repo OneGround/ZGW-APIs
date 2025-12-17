@@ -12,11 +12,9 @@ namespace OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 public class RedisCircuitBreakerSubscriberHealthTracker(
     IDistributedCache cache,
     ILogger<RedisCircuitBreakerSubscriberHealthTracker> logger,
-    IOptions<CircuitBreakerOptions> settings
+    IOptions<CircuitBreakerOptions> circuitBreakerOptions
 ) : ICircuitBreakerSubscriberHealthTracker
 {
-    private readonly CircuitBreakerOptions _options = settings.Value;
-
     private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
 
     public async Task<bool> IsHealthyAsync(string url, CancellationToken cancellationToken = default)
@@ -76,9 +74,9 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             }
 
             // Open circuit if failure threshold is reached
-            if (state.ConsecutiveFailures >= _options.FailureThreshold && state.BlockedUntil == null)
+            if (state.ConsecutiveFailures >= circuitBreakerOptions.Value.FailureThreshold && state.BlockedUntil == null)
             {
-                state.BlockedUntil = DateTime.UtcNow.Add(_options.BreakDuration);
+                state.BlockedUntil = DateTime.UtcNow.Add(circuitBreakerOptions.Value.BreakDuration);
 
                 logger.LogWarning(
                     "Circuit breaker OPENED for subscriber '{Url}'. "
@@ -86,7 +84,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
                         + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
                     url,
                     state.ConsecutiveFailures,
-                    _options.FailureThreshold,
+                    circuitBreakerOptions.Value.FailureThreshold,
                     state.BlockedUntil,
                     errorMessage
                 );
@@ -98,7 +96,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
                         + "Last error: {ErrorMessage}",
                     url,
                     state.ConsecutiveFailures,
-                    _options.FailureThreshold,
+                    circuitBreakerOptions.Value.FailureThreshold,
                     errorMessage
                 );
             }
@@ -188,7 +186,10 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         var cacheKey = GetCacheKey(state.Url);
         var serialized = JsonSerializer.Serialize(state);
 
-        var options = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheExpirationMinutes) };
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(circuitBreakerOptions.Value.CacheExpirationMinutes),
+        };
 
         await cache.SetStringAsync(cacheKey, serialized, options, cancellationToken);
     }
