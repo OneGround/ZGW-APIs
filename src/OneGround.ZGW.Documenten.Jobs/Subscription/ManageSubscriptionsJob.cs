@@ -41,7 +41,7 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _logger.LogInformation("{ManageSubscriptionsJob} job started.", nameof(ManageSubscriptionsJob));
 
         var currentServiceAccountCredentials = CurrentServiceAccountCredentials;
-        var currentRecurringHangfireTokenRefreshJobs = CurrentRecurringHangfireTokenRefreshJobs;
+        var currentRecurringJobs = CurrentRecurringJobs;
 
         // 1. Add missing subscriptions for service accounts that do not have one yet
         foreach (var serviceaccount in currentServiceAccountCredentials)
@@ -49,9 +49,10 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
             var rsin = serviceaccount.Rsin;
             var jobId = CreateOrPatchSubscriptionJob.GetJobId(rsin);
 
-            //ensure it was trigerred only once
-            if (currentRecurringHangfireTokenRefreshJobs.All(job => job.Id != jobId))
+            // Ensure it was triggerred only once
+            if (currentRecurringJobs.All(job => job.Id != jobId))
             {
+                _logger.LogInformation("Creating subscription job for RSIN {Rsin}", rsin);
                 RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(jobId, job => job.ExecuteAsync(rsin), Cron.Never);
                 RecurringJob.TriggerJob(jobId);
             }
@@ -61,7 +62,7 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         return Task.CompletedTask;
     }
 
-    private static List<RecurringJobDto> CurrentRecurringHangfireTokenRefreshJobs => JobStorage.Current.GetConnection().GetRecurringJobs();
+    private static List<RecurringJobDto> CurrentRecurringJobs => JobStorage.Current.GetConnection().GetRecurringJobs();
 
     private IEnumerable<ZgwServiceAccountCredential> CurrentServiceAccountCredentials =>
         _optionsMonitor.CurrentValue.Credentials.DistinctBy(x => new
