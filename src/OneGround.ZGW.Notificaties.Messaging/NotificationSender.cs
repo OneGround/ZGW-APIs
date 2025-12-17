@@ -138,8 +138,7 @@ public class NotificationSender : INotificationSender
                 await _healthTracker.MarkUnhealthyAsync(url, $"HTTP {(int)response.StatusCode}", (int)response.StatusCode, cancellationToken);
 
                 _logger.LogWarning(
-                    "{NotificationSender}: Subscriber marked as unhealthy due to HTTP error. "
-                        + "URL: {Url}, Channel: {Kanaal}, Status: {StatusCode}",
+                    "{NotificationSender}: Subscriber marked as unhealthy due to HTTP error. URL: {Url}, Channel: {Kanaal}, Status: {StatusCode}",
                     nameof(NotificationSender),
                     url,
                     notificatie.Kanaal,
@@ -167,7 +166,7 @@ public class NotificationSender : INotificationSender
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
                 tce,
-                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' timed out. " + "Subscriber marked as unhealthy.",
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' timed out. Subscriber marked as unhealthy.",
                 nameof(NotificationSender),
                 notificatie.Kanaal,
                 url
@@ -182,8 +181,7 @@ public class NotificationSender : INotificationSender
 
             _logger.LogWarning(
                 httpEx,
-                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' failed due to connection error. "
-                    + "Subscriber marked as unhealthy. Error: {Error}",
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' failed due to connection error. Subscriber marked as unhealthy. Error: {Error}",
                 nameof(NotificationSender),
                 notificatie.Kanaal,
                 url,
@@ -199,8 +197,7 @@ public class NotificationSender : INotificationSender
 
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
-                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' has failed. "
-                    + "Subscriber marked as unhealthy. Error: {Error}",
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' has failed. Subscriber marked as unhealthy. Error: {Error}",
                 nameof(NotificationSender),
                 notificatie.Kanaal,
                 url,
@@ -225,7 +222,7 @@ public class NotificationSender : INotificationSender
         {
             _logger.LogError(
                 ex,
-                "{NotificationSender}: Health check failed for subscriber {Url}. " + "Treating as healthy (fail-open behavior).",
+                "{NotificationSender}: Health check failed for subscriber {Url}. Treating as healthy (fail-open behavior).",
                 nameof(NotificationSender),
                 url
             );
