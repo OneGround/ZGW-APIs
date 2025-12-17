@@ -7,12 +7,13 @@ using AutoFixture;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 using Xunit;
@@ -34,7 +35,7 @@ public class SendNotificatiesConsumerTests
     private readonly Mock<ILogger<SendNotificatiesConsumer>> _logger;
     private readonly Mock<INotificatieScheduler> _notificatieScheduler;
     private readonly IMemoryCache _memoryCache;
-    private readonly IConfiguration _configuration;
+    private readonly IOptions<ApplicationOptions> _configuration;
     private readonly Mock<INotificationFilterService> _notificationFilterService;
 
     public SendNotificatiesConsumerTests()
@@ -50,13 +51,7 @@ public class SendNotificatiesConsumerTests
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
             .Returns(true);
 
-        var inMemorySettings = new Dictionary<string, string>
-        {
-            { "Application:AbonnementenCacheExpirationTime", "00:02:00" },
-            { "Eventbus:UseSeparateRetryQueue", "true" },
-        };
-
-        _configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
+        _configuration = Options.Create(new ApplicationOptions() { AbonnementenCacheExpirationTime = TimeSpan.FromMinutes(2) });
 
         _memoryCache = new MockMemoryCache();
     }

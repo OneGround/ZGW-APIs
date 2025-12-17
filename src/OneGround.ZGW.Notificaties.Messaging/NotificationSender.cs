@@ -1,12 +1,13 @@
 using System.Net.Http.Headers;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.Contracts.v1;
+using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
@@ -20,29 +21,45 @@ public class NotificationSender : INotificationSender
 {
     private readonly ILogger<NotificationSender> _logger;
     private readonly HttpClient _client;
-    private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IBatchIdAccessor _batchIdAccessor;
     private readonly ICorrelationContextAccessor _correlationIdAccessor;
+    private readonly ICircuitBreakerSubscriberHealthTracker _healthTracker;
+    private readonly IOptions<ApplicationOptions> _applicationOptions;
 
     public NotificationSender(
-        IConfiguration configuration,
         ILogger<NotificationSender> logger,
         HttpClient client,
         IBatchIdAccessor batchIdAccessor,
-        ICorrelationContextAccessor correlationIdAccessor
+        ICorrelationContextAccessor correlationIdAccessor,
+        ICircuitBreakerSubscriberHealthTracker healthTracker,
+        IOptions<ApplicationOptions> applicationOptions
     )
     {
-        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _logger = logger;
         _client = client;
-        _client.Timeout = _applicationConfiguration.CallbackTimeout;
+        _applicationOptions = applicationOptions;
         _batchIdAccessor = batchIdAccessor;
         _correlationIdAccessor = correlationIdAccessor;
+        _healthTracker = healthTracker;
     }
 
     public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
+        ArgumentNullException.ThrowIfNull(notificatie);
+
+        // Circuit breaker: Check if subscriber is healthy before attempting to send
+        var isHealthy = await SafeHealthCheckAsync(url, cancellationToken);
+        if (!isHealthy)
+        {
+            _logger.LogWarning(
+                "{NotificationSender}: Notification skipped - circuit breaker is OPEN. Subscriber: {Url}, Channel: {Kanaal}",
+                nameof(NotificationSender),
+                url,
+                notificatie.Kanaal
+            );
+
+            return new SubscriberResult { Success = false, Message = "Circuit breaker open - subscriber is unhealthy" };
+        }
 
         try
         {
@@ -90,6 +107,7 @@ public class NotificationSender : INotificationSender
                 httpRequest.Headers.Add("X-Correlation-Id", _correlationIdAccessor.CorrelationId);
             }
 
+            _client.Timeout = _applicationOptions.Value.CallbackTimeout;
             var response = await _client.SendAsync(httpRequest, cancellationToken);
 
             _logger.LogInformation(
@@ -102,21 +120,55 @@ public class NotificationSender : INotificationSender
 
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return response.IsSuccessStatusCode
-                ? new SubscriberResult { Success = true, StatusCode = response.StatusCode }
-                : new SubscriberResult
+            if (response.IsSuccessStatusCode)
+            {
+                // Circuit breaker: Mark subscriber as healthy on success
+                await _healthTracker.MarkHealthyAsync(url, cancellationToken);
+
+                _logger.LogDebug(
+                    "{NotificationSender}: Subscriber marked as healthy. URL: {Url}, Channel: {Kanaal}",
+                    nameof(NotificationSender),
+                    url,
+                    notificatie.Kanaal
+                );
+
+                return new SubscriberResult { Success = true, StatusCode = response.StatusCode };
+            }
+            else
+            {
+                // Circuit breaker: Mark subscriber as unhealthy on HTTP error
+                await _healthTracker.MarkUnhealthyAsync(url, $"HTTP {(int)response.StatusCode}", (int)response.StatusCode, cancellationToken);
+
+                _logger.LogWarning(
+                    "{NotificationSender}: Subscriber marked as unhealthy due to HTTP error. URL: {Url}, Channel: {Kanaal}, Status: {StatusCode}",
+                    nameof(NotificationSender),
+                    url,
+                    notificatie.Kanaal,
+                    (int)response.StatusCode
+                );
+
+                return new SubscriberResult
                 {
                     Success = false,
                     StatusCode = response.StatusCode,
                     Message = responseBody,
                 };
+            }
         }
         catch (TaskCanceledException tce)
         {
+            // Circuit breaker: Mark subscriber as unhealthy on timeout
+            await _healthTracker.MarkUnhealthyAsync(
+                url,
+                "Request timeout",
+                statusCode: 408, // Request Timeout
+                cancellationToken
+            );
+
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
                 tce,
-                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' timed out.",
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' timed out. Subscriber marked as unhealthy.",
                 nameof(NotificationSender),
                 notificatie.Kanaal,
                 url
@@ -124,11 +176,30 @@ public class NotificationSender : INotificationSender
 
             return new SubscriberResult { Success = false, Message = tce.Message };
         }
+        catch (HttpRequestException httpEx)
+        {
+            // Circuit breaker: Mark subscriber as unhealthy on connection error
+            await _healthTracker.MarkUnhealthyAsync(url, httpEx.Message, statusCode: (int?)httpEx.StatusCode, cancellationToken);
+
+            _logger.LogWarning(
+                httpEx,
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' failed due to connection error. Subscriber marked as unhealthy. Error: {Error}",
+                nameof(NotificationSender),
+                notificatie.Kanaal,
+                url,
+                httpEx.Message
+            );
+
+            return new SubscriberResult { Success = false, Message = httpEx.Message };
+        }
         catch (Exception ex)
         {
+            // Circuit breaker: Mark subscriber as unhealthy on unexpected error
+            await _healthTracker.MarkUnhealthyAsync(url, "Unexpected error", statusCode: null, cancellationToken);
+
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
-                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' has failed. Error is: {error}",
+                "{NotificationSender}: Notification to channel {Kanaal} subscriber '{url}' has failed. Subscriber marked as unhealthy. Error: {Error}",
                 nameof(NotificationSender),
                 notificatie.Kanaal,
                 url,
@@ -136,6 +207,30 @@ public class NotificationSender : INotificationSender
             );
 
             return new SubscriberResult { Success = false, Message = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Safely checks subscriber health with fail-open behavior.
+    /// If health tracker fails, allows notification through.
+    /// </summary>
+    private async Task<bool> SafeHealthCheckAsync(string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _healthTracker.IsHealthyAsync(url, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "{NotificationSender}: Health check failed for subscriber {Url}. Treating as healthy (fail-open behavior).",
+                nameof(NotificationSender),
+                url
+            );
+
+            // Fail-open: If health tracker is broken, don't block notifications
+            return true;
         }
     }
 }

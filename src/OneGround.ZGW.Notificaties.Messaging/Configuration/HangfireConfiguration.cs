@@ -2,10 +2,11 @@ namespace OneGround.ZGW.Notificaties.Messaging.Configuration;
 
 internal class HangfireConfiguration
 {
-    public TimeSpan[] RetryScheduleTimeSpanList { get; private set; }
+    public TimeSpan[] RetryScheduleTimeSpanList { get; private set; } = [];
 
     public string RetrySchedule
     {
+        get => string.Join(";", RetryScheduleTimeSpanList);
         set
         {
             var val = value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(TimeSpan.Parse).ToArray();
