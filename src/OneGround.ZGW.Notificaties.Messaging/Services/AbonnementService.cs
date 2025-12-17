@@ -35,6 +35,12 @@ public class AbonnementService(
             }
         );
 
-        return abonnementen[id];
+        if (abonnementen != null && abonnementen.TryGetValue(id, out var abonnement))
+        {
+            return abonnement;
+        }
+
+        logger.LogWarning("Abonnement with id {AbonnementId} was not found.", id);
+        return null;
     }
 }

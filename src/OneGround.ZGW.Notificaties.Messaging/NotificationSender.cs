@@ -51,7 +51,7 @@ public class NotificationSender : INotificationSender
         if (!isHealthy)
         {
             _logger.LogWarning(
-                "{NotificationSender}: Notification skipped - circuit breaker is OPEN. " + "Subscriber: {Url}, Channel: {Kanaal}",
+                "{NotificationSender}: Notification skipped - circuit breaker is OPEN. Subscriber: {Url}, Channel: {Kanaal}",
                 nameof(NotificationSender),
                 url,
                 notificatie.Kanaal
