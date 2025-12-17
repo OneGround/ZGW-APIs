@@ -24,6 +24,7 @@ public class NotificationSender : INotificationSender
     private readonly IBatchIdAccessor _batchIdAccessor;
     private readonly ICorrelationContextAccessor _correlationIdAccessor;
     private readonly ICircuitBreakerSubscriberHealthTracker _healthTracker;
+    private readonly IOptions<ApplicationOptions> _applicationOptions;
 
     public NotificationSender(
         ILogger<NotificationSender> logger,
@@ -36,7 +37,7 @@ public class NotificationSender : INotificationSender
     {
         _logger = logger;
         _client = client;
-        _client.Timeout = applicationOptions.Value.CallbackTimeout;
+        _applicationOptions = applicationOptions;
         _batchIdAccessor = batchIdAccessor;
         _correlationIdAccessor = correlationIdAccessor;
         _healthTracker = healthTracker;
@@ -106,6 +107,7 @@ public class NotificationSender : INotificationSender
                 httpRequest.Headers.Add("X-Correlation-Id", _correlationIdAccessor.CorrelationId);
             }
 
+            _client.Timeout = _applicationOptions.Value.CallbackTimeout;
             var response = await _client.SendAsync(httpRequest, cancellationToken);
 
             _logger.LogInformation(
