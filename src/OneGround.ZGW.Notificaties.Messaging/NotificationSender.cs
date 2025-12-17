@@ -178,7 +178,7 @@ public class NotificationSender : INotificationSender
         catch (HttpRequestException httpEx)
         {
             // Circuit breaker: Mark subscriber as unhealthy on connection error
-            await _healthTracker.MarkUnhealthyAsync(url, httpEx.Message, statusCode: null, cancellationToken);
+            await _healthTracker.MarkUnhealthyAsync(url, httpEx.Message, statusCode: (int?)httpEx.StatusCode, cancellationToken);
 
             _logger.LogWarning(
                 httpEx,
