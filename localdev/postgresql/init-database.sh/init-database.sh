@@ -46,6 +46,7 @@ grant_hangfire_permissions() {
         GRANT ALL ON SCHEMA hangfire TO oneground_admin;
         GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO oneground_admin;
         GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO oneground_admin;
+
         ALTER DEFAULT PRIVILEGES FOR ROLE oneground_admin IN SCHEMA hangfire GRANT ALL ON TABLES TO oneground_admin;
         ALTER DEFAULT PRIVILEGES FOR ROLE oneground_admin IN SCHEMA hangfire GRANT ALL ON SEQUENCES TO oneground_admin;
 EOSQL
@@ -67,4 +68,8 @@ EOSQL
     grant_permissions "$db"
 done
 
-grant_hangfire_permissions "nrc_db"
+DATABASES_WITH_HANGFIRE="drc_db nrc_db"
+
+for db in $DATABASES_WITH_HANGFIRE; do
+    grant_hangfire_permissions "$db"
+done

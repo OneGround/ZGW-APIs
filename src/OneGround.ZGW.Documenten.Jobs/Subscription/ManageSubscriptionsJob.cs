@@ -11,6 +11,8 @@ namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
 public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob>
 {
+    public static string GetJobId() => "manage-subscription-job";
+
     private readonly IOptionsMonitor<ZgwServiceAccountConfiguration> _optionsMonitor;
 
     public ManageSubscriptionsJob(
@@ -32,7 +34,6 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _optionsMonitor = optionsMonitor;
     }
 
-    [DisableConcurrentExecution(timeoutInSeconds: 300)]
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public Task ExecuteAsync()
@@ -45,11 +46,14 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         // 1. Add missing subscriptions for service accounts that do not have one yet
         foreach (var serviceaccount in currentServiceAccountCredentials)
         {
-            var jobId = CreateOrPatchSubscriptionJob.GetJobId(serviceaccount.Rsin);
+            var rsin = serviceaccount.Rsin;
+            var jobId = CreateOrPatchSubscriptionJob.GetJobId(rsin);
 
+            //ensure it was trigerred only once
             if (currentRecurringHangfireTokenRefreshJobs.All(job => job.Id != jobId))
             {
-                BackgroundJob.Enqueue<CreateOrPatchSubscriptionJob>(job => job.ExecuteAsync(serviceaccount.Rsin));
+                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(jobId, job => job.ExecuteAsync(rsin), Cron.Never);
+                RecurringJob.TriggerJob(jobId);
             }
         }
 
