@@ -11,6 +11,8 @@ namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
 public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob>
 {
+    public static string GetJobId() => "manage-subscription-job";
+
     private readonly IOptionsMonitor<ZgwServiceAccountConfiguration> _optionsMonitor;
 
     public ManageSubscriptionsJob(
@@ -32,7 +34,6 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _optionsMonitor = optionsMonitor;
     }
 
-    [DisableConcurrentExecution(timeoutInSeconds: 300)]
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public Task ExecuteAsync()
@@ -40,16 +41,20 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _logger.LogInformation("{ManageSubscriptionsJob} job started.", nameof(ManageSubscriptionsJob));
 
         var currentServiceAccountCredentials = CurrentServiceAccountCredentials;
-        var currentRecurringHangfireTokenRefreshJobs = CurrentRecurringHangfireTokenRefreshJobs;
+        var currentRecurringJobs = CurrentRecurringJobs;
 
         // 1. Add missing subscriptions for service accounts that do not have one yet
         foreach (var serviceaccount in currentServiceAccountCredentials)
         {
-            var jobId = CreateOrPatchSubscriptionJob.GetJobId(serviceaccount.Rsin);
+            var rsin = serviceaccount.Rsin;
+            var jobId = CreateOrPatchSubscriptionJob.GetJobId(rsin);
 
-            if (currentRecurringHangfireTokenRefreshJobs.All(job => job.Id != jobId))
+            // Ensure it was triggerred only once
+            if (currentRecurringJobs.All(job => job.Id != jobId))
             {
-                BackgroundJob.Enqueue<CreateOrPatchSubscriptionJob>(job => job.ExecuteAsync(serviceaccount.Rsin));
+                _logger.LogInformation("Creating subscription job for RSIN {Rsin}", rsin);
+                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(jobId, job => job.ExecuteAsync(rsin), Cron.Never);
+                RecurringJob.TriggerJob(jobId);
             }
         }
 
@@ -57,7 +62,7 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         return Task.CompletedTask;
     }
 
-    private static List<RecurringJobDto> CurrentRecurringHangfireTokenRefreshJobs => JobStorage.Current.GetConnection().GetRecurringJobs();
+    private static List<RecurringJobDto> CurrentRecurringJobs => JobStorage.Current.GetConnection().GetRecurringJobs();
 
     private IEnumerable<ZgwServiceAccountCredential> CurrentServiceAccountCredentials =>
         _optionsMonitor.CurrentValue.Credentials.DistinctBy(x => new
