@@ -145,4 +145,6 @@ public static class ProfileHelper
             return taal.ToLower();
         }
     }
+
+    public static Dictionary<string, string> Taal2letterTo3LetterMap => new() { { "nl", "nld" }, { "en", "eng" } };
 }

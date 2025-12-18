@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using System.IO;
 using FluentValidation;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
@@ -23,7 +23,7 @@ public class EnkelvoudigInformatieObjectRequestValidator : ZGWValidator<Enkelvou
         CascadeRuleFor(r => r.Auteur).NotNull().NotEmpty().MaximumLength(200);
         CascadeRuleFor(r => r.Status).IsEnumName(typeof(Status)).When(r => !string.IsNullOrEmpty(r.Status));
         CascadeRuleFor(r => r.Formaat).IsValidMimeType(v => MimeTypeHelper.IsValidMimeType(v), maxLength: 255, allowEmpty: true);
-        CascadeRuleFor(r => r.Taal).IsIso639LanguageCode(required: true, new Dictionary<string, string> { { "nl", "nld" }, { "en", "eng" } });
+        CascadeRuleFor(r => r.Taal).IsIso639LanguageCode(required: true, ProfileHelper.Taal2letterTo3LetterMap);
         CascadeRuleFor(r => r.Bestandsnaam).MaximumLength(255);
 
         CascadeRuleFor(r => r.Inhoud)

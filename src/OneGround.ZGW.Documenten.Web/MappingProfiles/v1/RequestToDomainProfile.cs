@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
@@ -55,10 +54,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
             .ForMember(
                 dest => dest.Taal,
-                opt =>
-                    opt.MapFrom(src =>
-                        ProfileHelper.Convert2letterTo3Letter(src.Taal, new Dictionary<string, string> { { "nl", "nld" }, { "en", "eng" } })
-                    )
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
             )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.Ignore())
@@ -119,10 +115,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
             .ForMember(
                 dest => dest.Taal,
-                opt =>
-                    opt.MapFrom(src =>
-                        ProfileHelper.Convert2letterTo3Letter(src.Taal, new Dictionary<string, string> { { "nl", "nld" }, { "en", "eng" } })
-                    )
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
             )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.Ignore())
