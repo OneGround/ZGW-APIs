@@ -38,6 +38,11 @@ grant_hangfire_permissions() {
     local db_name=$1
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db_name" <<-EOSQL
         CREATE SCHEMA IF NOT EXISTS hangfire AUTHORIZATION oneground_user;
+        
+        GRANT ALL ON SCHEMA hangfire TO oneground_user;
+        GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO oneground_user;
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO oneground_user;
+        
         GRANT ALL ON SCHEMA hangfire TO oneground_admin;
         GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO oneground_admin;
         GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO oneground_admin;

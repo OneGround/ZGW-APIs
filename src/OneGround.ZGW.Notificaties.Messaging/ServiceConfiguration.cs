@@ -194,7 +194,7 @@ public class ServiceConfiguration
 
     private AutomaticRetryAttribute GetRetryPolicyFromConfig()
     {
-        if (_hangfireConfiguration.ScheduledRetries == null || _hangfireConfiguration.ScheduledRetries.Length == 0)
+        if (_hangfireConfiguration.RetryScheduleTimeSpanList == null || _hangfireConfiguration.RetryScheduleTimeSpanList.Length == 0)
         {
             // No retries
             return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
@@ -204,8 +204,8 @@ public class ServiceConfiguration
         {
             ExceptOn = [typeof(GeneralException)],
             OnAttemptsExceeded = AttemptsExceededAction.Fail,
-            Attempts = _hangfireConfiguration.ScheduledRetries.Length,
-            DelaysInSeconds = _hangfireConfiguration.ScheduledRetries.Select(c => (int)c.TotalSeconds).ToArray(),
+            Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
+            DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
         };
     }
 }
