@@ -2,15 +2,16 @@ namespace OneGround.ZGW.Notificaties.Messaging.Configuration;
 
 internal class HangfireConfiguration
 {
-    private TimeSpan[] _scheduledRetries;
+    public TimeSpan[] RetryScheduleTimeSpanList { get; private set; } = [];
 
-    public TimeSpan[] ScheduledRetries
+    public string RetrySchedule
     {
-        get { return _scheduledRetries; }
+        get => string.Join(";", RetryScheduleTimeSpanList);
         set
         {
-            AssurValid(value);
-            _scheduledRetries = value;
+            var val = value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(TimeSpan.Parse).ToArray();
+            AssurValid(val);
+            RetryScheduleTimeSpanList = val;
         }
     }
 
@@ -26,9 +27,10 @@ internal class HangfireConfiguration
             if (previous.TotalSeconds >= current.TotalSeconds)
             {
                 throw new InvalidOperationException(
-                    $"{nameof(ScheduledRetries)} of {nameof(HangfireConfiguration)} should be an ordered set of timespans."
+                    $"{nameof(RetrySchedule)} of {nameof(HangfireConfiguration)} should be an ordered set of timespans."
                 );
             }
+
             previous = current;
         }
     }

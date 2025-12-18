@@ -1,16 +1,11 @@
 using Hangfire;
 using Hangfire.Console;
 using Hangfire.Server;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
-using OneGround.ZGW.Notificaties.DataModel;
-using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
+using OneGround.ZGW.Notificaties.Messaging.Services;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
@@ -23,31 +18,24 @@ public interface INotificatieJob
 public class NotificatieJob : INotificatieJob
 {
     private readonly INotificationSender _notificationSender;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IMemoryCache _memoryCache;
     private readonly IBatchIdAccessor _batchIdAccessor;
     private readonly ICorrelationContextAccessor _correlationIdAccessor;
     private readonly ILogger<NotificatieJob> _logger;
-    private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly IAbonnementService _abonnementService;
 
     public NotificatieJob(
         INotificationSender notificationSender,
-        IServiceProvider serviceProvider,
-        IConfiguration configuration,
-        IMemoryCache memoryCache,
         IBatchIdAccessor batchIdAccessor,
         ICorrelationContextAccessor correlationIdAccessor,
-        ILogger<NotificatieJob> logger
+        ILogger<NotificatieJob> logger,
+        IAbonnementService abonnementService
     )
     {
         _notificationSender = notificationSender;
-        _serviceProvider = serviceProvider;
-        _memoryCache = memoryCache;
         _batchIdAccessor = batchIdAccessor;
         _correlationIdAccessor = correlationIdAccessor;
         _logger = logger;
-
-        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
+        _abonnementService = abonnementService;
     }
 
     public async Task ReQueueNotificatieAsync(
@@ -57,12 +45,12 @@ public class NotificatieJob : INotificatieJob
         Guid? batchId = null
     )
     {
-        ArgumentNullException.ThrowIfNull(notificatie, nameof(notificatie));
+        ArgumentNullException.ThrowIfNull(notificatie);
 
         using (GetLoggingScope(notificatie.Rsin, notificatie.CorrelationId, batchId))
         {
             // Get deliver data for this subscriber like callback url and auth
-            var subscriber = await GetCachedAbonnementByIdAsync(abonnementId, CancellationToken.None);
+            var subscriber = await _abonnementService.GetByIdAsync(abonnementId, CancellationToken.None);
             if (subscriber == null)
             {
                 _logger.LogWarning("Abonnement with id {abonnementId} not found. Probably deleted within the retry period of the job.", abonnementId);
@@ -131,26 +119,5 @@ public class NotificatieJob : INotificatieJob
         {
             return _logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId, ["RSIN"] = rsin });
         }
-    }
-
-    private async Task<Abonnement> GetCachedAbonnementByIdAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var abonnementen = await _memoryCache.GetOrCreate(
-            $"abonnementen",
-            async e =>
-            {
-                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
-
-                var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
-
-                var _abonnementen = await dbContext.Abonnementen.AsNoTracking().ToDictionaryAsync(k => k.Id, v => v, cancellationToken);
-
-                _logger.LogDebug("{Count} abonnementen retrieved and all cached", _abonnementen.Count);
-
-                return _abonnementen;
-            }
-        );
-
-        return abonnementen[id];
     }
 }

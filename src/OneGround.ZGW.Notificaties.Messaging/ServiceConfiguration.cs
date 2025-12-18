@@ -13,11 +13,13 @@ using OneGround.ZGW.Common.ServiceAgent.Configuration;
 using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Extensions;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
+using OneGround.ZGW.Notificaties.Messaging.Services;
 using Polly;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
@@ -49,6 +51,9 @@ public class ServiceConfiguration
 
         services.AddOneGroundHealthChecks();
 
+        services.AddTransient<IAbonnementService, AbonnementService>();
+        services.AddCircuitBreaker(_configuration);
+
         const string serviceName = "NotificatiesSender";
         var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);
         services.Configure<HttpResiliencePipelineOptions>(optionsKey, _configuration.GetRequiredSection(optionsKey));
@@ -71,6 +76,8 @@ public class ServiceConfiguration
         {
             options.WaitUntilStarted = true;
         });
+
+        services.AddOptions<ApplicationOptions>().Bind(_configuration.GetSection(ApplicationOptions.Application));
 
         services.AddMassTransit(x =>
         {
@@ -194,7 +201,7 @@ public class ServiceConfiguration
 
     private AutomaticRetryAttribute GetRetryPolicyFromConfig()
     {
-        if (_hangfireConfiguration.ScheduledRetries == null || _hangfireConfiguration.ScheduledRetries.Length == 0)
+        if (_hangfireConfiguration.RetryScheduleTimeSpanList == null || _hangfireConfiguration.RetryScheduleTimeSpanList.Length == 0)
         {
             // No retries
             return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
@@ -204,8 +211,8 @@ public class ServiceConfiguration
         {
             ExceptOn = [typeof(GeneralException)],
             OnAttemptsExceeded = AttemptsExceededAction.Fail,
-            Attempts = _hangfireConfiguration.ScheduledRetries.Length,
-            DelaysInSeconds = _hangfireConfiguration.ScheduledRetries.Select(c => (int)c.TotalSeconds).ToArray(),
+            Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
+            DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
         };
     }
 }
