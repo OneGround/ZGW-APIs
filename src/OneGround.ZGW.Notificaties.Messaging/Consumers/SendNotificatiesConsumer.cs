@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Messaging;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
@@ -32,14 +33,14 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     private readonly IMemoryCache _memoryCache;
     private readonly INotificatieScheduler _notificatieScheduler;
     private readonly INotificationFilterService _notificationFilterService;
-    private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly IOptions<ApplicationOptions> _applicationOptions;
 
     public SendNotificatiesConsumer(
         ILogger<SendNotificatiesConsumer> logger,
         IServiceProvider serviceProvider,
         IMemoryCache memoryCache,
         INotificatieScheduler notificatieScheduler,
-        IConfiguration configuration,
+        IOptions<ApplicationOptions> applicationOptions,
         INotificationFilterService notificationFilterService
     )
         : base(logger)
@@ -48,8 +49,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         _memoryCache = memoryCache;
         _notificatieScheduler = notificatieScheduler;
         _notificationFilterService = notificationFilterService;
-
-        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>() ?? new ApplicationConfiguration();
+        _applicationOptions = applicationOptions;
     }
 
     public async Task Consume(ConsumeContext<ISendNotificaties> context)
@@ -150,7 +150,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
             $"abonnementen_{rsin}",
             async e =>
             {
-                e.AbsoluteExpirationRelativeToNow = _applicationConfiguration.AbonnementenCacheExpirationTime;
+                e.AbsoluteExpirationRelativeToNow = _applicationOptions.Value.AbonnementenCacheExpirationTime;
 
                 var dbContext = _serviceProvider.GetRequiredService<NrcDbContext>();
 

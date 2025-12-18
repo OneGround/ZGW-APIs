@@ -13,11 +13,13 @@ using OneGround.ZGW.Common.ServiceAgent.Configuration;
 using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.DataModel;
+using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Extensions;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
 using OneGround.ZGW.Notificaties.Messaging.Jobs;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Extensions;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
+using OneGround.ZGW.Notificaties.Messaging.Services;
 using Polly;
 
 namespace OneGround.ZGW.Notificaties.Messaging;
@@ -49,6 +51,9 @@ public class ServiceConfiguration
 
         services.AddOneGroundHealthChecks();
 
+        services.AddTransient<IAbonnementService, AbonnementService>();
+        services.AddCircuitBreaker(_configuration);
+
         const string serviceName = "NotificatiesSender";
         var optionsKey = HttpResiliencePipelineOptions.GetKey(serviceName);
         services.Configure<HttpResiliencePipelineOptions>(optionsKey, _configuration.GetRequiredSection(optionsKey));
@@ -71,6 +76,8 @@ public class ServiceConfiguration
         {
             options.WaitUntilStarted = true;
         });
+
+        services.AddOptions<ApplicationOptions>().Bind(_configuration.GetSection(ApplicationOptions.Application));
 
         services.AddMassTransit(x =>
         {
