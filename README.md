@@ -35,6 +35,13 @@ Supporting APIs:
 - **Authorization API** - For managing application access to data
 - **Reference API** - Process types and result types for archiving based on selection lists
 
+### Message Listeners
+
+The system includes two message listeners for asynchronous processing:
+
+- **Notifications Listener (NRC)** - `OneGround.ZGW.Notificaties.Messaging.Listener` - Processes notification messages and handles subscription-based event notifications
+- **Documenten Listener (DRC)** - `OneGround.ZGW.Documenten.Messaging.Listener` - Processes document-related messages for asynchronous document operations
+
 ## Technical Features
 
 - **Built with C# and .NET** - Utilizing modern C# features and .NET best practices
