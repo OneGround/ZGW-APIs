@@ -21,7 +21,7 @@ public class ManageSubscriptionsHostedService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        var jobId = ManageSubscriptionsJob.GetJobId();
+        var jobId = ManageSubscriptionsJob.JobId;
         try
         {
             // Initialize job if it doesn't exist or has never been triggered

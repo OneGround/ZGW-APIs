@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
 public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob>
 {
-    public static string GetJobId() => "manage-subscription-job";
+    public const string JobId = "manage-subscription-job";
 
     private readonly IOptionsMonitor<ZgwServiceAccountConfiguration> _optionsMonitor;
 
