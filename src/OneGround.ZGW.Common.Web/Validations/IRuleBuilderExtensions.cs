@@ -397,7 +397,7 @@ public static class IRuleBuilderExtensions
     public static IRuleBuilderOptions<T, string> IsIso639LanguageCode<T>(
         this IRuleBuilderInitial<T, string> ruleBuilderInitial,
         bool required,
-        Dictionary<string, string> dictionary = null
+        Dictionary<string, string> taal2letterTo3LetterMap = null
     )
     {
         return ruleBuilderInitial
@@ -411,7 +411,8 @@ public static class IRuleBuilderExtensions
                 if (string.IsNullOrEmpty(value))
                     return !required;
 
-                if (dictionary != null && dictionary.TryGetValue(value.ToLower(), out var result))
+                // Map 2-letter codes to 3-letter codes if mapping is provided
+                if (taal2letterTo3LetterMap != null && taal2letterTo3LetterMap.TryGetValue(value.ToLower(), out var result))
                 {
                     value = result;
                 }
