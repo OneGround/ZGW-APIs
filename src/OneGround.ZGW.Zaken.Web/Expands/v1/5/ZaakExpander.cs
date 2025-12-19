@@ -20,7 +20,14 @@ public class ZaakExpander : IObjectExpander<ZaakResponseDto>
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, ZaakResponseDto zaakDto)
     {
-        if (expandLookup.Count != 0)
+        var expands = new LegacyExpandAdapter(expandLookup, ExpandName);
+
+        return await ResolveAsync(expands, zaakDto);
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, ZaakResponseDto zaakDto)
+    {
+        if (expandLookup.Expands.Count != 0)
         {
             var expand = await ResolveChildrenParallelAsync(expandLookup, zaakDto);
             if (expand != null)
@@ -33,7 +40,7 @@ public class ZaakExpander : IObjectExpander<ZaakResponseDto>
         return zaakDto;
     }
 
-    private async Task<object> ResolveChildrenParallelAsync(HashSet<string> expandLookup, ZaakResponseDto zaakDto)
+    private async Task<object> ResolveChildrenParallelAsync(IExpandParser expandLookup, ZaakResponseDto zaakDto)
     {
         // Merge the zaak with sub-entities (expands)
         var result = new ExpandoObject();
@@ -42,82 +49,82 @@ public class ZaakExpander : IObjectExpander<ZaakResponseDto>
 
         IDictionary<string, object> expand = result;
 
-        if (expandLookup.StartsOfAnyOf("zaaktype"))
+        if (expandLookup.Expands.StartsOfAnyOf("zaaktype"))
         {
             var expander = _expanderFactory.Create<string>("zaaktype");
 
             tasks.Add("zaaktype", expander.ResolveAsync(expandLookup, zaakDto.Zaaktype));
         }
-        if (expandLookup.StartsOfAnyOf("status"))
+        if (expandLookup.Expands.StartsOfAnyOf("status"))
         {
             var expander = _expanderFactory.Create<string>("status");
 
             tasks.Add("status", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
-        if (expandLookup.StartsOfAnyOf("resultaat"))
+        if (expandLookup.Expands.StartsOfAnyOf("resultaat"))
         {
             var expander = _expanderFactory.Create<string>("resultaat");
 
             tasks.Add("resultaat", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("hoofdzaak"))
+        if (expandLookup.Expands.StartsOfAnyOf("hoofdzaak"))
         {
             var expander = _expanderFactory.Create<string>("hoofdzaak");
 
             tasks.Add("hoofdzaak", expander.ResolveAsync(expandLookup, zaakDto.Hoofdzaak));
         }
 
-        if (expandLookup.StartsOfAnyOf("relevanteanderezaken"))
+        if (expandLookup.Expands.StartsOfAnyOf("relevanteanderezaken"))
         {
             var expander = _expanderFactory.Create<IEnumerable<string>>("relevanteanderezaken");
 
             tasks.Add("relevanteanderezaken", expander.ResolveAsync(expandLookup, zaakDto.RelevanteAndereZaken.Select(z => z.Url)));
         }
 
-        if (expandLookup.StartsOfAnyOf("deelzaken"))
+        if (expandLookup.Expands.StartsOfAnyOf("deelzaken"))
         {
             var expander = _expanderFactory.Create<IEnumerable<string>>("deelzaken");
 
             tasks.Add("deelzaken", expander.ResolveAsync(expandLookup, zaakDto.Deelzaken));
         }
 
-        if (expandLookup.StartsOfAnyOf("zaakinformatieobjecten"))
+        if (expandLookup.Expands.StartsOfAnyOf("zaakinformatieobjecten"))
         {
             var expander = _expanderFactory.Create<string>("zaakinformatieobjecten");
 
             tasks.Add("zaakinformatieobjecten", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("eigenschappen"))
+        if (expandLookup.Expands.StartsOfAnyOf("eigenschappen"))
         {
             var expander = _expanderFactory.Create<string>("eigenschappen");
 
             tasks.Add("eigenschappen", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("rollen"))
+        if (expandLookup.Expands.StartsOfAnyOf("rollen"))
         {
             var expander = _expanderFactory.Create<string>("rollen");
 
             tasks.Add("rollen", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("zaakobjecten"))
+        if (expandLookup.Expands.StartsOfAnyOf("zaakobjecten"))
         {
             var expander = _expanderFactory.Create<string>("zaakobjecten");
 
             tasks.Add("zaakobjecten", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("zaakverzoeken"))
+        if (expandLookup.Expands.StartsOfAnyOf("zaakverzoeken"))
         {
             var expander = _expanderFactory.Create<string>("zaakverzoeken");
 
             tasks.Add("zaakverzoeken", expander.ResolveAsync(expandLookup, zaakDto.Url));
         }
 
-        if (expandLookup.StartsOfAnyOf("zaakcontactmomenten"))
+        if (expandLookup.Expands.StartsOfAnyOf("zaakcontactmomenten"))
         {
             var expander = _expanderFactory.Create<string>("zaakcontactmomenten");
 

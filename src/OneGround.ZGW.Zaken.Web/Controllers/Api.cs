@@ -8,6 +8,7 @@ public static class Api
     public const string LatestVersion_1_0 = "1.0.2";
     public const string LatestVersion_1_2 = "1.2.0";
     public const string LatestVersion_1_5 = "1.5.1";
+    public const string LatestVersion_1_6 = "1.6.0";
 }
 
 public class ApiMetaData : IApiMetaData
@@ -25,6 +26,8 @@ public class ApiMetaData : IApiMetaData
             // 1.5.x versions
             yield return "1.5.0";
             yield return "1.5.1";
+            // 1.6.x versions
+            yield return "1.6.0";
         }
     }
 }

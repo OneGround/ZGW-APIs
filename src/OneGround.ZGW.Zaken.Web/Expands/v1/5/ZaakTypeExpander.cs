@@ -26,7 +26,13 @@ public class ZaakTypeExpander : IObjectExpander<string>
 
     public string ExpandName => "zaaktype";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaaktype)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaaktype)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new System.NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaaktype)
     {
         object error = null;
 
@@ -44,7 +50,10 @@ public class ZaakTypeExpander : IObjectExpander<string>
             }
         );
 
-        if (expandLookup.ContainsIgnoreCase($"{ExpandName}.catalogus") && zaaktypeDto != null)
+        // TODO: Should we validate the given pathes in expandLookup.Items?
+        var zaaktypeDtoLimited = JObjectFilter.FilterObjectByPaths(JObjectHelper.FromObjectOrDefault(zaaktypeDto), expandLookup.Items[ExpandName]);
+
+        if (expandLookup.Expands.ContainsIgnoreCase($"{ExpandName}.catalogus") && zaaktypeDto != null)
         {
             var catalogusResponseDto = await _catalogusCache.GetOrCacheAndGetAsync(
                 $"key_{zaaktypeDto.Catalogus}",
@@ -60,14 +69,20 @@ public class ZaakTypeExpander : IObjectExpander<string>
                 }
             );
 
+            // TODO: Binnen de cache?
+            var catalogusDtoLimited = JObjectFilter.FilterObjectByPaths(
+                JObjectHelper.FromObjectOrDefault(catalogusResponseDto),
+                expandLookup.Items[$"{ExpandName}.catalogus"]
+            );
+
             var zaaktypeDtoExpanded = DtoExpander.Merge(
-                zaaktypeDto,
-                new { _expand = new { catalogus = catalogusResponseDto ?? error ?? new object() } }
+                zaaktypeDtoLimited,
+                new { _expand = new { catalogus = catalogusDtoLimited ?? error ?? new object() } }
             );
 
             return zaaktypeDtoExpanded;
         }
 
-        return zaaktypeDto ?? error ?? new object();
+        return zaaktypeDtoLimited ?? error ?? new object();
     }
 }

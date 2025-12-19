@@ -36,10 +36,14 @@ public class RollenExpander : IObjectExpander<string>
 
     public string ExpandName => "rollen";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
-        object error = null;
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
 
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaakUrl)
+    {
         using var scope = _serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
@@ -60,17 +64,20 @@ public class RollenExpander : IObjectExpander<string>
 
         if (result.Status != QueryStatus.OK)
         {
-            error = ExpandError.Create(result.Errors);
-            return error;
+            return ExpandError.Create(result.Errors);
         }
 
         var rollen = new List<object>();
 
         foreach (var rol in result.Result.PageResult)
         {
+            object error = null;
+
             var rolDto = _mapper.Map<ZaakRolResponseDto>(rol);
 
-            if (expandLookup.ContainsIgnoreCase("rollen.roltype") && rolDto?.RolType != null)
+            var rolDtoLimited = JObjectFilter.FilterObjectByPaths(JObjectHelper.FromObjectOrDefault(rolDto), expandLookup.Items[ExpandName]);
+
+            if (expandLookup.Expands.ContainsIgnoreCase("rollen.roltype") && rolDto?.RolType != null)
             {
                 var roltypeResponse = await _roltypeCache.GetOrCacheAndGetAsync(
                     $"key_{rolDto.RolType}",
@@ -86,12 +93,20 @@ public class RollenExpander : IObjectExpander<string>
                     }
                 );
 
-                var rolDtoExpanded = DtoExpander.Merge(rolDto, new { _expand = new { roltype = roltypeResponse ?? error ?? new object() } });
+                var roltypeResponseLimited = JObjectFilter.FilterObjectByPaths(
+                    JObjectHelper.FromObjectOrDefault(roltypeResponse),
+                    expandLookup.Items[$"{ExpandName}.roltype"]
+                );
+
+                var rolDtoExpanded = DtoExpander.Merge(
+                    rolDtoLimited,
+                    new { _expand = new { roltype = roltypeResponseLimited ?? error ?? new object() } }
+                );
                 rollen.Add(rolDtoExpanded);
             }
             else
             {
-                rollen.Add(rolDto);
+                rollen.Add(rolDtoLimited);
             }
         }
 

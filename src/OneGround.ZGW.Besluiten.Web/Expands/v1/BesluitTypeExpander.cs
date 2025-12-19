@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
@@ -25,6 +26,12 @@ public class BesluitTypeExpander : IObjectExpander<string>
     }
 
     public string ExpandName => ExpandKeys.BesluitType;
+
+    public Task<object> ResolveAsync(IExpandParser expandLookup, string entity)
+    {
+        // TODO: Implemement voor v1.6
+        throw new NotImplementedException();
+    }
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string besluitType)
     {

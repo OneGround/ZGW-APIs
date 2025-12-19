@@ -20,6 +20,12 @@ public class BesluitExpander : IObjectExpander<BesluitResponseDto>
 
     public string ExpandName => ExpanderNames.BesluitExpander;
 
+    public Task<object> ResolveAsync(IExpandParser expandLookup, BesluitResponseDto entity)
+    {
+        // TODO: Implemement voor v1.6
+        throw new NotImplementedException();
+    }
+
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, BesluitResponseDto dto)
     {
         if (expandLookup.Count == 0)

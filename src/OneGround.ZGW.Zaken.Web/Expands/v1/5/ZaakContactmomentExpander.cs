@@ -25,6 +25,12 @@ public class ZaakContactmomentenExpander : IObjectExpander<string>
 
     public string ExpandName => "zaakcontactmomenten";
 
+    public Task<object> ResolveAsync(IExpandParser expandLookup, string zaakUrl)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
         using var scope = _serviceProvider.CreateScope();

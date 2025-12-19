@@ -42,6 +42,12 @@ public class InformatieObjectExpander : IObjectExpander<InformatieObjectContext>
 
     public string ExpandName => "informatieobject";
 
+    public Task<object> ResolveAsync(IExpandParser expandLookup, InformatieObjectContext entity)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, InformatieObjectContext context)
     {
         if (

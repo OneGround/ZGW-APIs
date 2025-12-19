@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
@@ -26,6 +27,12 @@ public class InformatieObjectTypeExpander : IObjectExpander<string>
     }
 
     public string ExpandName => "informatieobjecttype";
+
+    public Task<object> ResolveAsync(IExpandParser expandLookup, string entity)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string informatieObjectType)
     {

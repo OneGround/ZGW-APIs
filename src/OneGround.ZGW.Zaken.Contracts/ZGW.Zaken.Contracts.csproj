@@ -10,4 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Common.Contracts\ZGW.Common.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="v1\6\Queries\" />
+    <Folder Include="v1\6\Responses\" />
+  </ItemGroup>
 </Project>

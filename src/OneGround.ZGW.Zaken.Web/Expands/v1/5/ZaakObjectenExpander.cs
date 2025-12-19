@@ -29,7 +29,13 @@ public class ZaakObjectenExpander : IObjectExpander<string>
 
     public string ExpandName => "zaakobjecten";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaakUrl)
     {
         using var scope = _serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
@@ -60,8 +66,13 @@ public class ZaakObjectenExpander : IObjectExpander<string>
         {
             var zaakobjectDto = _mapper.Map<ZaakObjectResponseDto>(zaakobject);
 
+            var zaakobjectDtoLimited = JObjectFilter.FilterObjectByPaths(
+                JObjectHelper.FromObjectOrDefault(zaakobjectDto),
+                expandLookup.Items[ExpandName]
+            );
+
             object error = null;
-            if (expandLookup.EndsOfAnyOf("zaakobjecttype"))
+            if (expandLookup.Expands.EndsOfAnyOf("zaakobjecttype"))
             {
                 ZaakObjectTypeDto zaakobjecttypeResponse = null;
                 if (zaakobjectDto.ZaakObjectType != null)
@@ -70,22 +81,38 @@ public class ZaakObjectenExpander : IObjectExpander<string>
                     if (!_zaakobjecttypeResponse.Success)
                     {
                         error = ExpandError.Create(_zaakobjecttypeResponse.Error);
+
+                        var zaakobjectDtoExpanded = DtoExpander.Merge(zaakobjectDtoLimited, new { _expand = new { zaakobjecttype = error } });
+
+                        zaakobjecten.Add(zaakobjectDtoExpanded);
                     }
                     else
                     {
                         zaakobjecttypeResponse = _zaakobjecttypeResponse.Response;
+
+                        var zaakobjecttypeResponseLimited = JObjectFilter.FilterObjectByPaths(
+                            JObjectHelper.FromObjectOrDefault(zaakobjecttypeResponse),
+                            expandLookup.Items[$"{ExpandName}.zaakobjecttype"]
+                        );
+
+                        var zaakobjectDtoExpanded = DtoExpander.Merge(
+                            zaakobjectDtoLimited,
+                            new { _expand = new { zaakobjecttype = zaakobjecttypeResponseLimited ?? new object() } }
+                        );
+
+                        zaakobjecten.Add(zaakobjectDtoExpanded);
                     }
                 }
+                else
+                {
+                    var zaakobjectDtoExpanded = DtoExpander.Merge(zaakobjectDtoLimited, new { _expand = new { zaakobjecttype = new object() } });
 
-                var zaakobjectDtoExpanded = DtoExpander.Merge(
-                    zaakobjectDto,
-                    new { _expand = new { zaakobjecttype = zaakobjecttypeResponse ?? error ?? new object() } }
-                );
-                zaakobjecten.Add(zaakobjectDtoExpanded);
+                    zaakobjecten.Add(zaakobjectDtoExpanded);
+                }
             }
             else
             {
-                zaakobjecten.Add(zaakobjectDto);
+                zaakobjecten.Add(zaakobjectDtoLimited);
             }
         }
 

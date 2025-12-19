@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Common.Caching;
@@ -15,6 +16,59 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._5;
+
+/* TODO: Issue - hoofdzaak.resultaat.resultaattype retourneert alle velden
+{
+    "id": "85f2a7a1-f042-4951-a2e5-bb8c8f3ad11b",
+    "fields": [
+        "uuid",
+        "identificatie",
+        "omschrijving",
+        "hoofdzaak"
+    ],
+    "resultaat": [
+        "toelichting",
+        {
+            "resultaattype": [
+                "omschrijving",
+                "omschrijvingGeneriek",
+                "archiefnominatie",
+                "archiefactietermijn"
+            ]
+        }
+    ],
+    "hoofdzaak": [
+        "uuid",
+        "identificatie",
+        "deelzaken",
+        {
+            "resultaat": [
+                "toelichting",
+                {
+                    "resultaattype": [
+                        "omschrijving",
+                        "omschrijvingGeneriek",
+                        "archiefnominatie",
+                        "archiefactietermijn"
+                    ]
+                }
+            ]
+        }
+    ],
+    "rollen": [
+        "betrokkene",
+        "betrokkeneType",
+        "contactpersoonRol",
+        "contactpersoonRol.emailadres",
+        "betrokkeneIdentificatie.identificatie",
+        {
+            "roltype": [
+                "omschrijvingGeneriek"
+            ]
+        }
+    ]
+}
+ */
 
 public class ZaakResultaatExpander : IObjectExpander<string>
 {
@@ -41,7 +95,13 @@ public class ZaakResultaatExpander : IObjectExpander<string>
 
     public string ExpandName => "resultaat";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaak)
     {
         object error = null;
 
@@ -62,7 +122,9 @@ public class ZaakResultaatExpander : IObjectExpander<string>
             }
         );
 
-        if (expandLookup.ContainsIgnoreCase("resultaat.resultaattype") && resultaatDto?.ResultaatType != null)
+        var resultaatDtoLimited = JObjectFilter.FilterObjectByPaths(JObjectHelper.FromObjectOrDefault(resultaatDto), expandLookup.Items[ExpandName]);
+
+        if (expandLookup.Expands.ContainsIgnoreCase("resultaat.resultaattype") && resultaatDto?.ResultaatType != null)
         {
             var resultaattypeResponse = await _resultaattypeCache.GetOrCacheAndGetAsync(
                 $"key_{resultaatDto.ResultaatType}",
@@ -78,14 +140,19 @@ public class ZaakResultaatExpander : IObjectExpander<string>
                 }
             );
 
+            var resultaattypeResponseLimited = JObjectFilter.FilterObjectByPaths(
+                JObjectHelper.FromObjectOrDefault(resultaattypeResponse),
+                expandLookup.Items[$"{ExpandName}.resultaattype"]
+            );
+
             var resultaatDtoExpanded = DtoExpander.Merge(
-                resultaatDto,
-                new { _expand = new { resultaattype = resultaattypeResponse ?? error ?? new object() } }
+                resultaatDtoLimited,
+                new { _expand = new { resultaattype = resultaattypeResponseLimited ?? error ?? new object() } }
             );
             return resultaatDtoExpanded;
         }
 
-        return resultaatDto ?? error ?? new object();
+        return resultaatDtoLimited ?? error ?? new object();
     }
 
     private async Task<(Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto, object)> GetZaakResultaatAsync(string zaak)

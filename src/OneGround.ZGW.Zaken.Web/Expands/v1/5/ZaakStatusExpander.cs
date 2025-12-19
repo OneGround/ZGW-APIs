@@ -43,7 +43,13 @@ public class ZaakStatusExpander : IObjectExpander<string>
 
     public string ExpandName => "status";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaak)
     {
         object error = null;
 
@@ -64,7 +70,9 @@ public class ZaakStatusExpander : IObjectExpander<string>
             }
         );
 
-        if (expandLookup.ContainsIgnoreCase("status.statustype") && statusDto?.StatusType != null)
+        var statusDtoLimited = JObjectFilter.FilterObjectByPaths(JObjectHelper.FromObjectOrDefault(statusDto), expandLookup.Items[ExpandName]);
+
+        if (expandLookup.Expands.ContainsIgnoreCase("status.statustype") && statusDto?.StatusType != null)
         {
             var statustypeResponse = await _statustypeCache.GetOrCacheAndGetAsync(
                 $"key_{statusDto.StatusType}",
@@ -80,11 +88,19 @@ public class ZaakStatusExpander : IObjectExpander<string>
                 }
             );
 
-            var statusDtoExpanded = DtoExpander.Merge(statusDto, new { _expand = new { statustype = statustypeResponse ?? error ?? new object() } });
+            var statustypeResponseLimited = JObjectFilter.FilterObjectByPaths(
+                JObjectHelper.FromObjectOrDefault(statustypeResponse),
+                expandLookup.Items[$"{ExpandName}.statustype"]
+            );
+
+            var statusDtoExpanded = DtoExpander.Merge(
+                statusDtoLimited,
+                new { _expand = new { statustype = statustypeResponseLimited ?? error ?? new object() } }
+            );
             return statusDtoExpanded;
         }
 
-        return statusDto ?? error ?? new object();
+        return statusDtoLimited ?? error ?? new object();
     }
 
     private async Task<(ZaakStatusGetResponseDto, object)> GetZaakStatusAsync(string zaak)

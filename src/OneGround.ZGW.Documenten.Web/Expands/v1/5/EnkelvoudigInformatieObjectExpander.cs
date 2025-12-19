@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -17,6 +18,12 @@ public class EnkelvoudigInformatieObjectExpander : IObjectExpander<EnkelvoudigIn
     }
 
     public string ExpandName => "enkelvoudiginformatieobject";
+
+    public Task<object> ResolveAsync(IExpandParser expandLookup, EnkelvoudigInformatieObjectGetResponseDto entity)
+    {
+        // TODO: Implemement voor v1.6
+        throw new NotImplementedException();
+    }
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, EnkelvoudigInformatieObjectGetResponseDto enkelvoudigInformatieObjectDto)
     {

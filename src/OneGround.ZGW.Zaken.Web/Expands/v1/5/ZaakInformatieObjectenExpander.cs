@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
@@ -36,7 +37,13 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
 
     public string ExpandName => "zaakinformatieobjecten";
 
-    public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    public Task<object> ResolveAsync(HashSet<string> expandLookup, string zaak)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string zaak)
     {
         object error = null;
 
@@ -77,8 +84,14 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
         {
             var zaakinformatieobjectDto = _mapper.Map<ZaakInformatieObjectResponseDto>(zaakinformatieobject);
 
+            // TODO: Should we validate the given pathes in expandLookup.Items?
+            var zaakinformatieobjectLimited = JObjectFilter.FilterObjectByPaths(
+                JObjectHelper.FromObjectOrDefault(zaakinformatieobjectDto),
+                expandLookup.Items[ExpandName]
+            );
+
             if (
-                expandLookup.ContainsAnyOf(
+                expandLookup.Expands.ContainsAnyOf(
                     "zaakinformatieobjecten.informatieobject",
                     "zaakinformatieobjecten.informatieobject.informatieobjecttype",
                     "zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"
@@ -87,9 +100,9 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
             {
                 // Note: Set the requested expand to DRC (informatieobject)
                 string expand = "";
-                if (expandLookup.ContainsAnyOf("zaakinformatieobjecten.informatieobject.informatieobjecttype"))
+                if (expandLookup.Expands.ContainsAnyOf("zaakinformatieobjecten.informatieobject.informatieobjecttype"))
                     expand = "informatieobjecttype";
-                if (expandLookup.ContainsAnyOf("zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"))
+                if (expandLookup.Expands.ContainsAnyOf("zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"))
                     expand = "informatieobjecttype.catalogus";
 
                 var informatieobjectResponse = await _informatieobjectResponseCache.GetOrCacheAndGetAsync(
@@ -106,15 +119,21 @@ public class ZaakInformatieObjectenExpander : IObjectExpander<string>
                     }
                 );
 
+                // TODO: Moet dit niet limited worden door de DRC-API (voor nu even oke)
+                var informatieobjectResponseLimited = JObjectFilter.FilterObjectByPaths(
+                    JObjectHelper.FromObjectOrDefault(informatieobjectResponse),
+                    expandLookup.Items[$"{ExpandName}.informatieobject"]
+                );
+
                 var zaakinformatieobjectDtoExpanded = DtoExpander.Merge(
-                    zaakinformatieobjectDto,
-                    new { _expand = new { informatieobject = informatieobjectResponse ?? new object() } }
+                    zaakinformatieobjectLimited,
+                    new { _expand = new { informatieobject = informatieobjectResponseLimited ?? new object() } }
                 );
                 zaakinformatieobjecten.Add(zaakinformatieobjectDtoExpanded);
             }
             else
             {
-                zaakinformatieobjecten.Add(zaakinformatieobjectDto);
+                zaakinformatieobjecten.Add(zaakinformatieobjectLimited);
             }
         }
         return zaakinformatieobjecten;

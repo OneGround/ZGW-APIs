@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -48,20 +49,56 @@ public abstract class ZaakBaseExpander
         return (zaakDto, error: null);
     }
 
-    protected static HashSet<string> GetInnerExpandLookup(string outerExpandName, HashSet<string> expandLookup)
+    //[Obsolete("Use GetInnerExpandLookup with IExpandParser instead.")]
+    //protected static HashSet<string> GetInnerExpandLookup(string outerExpandName, HashSet<string> expandLookup)
+    //{
+    //    var innerExpandLookup = new HashSet<string>();
+    //    foreach (var expand in expandLookup)
+    //    {
+    //        if (expand.StartsWith(outerExpandName))
+    //        {
+    //            var innerExpand = expand.Replace(outerExpandName, "").Trim('.');
+    //            if (!string.IsNullOrWhiteSpace(innerExpand))
+    //            {
+    //                innerExpandLookup.Add(innerExpand);
+    //            }
+    //        }
+    //    }
+    //    return innerExpandLookup;
+    //}
+
+    protected IExpandParser GetInnerExpandLookup(string outerExpandName, IExpandParser expandLookup)
+    {
+        return new ZaakInnerExpand(outerExpandName, expandLookup);
+    }
+}
+
+public class ZaakInnerExpand : IExpandParser
+{
+    protected Dictionary<string, HashSet<string>> _items = new();
+
+    public ZaakInnerExpand(string outerExpandName, IExpandParser expandLookup)
     {
         var innerExpandLookup = new HashSet<string>();
-        foreach (var expand in expandLookup)
+        foreach (var expand in expandLookup.Items)
         {
-            if (expand.StartsWith(outerExpandName))
+            if (expand.Key.StartsWith(outerExpandName))
             {
-                var innerExpand = expand.Replace(outerExpandName, "").Trim('.');
+                var innerExpand = expand.Key.Replace(outerExpandName, "").Trim('.');
+
                 if (!string.IsNullOrWhiteSpace(innerExpand))
                 {
                     innerExpandLookup.Add(innerExpand);
+
+                    _items.Add(innerExpand, expand.Value);
                 }
             }
         }
-        return innerExpandLookup;
     }
+
+    public HashSet<string> Expands => _items.Keys.ToHashSet();
+
+    public string ExpandsString => string.Join(",", Expands);
+
+    public Dictionary<string, HashSet<string>> Items => _items;
 }

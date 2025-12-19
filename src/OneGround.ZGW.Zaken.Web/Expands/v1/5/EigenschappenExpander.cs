@@ -33,6 +33,12 @@ public class EigenschappenExpander : IObjectExpander<string>
 
     public string ExpandName => "eigenschappen";
 
+    public Task<object> ResolveAsync(IExpandParser expandLookup, string zaakUrl)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string zaakUrl)
     {
         object error = null;

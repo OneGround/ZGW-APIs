@@ -37,6 +37,12 @@ public class BesluitInformatieObjectenExpander : IObjectExpander<string>
 
     public string ExpandName => ExpandKeys.BesluitInformatieObjecten;
 
+    public Task<object> ResolveAsync(IExpandParser expandLookup, string entity)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string besluit)
     {
         object error = null;

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using NetTopologySuite.IO.Converters;
+using Newtonsoft.Json;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
@@ -20,6 +22,12 @@ public class HoofdZaakExpander : ZaakBaseExpander, IObjectExpander<string>
     public string ExpandName => "hoofdzaak";
 
     public async Task<object> ResolveAsync(HashSet<string> expandLookup, string hoofdzaakUrl)
+    {
+        // Note: Not called directly so we can keep as it is now
+        throw new NotImplementedException();
+    }
+
+    public async Task<object> ResolveAsync(IExpandParser expandLookup, string hoofdzaakUrl)
     {
         if (hoofdzaakUrl == null)
         {
@@ -48,6 +56,15 @@ public class HoofdZaakExpander : ZaakBaseExpander, IObjectExpander<string>
 
         var hoofdzaakExpandedDto = await expander.ResolveAsync(innerExpandLookup, hoofdzaak);
 
-        return hoofdzaakExpandedDto;
+        var hoofdzaakLimitedDto = JObjectFilter.FilterObjectByPaths(
+            JObjectHelper.FromObjectOrDefault(hoofdzaakExpandedDto, GeometryConfiguredSerializer),
+            expandLookup.Items[ExpandName]
+        );
+
+        return hoofdzaakLimitedDto;
     }
+
+    // TODO: Duplicate code (ZakenController)
+    private static JsonSerializer GeometryConfiguredSerializer =>
+        JsonSerializer.Create(new JsonSerializerSettings { Converters = [new GeometryConverter()] });
 }
