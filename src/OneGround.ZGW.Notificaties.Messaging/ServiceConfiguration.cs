@@ -230,7 +230,7 @@ public class ServiceConfiguration
         };
     }
 
-    static void RemoveDefaultAutomaticRetryFilter()
+    private static void RemoveDefaultAutomaticRetryFilter()
     {
         // Remove the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
         var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);

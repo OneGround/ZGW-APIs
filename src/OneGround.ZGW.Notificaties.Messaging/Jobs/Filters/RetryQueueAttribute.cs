@@ -18,11 +18,11 @@ public sealed class RetryQueueAttribute : JobFilterAttribute, IApplyStateFilter,
 
     void IApplyStateFilter.OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
     {
-        // Alleen wanneer de job daadwerkelijk in een queue komt
+        // Only when the job actually goes into a queue
         if (context.NewState is not EnqueuedState enqueued)
             return;
 
-        // Alleen voor retries (niet eerste run)
+        // Only for retries (not first run)
         var retryCount = context.GetJobParameter<int>(RetryCountKey);
         if (retryCount <= 0)
             return;
@@ -48,7 +48,7 @@ public sealed class RetryQueueAttribute : JobFilterAttribute, IApplyStateFilter,
         // Get current retry attempt count (starts at 0)
         var retryAttempt = context.GetJobParameter<int>(RetryCountKey);
 
-        // Get from current job the max attempts quering AutomaticRetryAttribute filter
+        // Get from current job the max attempts querying AutomaticRetryAttribute filter
         var retryQueueFilter =
             JobFilterProviders
                 .Providers.SelectMany(p => p.GetFilters(context.BackgroundJob.Job))
