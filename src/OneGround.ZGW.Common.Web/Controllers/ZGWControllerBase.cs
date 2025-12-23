@@ -76,4 +76,21 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected static HashSet<string> ExpandLookup(string expand) =>
         expand != null ? expand.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet() : [];
+
+    // Note: Temporary log method. We should investigate who send the 2-letter language code so we log for these situations
+    protected void LogInvalidTaalCode(string taalRequested, string taalMapped)
+    {
+        if (taalRequested?.Length != taalMapped?.Length)
+        {
+            var clientId = User.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value ?? "unknown";
+            _logger.LogWarning(
+                "Language code mismatch: Request has {RequestLength}-character code '{RequestTaal}', but mapped to {MappedLength}-character code '{MappedTaal}' for ClientId: {ClientId}",
+                taalRequested.Length,
+                taalRequested,
+                taalMapped.Length,
+                taalMapped,
+                clientId
+            );
+        }
+    }
 }

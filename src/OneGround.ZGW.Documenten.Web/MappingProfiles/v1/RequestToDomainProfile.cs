@@ -52,6 +52,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Integriteit_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum)))
             .ForMember(dest => dest.Integriteit_Waarde, opt => opt.MapFrom(src => src.Integriteit.Waarde))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
@@ -109,6 +113,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Integriteit_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum)))
             .ForMember(dest => dest.Integriteit_Waarde, opt => opt.MapFrom(src => src.Integriteit.Waarde))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())

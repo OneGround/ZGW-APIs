@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
@@ -197,6 +197,9 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(enkelvoudigInformatieObjectRequest);
 
+        // Note: we should investigate who send the 2-letter language code so we log for these situations
+        LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
+
         var result = await _mediator.Send(
             new CreateEnkelvoudigInformatieObjectCommand { EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie }
         );
@@ -240,15 +243,18 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             enkelvoudigInformatieObjectRequest.Bronorganisatie
         );
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObject = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
             enkelvoudigInformatieObjectRequest
         );
+
+        // Note: we should investigate who send the 2-letter language code so we log for these situations
+        LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         var result = await _mediator.Send(
             new CreateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject,
+                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
             }
         );
 
@@ -310,15 +316,18 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObject = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
             mergedEnkelvoudigInformatieObjectRequest
         );
+
+        // Note: we should investigate who send the 2-letter language code so we log for these situations
+        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         var result = await _mediator.Send(
             new CreateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject,
+                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = true,
             }
         );
