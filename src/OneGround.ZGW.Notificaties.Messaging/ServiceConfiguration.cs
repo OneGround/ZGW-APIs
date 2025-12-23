@@ -176,8 +176,6 @@ public class ServiceConfiguration
                 o.UseConsole();
             }
         );
-
-        RemoveDefaultAutomaticRetryFilter();
     }
 
     private bool IsExpireFailedJobsScannerEnabled =>
@@ -221,6 +219,13 @@ public class ServiceConfiguration
             return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
         }
 
+        // Remove first the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
+        var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);
+        if (automaticRetryFilter != null)
+        {
+            GlobalJobFilters.Filters.Remove(automaticRetryFilter.Instance);
+        }
+
         return new AutomaticRetryAttribute
         {
             ExceptOn = [typeof(GeneralException)],
@@ -228,15 +233,5 @@ public class ServiceConfiguration
             Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
             DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
         };
-    }
-
-    private static void RemoveDefaultAutomaticRetryFilter()
-    {
-        // Remove the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
-        var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);
-        if (automaticRetryFilter != null)
-        {
-            GlobalJobFilters.Filters.Remove(automaticRetryFilter.Instance);
-        }
     }
 }
