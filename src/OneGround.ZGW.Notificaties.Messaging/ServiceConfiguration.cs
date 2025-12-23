@@ -127,26 +127,14 @@ public class ServiceConfiguration
 
         services.AddHangfireServer(o =>
         {
-            int? workerCountMain = _configuration.GetValue<int?>("Hangfire:WorkerCountMain");
-
             o.ServerName = Constants.NrcListenerMainServer;
             o.Queues = [Constants.NrcListenerMainQueue];
-
-            // Standard value is 20!
-            if (workerCountMain.HasValue)
-                o.WorkerCount = workerCountMain.Value;
         });
 
         services.AddHangfireServer(o =>
         {
-            int? workerCountRetry = _configuration.GetValue<int?>("Hangfire:WorkerCountRetry");
-
             o.ServerName = Constants.NrcListenerRetryServer;
             o.Queues = [Constants.NrcListenerRetryQueue];
-
-            // Standard value is 20!
-            if (workerCountRetry.HasValue)
-                o.WorkerCount = workerCountRetry.Value;
         });
 
         services.AddHangfire(
