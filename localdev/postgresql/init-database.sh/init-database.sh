@@ -36,18 +36,25 @@ EOSQL
 
 grant_hangfire_permissions() {
     local db_name=$1
+    local admin_role="oneground_admin"
+    local user_role="oneground_user"
+    
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db_name" <<-EOSQL
-        CREATE SCHEMA IF NOT EXISTS hangfire AUTHORIZATION oneground_user;
-        
-        GRANT ALL ON SCHEMA hangfire TO oneground_user;
-        GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO oneground_user;
-        GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO oneground_user;
-        
-        GRANT ALL ON SCHEMA hangfire TO oneground_admin;
-        GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO oneground_admin;
-        GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO oneground_admin;
-        ALTER DEFAULT PRIVILEGES FOR ROLE oneground_admin IN SCHEMA hangfire GRANT ALL ON TABLES TO oneground_admin;
-        ALTER DEFAULT PRIVILEGES FOR ROLE oneground_admin IN SCHEMA hangfire GRANT ALL ON SEQUENCES TO oneground_admin;
+        CREATE SCHEMA IF NOT EXISTS hangfire AUTHORIZATION ${user_role};
+
+        GRANT ALL ON SCHEMA hangfire TO ${user_role};
+        GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO ${user_role};
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO ${user_role};
+
+        GRANT ALL ON SCHEMA hangfire TO ${admin_role};
+        GRANT ALL ON ALL TABLES IN SCHEMA hangfire TO ${admin_role};
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA hangfire TO ${admin_role};
+
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA hangfire GRANT ALL ON TABLES TO ${user_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA hangfire GRANT ALL ON SEQUENCES TO ${user_role};
+
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA hangfire GRANT ALL ON TABLES TO ${admin_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA hangfire GRANT ALL ON SEQUENCES TO ${admin_role};
 EOSQL
 }
 
@@ -67,4 +74,8 @@ EOSQL
     grant_permissions "$db"
 done
 
-grant_hangfire_permissions "nrc_db"
+DATABASES_WITH_HANGFIRE="drc_db nrc_db"
+
+for db in $DATABASES_WITH_HANGFIRE; do
+    grant_hangfire_permissions "$db"
+done
