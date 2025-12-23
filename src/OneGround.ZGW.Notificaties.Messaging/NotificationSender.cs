@@ -190,7 +190,12 @@ public class NotificationSender : INotificationSender
                 httpEx.Message
             );
 
-            return new SubscriberResult { Success = false, Message = httpEx.Message };
+            return new SubscriberResult
+            {
+                Success = false,
+                Message = httpEx.Message,
+                StatusCode = httpEx.StatusCode,
+            };
         }
         catch (Exception ex)
         {
