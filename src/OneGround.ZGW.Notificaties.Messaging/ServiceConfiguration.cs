@@ -112,20 +112,14 @@ public class ServiceConfiguration
                         }
                     );
 
-                    cfg.UseHangfireScheduler(queueName: Constants.NrcHangfireQueue);
-
                     cfg.UseConsumeFilter(typeof(RsinFilter<>), context);
                     cfg.UseConsumeFilter(typeof(CorrelationIdFilter<>), context);
 
                     cfg.UseConsumeFilter(typeof(BatchIdConsumingFilter<>), context);
-                    //cfg.UseSendFilter(typeof(BatchIdSendingFilter<>), context);
-                    //cfg.UsePublishFilter(typeof(BatchIdPublishFilter<>), context);
 
                     cfg.ConfigureEndpoints(context);
                 }
             );
-
-            x.AddMessageScheduler(new Uri($"queue:{Constants.NrcHangfireQueue}"));
         });
 
         services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
@@ -133,8 +127,26 @@ public class ServiceConfiguration
 
         services.AddHangfireServer(o =>
         {
-            o.ServerName = Constants.NrcListenerServer;
-            o.Queues = [Constants.NrcListenerQueue];
+            int? workerCountMain = _configuration.GetValue<int?>("Hangfire:WorkerCountMain");
+
+            o.ServerName = Constants.NrcListenerMainServer;
+            o.Queues = [Constants.NrcListenerMainQueue];
+
+            // Standard value is 20!
+            if (workerCountMain.HasValue)
+                o.WorkerCount = workerCountMain.Value;
+        });
+
+        services.AddHangfireServer(o =>
+        {
+            int? workerCountRetry = _configuration.GetValue<int?>("Hangfire:WorkerCountRetry");
+
+            o.ServerName = Constants.NrcListenerRetryServer;
+            o.Queues = [Constants.NrcListenerRetryQueue];
+
+            // Standard value is 20!
+            if (workerCountRetry.HasValue)
+                o.WorkerCount = workerCountRetry.Value;
         });
 
         services.AddHangfire(
@@ -164,6 +176,8 @@ public class ServiceConfiguration
                 o.UseConsole();
             }
         );
+
+        RemoveDefaultAutomaticRetryFilter();
     }
 
     private bool IsExpireFailedJobsScannerEnabled =>
@@ -214,5 +228,15 @@ public class ServiceConfiguration
             Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
             DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
         };
+    }
+
+    static void RemoveDefaultAutomaticRetryFilter()
+    {
+        // Remove the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
+        var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);
+        if (automaticRetryFilter != null)
+        {
+            GlobalJobFilters.Filters.Remove(automaticRetryFilter.Instance);
+        }
     }
 }

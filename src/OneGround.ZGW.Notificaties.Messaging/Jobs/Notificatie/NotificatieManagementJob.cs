@@ -1,6 +1,7 @@
 using Hangfire;
 using Hangfire.Console;
 using Hangfire.Server;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Filters;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
 
@@ -9,7 +10,8 @@ public interface INotificatieManagementJob
     void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null);
 }
 
-[Queue(Constants.NrcListenerQueue)]
+[Queue(Constants.NrcListenerMainQueue)]
+[RetryQueue(Constants.NrcListenerRetryQueue)]
 public class NotificatieManagementJob : INotificatieManagementJob
 {
     public void ExpireFailedJobsScanAt(TimeSpan maxAgeFailedJob, PerformContext context = null)
