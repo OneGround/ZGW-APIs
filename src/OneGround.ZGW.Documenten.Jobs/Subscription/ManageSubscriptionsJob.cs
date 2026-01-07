@@ -53,7 +53,7 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
 
         foreach (var value in data)
         {
-            _logger.LogInformation("Creating subscription job for RSIN {Rsin}", value.jobId);
+            _logger.LogInformation("Creating subscription job {JobId} for RSIN {Rsin}", value.jobId, value.rsin);
             RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(value.jobId, job => job.ExecuteAsync(value.rsin), Cron.Never);
             RecurringJob.TriggerJob(value.jobId);
         }
