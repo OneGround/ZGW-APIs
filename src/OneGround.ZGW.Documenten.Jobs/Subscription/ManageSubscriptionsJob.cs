@@ -34,35 +34,33 @@ public class ManageSubscriptionsJob : SubscriptionJobBase<ManageSubscriptionsJob
         _optionsMonitor = optionsMonitor;
     }
 
-    [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    [AutomaticRetry(Attempts = 3, DelaysInSeconds = [5, 30, 120], OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public Task ExecuteAsync()
     {
         _logger.LogInformation("{ManageSubscriptionsJob} job started.", nameof(ManageSubscriptionsJob));
 
         var currentServiceAccountCredentials = CurrentServiceAccountCredentials;
-        var currentRecurringJobs = CurrentRecurringJobs;
 
-        // 1. Add missing subscriptions for service accounts that do not have one yet
-        foreach (var serviceaccount in currentServiceAccountCredentials)
-        {
-            var rsin = serviceaccount.Rsin;
-            var jobId = CreateOrPatchSubscriptionJob.GetJobId(rsin);
+        using var connection = JobStorage.Current.GetConnection();
+        var currentRecurringJobs = connection.GetRecurringJobs();
 
+        var data = currentServiceAccountCredentials
+            // 1. Add missing subscriptions for service accounts that do not have one yet
+            .Select(x => new { rsin = x.Rsin, jobId = CreateOrPatchSubscriptionJob.GetJobId(x.Rsin) })
             // Ensure it was triggerred only once
-            if (currentRecurringJobs.All(job => job.Id != jobId))
-            {
-                _logger.LogInformation("Creating subscription job for RSIN {Rsin}", rsin);
-                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(jobId, job => job.ExecuteAsync(rsin), Cron.Never);
-                RecurringJob.TriggerJob(jobId);
-            }
+            .Where(x => currentRecurringJobs.All(job => job.Id != x.jobId));
+
+        foreach (var value in data)
+        {
+            _logger.LogInformation("Creating subscription job for RSIN {Rsin}", value.jobId);
+            RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(value.jobId, job => job.ExecuteAsync(value.rsin), Cron.Never);
+            RecurringJob.TriggerJob(value.jobId);
         }
 
         _logger.LogInformation("{ManageSubscriptionsJob} job finished.", nameof(ManageSubscriptionsJob));
         return Task.CompletedTask;
     }
-
-    private static List<RecurringJobDto> CurrentRecurringJobs => JobStorage.Current.GetConnection().GetRecurringJobs();
 
     private IEnumerable<ZgwServiceAccountCredential> CurrentServiceAccountCredentials =>
         _optionsMonitor.CurrentValue.Credentials.DistinctBy(x => new
