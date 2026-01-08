@@ -45,7 +45,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         _notificatieServiceAgent = notificatieServiceAgent;
     }
 
-    [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    [AutomaticRetry(Attempts = 3, DelaysInSeconds = [5, 30, 120], OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public async Task ExecuteAsync(string rsin)
     {
@@ -91,7 +91,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             else
             {
                 // Abonnement does not exists so create new one for this Rsin
-                string callback = $"{DocumentListenerApiUrl}/v1/notificatie/{rsin}";
+                var callback = $"{DocumentListenerApiUrl}/v1/notificatie/{rsin}";
 
                 var added = await _notificatieServiceAgent.AddAbonnementAsync(
                     new AbonnementDto
@@ -160,7 +160,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                         : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
 
                 // Create a cron expression (using minute segment)
-                var refreshCronExpression = CronHelper.CreateCronForIntervalMinutes((int)refreshInMinutes);
+                var refreshCronExpression = CronHelper.CreateOneTimeCron((int)refreshInMinutes);
 
                 RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
             }

@@ -1,3 +1,4 @@
+using System;
 using OneGround.ZGW.Common.Helpers;
 using Xunit;
 
@@ -5,21 +6,123 @@ namespace OneGround.OneGround.ZGW.Common.UnitTests;
 
 public class CronHelperTests
 {
-    [Theory]
-    [InlineData(0, "*/1 * * * *")] // minutes <= 0, should default to 1
-    [InlineData(-5, "*/1 * * * *")] // negative minutes, should default to 1
-    [InlineData(1, "*/1 * * * *")] // 1 minute
-    [InlineData(5, "*/5 * * * *")] // less than 60 minutes
-    [InlineData(59, "*/59 * * * *")] // just below 60 minutes
-    [InlineData(60, "0 */1 * * *")] // exactly 1 hour
-    [InlineData(120, "0 */2 * * *")] // exactly 2 hours
-    [InlineData(180, "0 */3 * * *")] // exactly 3 hours
-    [InlineData(1440, "0 0 */1 * *")] // exactly 1 day
-    [InlineData(2880, "0 0 */2 * *")] // exactly 2 days
-    [InlineData(1500, "0 0 */1 * *")] // more than 1 day, not exactly multiple
-    public void CreateCronForIntervalMinutes_ReturnsExpectedCron(int minutes, string expected)
+    [Fact]
+    public void CreateOneTimeCron_WithPositiveMinutes_ReturnsCorrectCronExpression()
     {
-        var result = CronHelper.CreateCronForIntervalMinutes(minutes);
-        Assert.Equal(expected, result);
+        // Arrange
+        var minutesFromNow = 30;
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_WithZeroMinutes_ReturnsCurrentTimeCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = 0;
+        var expectedTime = DateTime.UtcNow;
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_WithNegativeMinutes_ReturnsCorrectCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = -15;
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_CrossingHourBoundary_ReturnsCorrectCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = 120; // 2 hours
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_CrossingDayBoundary_ReturnsCorrectCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = 1500; // ~25 hours
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_CrossingMonthBoundary_ReturnsCorrectCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = 50000; // ~34 days
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_ReturnsCorrectCronFormat()
+    {
+        // Arrange
+        var minutesFromNow = 10;
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert - Verify the format: "Minute Hour DayOfMonth Month DayOfWeek"
+        var parts = result.Split(' ');
+        Assert.Equal(5, parts.Length); // Cron should have 5 parts
+        Assert.Equal("*", parts[4]); // DayOfWeek should always be *
+    }
+
+    [Fact]
+    public void CreateOneTimeCron_WithLargeMinutesValue_ReturnsCorrectCronExpression()
+    {
+        // Arrange
+        var minutesFromNow = 525600; // 1 year in minutes
+        var expectedTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // Act
+        var result = CronHelper.CreateOneTimeCron(minutesFromNow);
+
+        // Assert
+        var expectedCron = $"{expectedTime.Minute} {expectedTime.Hour} {expectedTime.Day} {expectedTime.Month} *";
+        Assert.Equal(expectedCron, result);
     }
 }
