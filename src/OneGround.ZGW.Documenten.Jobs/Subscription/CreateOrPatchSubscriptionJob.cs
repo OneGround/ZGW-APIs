@@ -20,7 +20,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 
     private readonly INotificatiesServiceAgent _notificatieServiceAgent;
     private readonly ICachedZGWSecrets _cachedSecrets;
-    private readonly IZgwTokenCacheService _zgwTokenCacheService;
+    private readonly IZgwTokenService _zgwTokenService;
 
     public CreateOrPatchSubscriptionJob(
         ILogger<CreateOrPatchSubscriptionJob> logger,
@@ -30,7 +30,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         INotificatiesServiceAgent notificatieServiceAgent,
         IServiceDiscovery serviceDiscovery,
         ICachedZGWSecrets cachedSecrets,
-        IZgwTokenCacheService zgwTokenCacheService
+        IZgwTokenService zgwTokenService
     )
         : base(
             logger,
@@ -41,7 +41,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         )
     {
         _cachedSecrets = cachedSecrets;
-        _zgwTokenCacheService = zgwTokenCacheService;
+        _zgwTokenService = zgwTokenService;
         _notificatieServiceAgent = notificatieServiceAgent;
     }
 
@@ -173,8 +173,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             throw new InvalidOperationException($"No service secret configured for rsin: {rsin}");
         }
 
-        var response = await _zgwTokenCacheService.GetCachedTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
-
-        return response;
+        var token = await _zgwTokenService.GetTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
+        var expiresIn = TimeSpan.FromSeconds(token.ExpiresIn);
+        return ($"Bearer {token.AccessToken}", expiresIn);
     }
 }
