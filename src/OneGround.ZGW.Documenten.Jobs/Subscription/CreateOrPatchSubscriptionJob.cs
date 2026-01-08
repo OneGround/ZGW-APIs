@@ -150,20 +150,16 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                         $"Failed to create subscription in NRC API for Rsin {rsin}. Error(s): {added.GetErrorsFromResponse()}"
                     );
                 }
-
-                //
-                // 2. Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
-
-                double refreshInMinutes =
-                    token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
-                        ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
-                        : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
-
-                // Create a cron expression (using minute segment)
-                var refreshCronExpression = CronHelper.CreateOneTimeCron((int)refreshInMinutes);
-
-                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
             }
+
+            // Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
+            double refreshInMinutes =
+                token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
+                    ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
+                    : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
+
+            var refreshCronExpression = CronHelper.CreateOneTimeCron((int)refreshInMinutes);
+            RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
         }
 
         _logger.LogInformation("{CreateOrPatchSubscriptionJob} job finished.", nameof(CreateOrPatchSubscriptionJob));
