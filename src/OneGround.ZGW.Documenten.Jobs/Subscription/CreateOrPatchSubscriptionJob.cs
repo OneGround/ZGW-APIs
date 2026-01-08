@@ -77,7 +77,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 {
                     var patched = await _notificatieServiceAgent.PatchAbonnementByUrlAsync(
                         subscriber.Url,
-                        new JObject(new JProperty("auth", $"Bearer {token.bearer}"))
+                        new JObject(new JProperty("auth", token.bearer))
                     );
 
                     if (!patched.Success)
@@ -96,7 +96,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 var added = await _notificatieServiceAgent.AddAbonnementAsync(
                     new AbonnementDto
                     {
-                        Auth = $"Bearer {token.bearer}",
+                        Auth = token.bearer,
                         CallbackUrl = callback,
                         Kanalen = new List<AbonnementKanaalDto>
                         {
