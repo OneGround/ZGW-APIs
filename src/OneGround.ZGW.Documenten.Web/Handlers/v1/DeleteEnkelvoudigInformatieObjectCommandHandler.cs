@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,15 +62,38 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
         var enkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-            .Include(z => z.EnkelvoudigInformatieObjectVersies)
-            .Include(z => z.ObjectInformatieObjecten)
+            .EnkelvoudigInformatieObjecten.Include(x => x.ObjectInformatieObjecten)
+            .Include(x => x.EnkelvoudigInformatieObjectVersies)
+            .Include(x => x.LatestEnkelvoudigInformatieObjectVersie)
+            .Where(rsinFilter)
             .AsSplitQuery()
+            .AsNoTracking()
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (enkelvoudigInformatieObject == null)
         {
             return new CommandResult(CommandStatus.NotFound);
+        }
+
+        // NOTE: Vernietigen van informatieobjecten (drc-008) => Een EnkelvoudigInformatieObject MAG ALLEEN verwijderd worden indien er geen ObjectInformatieObject-en meer aan hangen.
+        // Indien er nog relaties zijn, dan MOET het DRC antwoorden met een HTTP 400 foutbericht
+        if (enkelvoudigInformatieObject.ObjectInformatieObjecten.Count > 0)
+        {
+            // Because relations are stored both in DRC and in ZRC/BRC be sure there is an external relation (ZRC and/or BRC).
+            // If not we could ignore the validation error here
+            if (await IsReallyReferencedByExternalComponents(_uriService.GetUri(enkelvoudigInformatieObject)))
+            {
+                return new CommandResult(
+                    CommandStatus.ValidationError,
+                    [
+                        new ValidationError(
+                            "nonFieldErrors",
+                            ErrorCode.PendingRelations,
+                            $"EnkelvoudigInformatieObject {enkelvoudigInformatieObject.Id} is gerefereerd aan één of meerdere ObjectInformatieObjecten."
+                        ),
+                    ]
+                );
+            }
         }
 
         var documentUrns = enkelvoudigInformatieObject
@@ -80,78 +102,42 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             .Distinct()
             .ToList();
 
-        var errors = new List<ValidationError>();
-
-        // Note: Vernietigen van informatieobjecten (drc-008) => Een EnkelvoudigInformatieObject MAG ALLEEN verwijderd worden indien er geen ObjectInformatieObject-en meer aan hangen.Indien er nog relaties zijn, dan MOET het DRC antwoorden met een HTTP 400 foutbericht
-        if (enkelvoudigInformatieObject.ObjectInformatieObjecten.Count != 0)
-        {
-            // Because relations are stored both in DRC and in ZRC/BRC be sure there is a external reation (ZRC and/or BRC). If not we could ignore the validation error here
-            if (IsReallyReferencedByExternalComponents(_uriService.GetUri(enkelvoudigInformatieObject)))
-            {
-                errors.Add(
-                    new ValidationError(
-                        "nonFieldErrors",
-                        ErrorCode.PendingRelations,
-                        $"EnkelvoudigInformatieObject {enkelvoudigInformatieObject.Id} is gerefereerd aan één of meerdere ObjectInformatieObjecten."
-                    )
-                );
-            }
-        }
-        if (errors.Count != 0)
-        {
-            return new CommandResult(CommandStatus.ValidationError, errors.ToArray());
-        }
-
-        //
         // 1. Delete the metadata
-
-        EnkelvoudigInformatieObjectVersie savedLatestEnkelvoudigInformatieObjectVersie;
-
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             _logger.LogDebug("Deleting EnkelvoudigInformatieObject {Id}....", enkelvoudigInformatieObject.Id);
 
-            using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
+            await using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
             {
-                // Note: Save the original LatestEnkelvoudigInformatieObjectVersie because we should set to null to prevent circular dependency while deleting
-                savedLatestEnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
-                enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersieId = null;
-
-                await _context.SaveChangesAsync(cancellationToken);
+                await _context
+                    .EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.LatestEnkelvoudigInformatieObjectVersieId, y => null), cancellationToken);
 
                 // Remove the audittrail for this EnkelvoudigInformatieObjecten first
-                var audittrailregels = _context.AuditTrailRegels.Where(a =>
-                    a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id
-                );
+                await _context
+                    .AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
+                    .ExecuteDeleteAsync(cancellationToken);
 
-                _context.AuditTrailRegels.RemoveRange(audittrailregels);
+                await _context.EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
 
-                _context.Remove(enkelvoudigInformatieObject);
-
-                // Audittrail: Record that only the enkelvoudigInformatieObject has been deleted WITHOUT any details expect the zaak identification (field toelichting)!!
-                var latestIdentificatie = enkelvoudigInformatieObject
-                    .EnkelvoudigInformatieObjectVersies.OrderBy(a => a.Versie)
-                    .LastOrDefault()
-                    ?.Identificatie; // Should always have at least one version
+                var latestEnkelvoudigInformatieObjectVersieIdentificatie = enkelvoudigInformatieObject
+                    .LatestEnkelvoudigInformatieObjectVersie
+                    ?.Identificatie;
 
                 await audittrail.DestroyedAsync(
                     enkelvoudigInformatieObject,
-                    toelichting: $"Betreft enkelvoudiginformatieobject met identificatie {latestIdentificatie}",
+                    toelichting: $"Betreft enkelvoudiginformatieobject met identificatie {latestEnkelvoudigInformatieObjectVersieIdentificatie}",
                     cancellationToken
                 );
 
-                await _context.SaveChangesAsync(cancellationToken);
-
                 await trans.CommitAsync(cancellationToken);
             }
+
             _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully deleted.", enkelvoudigInformatieObject.Id);
         }
 
-        //
         // 2. Delete all document versions (content) from DMS
-
         _logger.LogDebug("Deleting documents from DMS....");
-
         foreach (var document in documentUrns)
         {
             var documentUrn = new DocumentUrn(document);
@@ -176,18 +162,13 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             }
         }
 
-        //
         // 3. Notify...
-
-        // Note: Restore the original LatestEnkelvoudigInformatieObjectVersie because we should resolve and deliver all kenmerken (in SendNotificationAsync)
-        enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = savedLatestEnkelvoudigInformatieObjectVersie;
-
         await SendNotificationAsync(Actie.destroy, enkelvoudigInformatieObject, cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }
 
-    private bool IsReallyReferencedByExternalComponents(string enkelvoudigInformatieObject)
+    private async Task<bool> IsReallyReferencedByExternalComponents(string enkelvoudigInformatieObject)
     {
         var taskZrc = _zakenServiceAgent.GetZaakInformatieObjectenAsync(
             new GetAllZaakInformatieObjectenQueryParameters { InformatieObject = enkelvoudigInformatieObject }
@@ -197,7 +178,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             new GetAllBesluitInformatieObjectenQueryParameters { InformatieObject = enkelvoudigInformatieObject }
         );
 
-        Task.WaitAll(taskZrc, taskBrc);
+        await Task.WhenAll(taskZrc, taskBrc);
 
         if (!taskZrc.Result.Success || !taskBrc.Result.Success)
             return true; // In case of any error return true to keep eventually stored references!!
@@ -207,8 +188,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         return hasReferences;
     }
 
-    private static AuditTrailOptions AuditTrailOptions =>
-        new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" };
+    private static AuditTrailOptions AuditTrailOptions => new() { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" };
 }
 
 class DeleteEnkelvoudigInformatieObjectCommand : IRequest<CommandResult>
