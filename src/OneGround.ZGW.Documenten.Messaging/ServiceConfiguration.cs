@@ -17,7 +17,6 @@ using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Jobs;
 using OneGround.ZGW.Documenten.Messaging.Configuration;
-using OneGround.ZGW.Documenten.Messaging.Services;
 using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 
@@ -70,8 +69,6 @@ public class ServiceConfiguration
         {
             options.WaitUntilStarted = true;
         });
-
-        services.AddSingleton<IEnkelvoudigInformatieObjectDeletionService, EnkelvoudigInformatieObjectDeletionService>();
 
         services.AddHangfireServer(o =>
         {
