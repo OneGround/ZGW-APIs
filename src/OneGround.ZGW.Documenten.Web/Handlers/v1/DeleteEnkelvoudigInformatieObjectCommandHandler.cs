@@ -77,7 +77,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         // NOTE: Vernietigen van informatieobjecten (drc-008) => Een EnkelvoudigInformatieObject MAG ALLEEN verwijderd worden indien er geen ObjectInformatieObject-en meer aan hangen.
         // Indien er nog relaties zijn, dan MOET het DRC antwoorden met een HTTP 400 foutbericht
-        if (enkelvoudigInformatieObject.ObjectInformatieObjecten.Count > 0)
+        if (enkelvoudigInformatieObject.ObjectInformatieObjecten.Any())
         {
             // Because relations are stored both in DRC and in ZRC/BRC be sure there is an external relation (ZRC and/or BRC).
             // If not we could ignore the validation error here
