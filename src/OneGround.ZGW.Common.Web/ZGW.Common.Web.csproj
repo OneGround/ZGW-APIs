@@ -5,6 +5,12 @@
     <RootNamespace>OneGround.ZGW.Common.Web</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\iso-639-3.tab" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\iso-639-3.tab" />
+  </ItemGroup>
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
