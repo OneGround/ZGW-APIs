@@ -34,24 +34,20 @@ public static class Iso639Helper
 
         var lines = reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries).Skip(1); // header
 
-        var result = new List<Iso639Language>();
-
-        foreach (var line in lines)
-        {
-            var cols = line.Split('\t');
-
-            result.Add(
-                new Iso639Language
+        return lines
+            .Select(line =>
+            {
+                var cols = line.Split('\t');
+                return new Iso639Language
                 {
                     ISO6392Code = cols.ElementAtOrDefault(0),
                     ISO6391Code = cols.ElementAtOrDefault(1),
                     EnglishNameOfLanguage = cols.ElementAtOrDefault(2),
                     FrenchNameOfLanguage = cols.ElementAtOrDefault(3),
                     GermanNameOfLanguage = cols.ElementAtOrDefault(4),
-                }
-            );
-        }
-        return result;
+                };
+            })
+            .ToList();
     }
 }
 
