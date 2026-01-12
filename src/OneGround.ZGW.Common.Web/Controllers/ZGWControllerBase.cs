@@ -85,10 +85,10 @@ public abstract class ZGWControllerBase : ControllerBase
             var clientId = User.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value ?? "unknown";
             _logger.LogWarning(
                 "Language code mismatch: Request has {RequestLength}-character code '{RequestTaal}', but mapped to {MappedLength}-character code '{MappedTaal}' for ClientId: {ClientId}",
-                taalRequested.Length,
-                taalRequested,
-                taalMapped.Length,
-                taalMapped,
+                taalRequested?.Length ?? 0,
+                taalRequested ?? "null",
+                taalMapped?.Length ?? 0,
+                taalMapped ?? "null",
                 clientId
             );
         }
