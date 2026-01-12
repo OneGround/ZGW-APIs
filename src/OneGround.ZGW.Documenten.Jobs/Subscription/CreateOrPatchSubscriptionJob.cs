@@ -20,7 +20,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
 
     private readonly INotificatiesServiceAgent _notificatieServiceAgent;
     private readonly ICachedZGWSecrets _cachedSecrets;
-    private readonly IZgwTokenCacheService _zgwTokenCacheService;
+    private readonly IZgwTokenService _zgwTokenService;
 
     public CreateOrPatchSubscriptionJob(
         ILogger<CreateOrPatchSubscriptionJob> logger,
@@ -30,7 +30,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         INotificatiesServiceAgent notificatieServiceAgent,
         IServiceDiscovery serviceDiscovery,
         ICachedZGWSecrets cachedSecrets,
-        IZgwTokenCacheService zgwTokenCacheService
+        IZgwTokenService zgwTokenService
     )
         : base(
             logger,
@@ -41,11 +41,11 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
         )
     {
         _cachedSecrets = cachedSecrets;
-        _zgwTokenCacheService = zgwTokenCacheService;
+        _zgwTokenService = zgwTokenService;
         _notificatieServiceAgent = notificatieServiceAgent;
     }
 
-    [AutomaticRetry(Attempts = 3, DelaysInSeconds = new[] { 5, 30, 120 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
+    [AutomaticRetry(Attempts = 3, DelaysInSeconds = [5, 30, 120], OnAttemptsExceeded = AttemptsExceededAction.Fail)]
     [Queue(Constants.DrcSubscriptionsQueue)]
     public async Task ExecuteAsync(string rsin)
     {
@@ -77,7 +77,7 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 {
                     var patched = await _notificatieServiceAgent.PatchAbonnementByUrlAsync(
                         subscriber.Url,
-                        new JObject(new JProperty("auth", $"Bearer {token.bearer}"))
+                        new JObject(new JProperty("auth", token.bearer))
                     );
 
                     if (!patched.Success)
@@ -91,12 +91,12 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             else
             {
                 // Abonnement does not exists so create new one for this Rsin
-                string callback = $"{DocumentListenerApiUrl}/v1/notificatie/{rsin}";
+                var callback = $"{DocumentListenerApiUrl}/v1/notificatie/{rsin}";
 
                 var added = await _notificatieServiceAgent.AddAbonnementAsync(
                     new AbonnementDto
                     {
-                        Auth = $"Bearer {token.bearer}",
+                        Auth = token.bearer,
                         CallbackUrl = callback,
                         Kanalen = new List<AbonnementKanaalDto>
                         {
@@ -150,20 +150,16 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                         $"Failed to create subscription in NRC API for Rsin {rsin}. Error(s): {added.GetErrorsFromResponse()}"
                     );
                 }
-
-                //
-                // 2. Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
-
-                double refreshInMinutes =
-                    token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
-                        ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
-                        : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
-
-                // Create a cron expression (using minute segment)
-                var refreshCronExpression = CronHelper.CreateCronForIntervalMinutes((int)refreshInMinutes);
-
-                RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
             }
+
+            // Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
+            double refreshInMinutes =
+                token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
+                    ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
+                    : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
+
+            var refreshCronExpression = CronHelper.CreateOneTimeCron((int)refreshInMinutes);
+            RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
         }
 
         _logger.LogInformation("{CreateOrPatchSubscriptionJob} job finished.", nameof(CreateOrPatchSubscriptionJob));
@@ -177,8 +173,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
             throw new InvalidOperationException($"No service secret configured for rsin: {rsin}");
         }
 
-        var response = await _zgwTokenCacheService.GetCachedTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
-
-        return response;
+        var token = await _zgwTokenService.GetTokenAsync(value.ClientId, value.Secret, CancellationToken.None);
+        var expiresIn = TimeSpan.FromSeconds(token.ExpiresIn);
+        return ($"Bearer {token.AccessToken}", expiresIn);
     }
 }

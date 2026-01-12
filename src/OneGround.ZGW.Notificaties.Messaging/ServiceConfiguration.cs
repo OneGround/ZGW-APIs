@@ -112,20 +112,14 @@ public class ServiceConfiguration
                         }
                     );
 
-                    cfg.UseHangfireScheduler(queueName: Constants.NrcHangfireQueue);
-
                     cfg.UseConsumeFilter(typeof(RsinFilter<>), context);
                     cfg.UseConsumeFilter(typeof(CorrelationIdFilter<>), context);
 
                     cfg.UseConsumeFilter(typeof(BatchIdConsumingFilter<>), context);
-                    //cfg.UseSendFilter(typeof(BatchIdSendingFilter<>), context);
-                    //cfg.UsePublishFilter(typeof(BatchIdPublishFilter<>), context);
 
                     cfg.ConfigureEndpoints(context);
                 }
             );
-
-            x.AddMessageScheduler(new Uri($"queue:{Constants.NrcHangfireQueue}"));
         });
 
         services.AddNotificatiesJobs(o => o.ConnectionString = _configuration.GetConnectionString("HangfireConnectionString"));
@@ -133,8 +127,14 @@ public class ServiceConfiguration
 
         services.AddHangfireServer(o =>
         {
-            o.ServerName = Constants.NrcListenerServer;
-            o.Queues = [Constants.NrcListenerQueue];
+            o.ServerName = Constants.NrcListenerMainServer;
+            o.Queues = [Constants.NrcListenerMainQueue];
+        });
+
+        services.AddHangfireServer(o =>
+        {
+            o.ServerName = Constants.NrcListenerRetryServer;
+            o.Queues = [Constants.NrcListenerRetryQueue];
         });
 
         services.AddHangfire(
@@ -205,6 +205,13 @@ public class ServiceConfiguration
         {
             // No retries
             return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
+        }
+
+        // Remove first the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
+        var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);
+        if (automaticRetryFilter != null)
+        {
+            GlobalJobFilters.Filters.Remove(automaticRetryFilter.Instance);
         }
 
         return new AutomaticRetryAttribute

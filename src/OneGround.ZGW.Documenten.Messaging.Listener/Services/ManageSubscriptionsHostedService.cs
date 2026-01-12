@@ -24,8 +24,9 @@ public class ManageSubscriptionsHostedService : IHostedService
         var jobId = ManageSubscriptionsJob.JobId;
         try
         {
+            using var connection = JobStorage.Current.GetConnection();
             // Initialize job if it doesn't exist or has never been triggered
-            var existingJob = JobStorage.Current.GetConnection().GetRecurringJobs().FirstOrDefault(j => j.Id == jobId);
+            var existingJob = connection.GetRecurringJobs().FirstOrDefault(j => j.Id == jobId);
 
             if (existingJob != null)
             {
