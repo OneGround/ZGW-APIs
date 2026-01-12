@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
+using OneGround.ZGW.Notificaties.Messaging.Jobs.Filters;
 using OneGround.ZGW.Notificaties.Messaging.Services;
 
 namespace OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
@@ -14,7 +15,8 @@ public interface INotificatieJob
     Task ReQueueNotificatieAsync(Guid abonnementId, SubscriberNotificatie notificatie, PerformContext context = null, Guid? batchId = null);
 }
 
-[Queue(Constants.NrcListenerQueue)]
+[Queue(Constants.NrcListenerMainQueue)]
+[RetryQueue(Constants.NrcListenerRetryQueue)]
 public class NotificatieJob : INotificatieJob
 {
     private readonly INotificationSender _notificationSender;

@@ -4,20 +4,13 @@ namespace OneGround.ZGW.Common.Helpers;
 
 public static class CronHelper
 {
-    public static string CreateCronForIntervalMinutes(int minutes)
+    public static string CreateOneTimeCron(int minutesFromNow)
     {
-        if (minutes <= 0)
-            minutes = 1;
-        if (minutes < 60)
-        {
-            return $"*/{minutes} * * * *";
-        }
-        var hours = minutes / 60;
-        if (minutes % 60 == 0 && hours < 24)
-        {
-            return $"0 */{hours} * * *";
-        }
-        var days = Math.Max(1, minutes / (60 * 24));
-        return $"0 0 */{days} * *";
+        // 1. Calculate the exact future time
+        var targetTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
+
+        // 2. Generate a Cron that matches that specific Minute/Hour/Day
+        // Format: Minute Hour DayOfMonth Month DayOfWeek
+        return $"{targetTime.Minute} {targetTime.Hour} {targetTime.Day} {targetTime.Month} *";
     }
 }
