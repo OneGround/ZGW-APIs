@@ -82,6 +82,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
@@ -130,6 +134,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())

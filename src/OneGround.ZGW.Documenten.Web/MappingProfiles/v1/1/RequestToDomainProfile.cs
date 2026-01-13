@@ -56,6 +56,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => StatusFromString(src.Status)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
@@ -102,6 +106,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => StatusFromString(src.Status)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
+            .ForMember(
+                dest => dest.Taal,
+                opt => opt.MapFrom(src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())

@@ -5,6 +5,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Services;
 
@@ -76,4 +77,23 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected static HashSet<string> ExpandLookup(string expand) =>
         expand != null ? expand.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet() : [];
+
+    // Note: Temporary log method. We should investigate who send the 2-letter language code so we log for these situations
+    protected void LogInvalidTaalCode(string taalRequested, string taalMapped)
+    {
+        if (taalRequested?.Length != taalMapped?.Length)
+        {
+            var clientId =
+                User.Claims.FirstOrDefault(c => c.Type.Equals(CustomClaimTypes.ClientId, StringComparison.OrdinalIgnoreCase))?.Value ?? "unknown";
+
+            _logger.LogWarning(
+                "Language code mismatch: Request has {RequestLength}-character code '{RequestTaal}', but mapped to {MappedLength}-character code '{MappedTaal}' for ClientId: {ClientId}",
+                taalRequested?.Length ?? 0,
+                taalRequested ?? "null",
+                taalMapped?.Length ?? 0,
+                taalMapped ?? "null",
+                clientId
+            );
+        }
+    }
 }
