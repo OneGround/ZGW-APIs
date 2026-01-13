@@ -46,7 +46,7 @@ class DeleteObjectInformatieObjectCommandHandler
 
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.Where(rsinFilter)
-            .Include(e => e.InformatieObject.ObjectInformatieObjecten)
+            .Include(e => e.InformatieObject)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (objectInformatieObject == null)
@@ -62,9 +62,10 @@ class DeleteObjectInformatieObjectCommandHandler
 
             _context.ObjectInformatieObjecten.Remove(objectInformatieObject);
 
+            await _context.SaveChangesAsync(cancellationToken);
+
             await audittrail.DestroyedAsync(objectInformatieObject.InformatieObject, objectInformatieObject, cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
