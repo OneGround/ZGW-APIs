@@ -83,7 +83,9 @@ public abstract class ZGWControllerBase : ControllerBase
     {
         if (taalRequested?.Length != taalMapped?.Length)
         {
-            var clientId = User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.ClientId)?.Value ?? "unknown";
+            var clientId =
+                User.Claims.FirstOrDefault(c => c.Type.Equals(CustomClaimTypes.ClientId, StringComparison.OrdinalIgnoreCase))?.Value ?? "unknown";
+
             _logger.LogWarning(
                 "Language code mismatch: Request has {RequestLength}-character code '{RequestTaal}', but mapped to {MappedLength}-character code '{MappedTaal}' for ClientId: {ClientId}",
                 taalRequested?.Length ?? 0,
