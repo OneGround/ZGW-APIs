@@ -54,6 +54,8 @@ class DeleteObjectInformatieObjectCommandHandler
             return new CommandResult(CommandStatus.NotFound);
         }
 
+        var informatieObject = objectInformatieObject.InformatieObject;
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
@@ -64,8 +66,7 @@ class DeleteObjectInformatieObjectCommandHandler
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            await audittrail.DestroyedAsync(objectInformatieObject.InformatieObject, objectInformatieObject, cancellationToken);
-
+            await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
