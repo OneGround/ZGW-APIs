@@ -201,25 +201,30 @@ public class ServiceConfiguration
 
     private AutomaticRetryAttribute GetRetryPolicyFromConfig()
     {
-        if (_hangfireConfiguration.RetryScheduleTimeSpanList == null || _hangfireConfiguration.RetryScheduleTimeSpanList.Length == 0)
-        {
-            // No retries
-            return new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Fail };
-        }
-
-        // Remove first the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
+        // First remove the default AutomaticRetryAttribute filter (which has 10 retries). If we don't do this we got two instances of AutomaticRetryAttribute
         var automaticRetryFilter = GlobalJobFilters.Filters.FirstOrDefault(f => f.Instance is AutomaticRetryAttribute);
         if (automaticRetryFilter != null)
         {
             GlobalJobFilters.Filters.Remove(automaticRetryFilter.Instance);
         }
 
+        if (_hangfireConfiguration.RetryScheduleTimeSpanList == null || _hangfireConfiguration.RetryScheduleTimeSpanList.Length == 0)
+        {
+            // No retries
+            return new AutomaticRetryAttribute
+            {
+                OnAttemptsExceeded = AttemptsExceededAction.Fail,
+                Attempts = 0,
+                LogEvents = false,
+            };
+        }
+
         return new AutomaticRetryAttribute
         {
-            ExceptOn = [typeof(GeneralException)],
             OnAttemptsExceeded = AttemptsExceededAction.Fail,
             Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
             DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
+            LogEvents = false,
         };
     }
 }
