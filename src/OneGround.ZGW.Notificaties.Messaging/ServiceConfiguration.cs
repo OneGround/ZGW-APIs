@@ -215,7 +215,7 @@ public class ServiceConfiguration
             {
                 OnAttemptsExceeded = AttemptsExceededAction.Fail,
                 Attempts = 0,
-                LogEvents = false
+                LogEvents = false,
             };
         }
 
@@ -225,7 +225,7 @@ public class ServiceConfiguration
             OnAttemptsExceeded = AttemptsExceededAction.Fail,
             Attempts = _hangfireConfiguration.RetryScheduleTimeSpanList.Length,
             DelaysInSeconds = _hangfireConfiguration.RetryScheduleTimeSpanList.Select(c => (int)c.TotalSeconds).ToArray(),
-            LogEvents = false
+            LogEvents = false,
         };
     }
 }
