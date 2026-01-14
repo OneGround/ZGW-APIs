@@ -46,7 +46,7 @@ class DeleteObjectInformatieObjectCommandHandler
 
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.Where(rsinFilter)
-            .Include(e => e.InformatieObject.ObjectInformatieObjecten)
+            .Include(e => e.InformatieObject)
             .AsNoTracking()
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
