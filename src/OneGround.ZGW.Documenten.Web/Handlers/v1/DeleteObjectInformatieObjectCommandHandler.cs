@@ -47,6 +47,7 @@ class DeleteObjectInformatieObjectCommandHandler
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.Where(rsinFilter)
             .Include(e => e.InformatieObject.ObjectInformatieObjecten)
+            .AsNoTracking()
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (objectInformatieObject == null)
@@ -54,25 +55,32 @@ class DeleteObjectInformatieObjectCommandHandler
             return new CommandResult(CommandStatus.NotFound);
         }
 
+        var informatieObject = objectInformatieObject.InformatieObject;
+        if (informatieObject == null)
+        {
+            return new CommandResult(CommandStatus.NotFound);
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
 
             audittrail.SetOld<ObjectInformatieObjectResponseDto>(objectInformatieObject);
 
-            _context.ObjectInformatieObjecten.Remove(objectInformatieObject);
+            await _context.ObjectInformatieObjecten.Where(x => x.Id == objectInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
 
-            await audittrail.DestroyedAsync(objectInformatieObject.InformatieObject, objectInformatieObject, cancellationToken);
-
-            await _context.SaveChangesAsync(cancellationToken);
+            await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
 
+        await transaction.CommitAsync(cancellationToken);
+
         return new CommandResult(CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "objectinformatieobject" };
+    private static AuditTrailOptions AuditTrailOptions => new() { Bron = ServiceRoleName.DRC, Resource = "objectinformatieobject" };
 }
 
 class DeleteObjectInformatieObjectCommand : IRequest<CommandResult>
