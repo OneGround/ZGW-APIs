@@ -56,6 +56,10 @@ class DeleteObjectInformatieObjectCommandHandler
         }
 
         var informatieObject = objectInformatieObject.InformatieObject;
+        if (informatieObject == null)
+        {
+            return new CommandResult(CommandStatus.NotFound);
+        }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
@@ -72,7 +76,6 @@ class DeleteObjectInformatieObjectCommandHandler
         }
 
         await transaction.CommitAsync(cancellationToken);
-
 
         return new CommandResult(CommandStatus.OK);
     }
