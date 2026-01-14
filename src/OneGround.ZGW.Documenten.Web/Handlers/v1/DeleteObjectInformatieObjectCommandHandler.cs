@@ -58,28 +58,21 @@ class DeleteObjectInformatieObjectCommandHandler
         var informatieObject = objectInformatieObject.InformatieObject;
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        try
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
-            using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
-            {
-                _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
+            _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
 
-                audittrail.SetOld<ObjectInformatieObjectResponseDto>(objectInformatieObject);
+            audittrail.SetOld<ObjectInformatieObjectResponseDto>(objectInformatieObject);
 
-                await _context.ObjectInformatieObjecten.Where(x => x.Id == objectInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
+            await _context.ObjectInformatieObjecten.Where(x => x.Id == objectInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
 
-                await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
+            await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
 
-                _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
+            _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+
+        await transaction.CommitAsync(cancellationToken);
+
 
         return new CommandResult(CommandStatus.OK);
     }
