@@ -46,7 +46,8 @@ class DeleteObjectInformatieObjectCommandHandler
 
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.Where(rsinFilter)
-            .Include(e => e.InformatieObject)
+            .Include(e => e.InformatieObject.ObjectInformatieObjecten)
+            .AsNoTracking()
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (objectInformatieObject == null)
@@ -65,8 +66,7 @@ class DeleteObjectInformatieObjectCommandHandler
 
                 audittrail.SetOld<ObjectInformatieObjectResponseDto>(objectInformatieObject);
 
-                _context.ObjectInformatieObjecten.Remove(objectInformatieObject);
-                await _context.SaveChangesAsync(cancellationToken);
+                await _context.ObjectInformatieObjecten.Where(x => x.Id == objectInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
 
                 await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
 
@@ -84,7 +84,7 @@ class DeleteObjectInformatieObjectCommandHandler
         return new CommandResult(CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "objectinformatieobject" };
+    private static AuditTrailOptions AuditTrailOptions => new() { Bron = ServiceRoleName.DRC, Resource = "objectinformatieobject" };
 }
 
 class DeleteObjectInformatieObjectCommand : IRequest<CommandResult>
