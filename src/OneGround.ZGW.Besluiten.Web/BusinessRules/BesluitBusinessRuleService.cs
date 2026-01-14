@@ -174,7 +174,6 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         {
             // Wanneer een Besluit bij een zaak hoort (Besluit.zaak is gezet), dan MOET Besluit.besluittype voorkomen in de Besluit.zaak.zaaktype.besluittypen. (brc-007)
             var zaaktype = await TryGetZaakTypeByUrlAsync(result.Response.Zaaktype, errors);
-
             if (zaaktype != null && !zaaktype.BesluitTypen.Any(t => t == besluittype))
             {
                 string error = "De referentie hoort niet bij het zaaktype van de zaak.";
