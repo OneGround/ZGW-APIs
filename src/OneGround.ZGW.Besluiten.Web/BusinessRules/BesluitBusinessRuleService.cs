@@ -59,7 +59,7 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         }
 
         // 3. Common rules (valid for Add Besluit and Update Besluit)
-        return await ValidateAsync(besluitAdd, ignoreZaakValidation, errors);
+        return await ValidateCommonAsync(besluitAdd, ignoreZaakValidation, existing: false, errors);
     }
 
     public async Task<bool> ValidateAsync(Besluit besluitExisting, Besluit besluitUpdate, bool ignoreZaakValidation, List<ValidationError> errors)
@@ -113,10 +113,10 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         }
 
         // 2. Common rules (valid for Add Besluit and Update Besluit)
-        return await ValidateAsync(besluitUpdate, ignoreZaakValidation, errors);
+        return await ValidateCommonAsync(besluitUpdate, ignoreZaakValidation, existing: true, errors);
     }
 
-    private async Task<bool> ValidateAsync(Besluit besluit, bool ignoreZaakValidation, List<ValidationError> errors)
+    private async Task<bool> ValidateCommonAsync(Besluit besluit, bool ignoreZaakValidation, bool existing, List<ValidationError> errors)
     {
         // Common rules (both for add and update besluit)
 
@@ -124,7 +124,7 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         if (!ignoreZaakValidation && !string.IsNullOrEmpty(besluit.Zaak))
         {
             // Valideren informatieobject op de BesluitInformatieObject-resource (brc-003)
-            await ValidateZaakAsync(besluit.Zaak, besluit.BesluitType, errors);
+            await ValidateZaakAsync(besluit.Zaak, besluit.BesluitType, existing, errors);
         }
 
         // 3. Datum in het verleden of nu
@@ -162,7 +162,7 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         return errors.Count == 0;
     }
 
-    private async Task<bool> ValidateZaakAsync(string zaak, string besluittype, List<ValidationError> errors)
+    private async Task<bool> ValidateZaakAsync(string zaak, string besluittype, bool existing, List<ValidationError> errors)
     {
         var result = await _zakenServiceAgent.GetZaakByUrlAsync(zaak);
 
@@ -170,10 +170,11 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         {
             errors.Add(new ValidationError("zaak", result.Error.Code, result.Error.Title));
         }
-        else
+        else if (!existing) // Note: The following validation should only be done on creation of the Besluit.
         {
             // Wanneer een Besluit bij een zaak hoort (Besluit.zaak is gezet), dan MOET Besluit.besluittype voorkomen in de Besluit.zaak.zaaktype.besluittypen. (brc-007)
             var zaaktype = await TryGetZaakTypeByUrlAsync(result.Response.Zaaktype, errors);
+
             if (zaaktype != null && !zaaktype.BesluitTypen.Any(t => t == besluittype))
             {
                 string error = "De referentie hoort niet bij het zaaktype van de zaak.";
