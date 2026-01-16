@@ -48,12 +48,23 @@ class CreateCatalogusCommandHandler
 
         var catalogus = request.Catalogus;
 
+        if (request.Catalogus.Rsin != _rsin)
+        {
+            var error = new ValidationError(
+                "nonFieldErrors",
+                ErrorCode.Invalid,
+                $"The Rsin from client_id '{_rsin}' differs from the Rsin in request '{request.Catalogus.Rsin}'."
+            );
+
+            return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
+        }
+
         if (await _context.Catalogussen.AnyAsync(c => c.Owner == _rsin && c.Domein == catalogus.Domein, cancellationToken))
         {
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Unique,
-                $"Catalogus does already exist with the same (client_id) Rsin '{_rsin}' and Domein."
+                $"Catalogus does already exist with the same Rsin (client_id) '{_rsin}' and Domein '{request.Catalogus.Domein}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
