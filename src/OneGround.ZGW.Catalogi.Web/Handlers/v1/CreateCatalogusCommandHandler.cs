@@ -64,7 +64,7 @@ class CreateCatalogusCommandHandler
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Unique,
-                $"Catalogus does already exist with the same Rsin (client_id) '{_rsin}' and Domein '{request.Catalogus.Domein}'."
+                $"Catalogus does already exist with the same Rsin '{_rsin}' and Domein '{request.Catalogus.Domein}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
