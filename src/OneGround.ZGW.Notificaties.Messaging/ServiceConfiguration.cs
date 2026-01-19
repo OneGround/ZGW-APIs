@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using Hangfire;
 using Hangfire.Console;
@@ -208,11 +209,11 @@ public class ServiceConfiguration
     {
         var result = addRetryOnHttpStatusCodes
             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select<HttpStatusCode?>(codeString =>
+            .Select(codeString =>
             {
                 if (Enum.TryParse<HttpStatusCode>(codeString, out var statusCode))
                 {
-                    return statusCode;
+                    return (HttpStatusCode?)statusCode;
                 }
                 return null;
             })
