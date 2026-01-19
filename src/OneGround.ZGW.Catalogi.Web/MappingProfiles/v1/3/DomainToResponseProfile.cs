@@ -334,6 +334,18 @@ public class DomainToResponseProfile : Profile
                     opt.MapFrom(src => src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType.Omschrijving));
                 }
             )
+            .ForMember(
+                dest => dest.VastgelegdIn,
+                opt =>
+                {
+                    opt.PreCondition(src => src.BesluitTypeInformatieObjectTypen != null);
+                    opt.MapFrom(src =>
+                        src.BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null)
+                            .Select(b => b.InformatieObjectType.Omschrijving)
+                            .Distinct()
+                    );
+                }
+            )
             .ForMember(dest => dest.Catalogus, opt => opt.MapFrom<MemberUrlResolver, Catalogus>(src => src.Catalogus))
             .ForMember(dest => dest.ReactieTermijn, opt => opt.MapFrom(src => ProfileHelper.Fix0Period(src.ReactieTermijn)))
             .ForMember(dest => dest.PublicatieTermijn, opt => opt.MapFrom(src => ProfileHelper.Fix0Period(src.PublicatieTermijn)));
