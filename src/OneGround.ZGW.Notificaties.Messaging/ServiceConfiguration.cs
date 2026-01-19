@@ -208,16 +208,16 @@ public class ServiceConfiguration
     {
         var result = addRetryOnHttpStatusCodes
             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(codeString =>
+            .Select<HttpStatusCode?>(codeString =>
             {
                 if (Enum.TryParse<HttpStatusCode>(codeString, out var statusCode))
                 {
                     return statusCode;
                 }
-                return default;
+                return null;
             })
-            .Where(code => code != default)
-            .Select(code => code);
+            .Where(code => code.HasValue)
+            .Select(code => code!.Value);
 
         return result;
     }
