@@ -83,7 +83,7 @@ public class ServiceConfiguration
                             Delay = options.Retry.Delay,
                             ShouldHandle = arg =>
                             {
-                                if (arg.Outcome.Result == null) // This flow is when service did not repond at all (gives no HTTP statuscode)
+                                if (arg.Outcome.Result == null) // This flow is when service did not respond at all (gives no HTTP statuscode)
                                 {
                                     // Always retry on this flow
                                     return ValueTask.FromResult(true);
