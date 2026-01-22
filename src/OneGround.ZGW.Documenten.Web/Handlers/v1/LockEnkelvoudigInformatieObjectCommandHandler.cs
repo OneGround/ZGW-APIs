@@ -61,6 +61,17 @@ class LockEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<string>(null, CommandStatus.NotFound, error);
         }
 
+        // FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
+        if (enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie == null)
+        {
+            // Not very elegant but it's a temporary work around until we figure out the problem.
+            var latestVersion = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderByDescending(e => e.Versie).First();
+            enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
+
+            _logger.LogWarning("LatestEnkelvoudigInformatieObjectVersie is NULL -> restored");
+        }
+        // ----
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObject);

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -26,22 +27,27 @@ public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerk
 
     public async Task<Dictionary<string, string>> GetKenmerkenAsync(EnkelvoudigInformatieObject informatieobject, CancellationToken cancellationToken)
     {
+        // Work-around when LatestEnkelvoudigInformatieObjectVersie is null (See old issue: FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only)
+        var latestEnkelvoudigInformatieObjectVersie =
+            informatieobject.LatestEnkelvoudigInformatieObjectVersie
+            ?? informatieobject.EnkelvoudigInformatieObjectVersies.OrderByDescending(e => e.Versie).First();
+
         return new Dictionary<string, string>
         {
-            { "bronorganisatie", informatieobject.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie },
+            { "bronorganisatie", latestEnkelvoudigInformatieObjectVersie.Bronorganisatie },
             { "informatieobjecttype", informatieobject.InformatieObjectType },
             {
                 "vertrouwelijkheidaanduiding",
-                informatieobject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding.HasValue
-                    ? $"{informatieobject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding}"
+                latestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding.HasValue
+                    ? $"{latestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding}"
                     : null
             },
             // Note: New fields that can be filtered on
             { "informatieobjecttype_omschrijving", await GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(informatieobject) },
             { "catalogus", GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId) },
             { "domein", await GetDomeinFromInformatieObjectAsync(informatieobject) },
-            { "status", informatieobject.LatestEnkelvoudigInformatieObjectVersie.Status.ToString() },
-            { "inhoud_is_vervallen", informatieobject.LatestEnkelvoudigInformatieObjectVersie.InhoudIsVervallen.ToString() },
+            { "status", latestEnkelvoudigInformatieObjectVersie.Status.ToString() },
+            { "inhoud_is_vervallen", latestEnkelvoudigInformatieObjectVersie.InhoudIsVervallen.ToString() },
         };
     }
 
