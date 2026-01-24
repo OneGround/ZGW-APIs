@@ -17,15 +17,15 @@ namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
 class GetEnkelvoudigInformatieObjectQueryHandler
     : DocumentenBaseHandler<GetEnkelvoudigInformatieObjectQueryHandler>,
-        IRequestHandler<GetEnkelvoudigInformatieObjectQuery, QueryResult<EnkelvoudigInformatieObject>>
+        IRequestHandler<GetEnkelvoudigInformatieObjectQuery, QueryResult<EnkelvoudigInformatieObject2>>
 {
-    private readonly DrcDbContext _context;
+    private readonly DrcDbContext2 _context;
 
     public GetEnkelvoudigInformatieObjectQueryHandler(
         ILogger<GetEnkelvoudigInformatieObjectQueryHandler> logger,
         IConfiguration configuration,
         IEntityUriService uriService,
-        DrcDbContext context,
+        DrcDbContext2 context,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentKenmerkenResolver documentKenmerkenResolver
     )
@@ -34,7 +34,7 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         _context = context;
     }
 
-    public async Task<QueryResult<EnkelvoudigInformatieObject>> Handle(
+    public async Task<QueryResult<EnkelvoudigInformatieObject2>> Handle(
         GetEnkelvoudigInformatieObjectQuery request,
         CancellationToken cancellationToken
     )
@@ -45,87 +45,88 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         // By default, this returns the latest version of the (SINGLE) INFORMATION OBJECT. Specific versions can
         // be requested by means of query string parameters.
 
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObjectLock2>();
 
-        var enkelvoudiginformatieobject = await _context
-            .EnkelvoudigInformatieObjecten.AsNoTracking()
+        var enkelvoudiginformatieobjectLock = await _context
+            .EnkelvoudigInformatieObjectLocks.AsNoTracking()
             .Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
+            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectId == request.Id))
+            .Include(e => e.EnkelvoudigInformatieObjecten)
             .ThenInclude(e => e.BestandsDelen)
             .Include(e => e.GebruiksRechten)
             .AsSplitQuery()
-            .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (enkelvoudiginformatieobject == null)
+        if (enkelvoudiginformatieobjectLock == null)
         {
-            return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
+            return new QueryResult<EnkelvoudigInformatieObject2>(null, QueryStatus.NotFound);
         }
 
-        EnkelvoudigInformatieObjectVersie requestedVersie;
+        EnkelvoudigInformatieObject2 requestedVersie;
 
         var filter = request.GetEnkelvoudigInformatieObjectFilter;
 
         if (!filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
             // No filter specified so get latest version of the EnkelvoudigInformatieObject
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
+            requestedVersie = enkelvoudiginformatieobjectLock
+                .EnkelvoudigInformatieObjecten.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
                 .OrderBy(e => e.Versie)
                 .LastOrDefault();
         }
         else if (filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
             // Filter 'versie' is specified so get that version
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
+            requestedVersie = enkelvoudiginformatieobjectLock
+                .EnkelvoudigInformatieObjecten.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
                 .SingleOrDefault(e => e.Versie == filter.Versie);
         }
         else if (!filter.Versie.HasValue && filter.RegistratieOp.HasValue)
         {
             // Filter 'registratieOp' is specified so get the nearest versie before this date-time
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
+            requestedVersie = enkelvoudiginformatieobjectLock
+                .EnkelvoudigInformatieObjecten.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
                 .OrderBy(e => e.BeginRegistratie)
                 .LastOrDefault(e => e.BeginRegistratie <= filter.RegistratieOp);
         }
         else
         {
             // Filter 'versie' and 'registratieOp' are specified
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
+            requestedVersie = enkelvoudiginformatieobjectLock
+                .EnkelvoudigInformatieObjecten.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
                 .Where(e => e.BeginRegistratie <= filter.RegistratieOp && e.Versie == filter.Versie)
                 .SingleOrDefault();
         }
 
         if (requestedVersie == null)
         {
-            return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
+            return new QueryResult<EnkelvoudigInformatieObject2>(null, QueryStatus.NotFound);
         }
 
         if (!AuthorizationContextAccessor.AuthorizationContext.IsAuthorized(requestedVersie))
         {
-            return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.Forbidden);
+            return new QueryResult<EnkelvoudigInformatieObject2>(null, QueryStatus.Forbidden);
         }
 
         // Get the requested version only
-        enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Clear();
-        enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Add(requestedVersie);
+        //enkelvoudiginformatieobjectLock.EnkelvoudigInformatieObjectVersies.Clear();
+        //enkelvoudiginformatieobjectLock.EnkelvoudigInformatieObjectVersies.Add(requestedVersie);
 
         if (request.IgnoreLock)
         {
-            enkelvoudiginformatieobject.Lock = null;
+            enkelvoudiginformatieobjectLock.Lock = null;
         }
 
-        return new QueryResult<EnkelvoudigInformatieObject>(enkelvoudiginformatieobject, QueryStatus.OK);
+        return new QueryResult<EnkelvoudigInformatieObject2>(requestedVersie, QueryStatus.OK);
     }
 
-    private static Func<EnkelvoudigInformatieObjectVersie, bool> GetNotCompletedDocumentFilter(bool ignoreNotCompletedDocuments)
+    private static Func<EnkelvoudigInformatieObject2, bool> GetNotCompletedDocumentFilter(bool ignoreNotCompletedDocuments)
     {
         return v => !ignoreNotCompletedDocuments || v.BestandsDelen.Count == 0;
     }
 }
 
-class GetEnkelvoudigInformatieObjectQuery : IRequest<QueryResult<EnkelvoudigInformatieObject>>
+class GetEnkelvoudigInformatieObjectQuery : IRequest<QueryResult<EnkelvoudigInformatieObject2>>
 {
     public Guid Id { get; internal set; }
     public GetEnkelvoudigInformatieObjectFilter GetEnkelvoudigInformatieObjectFilter { get; internal set; } =

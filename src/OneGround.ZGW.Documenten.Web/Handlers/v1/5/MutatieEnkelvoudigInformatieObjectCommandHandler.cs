@@ -33,6 +33,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
     protected readonly INummerGenerator _nummerGenerator;
     protected readonly IAuditTrailFactory _auditTrailFactory;
     protected readonly DrcDbContext _context;
+    protected readonly DrcDbContext2 _context2;
     protected readonly ICatalogiServiceAgent _catalogiServiceAgent;
     protected readonly Lazy<IDocumentService> _lazyDocumentService;
     protected readonly ILockGenerator _lockGenerator;
@@ -46,6 +47,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentServicesResolver documentServicesResolver,
         DrcDbContext context,
+        DrcDbContext2 context2,
         IEnkelvoudigInformatieObjectBusinessRuleService enkelvoudigInformatieObjectBusinessRuleService,
         INummerGenerator nummerGenerator,
         ICatalogiServiceAgent catalogiServiceAgent,
@@ -59,6 +61,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
+        _context2 = context2;
         _enkelvoudigInformatieObjectBusinessRuleService = enkelvoudigInformatieObjectBusinessRuleService;
         _nummerGenerator = nummerGenerator;
         _catalogiServiceAgent = catalogiServiceAgent;
@@ -85,6 +88,13 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
     }
 
+    protected bool IsEnkelvoudigInformatieObjectVersieUnique2(string organisatie, string identificatie, int versie)
+    {
+        return !_context2
+            .EnkelvoudigInformatieObjecten.AsNoTracking()
+            .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
+    }
+
     protected void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
     {
         if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
@@ -105,8 +115,28 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         }
     }
 
+    protected void ValidateFile(EnkelvoudigInformatieObject2 enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
+    {
+        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
+            return;
+
+        try
+        {
+            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
+        }
+        catch (OneGroundException)
+        {
+            var error = new ValidationError(
+                "bestandsnaam",
+                ErrorCode.Invalid,
+                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
+            );
+            errors.Add(error);
+        }
+    }
+
     protected async Task<(string inhoud, long bestandsomvang)> TryAddDocumentToDocumentStore(
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie,
+        EnkelvoudigInformatieObject2 enkelvoudigInformatieObjectVersie,
         List<ValidationError> errors,
         CancellationToken cancellationToken
     )
@@ -122,11 +152,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             : enkelvoudigInformatieObjectVersie.Formaat;
 
         // We have enabled (some) metadata fields for the underlying document provider
-        var metadata = new DocumentMeta
-        {
-            Rsin = enkelvoudigInformatieObjectVersie.InformatieObject.Owner,
-            Version = enkelvoudigInformatieObjectVersie.Versie,
-        };
+        var metadata = new DocumentMeta { Rsin = enkelvoudigInformatieObjectVersie.Owner, Version = enkelvoudigInformatieObjectVersie.Versie };
 
         try
         {
@@ -147,7 +173,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         }
     }
 
-    protected void AddBestandsDelenToEnkelvoudigeInformatieObjectVersie(EnkelvoudigInformatieObjectVersie versie)
+    protected void AddBestandsDelenToEnkelvoudigeInformatieObjectVersie(EnkelvoudigInformatieObject2 versie)
     {
         _logger.LogDebug("Adding bestandsdelen in database....");
 
@@ -166,8 +192,8 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
                 Omvang = (int)(restBestandsomvang < maxPerBestandsdeel ? restBestandsomvang : maxPerBestandsdeel),
                 Volgnummer = volgnummer,
                 Voltooid = false,
-                EnkelvoudigInformatieObjectVersieId = versie.Id,
-                EnkelvoudigInformatieObjectVersie = versie,
+                EnkelvoudigInformatieObjectId = versie.Id,
+                EnkelvoudigInformatieObject = versie,
             };
 
             _context.BestandsDelen.Add(bestandsdeel);
@@ -175,10 +201,10 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             restBestandsomvang -= maxPerBestandsdeel;
         }
 
-        if (!versie.InformatieObject.Locked)
+        if (!versie.EnkelvoudigInformatieObjectLock.Locked)
         {
-            versie.InformatieObject.Locked = true;
-            versie.InformatieObject.Lock = _lockGenerator.Generate();
+            versie.EnkelvoudigInformatieObjectLock.Locked = true;
+            versie.EnkelvoudigInformatieObjectLock.Lock = _lockGenerator.Generate();
         }
 
         _logger.LogDebug("{numBestanden} bestandsdelen added in database", numBestanden);
@@ -191,6 +217,27 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
             // This value is guaranteed to be read from the cache (when validation is enabled which is normally the case of course!)
             var informatieObjectType = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
                 enkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
+            );
+
+            if (
+                Enum.TryParse<VertrouwelijkheidAanduiding>(
+                    informatieObjectType.Response.VertrouwelijkheidAanduiding,
+                    out var vertrouwelijkheidaanduiding
+                )
+            )
+            {
+                enkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding = vertrouwelijkheidaanduiding;
+            }
+        }
+    }
+
+    protected async Task SetVertrouwelijkheidAanduidingAsync(EnkelvoudigInformatieObject2 enkelvoudigInformatieObjectVersie)
+    {
+        if (!enkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding.HasValue)
+        {
+            // This value is guaranteed to be read from the cache (when validation is enabled which is normally the case of course!)
+            var informatieObjectType = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
+                enkelvoudigInformatieObjectVersie.InformatieObjectType
             );
 
             if (

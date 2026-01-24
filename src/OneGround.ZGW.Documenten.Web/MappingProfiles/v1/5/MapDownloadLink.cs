@@ -23,3 +23,21 @@ public class MapDownloadLink : IMappingAction<EnkelvoudigInformatieObjectVersie,
             dest.Inhoud = _uriService.GetUri(src);
     }
 }
+
+public class MapDownloadLink2 : IMappingAction<EnkelvoudigInformatieObject2, EnkelvoudigInformatieObjectResponseDto>
+{
+    private readonly IEntityUriService _uriService;
+
+    public MapDownloadLink2(IEntityUriService uriService)
+    {
+        _uriService = uriService;
+    }
+
+    public void Process(EnkelvoudigInformatieObject2 src, EnkelvoudigInformatieObjectResponseDto dest, ResolutionContext context)
+    {
+        if ((string.IsNullOrEmpty(src.Inhoud) && src.Bestandsomvang == 0) || src.BestandsDelen.Count != 0) // Note: New in v1.1
+            dest.Inhoud = null;
+        else
+            dest.Inhoud = _uriService.GetUri(src);
+    }
+}

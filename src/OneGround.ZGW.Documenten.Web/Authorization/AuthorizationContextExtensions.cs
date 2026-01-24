@@ -26,6 +26,11 @@ public static class AuthorizationContextExtensions
         );
     }
 
+    public static bool IsAuthorized(this AuthorizationContext context, EnkelvoudigInformatieObject2 informatieObject)
+    {
+        return context.IsAuthorized(informatieObject.InformatieObjectType, informatieObject.Vertrouwelijkheidaanduiding, context.RequestedScopes);
+    }
+
     public static bool IsAuthorized(this AuthorizationContext context, EnkelvoudigInformatieObject informatieObject, params string[] scopes)
     {
         return context.IsAuthorized(
@@ -33,6 +38,11 @@ public static class AuthorizationContextExtensions
             informatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding,
             scopes
         );
+    }
+
+    public static bool IsAuthorized(this AuthorizationContext context, EnkelvoudigInformatieObject2 informatieObject, params string[] scopes)
+    {
+        return context.IsAuthorized(informatieObject.InformatieObjectType, informatieObject.Vertrouwelijkheidaanduiding, scopes);
     }
 
     public static bool IsForcedUnlockAuthorized(this AuthorizationContext context)

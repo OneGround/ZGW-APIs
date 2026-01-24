@@ -17,7 +17,7 @@ public class DrcDbContext2 : BaseDbContext, IDbContextWithAuditTrail, IDataMigra
     public DbSet<EnkelvoudigInformatieObject2> EnkelvoudigInformatieObjecten { get; set; }
     public DbSet<EnkelvoudigInformatieObjectLock2> EnkelvoudigInformatieObjectLocks { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
-    public DbSet<BestandsDeel2> BestandsDelen { get; set; }
+    public DbSet<BestandsDeel> BestandsDelen { get; set; }
     public DbSet<ObjectInformatieObject> ObjectInformatieObjecten { get; set; }
     public DbSet<GebruiksRecht> GebruiksRechten { get; set; }
     public DbSet<Verzending> Verzendingen { get; set; }
@@ -138,6 +138,7 @@ public class DrcDbContext2 : BaseDbContext, IDbContextWithAuditTrail, IDataMigra
             .HasOne(e => e.EnkelvoudigInformatieObjectLock)
             .WithMany(e => e.EnkelvoudigInformatieObjecten)
             .HasForeignKey(e => e.EnkelvoudigInformatieObjectLockId)
+            .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
         // Define 1:1 relation between LatestEnkelvoudigInformatieObjectVersie and EnkelvoudigInformatieObject

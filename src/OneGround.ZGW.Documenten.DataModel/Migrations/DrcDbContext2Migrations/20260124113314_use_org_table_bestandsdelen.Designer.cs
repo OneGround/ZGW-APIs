@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
 {
     [DbContext(typeof(DrcDbContext2))]
-    partial class DrcDbContext2ModelSnapshot : ModelSnapshot
+    [Migration("20260124113314_use_org_table_bestandsdelen")]
+    partial class use_org_table_bestandsdelen
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -297,10 +300,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("bronorganisatie");
 
-                    b.Property<Guid>("CatalogusId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("catalogus_id");
-
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -485,15 +484,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("createdby");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("creationtime");
-
                     b.Property<string>("Lock")
                         .HasColumnType("text")
                         .HasColumnName("lock");
@@ -501,21 +491,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                     b.Property<bool>("Locked")
                         .HasColumnType("boolean")
                         .HasColumnName("locked");
-
-                    b.Property<DateTime?>("ModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modificationtime");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("modifiedby");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)")
-                        .HasColumnName("owner");
 
                     b.HasKey("Id");
 
@@ -542,9 +517,9 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("einddatum");
 
-                    b.Property<Guid>("EnkelvoudigInformatieObjectLockId")
+                    b.Property<Guid>("InformatieObjectId2")
                         .HasColumnType("uuid")
-                        .HasColumnName("enkelvoudiginformatieobjectlock_id");
+                        .HasColumnName("informatieobject_id2");
 
                     b.Property<DateTime?>("ModificationTime")
                         .HasColumnType("timestamp with time zone")
@@ -564,11 +539,18 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("startdatum");
 
+                    b.Property<Guid?>("informatieobject_id2")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("EnkelvoudigInformatieObjectLockId");
+                    b.HasIndex("informatieobject_id2");
 
-                    b.ToTable("gebruiksrechten");
+                    b.ToTable("gebruiksrechten", t =>
+                        {
+                            t.Property("informatieobject_id2")
+                                .HasColumnName("informatieobject_id21");
+                        });
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.ObjectInformatieObject", b =>
@@ -587,12 +569,13 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationtime");
 
-                    b.Property<Guid>("EnkelvoudigInformatieObjectLockId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("enkelvoudiginformatieobjectlock_id");
-
                     b.Property<Guid>("InformatieObjectId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("informatieobject_id");
+
+                    b.Property<Guid>("InformatieObjectId2")
+                        .HasColumnType("uuid")
+                        .HasColumnName("informatieobject_id2");
 
                     b.Property<DateTime?>("ModificationTime")
                         .HasColumnType("timestamp with time zone")
@@ -620,18 +603,25 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("character varying(9)")
                         .HasColumnName("owner");
 
-                    b.HasKey("Id");
+                    b.Property<Guid?>("informatieobject_id2")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("EnkelvoudigInformatieObjectLockId");
+                    b.HasKey("Id");
 
                     b.HasIndex("InformatieObjectId");
 
                     b.HasIndex("Object");
 
+                    b.HasIndex("informatieobject_id2");
+
                     b.HasIndex("Object", "InformatieObjectId", "ObjectType")
                         .IsUnique();
 
-                    b.ToTable("objectinformatieobjecten");
+                    b.ToTable("objectinformatieobjecten", t =>
+                        {
+                            t.Property("informatieobject_id2")
+                                .HasColumnName("informatieobject_id21");
+                        });
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.Verzending", b =>
@@ -689,14 +679,14 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("emailadres");
 
-                    b.Property<Guid>("EnkelvoudigInformatieObjectLockId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("enkelvoudiginformatieobjectlock_id");
-
                     b.Property<string>("Faxnummer")
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)")
                         .HasColumnName("faxnummer");
+
+                    b.Property<Guid>("InformatieObjectId2")
+                        .HasColumnType("uuid")
+                        .HasColumnName("informatieobject_id2");
 
                     b.Property<bool>("MijnOverheid")
                         .HasColumnType("boolean")
@@ -729,15 +719,22 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("date")
                         .HasColumnName("verzenddatum");
 
+                    b.Property<Guid?>("informatieobject_id2")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AardRelatie");
 
                     b.HasIndex("Betrokkene");
 
-                    b.HasIndex("EnkelvoudigInformatieObjectLockId");
+                    b.HasIndex("informatieobject_id2");
 
-                    b.ToTable("verzendingen");
+                    b.ToTable("verzendingen", t =>
+                        {
+                            t.Property("informatieobject_id2")
+                                .HasColumnName("informatieobject_id21");
+                        });
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.BestandsDeel", b =>
@@ -756,7 +753,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                     b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", "EnkelvoudigInformatieObjectLock")
                         .WithMany("EnkelvoudigInformatieObjecten")
                         .HasForeignKey("EnkelvoudigInformatieObjectLockId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("EnkelvoudigInformatieObjectLock");
@@ -764,35 +761,29 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.GebruiksRecht", b =>
                 {
-                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", "EnkelvoudigInformatieObjectLock")
-                        .WithMany("GebruiksRechten")
-                        .HasForeignKey("EnkelvoudigInformatieObjectLockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject2", "InformatieObject2")
+                        .WithMany()
+                        .HasForeignKey("informatieobject_id2");
 
-                    b.Navigation("EnkelvoudigInformatieObjectLock");
+                    b.Navigation("InformatieObject2");
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.ObjectInformatieObject", b =>
                 {
-                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", "EnkelvoudigInformatieObjectLock")
-                        .WithMany("ObjectInformatieObjecten")
-                        .HasForeignKey("EnkelvoudigInformatieObjectLockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject2", "InformatieObject2")
+                        .WithMany()
+                        .HasForeignKey("informatieobject_id2");
 
-                    b.Navigation("EnkelvoudigInformatieObjectLock");
+                    b.Navigation("InformatieObject2");
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.Verzending", b =>
                 {
-                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", "EnkelvoudigInformatieObjectLock")
-                        .WithMany("Verzendingen")
-                        .HasForeignKey("EnkelvoudigInformatieObjectLockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject2", "InformatieObject2")
+                        .WithMany()
+                        .HasForeignKey("informatieobject_id2");
 
-                    b.Navigation("EnkelvoudigInformatieObjectLock");
+                    b.Navigation("InformatieObject2");
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject2", b =>
@@ -803,12 +794,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", b =>
                 {
                     b.Navigation("EnkelvoudigInformatieObjecten");
-
-                    b.Navigation("GebruiksRechten");
-
-                    b.Navigation("ObjectInformatieObjecten");
-
-                    b.Navigation("Verzendingen");
                 });
 #pragma warning restore 612, 618
         }

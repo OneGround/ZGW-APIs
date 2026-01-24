@@ -38,36 +38,48 @@ public class RequestToDomainProfile : Profile
                 }
             ); // Note: Don't map to an empty list!! (EF Where Query on NULL)
 
+        /*
         // Create new initial EnkelvoudigInformatieObject: versie 1
-        CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObject>()
+        CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObject2>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
             .ForMember(dest => dest.CreationTime, opt => opt.Ignore())
             .ForMember(dest => dest.CreationTime, opt => opt.Ignore())
-            .ForMember(dest => dest.ModificationTime, opt => opt.Ignore())
+            .ForMember(dest => dest.ModificationTime, opt => opt.Ignore());
+            //.ForMember(dest => dest.Locked, opt => opt.Ignore())
+            //.ForMember(dest => dest.Lock, opt => opt.Ignore())
+            //.ForMember(dest => dest.ObjectInformatieObjecten, opt => opt.Ignore())
+            //.ForMember(dest => dest.GebruiksRechten, opt => opt.Ignore())
+            //.ForMember(dest => dest.EnkelvoudigInformatieObjectVersies, opt => opt.Ignore())
+            //.ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
+            //.ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+        */
+
+        // Create new initial EnkelvoudigInformatieObjectLock: versie 1
+        CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectLock2>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.Locked, opt => opt.Ignore())
             .ForMember(dest => dest.Lock, opt => opt.Ignore())
             .ForMember(dest => dest.ObjectInformatieObjecten, opt => opt.Ignore())
             .ForMember(dest => dest.GebruiksRechten, opt => opt.Ignore())
-            .ForMember(dest => dest.EnkelvoudigInformatieObjectVersies, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+            .ForMember(dest => dest.Verzendingen, opt => opt.Ignore())
+            .ForMember(dest => dest.EnkelvoudigInformatieObjecten, opt => opt.Ignore());
 
-        CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
+        CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObject2>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.VerzendDatum)))
-            .ForMember(
-                dest => dest.InformatieObject,
-                opt =>
-                    opt.MapFrom(src => new EnkelvoudigInformatieObject
-                    {
-                        InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
-                        IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
-                    })
-            )
+            //.ForMember(
+            //    dest => dest.InformatieObject,
+            //    opt =>
+            //        opt.MapFrom(src => new EnkelvoudigInformatieObject
+            //        {
+            //            InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
+            //            IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
+            //        })
+            //)
             .ForMember(dest => dest.Ondertekening_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum)))
             .ForMember(dest => dest.Ondertekening_Soort, opt => opt.MapFrom(src => SoortFromString(src.Ondertekening.Soort)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
@@ -80,6 +92,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => StatusFromString(src.Status)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
+            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.InformatieObjectType))
+            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.IndicatieGebruiksrecht))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
             .ForMember(
@@ -89,8 +103,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.MultiPartDocumentId, opt => opt.Ignore())
+            .ForMember(dest => dest.EnkelvoudigInformatieObjectLockId, opt => opt.Ignore());
 
+        // ZZZ TODO:...
         // Create new version of EnkelvoudigInformatieObject: versie 2, versie 3, etc
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObject>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -105,21 +121,21 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
 
-        CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
+        CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObject2>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.VerzendDatum)))
-            .ForMember(
-                dest => dest.InformatieObject,
-                opt =>
-                    opt.MapFrom(src => new EnkelvoudigInformatieObject
-                    {
-                        InformatieObjectType = src.InformatieObjectType,
-                        Lock = src.Lock,
-                        IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
-                    })
-            )
+            //.ForMember(
+            //    dest => dest.InformatieObject,
+            //    opt =>
+            //        opt.MapFrom(src => new EnkelvoudigInformatieObject
+            //        {
+            //            InformatieObjectType = src.InformatieObjectType,
+            //            Lock = src.Lock,
+            //            IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
+            //        })
+            //)
             .ForMember(dest => dest.Ondertekening_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum)))
             .ForMember(dest => dest.Ondertekening_Soort, opt => opt.MapFrom(src => SoortFromString(src.Ondertekening.Soort)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
@@ -132,6 +148,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => StatusFromString(src.Status)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
+            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.InformatieObjectType))
+            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.IndicatieGebruiksrecht))
             .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
             .ForMember(dest => dest.Versie, opt => opt.Ignore())
             .ForMember(
@@ -141,7 +159,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.MultiPartDocumentId, opt => opt.Ignore())
+            .ForMember(dest => dest.EnkelvoudigInformatieObjectLockId, opt => opt.Ignore());
 
         CreateMap<GetAllGebruiksRechtenQueryParameters, Models.v1.GetAllGebruiksRechtenFilter>()
             .ForMember(dest => dest.Startdatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Startdatum__gt)))

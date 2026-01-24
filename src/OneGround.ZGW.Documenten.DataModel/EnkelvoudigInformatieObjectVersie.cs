@@ -144,11 +144,29 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
 
 // ZZZ
 [Table("enkelvoudiginformatieobject_locks_2")]
-public class EnkelvoudigInformatieObjectLock2
+public class EnkelvoudigInformatieObjectLock2 : OwnedEntity, IAuditableEntity, IUrlEntity
 {
+    [NotMapped]
+    public string Url => "?";
+
     [Key]
     [Column("id")]
     public Guid Id { get; set; }
+
+    [Required]
+    [Column("creationtime")]
+    public DateTime CreationTime { get; set; }
+
+    [Column("modificationtime")]
+    public DateTime? ModificationTime { get; set; }
+
+    [MaxLength(50)]
+    [Column("createdby")]
+    public string CreatedBy { get; set; }
+
+    [MaxLength(50)]
+    [Column("modifiedby")]
+    public string ModifiedBy { get; set; }
 
     [Column("locked")]
     public bool Locked { get; set; }
@@ -157,6 +175,13 @@ public class EnkelvoudigInformatieObjectLock2
     public string Lock { get; set; }
 
     public List<EnkelvoudigInformatieObject2> EnkelvoudigInformatieObjecten { get; set; } = [];
+
+    // new
+    public List<ObjectInformatieObject> ObjectInformatieObjecten { get; set; } = [];
+
+    public List<GebruiksRecht> GebruiksRechten { get; set; } = [];
+
+    public List<Verzending> Verzendingen { get; set; } = [];
 }
 
 // ZZZ
@@ -164,7 +189,8 @@ public class EnkelvoudigInformatieObjectLock2
 public class EnkelvoudigInformatieObject2 : OwnedEntity, IAuditableEntity, IUrlEntity
 {
     [NotMapped]
-    public string Url => $"{Url}/download?versie={Versie}";
+    //public string Url => $"{Url}/download?versie={Versie}";
+    public string Url => $"/enkelvoudiginformatieobjecten/{EnkelvoudigInformatieObjectId}";
 
     [Key]
     [Column("id")]
@@ -293,6 +319,9 @@ public class EnkelvoudigInformatieObject2 : OwnedEntity, IAuditableEntity, IUrlE
     [Column("indicatiegebruiksrecht")]
     public bool? IndicatieGebruiksrecht { get; set; }
 
+    [Column("catalogus_id")]
+    public Guid CatalogusId { get; set; }
+
     public EnkelvoudigInformatieObjectLock2 EnkelvoudigInformatieObjectLock { get; set; }
 
     //public EnkelvoudigInformatieObject InformatieObject { get; set; }
@@ -301,7 +330,7 @@ public class EnkelvoudigInformatieObject2 : OwnedEntity, IAuditableEntity, IUrlE
 
     // ----
 
-    public List<BestandsDeel2> BestandsDelen { get; set; } = [];
+    public List<BestandsDeel> BestandsDelen { get; set; } = [];
 
     [MaxLength(250)]
     [Column("multipartdocument_id")]

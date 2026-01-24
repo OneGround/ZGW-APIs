@@ -12,6 +12,7 @@ namespace OneGround.ZGW.Documenten.Web.Handlers;
 public interface IDocumentKenmerkenResolver
 {
     Task<Dictionary<string, string>> GetKenmerkenAsync(EnkelvoudigInformatieObject informatieobject, CancellationToken cancellationToken);
+    Task<Dictionary<string, string>> GetKenmerkenAsync(EnkelvoudigInformatieObject2 informatieobject, CancellationToken cancellationToken);
 }
 
 public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerkenResolver
@@ -51,6 +52,28 @@ public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerk
         };
     }
 
+    public async Task<Dictionary<string, string>> GetKenmerkenAsync(
+        EnkelvoudigInformatieObject2 informatieobject,
+        CancellationToken cancellationToken
+    )
+    {
+        return new Dictionary<string, string>
+        {
+            { "bronorganisatie", informatieobject.Bronorganisatie },
+            { "informatieobjecttype", informatieobject.InformatieObjectType },
+            {
+                "vertrouwelijkheidaanduiding",
+                informatieobject.Vertrouwelijkheidaanduiding.HasValue ? $"{informatieobject.Vertrouwelijkheidaanduiding}" : null
+            },
+            // Note: New fields that can be filtered on
+            { "informatieobjecttype_omschrijving", await GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(informatieobject) },
+            { "catalogus", GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId) },
+            { "domein", await GetDomeinFromInformatieObjectAsync(informatieobject) },
+            { "status", informatieobject.Status.ToString() },
+            { "inhoud_is_vervallen", informatieobject.InhoudIsVervallen.ToString() },
+        };
+    }
+
     private async Task<string> GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(EnkelvoudigInformatieObject informatieobject)
     {
         var result = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieobject.InformatieObjectType);
@@ -66,6 +89,33 @@ public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerk
     }
 
     private async Task<string> GetDomeinFromInformatieObjectAsync(EnkelvoudigInformatieObject informatieobject)
+    {
+        var catalogusUri = GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId);
+
+        var result = await _catalogiServiceAgent.GetCatalogusAsync(catalogusUri);
+        if (!result.Success)
+        {
+            _logger.LogWarning("Could not retrieve catalogus '{catalogusUri}'.", catalogusUri);
+            return "(Domein not determined)";
+        }
+        return result.Response.Domein;
+    }
+
+    private async Task<string> GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(EnkelvoudigInformatieObject2 informatieobject)
+    {
+        var result = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieobject.InformatieObjectType);
+        if (!result.Success)
+        {
+            _logger.LogWarning(
+                "Could not retrieve informatieobjecttype-omschrijving '{InformatieObjectType}'.",
+                informatieobject.InformatieObjectType
+            );
+            return "(Informatieobjecttype-omschrijving not determined)";
+        }
+        return result.Response.Omschrijving;
+    }
+
+    private async Task<string> GetDomeinFromInformatieObjectAsync(EnkelvoudigInformatieObject2 informatieobject)
     {
         var catalogusUri = GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId);
 

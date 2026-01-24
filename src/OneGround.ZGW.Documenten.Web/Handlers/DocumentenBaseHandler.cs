@@ -86,6 +86,25 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
         );
     }
 
+    public async Task SendNotificationAsync(Actie actie, EnkelvoudigInformatieObject2 informatieObject, CancellationToken cancellationToken)
+    {
+        var hoofdObject = _uriService.GetUri(informatieObject);
+
+        await SendNotificationAsync(
+            new Notification
+            {
+                HoodfObject = hoofdObject,
+                Kanaal = Kanaal.documenten.ToString(),
+                Resource = Resource.enkelvoudiginformatieobject.ToString(),
+                ResourceUrl = hoofdObject,
+                Actie = actie.ToString(),
+                Kenmerken = await _documentKenmerkenResolver.GetKenmerkenAsync(informatieObject, cancellationToken),
+                Rsin = informatieObject.Owner,
+            },
+            cancellationToken
+        );
+    }
+
     public async Task SendNotificationAsync<TInformatieObjectEntity>(
         Actie actie,
         TInformatieObjectEntity informatieObjectEntity,

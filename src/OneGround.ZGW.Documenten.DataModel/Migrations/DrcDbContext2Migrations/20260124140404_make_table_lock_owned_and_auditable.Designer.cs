@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
 {
     [DbContext(typeof(DrcDbContext2))]
-    partial class DrcDbContext2ModelSnapshot : ModelSnapshot
+    [Migration("20260124140404_make_table_lock_owned_and_auditable")]
+    partial class make_table_lock_owned_and_auditable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

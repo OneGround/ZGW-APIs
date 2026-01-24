@@ -25,6 +25,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         IRequestHandler<LockEnkelvoudigInformatieObjectCommand, CommandResult<string>>
 {
     private readonly DrcDbContext _context;
+    private readonly DrcDbContext2 _context2;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly IDocumentService _documentService;
 
@@ -32,6 +33,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         ILogger<LockEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
         DrcDbContext context,
+        DrcDbContext2 context2,
         IEntityUriService uriService,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
@@ -42,6 +44,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
+        _context2 = context2;
         _auditTrailFactory = auditTrailFactory;
 
         _documentService = documentServicesResolver.GetDefault();
@@ -54,49 +57,39 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         else
             _logger.LogDebug("Unlocking EnkelvoudigInformatieObject....");
 
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObjectLock2>();
 
-        var enkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+        var enkelvoudigInformatieObjectLock = await _context2
+            .EnkelvoudigInformatieObjectLocks.Where(rsinFilter)
+            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectId == request.Id))
+            .Include(e => e.EnkelvoudigInformatieObjecten)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (enkelvoudigInformatieObject == null)
+        if (enkelvoudigInformatieObjectLock == null)
         {
             var error = new ValidationError("id", ErrorCode.NotFound, $"EnkelvoudigInformatieObject {request.Id} is onbekend.");
 
             return new CommandResult<string>(null, CommandStatus.NotFound, error);
         }
 
-        // FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-        if (enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie == null)
-        {
-            // Not very elegant but it's a temporary work around until we figure out the problem.
-            var latestVersion = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderByDescending(e => e.Versie).First();
-            enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
-
-            _logger.LogWarning("LatestEnkelvoudigInformatieObjectVersie is NULL -> restored");
-        }
-        // ----
-
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
-            audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObject);
+            //audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObjectLock);
 
             if (request.Set)
             {
-                if (enkelvoudigInformatieObject.Locked)
+                if (enkelvoudigInformatieObjectLock.Locked)
                 {
                     var error = new ValidationError("nonFieldErrors", ErrorCode.ExistingLock, "Het document is al gelockt.");
                     return new CommandResult<string>(null, CommandStatus.ValidationError, error);
                 }
 
-                enkelvoudigInformatieObject.Locked = true;
-                enkelvoudigInformatieObject.Lock = Guid.NewGuid().ToString().Replace("-", "");
+                enkelvoudigInformatieObjectLock.Locked = true;
+                enkelvoudigInformatieObjectLock.Lock = Guid.NewGuid().ToString().Replace("-", "");
             }
             else
             {
-                if (request.Lock != null && enkelvoudigInformatieObject.Lock != request.Lock)
+                if (request.Lock != null && enkelvoudigInformatieObjectLock.Lock != request.Lock)
                 {
                     var error = new ValidationError("nonFieldErrors", ErrorCode.IncorrectLockId, "Incorrect lock ID.");
                     return new CommandResult<string>(null, CommandStatus.ValidationError, error);
@@ -113,39 +106,39 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
                 // Handle incompleted multi-part documents here if any
 
-                bool multipleVersions = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.Count > 1;
+                bool multipleVersions = enkelvoudigInformatieObjectLock.EnkelvoudigInformatieObjecten.Count > 1;
 
-                var current = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
+                var current = enkelvoudigInformatieObjectLock.EnkelvoudigInformatieObjecten.OrderBy(e => e.Versie).Last();
                 if (current.Inhoud == null && current.Bestandsomvang > 0)
                 {
                     await AbortCurrentBestandsdelenUploadAsync(request, multipleVersions, current, cancellationToken);
                 }
 
-                enkelvoudigInformatieObject.Locked = false;
-                enkelvoudigInformatieObject.Lock = null;
+                enkelvoudigInformatieObjectLock.Locked = false;
+                enkelvoudigInformatieObjectLock.Lock = null;
             }
 
-            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObject);
+            //audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObjectLock);
 
-            await audittrail.PatchedAsync(enkelvoudigInformatieObject, enkelvoudigInformatieObject, cancellationToken);
+            await audittrail.PatchedAsync(enkelvoudigInformatieObjectLock, enkelvoudigInformatieObjectLock, cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context2.SaveChangesAsync(cancellationToken);
 
             if (request.Set)
                 _logger.LogDebug(
                     "EnkelvoudigInformatieObject successfully locked. Lock={enkelvoudigInformatieObjectLock}",
-                    enkelvoudigInformatieObject.Lock
+                    enkelvoudigInformatieObjectLock.Lock
                 );
             else
                 _logger.LogDebug("EnkelvoudigInformatieObject successfully unlocked.");
         }
-        return new CommandResult<string>(enkelvoudigInformatieObject.Lock, CommandStatus.OK);
+        return new CommandResult<string>(enkelvoudigInformatieObjectLock.Lock, CommandStatus.OK);
     }
 
     private async Task AbortCurrentBestandsdelenUploadAsync(
         LockEnkelvoudigInformatieObjectCommand request,
         bool multipleVersions,
-        EnkelvoudigInformatieObjectVersie current,
+        EnkelvoudigInformatieObject2 current,
         CancellationToken cancellationToken
     )
     {

@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Documenten.DataModel;
@@ -10,6 +10,12 @@ public interface IInformatieObjectAuthorizationTempTableService
     Task InsertInformatieObjectTypeAuthorizationsToTempTableAsync(
         AuthorizationContext authorizationContext,
         DrcDbContext drcDbContext,
+        CancellationToken cancellationToken
+    );
+
+    Task InsertInformatieObjectTypeAuthorizationsToTempTableAsync(
+        AuthorizationContext authorizationContext,
+        DrcDbContext2 drcDbContext,
         CancellationToken cancellationToken
     );
 }

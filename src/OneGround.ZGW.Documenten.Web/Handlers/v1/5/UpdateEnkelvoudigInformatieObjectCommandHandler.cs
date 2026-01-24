@@ -31,12 +31,13 @@ namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
 public class UpdateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<UpdateEnkelvoudigInformatieObjectCommandHandler>,
-        IRequestHandler<UpdateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
+        IRequestHandler<UpdateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObject2>>
 {
     public UpdateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<UpdateEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
         DrcDbContext context,
+        DrcDbContext2 context2,
         IEntityUriService uriService,
         INummerGenerator nummerGenerator,
         IDocumentServicesResolver documentServicesResolver,
@@ -57,6 +58,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             authorizationContextAccessor,
             documentServicesResolver,
             context,
+            context2,
             enkelvoudigInformatieObjectBusinessRuleService,
             nummerGenerator,
             catalogiServiceAgent,
@@ -68,7 +70,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             fileValidationService
         ) { }
 
-    public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
+    public async Task<CommandResult<EnkelvoudigInformatieObject2>> Handle(
         UpdateEnkelvoudigInformatieObjectCommand request,
         CancellationToken cancellationToken
     )
@@ -82,52 +84,45 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         ValidateFile(versie, errors);
 
         // Add new version of the EnkelvoudigInformatieObject
-        var existingEnkelvoudigInformatieObject = await _context
+        var existingEnkelvoudigInformatieObjectVersies = await _context2
             .EnkelvoudigInformatieObjecten.AsSplitQuery()
-            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .Include(e => e.GebruiksRechten)
-            .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
+            .Include(e => e.EnkelvoudigInformatieObjectLock.GebruiksRechten)
+            .Include(e => e.EnkelvoudigInformatieObjectLock.Verzendingen) // added (missed org)
+            .Where(e => e.EnkelvoudigInformatieObjectId == request.ExistingEnkelvoudigInformatieObjectId.Value)
+            .ToListAsync(cancellationToken);
 
-        if (existingEnkelvoudigInformatieObject == null)
+        var currentVersie = existingEnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
+
+        if (currentVersie == null)
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+            return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.NotFound);
         }
 
-        // FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-        if (existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie == null)
+        if (!_authorizationContext.IsAuthorized(currentVersie, AuthorizationScopes.Documenten.Update))
         {
-            // Not very elegant but it's a temporary work around until we figure out the problem. So IsAuthorized will work now
-            var latestVersion = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
-            existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
-
-            _logger.LogWarning("LatestEnkelvoudigInformatieObjectVersie is NULL -> restored");
+            return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.Forbidden);
         }
-        // ----
-
-        if (!_authorizationContext.IsAuthorized(existingEnkelvoudigInformatieObject, AuthorizationScopes.Documenten.Update))
-        {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
-        }
-
-        var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
 
         versie.Versie = currentVersie.Versie + 1;
-        versie.Owner = currentVersie.InformatieObject.Owner;
+        versie.Owner = currentVersie.Owner;
+        versie.CatalogusId = currentVersie.CatalogusId;
+        versie.InformatieObjectType = currentVersie.InformatieObjectType;
+        versie.EnkelvoudigInformatieObjectLockId = currentVersie.EnkelvoudigInformatieObjectLockId;
 
-        await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
-            versie,
-            _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
-            request.ExistingEnkelvoudigInformatieObjectId,
-            request.IsPartialUpdate,
-            apiVersie: 1.5M,
-            errors,
-            cancellationToken
-        );
+        // ZZZ
+        //await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
+        //    versie,
+        //    _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
+        //    request.ExistingEnkelvoudigInformatieObjectId,
+        //    request.IsPartialUpdate,
+        //    apiVersie: 1.5M,
+        //    errors,
+        //    cancellationToken
+        //);
 
         if (errors.Count != 0)
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
+            return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
@@ -136,24 +131,24 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Add a new version of the existing EnkelvoudigInformatieObject
-            audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(existingEnkelvoudigInformatieObject);
+            audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(currentVersie);
 
-            var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType;
+            var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObjectType;
 
-            var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
+            var indicatieGebruiksrecht = versie.IndicatieGebruiksrecht;
 
             versie.BeginRegistratie = DateTime.UtcNow;
             versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId.Value;
             // Clone the EnkelvoudigInformatieObject from previous version
-            versie.InformatieObject = existingEnkelvoudigInformatieObject;
-            versie.InformatieObject.InformatieObjectType = informatieObjectType;
-            versie.InformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
+            //versie.InformatieObject = existingEnkelvoudigInformatieObject;
+            versie.InformatieObjectType = informatieObjectType;
+            versie.IndicatieGebruiksrecht = indicatieGebruiksrecht;
 
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
                 // We have enabled (some) metadata fields for the underlying document provider
-                var metadata = new DocumentMeta { Rsin = versie.InformatieObject.Owner, Version = versie.Versie };
+                var metadata = new DocumentMeta { Rsin = versie.Owner, Version = versie.Versie };
 
                 var result = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
 
@@ -172,7 +167,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                 var (inhoud, bestandsomvang) = await TryAddDocumentToDocumentStore(versie, errors, cancellationToken);
                 if (errors.Count != 0)
                 {
-                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
+                    return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.ValidationError, errors.ToArray());
                 }
                 versie.Inhoud = inhoud;
                 versie.Bestandsomvang = bestandsomvang;
@@ -193,52 +188,37 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                 versie.Identificatie = enkelvoudigInformatieObjectNummer;
             }
 
-            await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
+            await _context2.EnkelvoudigInformatieObjecten.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-
-            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie);
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
+                await audittrail.PatchedAsync(versie, versie, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
+                await audittrail.UpdatedAsync(versie, versie, cancellationToken);
             }
 
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+            await _context2.SaveChangesAsync(cancellationToken);
         }
 
-        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created new version", versie.InformatieObject.Id);
+        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created new version", versie.Id);
 
         // Note: Do not send notification using bestandsdelen (this is done when all bestandsdelen are uploaded an checkin is called)
         if (versie.BestandsDelen.Count == 0)
         {
-            await SendNotificationAsync(Actie.update, versie.InformatieObject, cancellationToken);
+            await SendNotificationAsync(Actie.update, versie, cancellationToken);
         }
 
-        return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
+        return new CommandResult<EnkelvoudigInformatieObject2>(versie, CommandStatus.OK);
     }
 }
 
-public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
+public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObject2>>
 {
-    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
+    public EnkelvoudigInformatieObject2 EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
 }

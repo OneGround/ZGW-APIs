@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
 {
     [DbContext(typeof(DrcDbContext2))]
-    partial class DrcDbContext2ModelSnapshot : ModelSnapshot
+    [Migration("20260124131245_fix_relations_into")]
+    partial class fix_relations_into
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -485,15 +488,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("createdby");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("creationtime");
-
                     b.Property<string>("Lock")
                         .HasColumnType("text")
                         .HasColumnName("lock");
@@ -501,21 +495,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                     b.Property<bool>("Locked")
                         .HasColumnType("boolean")
                         .HasColumnName("locked");
-
-                    b.Property<DateTime?>("ModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modificationtime");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("modifiedby");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)")
-                        .HasColumnName("owner");
 
                     b.HasKey("Id");
 
@@ -756,7 +735,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
                     b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectLock2", "EnkelvoudigInformatieObjectLock")
                         .WithMany("EnkelvoudigInformatieObjecten")
                         .HasForeignKey("EnkelvoudigInformatieObjectLockId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("EnkelvoudigInformatieObjectLock");

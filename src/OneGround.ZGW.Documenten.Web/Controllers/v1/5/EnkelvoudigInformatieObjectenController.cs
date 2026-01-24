@@ -296,7 +296,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             enkelvoudigInformatieObjectRequest.Bronorganisatie
         );
 
-        var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(enkelvoudigInformatieObjectRequest);
+        var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObject2>(enkelvoudigInformatieObjectRequest);
 
         // Note: we should investigate who send the 2-letter language code so we log for these situations
         LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
@@ -344,7 +344,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             enkelvoudigInformatieObjectRequest.Bronorganisatie
         );
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+        EnkelvoudigInformatieObject2 enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObject2>(
             enkelvoudigInformatieObjectRequest
         );
 
@@ -397,60 +397,62 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
     public async Task<IActionResult> PartialUpdateAsync([FromBody] dynamic partialEnkelvoudigInformatieObjectRequest, Guid id)
     {
+        throw new NotImplementedException();
+
         // We do log only the request not the partial update request (because can be large)
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+        //_logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true });
+        //var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true });
 
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
+        //if (resultGet.Status == QueryStatus.NotFound)
+        //{
+        //    return _errorResponseBuilder.NotFound();
+        //}
 
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
+        //if (resultGet.Status == QueryStatus.Forbidden)
+        //{
+        //    return _errorResponseBuilder.Forbidden();
+        //}
 
-        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
-            EnkelvoudigInformatieObjectUpdateRequestDto,
-            EnkelvoudigInformatieObject
-        >(resultGet.Result, partialEnkelvoudigInformatieObjectRequest);
+        //EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+        //    EnkelvoudigInformatieObjectUpdateRequestDto,
+        //    EnkelvoudigInformatieObject
+        //>(resultGet.Result, partialEnkelvoudigInformatieObjectRequest);
 
-        if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
-        {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
+        //if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
+        //{
+        //    return _errorResponseBuilder.BadRequest(validationResult);
+        //}
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
-            mergedEnkelvoudigInformatieObjectRequest
-        );
+        //EnkelvoudigInformatieObject2 enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObject2>(
+        //    mergedEnkelvoudigInformatieObjectRequest
+        //);
 
-        // Note: we should investigate who send the 2-letter language code so we log for these situations
-        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
+        //// Note: we should investigate who send the 2-letter language code so we log for these situations
+        //LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
-        var result = await _mediator.Send(
-            new UpdateEnkelvoudigInformatieObjectCommand
-            {
-                ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
-                IsPartialUpdate = true,
-            }
-        );
+        //var result = await _mediator.Send(
+        //    new UpdateEnkelvoudigInformatieObjectCommand
+        //    {
+        //        ExistingEnkelvoudigInformatieObjectId = id,
+        //        EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
+        //        IsPartialUpdate = true,
+        //    }
+        //);
 
-        if (result.Status == CommandStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
+        //if (result.Status == CommandStatus.NotFound)
+        //{
+        //    return _errorResponseBuilder.NotFound();
+        //}
 
-        if (result.Status == CommandStatus.ValidationError)
-        {
-            return _errorResponseBuilder.BadRequest(result.Errors);
-        }
+        //if (result.Status == CommandStatus.ValidationError)
+        //{
+        //    return _errorResponseBuilder.BadRequest(result.Errors);
+        //}
 
-        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
+        //var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
 
-        return Ok(enkelvoudigInformatieObjectResponse);
+        //return Ok(enkelvoudigInformatieObjectResponse);
     }
 
     //
@@ -472,83 +474,84 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Produces("application/octet-stream")]
     public async Task<IActionResult> DownloadAsync(Guid id, [FromQuery] DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters)
     {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(DownloadAsync), id, queryParameters);
+        throw new NotImplementedException();
+        //_logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(DownloadAsync), id, queryParameters);
 
-        var filter = _mapper.Map<Models.v1.GetEnkelvoudigInformatieObjectFilter>(queryParameters);
+        //var filter = _mapper.Map<Models.v1.GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
-        var resultGet = await _mediator.Send(
-            new GetEnkelvoudigInformatieObjectQuery
-            {
-                Id = id,
-                GetEnkelvoudigInformatieObjectFilter = filter,
-                IgnoreNotCompletedDocuments = true,
-            }
-        );
+        //var resultGet = await _mediator.Send(
+        //    new GetEnkelvoudigInformatieObjectQuery
+        //    {
+        //        Id = id,
+        //        GetEnkelvoudigInformatieObjectFilter = filter,
+        //        IgnoreNotCompletedDocuments = true,
+        //    }
+        //);
 
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
+        //if (resultGet.Status == QueryStatus.NotFound)
+        //{
+        //    return _errorResponseBuilder.NotFound();
+        //}
 
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
+        //if (resultGet.Status == QueryStatus.Forbidden)
+        //{
+        //    return _errorResponseBuilder.Forbidden();
+        //}
 
-        var enkelvoudigInformatieObjectVersie = resultGet.Result.EnkelvoudigInformatieObjectVersies.Single();
+        //var enkelvoudigInformatieObjectVersie = resultGet.Result.EnkelvoudigInformatieObjectVersies.Single();
 
-        // Note: New in v1.1: if file size = 0, i.e.EnkelvoudigInformatieObject contains only metadata without file content.The EnkelvoudigInformatieObject is created using a single request to Documenten API.
-        if (enkelvoudigInformatieObjectVersie.Bestandsomvang == 0 && enkelvoudigInformatieObjectVersie.Inhoud == null)
-        {
-            if (_applicationConfiguration.DocumentJobPrioritizationAtDownload)
-            {
-                await _mediator.Send(
-                    new Handlers.v1._1.PrioritizationDocumentJobCommand
-                    {
-                        EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
-                    }
-                );
-            }
-            // Document meta does exists but no content
-            return NoContent(); // TODO: Unclear what to return. ZGW reference does respond with HTTP Status 500. I think 204 [NoContent] make sense here
-        }
+        //// Note: New in v1.1: if file size = 0, i.e.EnkelvoudigInformatieObject contains only metadata without file content.The EnkelvoudigInformatieObject is created using a single request to Documenten API.
+        //if (enkelvoudigInformatieObjectVersie.Bestandsomvang == 0 && enkelvoudigInformatieObjectVersie.Inhoud == null)
+        //{
+        //    if (_applicationConfiguration.DocumentJobPrioritizationAtDownload)
+        //    {
+        //        await _mediator.Send(
+        //            new Handlers.v1._1.PrioritizationDocumentJobCommand
+        //            {
+        //                EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
+        //            }
+        //        );
+        //    }
+        //    // Document meta does exists but no content
+        //    return NoContent(); // TODO: Unclear what to return. ZGW reference does respond with HTTP Status 500. I think 204 [NoContent] make sense here
+        //}
 
-        var documentUrn = new DocumentUrn(enkelvoudigInformatieObjectVersie.Inhoud);
+        //var documentUrn = new DocumentUrn(enkelvoudigInformatieObjectVersie.Inhoud);
 
-        var resultDwnl = await _mediator.Send(
-            new DownloadEnkelvoudigInformatieObjectQuery
-            {
-                DocumentUrn = documentUrn,
-                EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
-            }
-        );
+        //var resultDwnl = await _mediator.Send(
+        //    new DownloadEnkelvoudigInformatieObjectQuery
+        //    {
+        //        DocumentUrn = documentUrn,
+        //        EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
+        //    }
+        //);
 
-        if (resultDwnl.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
+        //if (resultDwnl.Status == QueryStatus.NotFound)
+        //{
+        //    return _errorResponseBuilder.NotFound();
+        //}
 
-        await _mediator.Send(
-            new LogAuditTrailGetObjectCommand
-            {
-                RetrieveCatagory = RetrieveCatagory.Minimal,
-                BaseEntity = resultGet.Result,
-                SubEntity = enkelvoudigInformatieObjectVersie,
-                OverruleActieWeergave = "Object gedownload",
-                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
-            }
-        );
+        //await _mediator.Send(
+        //    new LogAuditTrailGetObjectCommand
+        //    {
+        //        RetrieveCatagory = RetrieveCatagory.Minimal,
+        //        BaseEntity = resultGet.Result,
+        //        SubEntity = enkelvoudigInformatieObjectVersie,
+        //        OverruleActieWeergave = "Object gedownload",
+        //        AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
+        //    }
+        //);
 
-        var cd = new ContentDisposition { FileName = HttpUtility.UrlPathEncode(enkelvoudigInformatieObjectVersie.Bestandsnaam) };
+        //var cd = new ContentDisposition { FileName = HttpUtility.UrlPathEncode(enkelvoudigInformatieObjectVersie.Bestandsnaam) };
 
-        Response.Headers.ContentDisposition = cd.ToString();
-        Response.Headers.XContentTypeOptions = "nosniff";
+        //Response.Headers.ContentDisposition = cd.ToString();
+        //Response.Headers.XContentTypeOptions = "nosniff";
 
-        var mimeType = string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Formaat)
-            ? MimeTypeHelper.GetMimeType(enkelvoudigInformatieObjectVersie.Bestandsnaam)
-            : enkelvoudigInformatieObjectVersie.Formaat;
+        //var mimeType = string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Formaat)
+        //    ? MimeTypeHelper.GetMimeType(enkelvoudigInformatieObjectVersie.Bestandsnaam)
+        //    : enkelvoudigInformatieObjectVersie.Formaat;
 
-        return File(resultDwnl.Result, mimeType);
+        //return File(resultDwnl.Result, mimeType);
     }
 
     /// <summary>

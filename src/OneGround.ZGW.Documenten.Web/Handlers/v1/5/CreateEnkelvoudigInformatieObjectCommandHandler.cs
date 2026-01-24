@@ -30,12 +30,13 @@ namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
 public class CreateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<CreateEnkelvoudigInformatieObjectCommandHandler>,
-        IRequestHandler<CreateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
+        IRequestHandler<CreateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObject2>>
 {
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
         DrcDbContext context,
+        DrcDbContext2 context2,
         IEntityUriService uriService,
         INummerGenerator nummerGenerator,
         IDocumentServicesResolver documentServicesResolver,
@@ -56,6 +57,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             authorizationContextAccessor,
             documentServicesResolver,
             context,
+            context2,
             enkelvoudigInformatieObjectBusinessRuleService,
             nummerGenerator,
             catalogiServiceAgent,
@@ -67,7 +69,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             fileValidationService
         ) { }
 
-    public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
+    public async Task<CommandResult<EnkelvoudigInformatieObject2>> Handle(
         CreateEnkelvoudigInformatieObjectCommand request,
         CancellationToken cancellationToken
     )
@@ -78,13 +80,13 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         if (
             !_authorizationContext.IsAuthorized(
-                request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
+                request.EnkelvoudigInformatieObjectVersie.InformatieObjectType,
                 request.EnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding,
                 AuthorizationScopes.Documenten.Create
             )
         )
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
+            return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.Forbidden);
         }
 
         versie.SetLinkToNullWhenInvalid();
@@ -96,27 +98,28 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         versie.Versie = 1;
 
-        await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
-            versie,
-            _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
-            existingEnkelvoudigInformatieObjectId: null,
-            isPartialUpdate: false,
-            apiVersie: 1.5M,
-            errors,
-            cancellationToken
-        );
+        // ZZZ
+        //await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
+        //    versie,
+        //    _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
+        //    existingEnkelvoudigInformatieObjectId: null,
+        //    isPartialUpdate: false,
+        //    apiVersie: 1.5M,
+        //    errors,
+        //    cancellationToken
+        //);
 
         if (errors.Count != 0)
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
+            return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
         var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-            request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
+            request.EnkelvoudigInformatieObjectVersie.InformatieObjectType
         );
         if (!informatieobjecttype.Success)
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(
+            return new CommandResult<EnkelvoudigInformatieObject2>(
                 null,
                 CommandStatus.ValidationError,
                 new ValidationError("enkelvoudiginformatieobjecttype", informatieobjecttype.Error.Code, informatieobjecttype.Error.Title)
@@ -130,15 +133,17 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Create the new (initial) version of the EnkelvoudigInformatieObject
-            versie.InformatieObject.Owner = _rsin;
+            versie.Owner = _rsin;
             versie.BeginRegistratie = DateTime.UtcNow;
-            versie.Owner = versie.InformatieObject.Owner;
+            versie.Owner = versie.Owner;
+            versie.CatalogusId = catalogusId;
+            versie.EnkelvoudigInformatieObjectId = Guid.NewGuid();
 
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
                 // We have enabled (some) metadata fields for the underlying document provider
-                var metadata = new DocumentMeta { Rsin = versie.InformatieObject.Owner, Version = versie.Versie };
+                var metadata = new DocumentMeta { Rsin = versie.Owner, Version = versie.Versie };
 
                 var result = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
 
@@ -158,7 +163,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
                 var (inhoud, bestandsomvang) = await TryAddDocumentToDocumentStore(versie, errors, cancellationToken);
                 if (errors.Count != 0)
                 {
-                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
+                    return new CommandResult<EnkelvoudigInformatieObject2>(null, CommandStatus.ValidationError, errors.ToArray());
                 }
                 versie.Inhoud = inhoud;
                 versie.Bestandsomvang = bestandsomvang;
@@ -172,58 +177,44 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
                     organisatie,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique2(organisatie, id, versie.Versie),
                     cancellationToken
                 );
 
                 versie.Identificatie = enkelvoudigInformatieObjectNummer;
             }
 
-            await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
+            var @lock = new EnkelvoudigInformatieObjectLock2 { Id = Guid.NewGuid(), Owner = _rsin };
+
+            versie.EnkelvoudigInformatieObjectLockId = @lock.Id;
+
+            await _context2.EnkelvoudigInformatieObjectLocks.AddAsync(@lock, cancellationToken);
+            await _context2.EnkelvoudigInformatieObjecten.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
+
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie);
+
+            await audittrail.CreatedAsync(versie, versie, cancellationToken);
 
             try
             {
-                using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-                // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-                await _context.SaveChangesAsync(cancellationToken);
-
-                // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-                versie.InformatieObject.CatalogusId = catalogusId;
-
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
-
-                await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
-
-                await _context.SaveChangesAsync(cancellationToken);
-
-                await trans.CommitAsync(cancellationToken);
+                await _context2.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+            catch (Exception ex) { }
         }
 
-        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);
+        _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.Id);
 
         // Note: Do not send notification using bestandsdelen (this is done when all bestandsdelen are uploaded an checkin is called)
         if (versie.BestandsDelen.Count == 0)
         {
-            await SendNotificationAsync(Actie.create, versie.InformatieObject, cancellationToken); // TODO: Check older versions how this reacts!!!!!
+            await SendNotificationAsync(Actie.create, versie, cancellationToken); // TODO: Check older versions how this reacts!!!!!
         }
 
-        return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
+        return new CommandResult<EnkelvoudigInformatieObject2>(versie, CommandStatus.OK);
     }
 }
 
-public class CreateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
+public class CreateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObject2>>
 {
-    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
+    public EnkelvoudigInformatieObject2 EnkelvoudigInformatieObjectVersie { get; internal set; }
 }
