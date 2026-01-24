@@ -40,9 +40,18 @@ public class GebruiksRecht : IAuditableEntity, IUrlEntity, IInformatieObjectEnti
     [Column("einddatum")]
     public DateTime? Einddatum { get; set; }
 
+    [NotMapped] // ZZZ
     [Column("informatieobject_id")]
     public Guid InformatieObjectId { get; set; }
 
+    [NotMapped] // ZZZ
     [ForeignKey(nameof(InformatieObjectId))]
     public EnkelvoudigInformatieObject InformatieObject { get; set; }
+
+    // ZZZ
+    [Column("informatieobject_id2")]
+    public Guid InformatieObjectId2 { get; set; }
+
+    [ForeignKey("informatieobject_id2")]
+    public EnkelvoudigInformatieObject2 InformatieObject2 { get; set; }
 }

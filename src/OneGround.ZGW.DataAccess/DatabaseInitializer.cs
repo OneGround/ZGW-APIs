@@ -81,7 +81,7 @@ public class DatabaseInitializer<TDbContext> : IDatabaseInitializer<TDbContext>
             }
 
             context.Database.SetCommandTimeout(TimeSpan.FromMinutes(60));
-            await context.Database.MigrateAsync();
+           // await context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {

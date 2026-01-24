@@ -63,6 +63,7 @@ public class Startup
         services.AddSingleton(Serilog.Log.Logger);
 
         services.AddZGWDbContext<DrcDbContext>(Configuration);
+        services.AddZGWDbContext<DrcDbContext2>(Configuration);
 
         services.AddZGWApi(
             "Documenten",
@@ -161,6 +162,7 @@ public class Startup
         services.AddScoped<IDbUserContext, DbUserContext>();
 
         services.AddDatabaseInitializerService<DrcDbContext, DrcDbContextFactory>();
+        services.AddDatabaseInitializerService<DrcDbContext2, DrcDbContextFactory2>();
         services.Configure<MassTransitHostOptions>(options =>
         {
             options.WaitUntilStarted = true;

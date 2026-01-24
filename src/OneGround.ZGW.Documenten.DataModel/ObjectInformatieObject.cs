@@ -35,11 +35,20 @@ public class ObjectInformatieObject : OwnedEntity, IAuditableEntity, IUrlEntity
     [Column("object")]
     public string Object { get; set; }
 
+    [NotMapped] // ZZZ
     [Column("informatieobject_id")]
     public Guid InformatieObjectId { get; set; }
 
-    [ForeignKey("InformatieObjectId ")]
+    [NotMapped] // ZZZ
+    [ForeignKey("InformatieObjectId")]
     public EnkelvoudigInformatieObject InformatieObject { get; set; }
+
+    // ZZZ
+    [Column("informatieobject_id2")]
+    public Guid InformatieObjectId2 { get; set; }
+
+    [ForeignKey("informatieobject_id2")]
+    public EnkelvoudigInformatieObject2 InformatieObject2 { get; set; }
 
     [Required]
     [Column("objecttype")]

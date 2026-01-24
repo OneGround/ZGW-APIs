@@ -34,3 +34,33 @@ public class BestandsDeel : IBaseEntity, IUrlEntity
     [Column("uploadpart_id")]
     public string UploadPartId { get; set; }
 }
+
+[Table("bestandsdelen2")]
+public class BestandsDeel2 : IBaseEntity, IUrlEntity
+{
+    [NotMapped]
+    public string Url => $"/bestandsdelen/{Id}";
+
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
+
+    [Column("volgnummer")]
+    public int Volgnummer { get; set; }
+
+    [Column("omvang")]
+    public int Omvang { get; set; }
+
+    [Column("voltooid")]
+    public bool Voltooid { get; set; }
+
+    [Column("enkelvoudiginformatieobject_id")]
+    public Guid EnkelvoudigInformatieObjectId { get; set; }
+
+    [ForeignKey(nameof(EnkelvoudigInformatieObjectId))]
+    public EnkelvoudigInformatieObject2 EnkelvoudigInformatieObject { get; set; }
+
+    [MaxLength(250)]
+    [Column("uploadpart_id")]
+    public string UploadPartId { get; set; }
+}
