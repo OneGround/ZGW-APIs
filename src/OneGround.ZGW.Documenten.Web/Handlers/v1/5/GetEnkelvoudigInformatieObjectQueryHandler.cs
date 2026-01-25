@@ -50,7 +50,7 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         var enkelvoudiginformatieobjectLock = await _context
             .EnkelvoudigInformatieObjectLocks.AsNoTracking()
             .Where(rsinFilter)
-            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectId == request.Id))
+            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectLockId == request.Id))
             .Include(e => e.EnkelvoudigInformatieObjecten)
             .ThenInclude(e => e.BestandsDelen)
             .Include(e => e.GebruiksRechten)

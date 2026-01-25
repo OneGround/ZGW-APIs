@@ -190,7 +190,7 @@ public class EnkelvoudigInformatieObject2 : OwnedEntity, IAuditableEntity, IUrlE
 {
     [NotMapped]
     //public string Url => $"{Url}/download?versie={Versie}";
-    public string Url => $"/enkelvoudiginformatieobjecten/{EnkelvoudigInformatieObjectId}";
+    public string Url => $"/enkelvoudiginformatieobjecten/{EnkelvoudigInformatieObjectLockId}";
 
     [Key]
     [Column("id")]
@@ -308,8 +308,8 @@ public class EnkelvoudigInformatieObject2 : OwnedEntity, IAuditableEntity, IUrlE
     public Guid EnkelvoudigInformatieObjectLockId { get; set; }
 
     // ZZZ
-    [Column("enkelvoudiginformatieobject_id ")]
-    public Guid EnkelvoudigInformatieObjectId { get; set; }
+    //[Column("enkelvoudiginformatieobject_id ")]
+    //public Guid EnkelvoudigInformatieObjectId { get; set; }
 
     [Required]
     [MaxLength(200)]

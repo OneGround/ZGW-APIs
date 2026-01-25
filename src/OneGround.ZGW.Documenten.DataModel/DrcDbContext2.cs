@@ -62,13 +62,13 @@ public class DrcDbContext2 : BaseDbContext, IDbContextWithAuditTrail, IDataMigra
                 e.Owner,
                 e.Inhoud,
                 e.Vertrouwelijkheidaanduiding,
-                e.EnkelvoudigInformatieObjectId,
+                e.EnkelvoudigInformatieObjectLockId,
             })
             .IsDescending(false, false, true, false)
             .IncludeProperties(e => e.Bestandsomvang)
             .HasFilter($"{nameof(EnkelvoudigInformatieObject2.Bestandsomvang)} IS NOT NULL");
 
-        modelBuilder.Entity<EnkelvoudigInformatieObject2>().HasIndex(b => b.EnkelvoudigInformatieObjectId);
+        modelBuilder.Entity<EnkelvoudigInformatieObject2>().HasIndex(b => b.EnkelvoudigInformatieObjectLockId);
 
         // Note: We sould have versie DESC in the index but it is not possible in EF right now
         modelBuilder
@@ -76,7 +76,7 @@ public class DrcDbContext2 : BaseDbContext, IDbContextWithAuditTrail, IDataMigra
             .HasIndex(b => new
             {
                 b.Owner,
-                b.EnkelvoudigInformatieObjectId,
+                b.EnkelvoudigInformatieObjectLockId,
                 b.Versie,
                 b.Vertrouwelijkheidaanduiding,
             })
@@ -120,7 +120,7 @@ public class DrcDbContext2 : BaseDbContext, IDbContextWithAuditTrail, IDataMigra
             {
                 e.Owner,
                 e.Vertrouwelijkheidaanduiding,
-                e.EnkelvoudigInformatieObjectId,
+                e.EnkelvoudigInformatieObjectLockId,
             });
 
         modelBuilder

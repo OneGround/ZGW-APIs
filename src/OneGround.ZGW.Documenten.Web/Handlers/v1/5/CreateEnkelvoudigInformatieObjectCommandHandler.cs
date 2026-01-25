@@ -137,7 +137,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             versie.BeginRegistratie = DateTime.UtcNow;
             versie.Owner = versie.Owner;
             versie.CatalogusId = catalogusId;
-            versie.EnkelvoudigInformatieObjectId = Guid.NewGuid();
 
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))

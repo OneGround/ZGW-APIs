@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations.DrcDbContext2Migrations
 {
     [DbContext(typeof(DrcDbContext2))]
-    partial class DrcDbContext2ModelSnapshot : ModelSnapshot
+    [Migration("20260124173352_delete_duplicate_id")]
+    partial class delete_duplicate_id
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

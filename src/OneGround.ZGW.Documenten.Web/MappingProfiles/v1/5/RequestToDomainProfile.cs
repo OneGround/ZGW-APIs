@@ -5,6 +5,7 @@ using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Documenten.Contracts.v1._5;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
+using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 
@@ -102,7 +103,6 @@ public class RequestToDomainProfile : Profile
             )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
-            .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
             .ForMember(dest => dest.MultiPartDocumentId, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectLockId, opt => opt.Ignore());
 
@@ -126,16 +126,10 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.CreatieDatum)))
             .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum)))
             .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.VerzendDatum)))
-            //.ForMember(
-            //    dest => dest.InformatieObject,
-            //    opt =>
-            //        opt.MapFrom(src => new EnkelvoudigInformatieObject
-            //        {
-            //            InformatieObjectType = src.InformatieObjectType,
-            //            Lock = src.Lock,
-            //            IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
-            //        })
-            //)
+            .ForMember(
+                dest => dest.EnkelvoudigInformatieObjectLock,
+                opt => opt.MapFrom(src => new EnkelvoudigInformatieObjectLock2 { Lock = src.Lock })
+            )
             .ForMember(dest => dest.Ondertekening_Datum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum)))
             .ForMember(dest => dest.Ondertekening_Soort, opt => opt.MapFrom(src => SoortFromString(src.Ondertekening.Soort)))
             .ForMember(dest => dest.Integriteit_Algoritme, opt => opt.MapFrom(src => AlgoritmeFromString(src.Integriteit.Algoritme)))
@@ -158,7 +152,6 @@ public class RequestToDomainProfile : Profile
             )
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
-            .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
             .ForMember(dest => dest.MultiPartDocumentId, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectLockId, opt => opt.Ignore());
 

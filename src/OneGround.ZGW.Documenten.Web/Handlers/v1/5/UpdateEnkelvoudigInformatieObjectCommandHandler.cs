@@ -88,7 +88,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             .EnkelvoudigInformatieObjecten.AsSplitQuery()
             .Include(e => e.EnkelvoudigInformatieObjectLock.GebruiksRechten)
             .Include(e => e.EnkelvoudigInformatieObjectLock.Verzendingen) // added (missed org)
-            .Where(e => e.EnkelvoudigInformatieObjectId == request.ExistingEnkelvoudigInformatieObjectId.Value)
+            .Where(e => e.EnkelvoudigInformatieObjectLockId == request.ExistingEnkelvoudigInformatieObjectId.Value)
             .ToListAsync(cancellationToken);
 
         var currentVersie = existingEnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
@@ -107,18 +107,18 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         versie.Owner = currentVersie.Owner;
         versie.CatalogusId = currentVersie.CatalogusId;
         versie.InformatieObjectType = currentVersie.InformatieObjectType;
-        versie.EnkelvoudigInformatieObjectLockId = currentVersie.EnkelvoudigInformatieObjectLockId;
+        //versie.EnkelvoudigInformatieObjectLockId = currentVersie.EnkelvoudigInformatieObjectLockId;
 
         // ZZZ
-        //await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
-        //    versie,
-        //    _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
-        //    request.ExistingEnkelvoudigInformatieObjectId,
-        //    request.IsPartialUpdate,
-        //    apiVersie: 1.5M,
-        //    errors,
-        //    cancellationToken
-        //);
+        await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
+            versie,
+            _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
+            request.ExistingEnkelvoudigInformatieObjectId,
+            request.IsPartialUpdate,
+            apiVersie: 1.5M,
+            errors,
+            cancellationToken
+        );
 
         if (errors.Count != 0)
         {
@@ -138,7 +138,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             var indicatieGebruiksrecht = versie.IndicatieGebruiksrecht;
 
             versie.BeginRegistratie = DateTime.UtcNow;
-            versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId.Value;
+            versie.EnkelvoudigInformatieObjectLockId = request.ExistingEnkelvoudigInformatieObjectId.Value;
+            versie.EnkelvoudigInformatieObjectLock = null;
             // Clone the EnkelvoudigInformatieObject from previous version
             //versie.InformatieObject = existingEnkelvoudigInformatieObject;
             versie.InformatieObjectType = informatieObjectType;

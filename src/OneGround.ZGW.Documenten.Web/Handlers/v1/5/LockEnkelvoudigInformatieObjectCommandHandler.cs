@@ -61,7 +61,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
         var enkelvoudigInformatieObjectLock = await _context2
             .EnkelvoudigInformatieObjectLocks.Where(rsinFilter)
-            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectId == request.Id))
+            .Where(l => l.EnkelvoudigInformatieObjecten.Any(e => e.EnkelvoudigInformatieObjectLockId == request.Id))
             .Include(e => e.EnkelvoudigInformatieObjecten)
             .SingleOrDefaultAsync(cancellationToken);
 
