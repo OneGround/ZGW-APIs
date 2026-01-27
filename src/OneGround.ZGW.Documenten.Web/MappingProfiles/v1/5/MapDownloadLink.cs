@@ -17,6 +17,8 @@ public class MapDownloadLink : IMappingAction<EnkelvoudigInformatieObjectVersie,
 
     public void Process(EnkelvoudigInformatieObjectVersie src, EnkelvoudigInformatieObjectResponseDto dest, ResolutionContext context)
     {
+        dest.Url = _uriService.GetUri(src.InformatieObject);
+
         if ((string.IsNullOrEmpty(src.Inhoud) && src.Bestandsomvang == 0) || src.BestandsDelen.Count != 0) // Note: New in v1.1
             dest.Inhoud = null;
         else
