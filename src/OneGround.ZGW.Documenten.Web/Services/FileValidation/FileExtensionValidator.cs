@@ -8,8 +8,8 @@ public class FileExtensionValidator : IFileExtensionValidator
 {
     public void EnsureFileExtensionIsAllowed(string fileName)
     {
-        if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File name must not be null or empty.", nameof(fileName));
+        if (string.IsNullOrWhiteSpace(fileName)) // Note: filename is not a required field while adding a document so skip validation
+            return;
 
         var extension = Path.GetExtension(fileName);
         if (string.IsNullOrWhiteSpace(extension))
