@@ -5,6 +5,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._5;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
 
 namespace OneGround.ZGW.Documenten.Web.MappingProfiles.v1._5;
 
@@ -12,6 +13,29 @@ public class DomainToResponseProfile : Profile
 {
     public DomainToResponseProfile()
     {
+        CreateMap<EnkelvoudigInformatieObjectVersie, EnkelvoudigInformatieObjectGetResponseDto>()
+            .ForMember(dest => dest.Url, opt => opt.MapFrom<MemberUrlResolver, EnkelvoudigInformatieObjectVersie>(src => src))
+            .ForMember(dest => dest.CreatieDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.CreatieDatum)))
+            .ForMember(dest => dest.OntvangstDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.OntvangstDatum)))
+            .ForMember(dest => dest.BeginRegistratie, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.BeginRegistratie, true)))
+            .ForMember(dest => dest.VerzendDatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDate(src.VerzendDatum)))
+            .ForMember(
+                dest => dest.Ondertekening,
+                opt => opt.MapFrom(src => EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(src, true))
+            )
+            .ForMember(
+                dest => dest.Integriteit,
+                opt => opt.MapFrom(src => EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(src, true))
+            )
+            .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.MapFrom(src => src.IndicatieGebruiksrecht))
+            .ForMember(dest => dest.Locked, opt => opt.MapFrom(src => src.InformatieObject.Locked)) // Note: Locked is on the parent object
+            .ForMember(dest => dest.Verschijningsvorm, opt => opt.MapFrom(src => src.Verschijningsvorm))
+            .ForMember(dest => dest.Trefwoorden, opt => opt.MapFrom(src => src.Trefwoorden))
+            .ForMember(dest => dest.Inhoud, opt => opt.Ignore())
+            .ForMember(dest => dest.InformatieObjectType, opt => opt.MapFrom(src => src.InformatieObjectType))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.HasValue ? src.Status.Value.ToString() : string.Empty))
+            .AfterMap<MapDownloadLink>();
+
         CreateMap<EnkelvoudigInformatieObject, EnkelvoudigInformatieObjectGetResponseDto>()
             .ForMember(dest => dest.Url, opt => opt.MapFrom<UrlResolver>())
             .ForMember(dest => dest.Versie, opt => opt.Ignore())

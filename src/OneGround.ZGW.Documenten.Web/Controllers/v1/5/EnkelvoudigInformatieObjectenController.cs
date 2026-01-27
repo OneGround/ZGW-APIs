@@ -133,6 +133,57 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         return Ok(paginationResponse);
     }
 
+    [HttpGet("api/v1/enkelvoudiginformatieobjecten2", Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.List + "2")]
+    [Scope(AuthorizationScopes.Documenten.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseExpandedDto>))]
+    [Expand]
+    public async Task<IActionResult> GetAll2Async([FromQuery] GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters, int page = 1)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
+
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
+        var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
+
+        var result = await _mediator.Send(
+            new GetAllEnkelvoudigInformatieObjectenQuery2 { GetAllEnkelvoudigInformatieObjectenFilter = filter, Pagination = pagination }
+        );
+
+        if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
+        {
+            return _errorResponseBuilder.PageNotFound();
+        }
+
+        //return Ok(new { TotalCount = result.Result.Count, Resuls = result.Result.PageResult });
+
+        var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
+
+        var expandLookup = ExpandLookup(queryParameters.Expand);
+
+        var enkelvoudigInformatieObjectenWithOptionalExpand = enkelvoudigInformatieObjectenResponse
+            .Select(e => _expander.ResolveAsync(expandLookup, e).Result)
+            .ToList();
+
+        var paginationResponse = _paginationHelper.CreatePaginatedResponse(
+            queryParameters,
+            pagination,
+            enkelvoudigInformatieObjectenWithOptionalExpand,
+            result.Result.Count
+        );
+
+        await _mediator.Send(
+            new LogAuditTrailGetObjectListCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.Minimal,
+                Page = pagination.Page,
+                Count = paginationResponse.Results.Count(),
+                TotalCount = paginationResponse.Count,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
+            }
+        );
+
+        return Ok(paginationResponse);
+    }
+
     //
     // HTTP GET http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/b24ee37c-00db-4108-b831-e3b420b35a09
     // HTTP GET http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/b24ee37c-00db-4108-b831-e3b420b35a09?versie=2&registratieop=2020-11-07

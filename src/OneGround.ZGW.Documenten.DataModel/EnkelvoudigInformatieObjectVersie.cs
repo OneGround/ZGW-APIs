@@ -11,6 +11,7 @@ namespace OneGround.ZGW.Documenten.DataModel;
 public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, IUrlEntity
 {
     [NotMapped]
+    //public string Url => $"/enkelvoudiginformatieobjecten/{EnkelvoudigInformatieObjectId}";
     public string Url =>
         InformatieObject != null ? $"{InformatieObject.Url}/download?versie={Versie}"
         : LatestInformatieObject != null ? $"{LatestInformatieObject.Url}/download?versie={Versie}"
@@ -140,4 +141,15 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
     [MaxLength(250)]
     [Column("multipartdocument_id")]
     public string MultiPartDocumentId { get; set; }
+
+    //[Required]
+    [MaxLength(200)]
+    [Column("informatieobjecttype")]
+    public string InformatieObjectType { get; set; }
+
+    [Column("indicatiegebruiksrecht")]
+    public bool? IndicatieGebruiksrecht { get; set; }
+
+    [Column("catalogus_id")]
+    public Guid? CatalogusId { get; set; }
 }
