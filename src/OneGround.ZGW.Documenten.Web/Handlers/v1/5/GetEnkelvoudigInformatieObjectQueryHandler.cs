@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -45,15 +46,12 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         // By default, this returns the latest version of the (SINGLE) INFORMATION OBJECT. Specific versions can
         // be requested by means of query string parameters.
 
+        // First, fetch the parent object (without versions)
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
         var enkelvoudiginformatieobject = await _context
             .EnkelvoudigInformatieObjecten.AsNoTracking()
             .Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .ThenInclude(e => e.BestandsDelen)
-            .Include(e => e.GebruiksRechten)
-            .AsSplitQuery()
             .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
 
         if (enkelvoudiginformatieobject == null)
@@ -61,40 +59,46 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
         }
 
-        EnkelvoudigInformatieObjectVersie requestedVersie;
-
         var filter = request.GetEnkelvoudigInformatieObjectFilter;
+        EnkelvoudigInformatieObjectVersie requestedVersie = null;
+
+        // Build the base query for versions (use IQueryable to avoid type issues)
+        var rsinFilterVersion = GetRsinFilterPredicate<EnkelvoudigInformatieObjectVersie>();
+
+        IQueryable<EnkelvoudigInformatieObjectVersie> versieQuery = _context
+            .EnkelvoudigInformatieObjectVersies.AsNoTracking()
+            .Where(rsinFilterVersion)
+            .Where(v => v.EnkelvoudigInformatieObjectId == request.Id)
+            .Include(v => v.BestandsDelen);
+
+        // Apply filter logic using expressions
+        var notCompletedFilter = GetNotCompletedDocumentFilterExpression(request.IgnoreNotCompletedDocuments);
+        versieQuery = versieQuery.Where(notCompletedFilter);
 
         if (!filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
-            // No filter specified so get latest version of the EnkelvoudigInformatieObject
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
-                .OrderBy(e => e.Versie)
-                .LastOrDefault();
+            // Latest version
+            requestedVersie = await versieQuery.OrderBy(v => v.Versie).LastOrDefaultAsync(cancellationToken);
         }
         else if (filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
-            // Filter 'versie' is specified so get that version
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
-                .SingleOrDefault(e => e.Versie == filter.Versie);
+            // Specific version
+            requestedVersie = await versieQuery.Where(v => v.Versie == filter.Versie).SingleOrDefaultAsync(cancellationToken);
         }
         else if (!filter.Versie.HasValue && filter.RegistratieOp.HasValue)
         {
-            // Filter 'registratieOp' is specified so get the nearest versie before this date-time
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
-                .OrderBy(e => e.BeginRegistratie)
-                .LastOrDefault(e => e.BeginRegistratie <= filter.RegistratieOp);
+            // Nearest version before date
+            requestedVersie = await versieQuery
+                .Where(v => v.BeginRegistratie <= filter.RegistratieOp)
+                .OrderBy(v => v.BeginRegistratie)
+                .LastOrDefaultAsync(cancellationToken);
         }
         else
         {
-            // Filter 'versie' and 'registratieOp' are specified
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(GetNotCompletedDocumentFilter(request.IgnoreNotCompletedDocuments))
-                .Where(e => e.BeginRegistratie <= filter.RegistratieOp && e.Versie == filter.Versie)
-                .SingleOrDefault();
+            // Both filters
+            requestedVersie = await versieQuery
+                .Where(v => v.BeginRegistratie <= filter.RegistratieOp && v.Versie == filter.Versie)
+                .SingleOrDefaultAsync(cancellationToken);
         }
 
         if (requestedVersie == null)
@@ -102,12 +106,15 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
         }
 
+        enkelvoudiginformatieobject.LatestEnkelvoudigInformatieObjectVersie = requestedVersie;
+        requestedVersie.InformatieObject = enkelvoudiginformatieobject;
+
         if (!AuthorizationContextAccessor.AuthorizationContext.IsAuthorized(requestedVersie))
         {
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.Forbidden);
         }
 
-        // Get the requested version only
+        // Attach only the requested version
         enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Clear();
         enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Add(requestedVersie);
 
@@ -119,9 +126,18 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         return new QueryResult<EnkelvoudigInformatieObject>(enkelvoudiginformatieobject, QueryStatus.OK);
     }
 
-    private static Func<EnkelvoudigInformatieObjectVersie, bool> GetNotCompletedDocumentFilter(bool ignoreNotCompletedDocuments)
+    private static Expression<Func<EnkelvoudigInformatieObjectVersie, bool>> GetNotCompletedDocumentFilterExpression(bool ignoreNotCompletedDocuments)
     {
-        return v => !ignoreNotCompletedDocuments || v.BestandsDelen.Count == 0;
+        if (!ignoreNotCompletedDocuments)
+        {
+            // No filter, always true
+            return v => true;
+        }
+        else
+        {
+            // Only include versions with no BestandsDelen
+            return v => v.BestandsDelen.Count == 0;
+        }
     }
 }
 

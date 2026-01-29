@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
@@ -20,10 +21,14 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
     public void Process(EnkelvoudigInformatieObject src, EnkelvoudigInformatieObjectGetResponseDto dest, ResolutionContext context)
     {
         // Note: For update-request-mapping we get always get the latest version
-        var latestVersion = src.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
+        var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
         if (latestVersion == null)
         {
-            return;
+            latestVersion = src.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
+            if (latestVersion == null)
+            {
+                return;
+            }
         }
 
         dest.Versie = latestVersion.Versie;
@@ -47,8 +52,22 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, true);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, true);
-        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
+        if (latestVersion.InformatieObject != null)
+        {
+            // The eiov->eio (N:1) navigation property is present
+            dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
+            dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
+        }
+        else if (latestVersion.LatestInformatieObject != null)
+        {
+            // The eio->latest_eiov (1:1) navigation property is present
+            dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
+            dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
+        }
+        else
+        {
+            throw new NullReferenceException();
+        }
         dest.Verschijningsvorm = latestVersion.Verschijningsvorm;
         dest.Trefwoorden = latestVersion.Trefwoorden;
         dest.InhoudIsVervallen = latestVersion.InhoudIsVervallen;
@@ -66,7 +85,10 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
             Omvang = bestandsdeel.Omvang,
             Volgnummer = bestandsdeel.Volgnummer,
             Voltooid = bestandsdeel.Voltooid,
-            Lock = bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject.Lock,
+            Lock =
+                bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject != null
+                    ? bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject.Lock
+                    : bestandsdeel.EnkelvoudigInformatieObjectVersie.LatestInformatieObject.Lock,
         };
     }
 }
