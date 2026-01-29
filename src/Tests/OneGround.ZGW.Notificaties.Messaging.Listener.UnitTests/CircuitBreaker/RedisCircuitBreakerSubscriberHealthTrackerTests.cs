@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +10,7 @@ using Moq;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Models;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Options;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
+using StackExchange.Redis;
 using Xunit;
 
 namespace OneGround.ZGW.Notificaties.Listener.UnitTests.CircuitBreaker;
@@ -35,7 +36,7 @@ public class RedisCircuitBreakerSubscriberHealthTrackerTests
         var optionsMock = new Mock<IOptions<CircuitBreakerOptions>>();
         optionsMock.Setup(o => o.Value).Returns(_settings);
 
-        _sut = new RedisCircuitBreakerSubscriberHealthTracker(_cacheMock.Object, _loggerMock.Object, optionsMock.Object);
+        _sut = new RedisCircuitBreakerSubscriberHealthTracker(_cacheMock.Object, _loggerMock.Object, optionsMock.Object, new ConfigurationOptions());
         _fixture = new Fixture();
     }
 

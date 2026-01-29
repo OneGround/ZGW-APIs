@@ -17,8 +17,6 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
     ConfigurationOptions configurationOptions
 ) : ICircuitBreakerSubscriberHealthTracker
 {
-    private readonly ConfigurationOptions _configurationOptions;
-
     private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
 
     public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default)
