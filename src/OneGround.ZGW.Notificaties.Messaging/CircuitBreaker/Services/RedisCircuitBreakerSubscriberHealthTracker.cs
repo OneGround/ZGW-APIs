@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Models;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Options;
+using StackExchange.Redis;
 
 namespace OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 
@@ -17,6 +18,83 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
 {
     private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
 
+    public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken)
+    {
+        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
+
+        IDatabase db = redis.GetDatabase();
+
+        var endpoint = redis.GetEndPoints()[0];
+        IServer server = redis.GetServer(endpoint);
+
+        var results = new Dictionary<RedisKey, CircuitBreakerSubscriberHealthState>();
+
+        foreach (var key in server.Keys(pattern: $"{CacheKeyPrefix}*"))
+        {
+            if (key == default(RedisKey))
+            {
+                continue;
+            }
+
+            RedisType type = await db.KeyTypeAsync(key);
+
+            if (type == RedisType.Hash)
+            {
+                var cachedData = await cache.GetStringAsync(key!, CancellationToken.None);
+                if (cachedData == null)
+                {
+                    continue;
+                }
+
+                var value = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(cachedData!);
+                if (value == null)
+                {
+                    continue;
+                }
+
+                results.Add(key, value!);
+            }
+        }
+        return results;
+    }
+
+    public async Task<int> ClearAllUnhealthyAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var unhealthySubscribers = await GetAllUnhealthyAsync(cancellationToken);
+
+            if (!unhealthySubscribers.Any())
+            {
+                logger.LogInformation("No unhealthy subscribers found to clear.");
+                return 0;
+            }
+
+            var clearedCount = 0;
+            foreach (var kvp in unhealthySubscribers)
+            {
+                try
+                {
+                    await cache.RemoveAsync(kvp.Key!, cancellationToken);
+                    clearedCount++;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error clearing unhealthy subscriber with key '{Key}'.", kvp.Key);
+                }
+            }
+
+            logger.LogInformation("Cleared {ClearedCount} of {TotalCount} unhealthy subscribers.", clearedCount, unhealthySubscribers.Count);
+
+            return clearedCount;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error clearing all unhealthy subscribers.");
+            throw;
+        }
+    }
+
     public async Task<bool> IsHealthyAsync(string url, CancellationToken cancellationToken = default)
     {
         try
@@ -27,6 +105,21 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             {
                 // No health state tracked - consider healthy
                 return true;
+            }
+
+            // Check if circuit should transition from Open to Half-Open (monitoring)
+            if (state.BlockedUntil.HasValue && DateTime.UtcNow >= state.BlockedUntil.Value)
+            {
+                // Transition to half-open state - clear BlockedUntil and reset counters
+                // The presence of state with ConsecutiveFailures > 0 will indicate we're monitoring
+                logger.LogInformation(
+                    "Circuit breaker transitioned to HALF-OPEN for subscriber '{Url}'. Monitoring for recovery. Failure counters reset.",
+                    url
+                );
+
+                await MarkHealthyAsync(url, cancellationToken);
+
+                return true; // Allow one attempt
             }
 
             var isHealthy = !state.IsCircuitOpen;
@@ -63,6 +156,13 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         {
             var state = await GetHealthStateAsync(url, cancellationToken) ?? new CircuitBreakerSubscriberHealthState { Url = url };
 
+            // Detect if we're failing during HALF-OPEN (monitoring) state:
+            // State exists, BlockedUntil is null, and we have a low failure count
+            var wasInHalfOpen =
+                state.BlockedUntil == null
+                && state.ConsecutiveFailures < circuitBreakerOptions.Value.FailureThreshold
+                && state.LastFailureAt.HasValue;
+
             state.ConsecutiveFailures++;
             state.LastFailureAt = DateTime.UtcNow;
             state.LastErrorMessage = errorMessage;
@@ -74,20 +174,35 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             }
 
             // Open circuit if failure threshold is reached
-            if (state.ConsecutiveFailures >= circuitBreakerOptions.Value.FailureThreshold && state.BlockedUntil == null)
+            if (state.ConsecutiveFailures >= circuitBreakerOptions.Value.FailureThreshold)
             {
                 state.BlockedUntil = DateTime.UtcNow.Add(circuitBreakerOptions.Value.BreakDuration);
 
-                logger.LogWarning(
-                    "Circuit breaker OPENED for subscriber '{Url}'. "
-                        + "Failure threshold reached: {ConsecutiveFailures}/{FailureThreshold}. "
-                        + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
-                    url,
-                    state.ConsecutiveFailures,
-                    circuitBreakerOptions.Value.FailureThreshold,
-                    state.BlockedUntil,
-                    errorMessage
-                );
+                if (wasInHalfOpen)
+                {
+                    logger.LogWarning(
+                        "Circuit breaker RE-OPENED for subscriber '{Url}'. "
+                            + "Failed again during monitoring. Consecutive failures: {ConsecutiveFailures}. "
+                            + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
+                        url,
+                        state.ConsecutiveFailures,
+                        state.BlockedUntil,
+                        errorMessage
+                    );
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Circuit breaker OPENED for subscriber '{Url}'. "
+                            + "Failure threshold reached: {ConsecutiveFailures}/{FailureThreshold}. "
+                            + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
+                        url,
+                        state.ConsecutiveFailures,
+                        circuitBreakerOptions.Value.FailureThreshold,
+                        state.BlockedUntil,
+                        errorMessage
+                    );
+                }
             }
             else
             {
