@@ -30,7 +30,7 @@ if (app.Environment.IsLocal())
     app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireLocalAuthFilter() } });
 }
 
-// Additional add a extra Custom Hangfire menu for health monitor
+// Additionally add an extra custom Hangfire menu for health monitor
 DashboardRoutes.Routes.Add(
     "/unhealthmonitor",
     new UnhealthMonitorDashboardPage(app.Services.GetRequiredService<ICircuitBreakerSubscriberHealthTracker>())
