@@ -13,14 +13,17 @@ namespace OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 public class RedisCircuitBreakerSubscriberHealthTracker(
     IDistributedCache cache,
     ILogger<RedisCircuitBreakerSubscriberHealthTracker> logger,
-    IOptions<CircuitBreakerOptions> circuitBreakerOptions
+    IOptions<CircuitBreakerOptions> circuitBreakerOptions,
+    ConfigurationOptions configurationOptions
 ) : ICircuitBreakerSubscriberHealthTracker
 {
+    private readonly ConfigurationOptions _configurationOptions;
+
     private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
 
     public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default)
     {
-        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
+        using ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(configurationOptions);
 
         IDatabase db = redis.GetDatabase();
 
