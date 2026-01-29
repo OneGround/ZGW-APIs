@@ -75,19 +75,12 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             var clearedCount = 0;
             foreach (var kvp in unhealthySubscribers)
             {
-                try
+                if (dictOnlyTheseRedisKeys.Count > 0 && !dictOnlyTheseRedisKeys.Contains(kvp.Key.ToString()))
                 {
-                    if (dictOnlyTheseRedisKeys.Count > 0 && !dictOnlyTheseRedisKeys.Contains(kvp.Key.ToString()))
-                    {
-                        continue;
-                    }
-                    await cache.RemoveAsync(kvp.Key!, cancellationToken);
-                    clearedCount++;
+                    continue;
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error clearing unhealthy subscriber with key '{Key}'.", kvp.Key);
-                }
+                await cache.RemoveAsync(kvp.Key!, cancellationToken);
+                clearedCount++;
             }
 
             logger.LogInformation("Cleared {ClearedCount} of {TotalCount} unhealthy subscribers.", clearedCount, unhealthySubscribers.Count);
@@ -96,7 +89,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error clearing all unhealthy subscribers.");
+            logger.LogError(ex, "Error clearing (all/selected) unhealthy subscribers.");
             throw;
         }
     }
