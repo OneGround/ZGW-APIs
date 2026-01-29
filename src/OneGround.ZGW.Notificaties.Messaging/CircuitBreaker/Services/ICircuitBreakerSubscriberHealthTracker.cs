@@ -12,7 +12,7 @@ public interface ICircuitBreakerSubscriberHealthTracker
     /// <returns>A task that represents the asynchronous operation. The task result contains a collection of tuples, each
     /// consisting of a Redis key and its associated string value. The collection is empty if no cache entries are
     /// present.
-    /// <returns>Dictionary of Redis keys and their corresponding unhealthy health states.</returns>
+    /// </returns>
     Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
