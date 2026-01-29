@@ -33,8 +33,7 @@ if (app.Environment.IsLocal())
 // Additional add a extra Custom Hangfire menu for health monitor
 DashboardRoutes.Routes.Add(
     "/unhealthmonitor",
-    new UnhealthMonitorDashboardPage(
-        app.Services.GetRequiredService<ICircuitBreakerSubscriberHealthTracker>())
+    new UnhealthMonitorDashboardPage(app.Services.GetRequiredService<ICircuitBreakerSubscriberHealthTracker>())
 );
 
 // Add a menu-item to the Hangfire Dashboard navigation bar

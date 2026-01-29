@@ -21,7 +21,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
         {
             try
             {
-                await _healthTracker.ClearAllUnhealthyAsync();
+                await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync("{\"success\": true, \"message\": \"Cache cleared successfully\"}");

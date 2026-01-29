@@ -18,7 +18,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
 {
     private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
 
-    public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken)
+    public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default)
     {
         ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
 
@@ -58,7 +58,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         return results;
     }
 
-    public async Task<int> ClearAllUnhealthyAsync(CancellationToken cancellationToken = default)
+    public async Task<int> ClearAllUnhealthyAsync(CancellationToken cancellationToken = default, params string[] onlyTheseRedisKeys)
     {
         try
         {
@@ -70,11 +70,17 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
                 return 0;
             }
 
+            var dictOnlyTheseRedisKeys = onlyTheseRedisKeys.ToHashSet();
+
             var clearedCount = 0;
             foreach (var kvp in unhealthySubscribers)
             {
                 try
                 {
+                    if (dictOnlyTheseRedisKeys.Count > 0 && !dictOnlyTheseRedisKeys.Contains(kvp.Key.ToString()))
+                    {
+                        continue;
+                    }
                     await cache.RemoveAsync(kvp.Key!, cancellationToken);
                     clearedCount++;
                 }
