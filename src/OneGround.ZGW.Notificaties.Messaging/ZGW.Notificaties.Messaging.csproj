@@ -19,4 +19,7 @@
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.DataModel\ZGW.Notificaties.DataModel.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
 </Project>
