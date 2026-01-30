@@ -79,7 +79,7 @@ public class EigenschapBronDate : IBronDateService
             return null;
         }
 
-        if (eigenschap?.Specificatie == null || eigenschap?.Specificatie.Formaat != "datum")
+        if (eigenschap?.Specificatie == null || eigenschap.Specificatie.Formaat != "datum")
         {
             errors.Add(
                 new ArchiveValidationError(
