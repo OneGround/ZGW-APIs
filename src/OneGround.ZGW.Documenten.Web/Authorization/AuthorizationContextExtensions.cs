@@ -64,7 +64,6 @@ public static class AuthorizationContextExtensions
         return context
             .Authorization.Authorizations.Where(a => a.InformatieObjectType == informatieObjectType)
             .Where(a => a.MaximumVertrouwelijkheidAanduiding >= (int)vertrouwelijkheidAanduiding)
-            .Where(a => scopes.Any(s => a.Scopes.Contains(s)))
-            .Any();
+            .Any(a => scopes.Any(s => a.Scopes.Contains(s)));
     }
 }
