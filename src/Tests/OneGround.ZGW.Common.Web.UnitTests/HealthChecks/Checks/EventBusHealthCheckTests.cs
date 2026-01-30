@@ -146,7 +146,7 @@ public class EventBusHealthCheckTests
     {
         var busHealthResult = BusHealthResult.Healthy("Healthy", new Dictionary<string, EndpointHealthResult>());
         _mockBusControl.Setup(b => b.CheckHealth()).Returns(busHealthResult);
-        var cancellationTokenSource = new CancellationTokenSource();
+        using var cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = cancellationTokenSource.Token;
 
         var result = await _healthCheck.CheckHealthAsync(new HealthCheckContext(), cancellationToken);

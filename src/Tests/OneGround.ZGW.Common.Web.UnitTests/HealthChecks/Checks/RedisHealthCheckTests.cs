@@ -161,7 +161,7 @@ public class RedisHealthCheckTests
         _mockRedis.Setup(r => r.IsConnected).Returns(true);
         _mockDatabase.Setup(d => d.PingAsync(It.IsAny<CommandFlags>())).ReturnsAsync(TimeSpan.FromMilliseconds(50));
         _mockRedis.Setup(r => r.GetEndPoints(It.IsAny<bool>())).Returns([]);
-        var cancellationTokenSource = new CancellationTokenSource();
+        using var cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = cancellationTokenSource.Token;
 
         var result = await _healthCheck.CheckHealthAsync(new HealthCheckContext(), cancellationToken);
