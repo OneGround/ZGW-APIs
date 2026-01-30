@@ -1,9 +1,28 @@
-﻿using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Models;
+using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Models;
+using StackExchange.Redis;
 
 namespace OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 
 public interface ICircuitBreakerSubscriberHealthTracker
 {
+    /// <summary>
+    /// Retrieves all cache key-value pairs from the underlying Redis store.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of tuples, each
+    /// consisting of a Redis key and its associated string value. The collection is empty if no cache entries are
+    /// present.
+    /// </returns>
+    Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes all unhealthy items from the collection.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <param name="onlyTheseRedisKeys">An optional list of specific Redis keys to clear.</param>
+    /// <returns>The number of cleared unhealthy subscribers.</returns>
+    Task<int> ClearAllUnhealthyAsync(CancellationToken cancellationToken = default, params string[] onlyTheseRedisKeys);
+
     /// <summary>
     /// Checks if a subscriber endpoint is healthy and available to receive notifications.
     /// </summary>
