@@ -1,5 +1,4 @@
 using Hangfire;
-using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Configuration;
@@ -7,9 +6,8 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Notificaties.Messaging;
-using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
-using OneGround.ZGW.Notificaties.Messaging.UI;
+using OneGround.ZGW.Notificaties.Messaging.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,12 +29,6 @@ if (app.Environment.IsLocal())
 }
 
 // Additionally add an extra custom Hangfire menu for health monitor
-DashboardRoutes.Routes.Add(
-    "/unhealthmonitor",
-    new UnhealthMonitorDashboardPage(app.Services.GetRequiredService<ICircuitBreakerSubscriberHealthTracker>())
-);
-
-// Add a menu-item to the Hangfire Dashboard navigation bar
-NavigationMenu.Items.Add(page => new MenuItem("Unhealth Monitor", "/hangfire/unhealthmonitor"));
+app.AddHangfireUnhealthMonitor();
 
 await app.RunAsync();
