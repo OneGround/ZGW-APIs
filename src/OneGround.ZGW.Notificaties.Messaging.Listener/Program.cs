@@ -26,9 +26,9 @@ app.MapOneGroundHealthChecks();
 if (app.Environment.IsLocal())
 {
     app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireLocalAuthFilter() } });
-}
 
-// Additionally add an extra custom Hangfire menu for health monitor
-app.AddHangfireUnhealthMonitor();
+    // Additionally add an extra custom Hangfire menu for health monitor
+    app.AddHangfireUnhealthMonitor();
+}
 
 await app.RunAsync();
