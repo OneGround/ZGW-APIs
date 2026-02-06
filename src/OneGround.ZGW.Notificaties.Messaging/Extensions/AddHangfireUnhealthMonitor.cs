@@ -19,6 +19,6 @@ public static class WebApplicationExtension
         );
 
         // Add a menu-item to the Hangfire Dashboard navigation bar
-        NavigationMenu.Items.Add(page => new MenuItem("Unhealth Monitor", $"/hangfire/{UnhealthMonitorUrl}"));
+        NavigationMenu.Items.Add(page => new MenuItem("Unhealthy endpoints", $"/hangfire/{UnhealthMonitorUrl}"));
     }
 }
