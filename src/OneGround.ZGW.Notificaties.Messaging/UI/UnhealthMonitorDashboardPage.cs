@@ -348,7 +348,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         }})
                         .finally(() => {{
                             btn.disabled = false;
-                            btn.textContent = 'Clear Cache';
+                            btn.textContent = 'Clear all';
                         }});
                     }}
                     
@@ -371,7 +371,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                 <div id='notification' class='notification'></div>
                 <div class='container'>
                     <div class='header'>
-                        <h1>Webhook Receiver Unhealth Monitor</h1>
+                        <h1>Unhealthy notification receiver endpoints</h1>
                         <div class='header-actions'>
                             <div class='toggle-container'>
                                 <span class='toggle-label'>Auto Refresh</span>
@@ -380,7 +380,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                                     <span class='toggle-slider'></span>
                                 </label>
                             </div>
-                            <button id='clearCacheBtn' class='clear-cache-btn' onclick='clearCache()'>Clear Cache</button>
+                            <button id='clearCacheBtn' class='clear-cache-btn' onclick='clearCache()'>Clear all</button>
                             <a href='javascript:history.back()' class='back-link'>Back to Previous Page</a>
                         </div>
                     </div>
