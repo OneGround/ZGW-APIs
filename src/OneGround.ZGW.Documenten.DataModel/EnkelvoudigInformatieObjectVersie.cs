@@ -140,4 +140,7 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
     [MaxLength(250)]
     [Column("multipartdocument_id")]
     public string MultiPartDocumentId { get; set; }
+
+    // Note: maps with the Postgres build in xmin concurrency token (uint is the C# equivalent for the Postgres 'xid' type)
+    public uint RowVersion { get; set; }
 }

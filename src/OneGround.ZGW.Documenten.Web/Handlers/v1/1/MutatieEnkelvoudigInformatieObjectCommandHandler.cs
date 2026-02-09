@@ -219,18 +219,4 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
     protected IDocumentService DocumentService => _lazyDocumentService.Value;
 
     protected AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" };
-
-    protected void LogFunctionalEntityKeys(string message, EnkelvoudigInformatieObjectVersie versie)
-    {
-        _logger.LogWarning("Database exception occured: {message}. Key dump creating/updating EnkelvoudigInformatieObject version...", message);
-        _logger.LogWarning(
-            "-{labelVersieEnkelvoudigInformatieObjectId}: {versieEnkelvoudigInformatieObjectId}",
-            nameof(versie.EnkelvoudigInformatieObjectId),
-            versie.EnkelvoudigInformatieObjectId
-        );
-        _logger.LogWarning("-{labelVersieOwner}: {versieOwner}", nameof(versie.Owner), versie.Owner);
-        _logger.LogWarning("-{labelVersieBronorganisatie}: {versieBronorganisatie}", nameof(versie.Bronorganisatie), versie.Bronorganisatie);
-        _logger.LogWarning("-{labelVersieIdentificatie}: {versieIdentificatie}", nameof(versie.Identificatie), versie.Identificatie);
-        _logger.LogWarning("-{labelVersieVersie}: {versieVersie}", nameof(versie.Versie), versie.Versie);
-    }
 }

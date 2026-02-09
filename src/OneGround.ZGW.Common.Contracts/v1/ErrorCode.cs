@@ -64,6 +64,6 @@ public static class ErrorCode
     public const string SelfForbidden = "self-forbidden";
     public const string AmbiguousCatalogi = "ambiguous-catalogi";
     public const string FileSize = "file-size";
-
-    public const string Other = "other"; // TODO: In some cases I don't know the exact code to use. Where can we find them?
+    public const string Conflict = "conflict";
+    public const string Other = "other";
 }

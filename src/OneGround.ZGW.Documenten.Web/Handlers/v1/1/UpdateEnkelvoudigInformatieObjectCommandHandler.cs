@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -81,29 +83,45 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
         ValidateFile(versie, errors);
 
-        // Add new version of the EnkelvoudigInformatieObject
+        // Use ReadCommitted isolation level:
+        // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
+        // - xmin (configured in EnkelvoudigInformatieObject) provides optimistic concurrency detection (detects any changes since read)
+        // - ReadCommitted allows better concurrency than Serializable for this use case
+        // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
+        using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        // First, try to acquire lock on the EnkelvoudigInformatieObject
         var existingEnkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.AsSplitQuery()
+            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId])
+            .AsSplitQuery()
             .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .Include(e => e.EnkelvoudigInformatieObjectVersies)
             .Include(e => e.GebruiksRechten)
-            .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
+            .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
 
         if (existingEnkelvoudigInformatieObject == null)
         {
-            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-        }
+            // The object might be locked OR not exist - check if it exists without lock
+            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(
+                e => e.Id == request.ExistingEnkelvoudigInformatieObjectId,
+                cancellationToken
+            );
 
-        // FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-        if (existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie == null)
-        {
-            // Not very elegant but it's a temporary work around until we figure out the problem. So IsAuthorized call next will work now
-            var latestVersion = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
-            existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
+            if (!exists)
+            {
+                // Object truly doesn't exist
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+            }
 
-            _logger.LogWarning("LatestEnkelvoudigInformatieObjectVersie is NULL -> restored");
+            // Object exists but is locked by another process
+            var error = new ValidationError(
+                "nonFieldErrors",
+                ErrorCode.Conflict,
+                $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
+            );
+
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
-        // ----
 
         if (!_authorizationContext.IsAuthorized(existingEnkelvoudigInformatieObject, AuthorizationScopes.Documenten.Update))
         {
@@ -143,7 +161,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
 
             versie.BeginRegistratie = DateTime.UtcNow;
-            versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId.Value;
+            versie.EnkelvoudigInformatieObjectId = request.ExistingEnkelvoudigInformatieObjectId;
             // Clone the EnkelvoudigInformatieObject from previous version
             versie.InformatieObject = existingEnkelvoudigInformatieObject;
             versie.InformatieObject.InformatieObjectType = informatieObjectType;
@@ -208,20 +226,12 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                 await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
 
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+            // TODO: Temporary DELAY to test distributed lock functionality
+            await Task.Delay(request.ProcessDelay * 1000, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await tx.CommitAsync(cancellationToken);
         }
 
         _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created new version", versie.InformatieObject.Id);
@@ -239,6 +249,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
-    public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; }
+    public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
+    public int ProcessDelay { get; internal set; }
 }

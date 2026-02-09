@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -96,4 +96,8 @@ public interface IErrorResponseBuilder
     /// <param name="message"></param>
     /// <returns></returns>
     JsonResult InternalServerError(string message = "");
+
+    JsonResult Conflict();
+
+    JsonResult Conflict(IEnumerable<ValidationError> validationErrors);
 }

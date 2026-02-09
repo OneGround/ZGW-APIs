@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Moq;
 using Newtonsoft.Json;
-using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;

@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -181,34 +180,21 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            try
-            {
-                using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-                // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-                await _context.SaveChangesAsync(cancellationToken);
+            using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
+            await _context.SaveChangesAsync(cancellationToken);
 
-                // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-                versie.InformatieObject.CatalogusId = catalogusId;
+            // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.CatalogusId = catalogusId;
 
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
-                await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
+            await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
 
-                await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
-                await trans.CommitAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+            await trans.CommitAsync(cancellationToken);
         }
 
         _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);

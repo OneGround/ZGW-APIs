@@ -113,6 +113,12 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 e.LatestEnkelvoudigInformatieObjectVersieId,
             });
 
+        // Configure optimistic concurrency. Declare PostgreSQL xmin. PostgreSQL automatically maintains an xmin system column for every row, which is updated on every modification. This serves as a natural concurrency token.
+        modelBuilder.Entity<EnkelvoudigInformatieObject>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
+
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()
             .HasIndex(e => new
@@ -121,6 +127,12 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 e.Id,
                 e.Vertrouwelijkheidaanduiding,
             });
+
+        // Configure optimistic concurrency. Declare PostgreSQL xmin. PostgreSQL automatically maintains an xmin system column for every row, which is updated on every modification. This serves as a natural concurrency token.
+        modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
 
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()

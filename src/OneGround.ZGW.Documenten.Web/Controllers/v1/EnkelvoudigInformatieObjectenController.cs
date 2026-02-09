@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using AutoMapper;
@@ -228,13 +229,15 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Operations.EnkelvoudigInformatieObjecten.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> UpdateAsync([FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest, Guid id)
+    public async Task<IActionResult> UpdateAsync([FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest, Guid id, CancellationToken cancelationToken)
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {@FromBody}, {Rsin}",
@@ -255,7 +258,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
-            }
+            }, cancelationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -273,6 +276,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
+        }
+
         var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
 
         return Ok(enkelvoudigInformatieObjectResponse);
@@ -284,17 +292,19 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Operations.EnkelvoudigInformatieObjecten.PartialUpdate)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> PartialUpdateAsync([FromBody] dynamic partialEnkelvoudigInformatieObjectRequest, Guid id)
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] dynamic partialEnkelvoudigInformatieObjectRequest, Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true });
+        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true }, cancellationToken);
 
         if (resultGet.Status == QueryStatus.NotFound)
         {
@@ -329,12 +339,22 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = true,
-            }
+            }, cancellationToken
         );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
 
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
         }
 
         var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
@@ -436,17 +456,19 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Lock, Name = Operations.EnkelvoudigInformatieObjecten.Lock)]
     [Scope(AuthorizationScopes.Documenten.Lock)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(LockResponseDto))]
-    public async Task<IActionResult> LockAsync(Guid id)
+    public async Task<IActionResult> LockAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(LockAsync), id);
 
-        var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true });
+        var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -461,6 +483,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
         }
 
         var response = new LockResponseDto { Lock = result.Result };
@@ -479,13 +506,15 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Unlock, Name = Operations.EnkelvoudigInformatieObjecten.Unlock)]
     [Scope(AuthorizationScopes.Documenten.Lock, AuthorizationScopes.Documenten.ForcedUnlock)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [IgnoreMissingContentType]
-    public async Task<IActionResult> UnlockAsync(Guid id, [FromBody] LockRequestDto request)
+    public async Task<IActionResult> UnlockAsync(Guid id, [FromBody] LockRequestDto request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromBody}", nameof(UnlockAsync), id, request);
 
@@ -495,7 +524,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 Id = id,
                 Set = false,
                 Lock = request?.Lock,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -511,6 +541,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
         }
 
         return NoContent();

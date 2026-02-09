@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -129,16 +129,18 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// </remarks>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ObjectInformatieObjecten.Create, Name = Operations.ObjectInformatieObjecten.Create)]
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ObjectInformatieObjectResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> AddAsync([FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest)
+    public async Task<IActionResult> AddAsync([FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), objectInformatieObjectRequest);
 
@@ -149,7 +151,8 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             {
                 ObjectInformatieObject = objectInformatieObject,
                 InformatieObjectUrl = objectInformatieObjectRequest.InformatieObject,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.ValidationError)
@@ -160,6 +163,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         if (result.Status == CommandStatus.Forbidden)
         {
             return _errorResponseBuilder.Forbidden();
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
         }
 
         var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
