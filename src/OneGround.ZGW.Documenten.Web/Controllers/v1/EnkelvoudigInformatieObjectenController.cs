@@ -237,7 +237,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> UpdateAsync([FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest, Guid id, CancellationToken cancelationToken)
+    public async Task<IActionResult> UpdateAsync(
+        [FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest,
+        Guid id,
+        CancellationToken cancelationToken
+    )
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {@FromBody}, {Rsin}",
@@ -258,7 +262,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
-            }, cancelationToken
+            },
+            cancelationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -300,7 +305,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> PartialUpdateAsync([FromBody] dynamic partialEnkelvoudigInformatieObjectRequest, Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> PartialUpdateAsync(
+        [FromBody] dynamic partialEnkelvoudigInformatieObjectRequest,
+        Guid id,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
@@ -339,7 +348,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = true,
-            }, cancellationToken
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)

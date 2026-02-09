@@ -347,7 +347,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true });
+        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true }, cancellationToken);
 
         if (resultGet.Status == QueryStatus.NotFound)
         {
@@ -383,7 +383,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = true,
                 ProcessDelay = processdelay,
-            }, cancellationToken
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -575,7 +576,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [IgnoreMissingContentType]
-    public async Task<IActionResult> UnlockAsync(Guid id, [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UnlockAsync(
+        Guid id,
+        [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromBody}", nameof(UnlockAsync), id, request);
 
@@ -585,7 +590,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 Id = id,
                 Set = false,
                 Lock = request?.Lock,
-            }, cancellationToken
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)

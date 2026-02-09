@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -140,7 +141,10 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> AddAsync([FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest, CancellationToken cancellationToken)
+    public async Task<IActionResult> AddAsync(
+        [FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), objectInformatieObjectRequest);
 

@@ -366,6 +366,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
                 MergeWithPartial = null,
+                ProcessDelay = processdelay,
             },
             cancellationToken
         );
@@ -685,12 +686,12 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         );
 
         // Note: we should investigate who send the 2-letter language code so we log for these situations
-        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal); // |TODO
+        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         return (versie: enkelvoudigInformatieObjectVersie, errors: null);
     }
 
-    private List<ValidationError> ToValidationResult(ValidationResult validationResult)
+    private static List<ValidationError> ToValidationResult(ValidationResult validationResult)
     {
         return validationResult
             .Errors.Select(e => new ValidationError
