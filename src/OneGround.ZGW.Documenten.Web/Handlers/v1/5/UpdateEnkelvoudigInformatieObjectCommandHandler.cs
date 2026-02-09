@@ -210,6 +210,9 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
             try
             {
+                // TODO: Temporary DELAY to test distributed lock functionality
+                await Task.Delay(request.ProcessDelay * 1000, cancellationToken);
+
                 await _context.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateConcurrencyException ex)
@@ -241,4 +244,5 @@ public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<E
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
+    public int ProcessDelay { get; internal set; }
 }

@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using AutoMapper;
@@ -33,6 +34,7 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Configuration;
 using OneGround.ZGW.Documenten.Web.Contracts.v1._5;
+using OneGround.ZGW.Documenten.Web.Filters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using Swashbuckle.AspNetCore.Annotations;
@@ -326,13 +328,21 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="423">Locked - Another process is holding the lock</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
+    [ExclusiveLock("id")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> UpdateAsync([FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest, Guid id)
+    [SwaggerResponse(StatusCodes.Status423Locked, Description = "Resource is locked by another process")]
+    public async Task<IActionResult> UpdateAsync(
+        [FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest,
+        Guid id,
+        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
+        CancellationToken cancellationToken = default
+    )
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {@FromBody}, {Rsin}",
@@ -351,7 +361,9 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = false,
-            }
+                ProcessDelay = processdelay,
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -383,18 +395,26 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="423">Locked - Another process is holding the lock</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.PartialUpdate)]
     [Scope(AuthorizationScopes.Documenten.Update)]
+    [ExclusiveLock("id")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectUpdateResponseDto))]
-    public async Task<IActionResult> PartialUpdateAsync([FromBody] dynamic partialEnkelvoudigInformatieObjectRequest, Guid id)
+    [SwaggerResponse(StatusCodes.Status423Locked, Description = "Resource is locked by another process")]
+    public async Task<IActionResult> PartialUpdateAsync(
+        [FromBody] dynamic partialEnkelvoudigInformatieObjectRequest,
+        Guid id,
+        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
+        CancellationToken cancellationToken = default
+    )
     {
         // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true });
+        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true }, cancellationToken);
 
         if (resultGet.Status == QueryStatus.NotFound)
         {
@@ -426,7 +446,9 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
                 IsPartialUpdate = true,
-            }
+                ProcessDelay = processdelay,
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -550,17 +572,25 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="423">Locked - Another process is holding the lock</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Lock, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Lock)]
     [Scope(AuthorizationScopes.Documenten.Lock)]
+    [ExclusiveLock("id")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(Documenten.Contracts.v1.Responses.LockResponseDto))]
-    public async Task<IActionResult> LockAsync(Guid id)
+    [SwaggerResponse(StatusCodes.Status423Locked, Description = "Resource is locked by another process")]
+    public async Task<IActionResult> LockAsync(
+        Guid id,
+        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
+        CancellationToken cancellationToken = default
+    )
     {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(LockAsync), id);
+        // TODO: Temporary DELAY to test distributed lock functionality
+        await Task.Delay(processdelay * 1000, cancellationToken);
 
-        var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true });
+        var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -593,15 +623,24 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="423">Locked - Another process is holding the lock</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Unlock, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Unlock)]
     [Scope(AuthorizationScopes.Documenten.Lock, AuthorizationScopes.Documenten.ForcedUnlock)]
+    [ExclusiveLock("id")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status423Locked, Description = "Resource is locked by another process")]
     [IgnoreMissingContentType]
-    public async Task<IActionResult> UnlockAsync(Guid id, [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request)
+    public async Task<IActionResult> UnlockAsync(
+        Guid id,
+        [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request,
+        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
+        CancellationToken cancellationToken = default
+    )
     {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromBody}", nameof(UnlockAsync), id, request);
+        // TODO: Temporary DELAY to test distributed lock functionality
+        await Task.Delay(processdelay * 1000, cancellationToken);
 
         var result = await _mediator.Send(
             new LockEnkelvoudigInformatieObjectCommand
@@ -609,7 +648,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 Id = id,
                 Set = false,
                 Lock = request?.Lock,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)

@@ -156,6 +156,8 @@ public class Startup
         services.AddCorrelationId();
         services.AddBatchId();
 
+        services.AddSingleton<IDistributedLockFactory, DistributedLockFactory>();
+
         services.AddServiceEndpoints(Configuration);
 
         services.AddScoped<IDbUserContext, DbUserContext>();
