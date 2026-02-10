@@ -45,4 +45,7 @@ public class GebruiksRecht : IAuditableEntity, IUrlEntity, IInformatieObjectEnti
 
     [ForeignKey(nameof(InformatieObjectId))]
     public EnkelvoudigInformatieObject InformatieObject { get; set; }
+
+    // Note: maps with the Postgres build in xmin concurrency token (uint is the C# equivalent for the Postgres 'xid' type)
+    public uint RowVersion { get; set; }
 }

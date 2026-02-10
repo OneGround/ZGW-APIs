@@ -269,7 +269,7 @@ public class ErrorResponseBuilder : IErrorResponseBuilder
 
     public JsonResult Conflict()
     {
-        var statusCode = (int)HttpStatusCode.Locked;
+        var statusCode = (int)HttpStatusCode.Conflict;
 
         return new JsonResult(
             new ErrorResponse

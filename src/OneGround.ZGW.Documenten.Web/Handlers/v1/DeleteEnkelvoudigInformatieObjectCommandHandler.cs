@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Notificaties;
@@ -61,8 +63,17 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
+        // Use ReadCommitted isolation level:
+        // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
+        // - xmin (configured in EnkelvoudigInformatieObject) provides optimistic concurrency detection (detects any changes since read)
+        // - ReadCommitted allows better concurrency than Serializable for this use case
+        // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
+        using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        // First, try to acquire lock on the EnkelvoudigInformatieObject
         var enkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.Include(x => x.ObjectInformatieObjecten)
+            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
+            .Include(x => x.ObjectInformatieObjecten)
             .Include(x => x.EnkelvoudigInformatieObjectVersies)
             .Include(x => x.LatestEnkelvoudigInformatieObjectVersie)
             .Where(rsinFilter)
@@ -72,7 +83,23 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         if (enkelvoudigInformatieObject == null)
         {
-            return new CommandResult(CommandStatus.NotFound);
+            // The object might be locked OR not exist - check if it exists without lock
+            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(e => e.Id == request.Id, cancellationToken);
+
+            if (!exists)
+            {
+                // Object truly doesn't exist
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+            }
+
+            // Object exists but is locked by another process
+            var error = new ValidationError(
+                "nonFieldErrors",
+                ErrorCode.Conflict,
+                $"Het enkelvoudiginformatieobject {request.Id} is vergrendeld door een andere bewerking."
+            );
+
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
 
         // NOTE: Vernietigen van informatieobjecten (drc-008) => Een EnkelvoudigInformatieObject MAG ALLEEN verwijderd worden indien er geen ObjectInformatieObject-en meer aan hangen.
@@ -107,31 +134,28 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         {
             _logger.LogDebug("Deleting EnkelvoudigInformatieObject {Id}....", enkelvoudigInformatieObject.Id);
 
-            await using (var trans = await _context.Database.BeginTransactionAsync(cancellationToken))
-            {
-                await _context
-                    .EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id)
-                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.LatestEnkelvoudigInformatieObjectVersieId, y => null), cancellationToken);
+            await _context
+                .EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.LatestEnkelvoudigInformatieObjectVersieId, y => null), cancellationToken);
 
-                // Remove the audittrail for this EnkelvoudigInformatieObjecten first
-                await _context
-                    .AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
-                    .ExecuteDeleteAsync(cancellationToken);
+            // Remove the audittrail for this EnkelvoudigInformatieObjecten first
+            await _context
+                .AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
+                .ExecuteDeleteAsync(cancellationToken);
 
-                await _context.EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
+            await _context.EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
 
-                var latestEnkelvoudigInformatieObjectVersieIdentificatie = enkelvoudigInformatieObject
-                    .LatestEnkelvoudigInformatieObjectVersie
-                    ?.Identificatie;
+            var latestEnkelvoudigInformatieObjectVersieIdentificatie = enkelvoudigInformatieObject
+                .LatestEnkelvoudigInformatieObjectVersie
+                ?.Identificatie;
 
-                await audittrail.DestroyedAsync(
-                    enkelvoudigInformatieObject,
-                    toelichting: $"Betreft enkelvoudiginformatieobject met identificatie {latestEnkelvoudigInformatieObjectVersieIdentificatie}",
-                    cancellationToken
-                );
+            await audittrail.DestroyedAsync(
+                enkelvoudigInformatieObject,
+                toelichting: $"Betreft enkelvoudiginformatieobject met identificatie {latestEnkelvoudigInformatieObjectVersieIdentificatie}",
+                cancellationToken
+            );
 
-                await trans.CommitAsync(cancellationToken);
-            }
+            await tx.CommitAsync(cancellationToken);
 
             _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully deleted.", enkelvoudigInformatieObject.Id);
         }

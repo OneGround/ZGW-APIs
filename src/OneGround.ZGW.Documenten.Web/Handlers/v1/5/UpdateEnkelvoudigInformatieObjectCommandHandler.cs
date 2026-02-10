@@ -154,7 +154,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             versie,
             _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
             request.ExistingEnkelvoudigInformatieObjectId,
-            request.IsPartialUpdate,
+            isPartialUpdate,
             apiVersie: 1.5M,
             errors,
             cancellationToken
@@ -234,7 +234,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
-            if (request.IsPartialUpdate)
+            if (isPartialUpdate)
             {
                 await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
@@ -267,7 +267,6 @@ public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<E
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public bool IsPartialUpdate { get; internal set; }
     public int ProcessDelay { get; internal set; }
     public Func<EnkelvoudigInformatieObject, (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors)> MergeWithPartial
     {

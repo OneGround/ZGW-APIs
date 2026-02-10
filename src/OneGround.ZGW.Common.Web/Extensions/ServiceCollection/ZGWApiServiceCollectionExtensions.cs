@@ -4,9 +4,7 @@ using System.Reflection;
 using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -63,10 +61,7 @@ public static class ZGWApiServiceCollectionExtensions
         services.Replace(ServiceDescriptor.Transient<IApiVersionParser, ZgwApiVersionParser>());
 
         services
-            .AddControllers(options =>
-            {
-                options.Filters.Add<ConcurrencyExceptionFilter>();
-            })
+            .AddControllers()
             .AddNewtonsoftJson(options =>
             {
                 zgwApiOptions.NewtonsoftJsonOptions?.Invoke(options);
@@ -114,25 +109,5 @@ public static class ZGWApiServiceCollectionExtensions
 
         var zgwVersion = ApplicationInformation.GetVersion();
         services.AddSwagger(apiName, zgwVersion, zgwApiOptions.SwaggerGenOptions, zgwApiOptions.AddSwaggerOptions);
-    }
-}
-
-public class ConcurrencyExceptionFilter : IExceptionFilter
-{
-    public void OnException(ExceptionContext context)
-    {
-        if (context.Exception is DbUpdateConcurrencyException)
-        {
-            // You can optionally extract the current database values here
-            // to send back to the client so they can see what changed.
-            context.Result = new ConflictObjectResult(
-                new
-                {
-                    Message = "A concurrency conflict occurred.",
-                    Details = "The record you attempted to edit was modified by another user after you got its original values.",
-                }
-            );
-            context.ExceptionHandled = true;
-        }
     }
 }

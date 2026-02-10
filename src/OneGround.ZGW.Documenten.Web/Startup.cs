@@ -83,7 +83,8 @@ public class Startup
                 };
 
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
-            }
+            } /*,
+            addConcurrencyExceptionFilter: true*/
         );
 
         services.AddOneGroundHealthChecks().AddRedisCheck();
