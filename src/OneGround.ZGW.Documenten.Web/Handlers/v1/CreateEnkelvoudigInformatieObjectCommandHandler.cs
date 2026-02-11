@@ -97,6 +97,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
         bool isPartialUpdate = request.MergeWithPartial != null && request.EnkelvoudigInformatieObjectVersie == null;
 
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+
         // Set version first because business-rule wants to verify against
         EnkelvoudigInformatieObject existingEnkelvoudigInformatieObject = null;
         if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
@@ -104,6 +106,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             // Add new version of the EnkelvoudigInformatieObject
             existingEnkelvoudigInformatieObject = await _context
                 .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
+                .Where(rsinFilter)
                 .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
                 .Include(e => e.EnkelvoudigInformatieObjectVersies)
                 .Include(e => e.GebruiksRechten)
@@ -112,10 +115,9 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             if (existingEnkelvoudigInformatieObject == null)
             {
                 // The object might be locked OR not exist - check if it exists without lock
-                var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(
-                    e => e.Id == request.ExistingEnkelvoudigInformatieObjectId,
-                    cancellationToken
-                );
+                var exists = await _context
+                    .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                    .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
 
                 if (!exists)
                 {

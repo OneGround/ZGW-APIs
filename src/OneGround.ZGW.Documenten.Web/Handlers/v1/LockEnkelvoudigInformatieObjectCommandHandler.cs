@@ -70,7 +70,7 @@ class LockEnkelvoudigInformatieObjectCommandHandler
         if (enkelvoudigInformatieObject == null)
         {
             // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(e => e.Id == request.Id, cancellationToken);
+            var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, cancellationToken);
 
             if (!exists)
             {

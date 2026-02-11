@@ -61,14 +61,14 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
     {
         _logger.LogDebug("Get EnkelvoudigInformatieObject {Id}....", request.Id);
 
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
-
         // Use ReadCommitted isolation level:
         // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
         // - xmin (configured in EnkelvoudigInformatieObject) provides optimistic concurrency detection (detects any changes since read)
         // - ReadCommitted allows better concurrency than Serializable for this use case
         // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
         using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
         // First, try to acquire lock on the EnkelvoudigInformatieObject
         var enkelvoudigInformatieObject = await _context
@@ -84,7 +84,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         if (enkelvoudigInformatieObject == null)
         {
             // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(e => e.Id == request.Id, cancellationToken);
+            var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, cancellationToken);
 
             if (!exists)
             {

@@ -83,9 +83,12 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
         using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+
         // First, try to acquire lock on the EnkelvoudigInformatieObject
         var existingEnkelvoudigInformatieObject = await _context
             .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId])
+            .Where(rsinFilter)
             .AsSplitQuery()
             .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .Include(e => e.EnkelvoudigInformatieObjectVersies)
@@ -95,10 +98,9 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         if (existingEnkelvoudigInformatieObject == null)
         {
             // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(
-                e => e.Id == request.ExistingEnkelvoudigInformatieObjectId,
-                cancellationToken
-            );
+            var exists = await _context
+                .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
 
             if (!exists)
             {

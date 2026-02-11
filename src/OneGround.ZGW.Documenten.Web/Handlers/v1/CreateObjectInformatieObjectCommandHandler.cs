@@ -73,7 +73,9 @@ class CreateObjectInformatieObjectCommandHandler
         if (informatieObject == null)
         {
             // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.AnyAsync(e => e.Id == enkelvoudigInformatieObjectId, cancellationToken);
+            var exists = await _context
+                .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                .AnyAsync(e => e.Id == enkelvoudigInformatieObjectId, cancellationToken);
 
             if (!exists)
             {
