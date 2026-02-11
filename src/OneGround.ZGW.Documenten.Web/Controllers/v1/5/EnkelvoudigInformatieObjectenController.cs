@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using AutoMapper;
-using FluentValidation.Results;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +25,7 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
@@ -663,28 +663,14 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
         {
-            return (versie: null, errors: ToValidationResult(validationResult));
+            return (versie: null, errors: validationResult.ToValidationErrors());
         }
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
-            mergedEnkelvoudigInformatieObjectRequest
-        );
+        var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(mergedEnkelvoudigInformatieObjectRequest);
 
         // Note: we should investigate who send the 2-letter language code so we log for these situations
         LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         return (versie: enkelvoudigInformatieObjectVersie, errors: null);
-    }
-
-    private static List<ValidationError> ToValidationResult(ValidationResult validationResult)
-    {
-        return validationResult
-            .Errors.Select(e => new ValidationError
-            {
-                Name = e.PropertyName,
-                Code = e.ErrorCode,
-                Reason = e.ErrorMessage,
-            })
-            .ToList();
     }
 }
