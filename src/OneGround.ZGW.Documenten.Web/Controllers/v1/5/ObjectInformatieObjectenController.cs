@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -62,13 +63,19 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ObjectInformatieObjectResponseExpandedDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
         var filter = _mapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter });
+        var result = await _mediator.Send(
+            new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
+            cancellationToken
+        );
 
         var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
@@ -106,11 +113,15 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(
+        Guid id,
+        [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id });
+        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -157,8 +168,12 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters)
+    public Task<IActionResult> HeadAsync(
+        Guid id,
+        [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
-        return GetAsync(id, queryParameters);
+        return GetAsync(id, queryParameters, cancellationToken);
     }
 }

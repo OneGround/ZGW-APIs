@@ -55,13 +55,19 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
         var filter = _mapper.Map<GetAllObjectInformatieObjectenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter });
+        var result = await _mediator.Send(
+            new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
+            cancellationToken
+        );
 
         var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
@@ -88,11 +94,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id });
+        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -201,11 +207,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> DeleteAsync(Guid id)
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteObjectInformatieObjectCommand { Id = id });
+        var result = await _mediator.Send(new DeleteObjectInformatieObjectCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

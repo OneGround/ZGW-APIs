@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -97,14 +98,21 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<VerzendingResponseExpandedDto>))]
     [Expand]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllVerzendingenQueryParameters queryParameters, int page = 1)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllVerzendingenQueryParameters queryParameters,
+        int page = 1,
+        CancellationToken cancellationToken = default
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.VerzendingenPageSize));
         var filter = _mapper.Map<GetAllVerzendingenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetAllVerzendingenQuery { GetAllVerzendingenFilter = filter, Pagination = pagination });
+        var result = await _mediator.Send(
+            new GetAllVerzendingenQuery { GetAllVerzendingenFilter = filter, Pagination = pagination },
+            cancellationToken
+        );
 
         if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
         {
@@ -136,7 +144,8 @@ public class VerzendingenController : ZGWControllerBase
                 Count = paginationResponse.Results.Count(),
                 TotalCount = paginationResponse.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "verzending" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(paginationResponse);
@@ -160,11 +169,11 @@ public class VerzendingenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
-        var result = await _mediator.Send(new GetVerzendingQuery { Id = id });
+        var result = await _mediator.Send(new GetVerzendingQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -192,7 +201,8 @@ public class VerzendingenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "verzending" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(verzendingWithOptionalExpand);
@@ -212,9 +222,9 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters)
+    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters, CancellationToken cancellationToken)
     {
-        return GetAsync(id, queryParameters);
+        return GetAsync(id, queryParameters, cancellationToken);
     }
 
     //
@@ -231,14 +241,15 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(VerzendingResponseDto))]
-    public async Task<IActionResult> AddAsync([FromBody] VerzendingRequestDto verzendingRequest)
+    public async Task<IActionResult> AddAsync([FromBody] VerzendingRequestDto verzendingRequest, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), verzendingRequest);
 
         var verzending = _mapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
-            new CreateVerzendingCommand { Verzending = verzending, InformatieObjectUrl = verzendingRequest.InformatieObject }
+            new CreateVerzendingCommand { Verzending = verzending, InformatieObjectUrl = verzendingRequest.InformatieObject },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.Forbidden)
@@ -271,7 +282,7 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
-    public async Task<IActionResult> UpdateAsync([FromBody] VerzendingRequestDto verzendingRequest, Guid id)
+    public async Task<IActionResult> UpdateAsync([FromBody] VerzendingRequestDto verzendingRequest, Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(UpdateAsync), verzendingRequest);
 
@@ -284,7 +295,8 @@ public class VerzendingenController : ZGWControllerBase
                 InformatieObjectUrl = verzendingRequest.InformatieObject,
                 Verzending = verzending,
                 IsPartialUpdate = false,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -322,12 +334,12 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
-    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialVerzendingRequest, Guid id)
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialVerzendingRequest, Guid id, CancellationToken cancellationToken)
     {
         // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetVerzendingQuery { Id = id });
+        var resultGet = await _mediator.Send(new GetVerzendingQuery { Id = id }, cancellationToken);
 
         if (resultGet.Status == QueryStatus.NotFound)
         {
@@ -358,7 +370,8 @@ public class VerzendingenController : ZGWControllerBase
                 Verzending = mergedVerzending,
                 InformatieObjectUrl = mergedVerzendingRequest.InformatieObject,
                 IsPartialUpdate = true,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -391,11 +404,11 @@ public class VerzendingenController : ZGWControllerBase
     [HttpDelete(ApiRoutes.Verzendingen.Delete, Name = Operations.Verzendingen.Delete)]
     [Scope(AuthorizationScopes.Documenten.Delete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> DeleteAsync(Guid id)
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteVerzendingCommand { Id = id });
+        var result = await _mediator.Send(new DeleteVerzendingCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

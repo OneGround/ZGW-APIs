@@ -86,7 +86,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters, int page = 1)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters,
+        int page = 1,
+        CancellationToken cancellationToken = default
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
@@ -94,7 +98,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
-            new GetAllEnkelvoudigInformatieObjectenQuery { GetAllEnkelvoudigInformatieObjectenFilter = filter, Pagination = pagination }
+            new GetAllEnkelvoudigInformatieObjectenQuery { GetAllEnkelvoudigInformatieObjectenFilter = filter, Pagination = pagination },
+            cancellationToken
         );
 
         if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
@@ -119,7 +124,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 Count = paginationResponse.Results.Count(),
                 TotalCount = paginationResponse.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(paginationResponse);
@@ -141,13 +147,20 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(
+        Guid id,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
         var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter });
+        var result = await _mediator.Send(
+            new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
+            cancellationToken
+        );
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -168,7 +181,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(enkelvoudigInformatieObjectResponse);
@@ -188,7 +202,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(EnkelvoudigInformatieObjectCreateResponseDto))]
-    public async Task<IActionResult> AddAsync([FromBody] EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObjectRequest)
+    public async Task<IActionResult> AddAsync(
+        [FromBody] EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObjectRequest,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {@FromBody}, {Rsin}",
@@ -203,7 +220,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         var result = await _mediator.Send(
-            new CreateEnkelvoudigInformatieObjectCommand { EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie }
+            new CreateEnkelvoudigInformatieObjectCommand { EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.Forbidden)
@@ -241,7 +259,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> UpdateAsync(
         [FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest,
         Guid id,
-        CancellationToken cancelationToken
+        CancellationToken cancellationToken
     )
     {
         _logger.LogDebug(
@@ -265,7 +283,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
                 MergeWithPartial = null,
             },
-            cancelationToken
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)
@@ -361,13 +379,20 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Operations.EnkelvoudigInformatieObjecten.Download)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [Produces("application/octet-stream")]
-    public async Task<IActionResult> DownloadAsync(Guid id, [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters)
+    public async Task<IActionResult> DownloadAsync(
+        Guid id,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(DownloadAsync), id, queryParameters);
 
         var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter });
+        var resultGet = await _mediator.Send(
+            new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
+            cancellationToken
+        );
 
         if (resultGet.Status == QueryStatus.NotFound)
         {
@@ -397,7 +422,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 DocumentUrn = documentUrn,
                 EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
-            }
+            },
+            cancellationToken
         );
 
         if (resultDwnl.Status == QueryStatus.NotFound)
@@ -413,7 +439,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 SubEntity = enkelvoudigInformatieObjectVersie,
                 OverruleActieWeergave = "Object gedownload",
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
-            }
+            },
+            cancellationToken
         );
 
         var cd = new ContentDisposition { FileName = HttpUtility.UrlPathEncode(enkelvoudigInformatieObjectVersie.Bestandsnaam) };
@@ -556,11 +583,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> DeleteAsync(Guid id)
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteEnkelvoudigInformatieObjectCommand { Id = id });
+        var result = await _mediator.Send(new DeleteEnkelvoudigInformatieObjectCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -602,7 +629,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<AuditTrailRegelDto>))]
-    public async Task<IActionResult> GetAllAuditTrailRegelsAsync(Guid enkelvoudiginformatieobject_uuid)
+    public async Task<IActionResult> GetAllAuditTrailRegelsAsync(Guid enkelvoudiginformatieobject_uuid, CancellationToken cancellationToken)
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {EnkelvoudigInformatieObjectUuid}",
@@ -611,7 +638,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         );
 
         var result = await _mediator.Send(
-            new GetAllEnkelvoudigInformatieObjectAuditTrailRegels { EnkelvoudigInformatieObjectId = enkelvoudiginformatieobject_uuid }
+            new GetAllEnkelvoudigInformatieObjectAuditTrailRegels { EnkelvoudigInformatieObjectId = enkelvoudiginformatieobject_uuid },
+            cancellationToken
         );
 
         if (result.Status == QueryStatus.Forbidden)
@@ -646,7 +674,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(AuditTrailRegelDto))]
-    public async Task<IActionResult> GetAuditTrailRegelAsync(Guid enkelvoudiginformatieobject_uuid, Guid uuid)
+    public async Task<IActionResult> GetAuditTrailRegelAsync(Guid enkelvoudiginformatieobject_uuid, Guid uuid, CancellationToken cancellationToken)
     {
         _logger.LogDebug(
             "{ControllerMethod} called with {EnkelvoudigInformatieObjectUuid}, {Uuid}",
@@ -660,7 +688,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 EnkelvoudigInformatieObjectId = enkelvoudiginformatieobject_uuid,
                 AuditTrailRegelId = uuid,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == QueryStatus.NotFound)
@@ -680,13 +709,13 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
     private (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors) TryMergeWithRequestBody(
         dynamic partialEnkelvoudigInformatieObjectRequest,
-        EnkelvoudigInformatieObject eoi
+        EnkelvoudigInformatieObject enkelvoudigInformatieObject
     )
     {
         EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
             EnkelvoudigInformatieObjectUpdateRequestDto,
             EnkelvoudigInformatieObject
-        >(eoi, partialEnkelvoudigInformatieObjectRequest);
+        >(enkelvoudigInformatieObject, partialEnkelvoudigInformatieObjectRequest);
 
         if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
         {
