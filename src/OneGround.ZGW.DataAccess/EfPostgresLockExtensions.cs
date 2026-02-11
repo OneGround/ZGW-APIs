@@ -30,6 +30,15 @@ public static class EfPostgresLockExtensions
     )
         where TEntity : class
     {
+        // Note: The following check fixes the issue when the method LockForUpdate() is called from a UnitTest:
+        //   System.InvalidOperationException : Query root of type 'FromSqlQueryRootExpression' wasn't handled by provider code.
+        //   This issue happens when using a provider specific method on a different provider where it is not supported.
+        if (context.IsInMemory())
+        {
+            // Simply return the set without applying any locking, as InMemory provider does not support raw SQL or locking semantics.
+            return set;
+        }
+
         var entityType = context.Model.FindEntityType(typeof(TEntity)) ?? throw new InvalidOperationException("Entity not found");
 
         var tableName = entityType.GetTableName();
@@ -49,5 +58,10 @@ public static class EfPostgresLockExtensions
             FOR UPDATE{skip}
         ";
         return set.FromSqlRaw(sql, new NpgsqlParameter("ids", ids.ToArray()));
+    }
+
+    private static bool IsInMemory(this DbContext context)
+    {
+        return context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";
     }
 }
