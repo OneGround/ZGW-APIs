@@ -1028,8 +1028,7 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
-            fileValidationService: _mockFileValidationService.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
         );
     }
 

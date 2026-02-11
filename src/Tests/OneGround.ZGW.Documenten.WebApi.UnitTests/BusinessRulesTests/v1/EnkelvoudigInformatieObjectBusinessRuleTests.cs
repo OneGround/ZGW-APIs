@@ -13,6 +13,7 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
@@ -728,7 +729,16 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var mockLogger = new Mock<ILogger<EnkelvoudigInformatieObjectBusinessRuleService>>();
 
-        var svc = new EnkelvoudigInformatieObjectBusinessRuleService(config, mockLogger.Object, mockDbContext, mockCatalogiServiceAgent.Object);
+        var mockFileValidationService = new Mock<IFileValidationService>();
+        mockFileValidationService.Setup(m => m.Validate(It.IsAny<string>()));
+
+        var svc = new EnkelvoudigInformatieObjectBusinessRuleService(
+            config,
+            mockLogger.Object,
+            mockDbContext,
+            mockCatalogiServiceAgent.Object,
+            mockFileValidationService.Object
+        );
 
         return svc;
     }

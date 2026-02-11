@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using AutoMapper;
+using FluentValidation.Results;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -288,8 +289,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             new UpdateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
-                IsPartialUpdate = false,
+                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
+                MergeWithPartial = null,
                 ProcessDelay = processdelay,
             },
             cancellationToken
@@ -347,41 +348,12 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = id, IgnoreLock = true }, cancellationToken);
-
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
-            EnkelvoudigInformatieObjectUpdateRequestDto,
-            EnkelvoudigInformatieObject
-        >(resultGet.Result, partialEnkelvoudigInformatieObjectRequest);
-
-        if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
-        {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
-
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
-            mergedEnkelvoudigInformatieObjectRequest
-        );
-
-        // Note: we should investigate who send the 2-letter language code so we log for these situations
-        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
-
         var result = await _mediator.Send(
             new UpdateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
-                IsPartialUpdate = true,
+                EnkelvoudigInformatieObjectVersie = null, // Note: Indicates that the versie should be merged in the command handler
+                MergeWithPartial = (eoi) => TryMergeWithRequestBody(partialEnkelvoudigInformatieObjectRequest, eoi),
                 ProcessDelay = processdelay,
             },
             cancellationToken
@@ -615,5 +587,42 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         }
 
         return NoContent();
+    }
+
+    private (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors) TryMergeWithRequestBody(
+        dynamic partialEnkelvoudigInformatieObjectRequest,
+        EnkelvoudigInformatieObject eoi
+    )
+    {
+        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+            EnkelvoudigInformatieObjectUpdateRequestDto,
+            EnkelvoudigInformatieObject
+        >(eoi, partialEnkelvoudigInformatieObjectRequest);
+
+        if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
+        {
+            return (versie: null, errors: ToValidationResult(validationResult));
+        }
+
+        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+            mergedEnkelvoudigInformatieObjectRequest
+        );
+
+        // Note: we should investigate who send the 2-letter language code so we log for these situations
+        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
+
+        return (versie: enkelvoudigInformatieObjectVersie, errors: null);
+    }
+
+    private static List<ValidationError> ToValidationResult(ValidationResult validationResult)
+    {
+        return validationResult
+            .Errors.Select(e => new ValidationError
+            {
+                Name = e.PropertyName,
+                Code = e.ErrorCode,
+                Reason = e.ErrorMessage,
+            })
+            .ToList();
     }
 }

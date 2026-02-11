@@ -27,7 +27,6 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -49,8 +48,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -66,8 +64,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             lockGenerator,
             formOptions,
             notificatieService,
-            documentKenmerkenResolver,
-            fileValidationService
+            documentKenmerkenResolver
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -77,11 +74,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
     {
         _logger.LogDebug("Updating (creating new version of existing) EnkelvoudigInformatieObject....");
 
-        var versie = request.EnkelvoudigInformatieObjectVersie;
-
         var errors = new List<ValidationError>();
-
-        ValidateFile(versie, errors);
 
         // Use ReadCommitted isolation level:
         // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
@@ -123,6 +116,27 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
 
+        bool isPartialUpdate = request.MergeWithPartial != null && request.EnkelvoudigInformatieObjectVersie == null;
+
+        EnkelvoudigInformatieObjectVersie versie;
+        if (isPartialUpdate)
+        {
+            // Partial update with merge function provided by the client (e.g. for PATCH endpoint)
+            var mergeResult = request.MergeWithPartial(existingEnkelvoudigInformatieObject);
+
+            // Merged object valid? If not return validation errors to the client
+            if (mergeResult.versie == null && mergeResult.errors?.Any() == true)
+            {
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, mergeResult.errors.ToArray());
+            }
+            versie = mergeResult.versie;
+        }
+        else
+        {
+            // Full update (e.g. for PUT endpoint) with EnkelvoudigInformatieObjectVersie provided by the client
+            versie = request.EnkelvoudigInformatieObjectVersie;
+        }
+
         if (!_authorizationContext.IsAuthorized(existingEnkelvoudigInformatieObject, AuthorizationScopes.Documenten.Update))
         {
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
@@ -133,11 +147,14 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         versie.Versie = currentVersie.Versie + 1;
         versie.Owner = currentVersie.InformatieObject.Owner;
 
+        versie.SetLinkToNullWhenInvalid();
+        versie.EscapeBestandsNaamWhenInvalid();
+
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
             _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
             request.ExistingEnkelvoudigInformatieObjectId,
-            request.IsPartialUpdate,
+            isPartialUpdate,
             apiVersie: 1.1M,
             errors,
             cancellationToken
@@ -149,14 +166,14 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         }
 
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
-        await SetVertrouwelijkheidAanduidingAsync(request.EnkelvoudigInformatieObjectVersie);
+        await SetVertrouwelijkheidAanduidingAsync(versie);
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             // Add a new version of the existing EnkelvoudigInformatieObject
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(existingEnkelvoudigInformatieObject);
 
-            var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType;
+            var informatieObjectType = versie.InformatieObject.InformatieObjectType;
 
             var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
 
@@ -199,7 +216,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = request.EnkelvoudigInformatieObjectVersie.Bronorganisatie;
+                var organisatie = versie.Bronorganisatie;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
                     organisatie,
@@ -217,7 +234,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
-            if (request.IsPartialUpdate)
+            if (isPartialUpdate)
             {
                 await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
@@ -250,6 +267,10 @@ public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<E
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public bool IsPartialUpdate { get; internal set; }
     public int ProcessDelay { get; internal set; }
+    public Func<EnkelvoudigInformatieObject, (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors)> MergeWithPartial
+    {
+        get;
+        internal set;
+    }
 }

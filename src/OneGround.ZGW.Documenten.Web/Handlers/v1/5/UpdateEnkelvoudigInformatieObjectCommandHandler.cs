@@ -27,7 +27,6 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -49,8 +48,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -66,8 +64,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             lockGenerator,
             formOptions,
             notificatieService,
-            documentKenmerkenResolver,
-            fileValidationService
+            documentKenmerkenResolver
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -149,6 +146,9 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
         versie.Versie = currentVersie.Versie + 1;
         versie.Owner = currentVersie.InformatieObject.Owner;
+
+        versie.SetLinkToNullWhenInvalid();
+        versie.EscapeBestandsNaamWhenInvalid();
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
