@@ -266,9 +266,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            // TODO: Delete!!!!
-            await Task.Delay(15000, cancellationToken);
-
             // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
             await _context.SaveChangesAsync(cancellationToken);
 

@@ -342,7 +342,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> UpdateAsync(
         [FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest,
         Guid id,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
         CancellationToken cancellationToken = default
     )
     {
@@ -366,7 +365,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
                 MergeWithPartial = null,
-                ProcessDelay = processdelay,
             },
             cancellationToken
         );
@@ -416,7 +414,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> PartialUpdateAsync(
         [FromBody] dynamic partialEnkelvoudigInformatieObjectRequest,
         Guid id,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
         CancellationToken cancellationToken = default
     )
     {
@@ -429,7 +426,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = null, // Note: Indicates that the versie should be merged in the command handler
                 MergeWithPartial = (eoi) => TryMergeWithRequestBody(partialEnkelvoudigInformatieObjectRequest, eoi),
-                ProcessDelay = processdelay,
             },
             cancellationToken
         );
@@ -568,15 +564,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(Documenten.Contracts.v1.Responses.LockResponseDto))]
-    public async Task<IActionResult> LockAsync(
-        Guid id,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
-        CancellationToken cancellationToken = default
-    )
+    public async Task<IActionResult> LockAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        // TODO: Temporary DELAY to test distributed lock functionality
-        await Task.Delay(processdelay * 1000, cancellationToken);
-
         var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
@@ -626,13 +615,9 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> UnlockAsync(
         Guid id,
         [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
         CancellationToken cancellationToken = default
     )
     {
-        // TODO: Temporary DELAY to test distributed lock functionality
-        await Task.Delay(processdelay * 1000, cancellationToken);
-
         var result = await _mediator.Send(
             new LockEnkelvoudigInformatieObjectCommand
             {

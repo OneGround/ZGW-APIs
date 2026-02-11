@@ -267,7 +267,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> UpdateAsync(
         [FromBody] EnkelvoudigInformatieObjectUpdateRequestDto enkelvoudigInformatieObjectRequest,
         Guid id,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
         CancellationToken cancellationToken = default
     )
     {
@@ -291,7 +290,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
                 MergeWithPartial = null,
-                ProcessDelay = processdelay,
             },
             cancellationToken
         );
@@ -341,7 +339,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public async Task<IActionResult> PartialUpdateAsync(
         [FromBody] dynamic partialEnkelvoudigInformatieObjectRequest,
         Guid id,
-        int processdelay = 0, // TODO: Temporary DELAY to test distributed lock functionality
         CancellationToken cancellationToken = default
     )
     {
@@ -354,7 +351,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = null, // Note: Indicates that the versie should be merged in the command handler
                 MergeWithPartial = (eoi) => TryMergeWithRequestBody(partialEnkelvoudigInformatieObjectRequest, eoi),
-                ProcessDelay = processdelay,
             },
             cancellationToken
         );

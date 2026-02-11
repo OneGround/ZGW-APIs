@@ -46,8 +46,7 @@ public class ZtcDbSeeder : IDatabaseSeeder<ZtcDbContext>
 
         _seeder.Upsert(context.ZaakTypeInformatieObjectTypen, data);
 
-        // TODO: ENABLE!!!
-        //await context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     private async Task SeedInformatieObjectTypenAsync(ZtcDbContext context)
@@ -123,7 +122,6 @@ public class ZtcDbSeeder : IDatabaseSeeder<ZtcDbContext>
 
         _seeder.Upsert(context.ReferentieProcessen, data);
 
-        // TODO: ENABLE!!!
-        //await context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

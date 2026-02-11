@@ -243,9 +243,6 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                 await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
 
-            // TODO: Temporary DELAY to test distributed lock functionality
-            await Task.Delay(request.ProcessDelay * 1000, cancellationToken);
-
             await _context.SaveChangesAsync(cancellationToken);
 
             await tx.CommitAsync(cancellationToken);
@@ -267,7 +264,6 @@ public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<E
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public int ProcessDelay { get; internal set; }
     public Func<EnkelvoudigInformatieObject, (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors)> MergeWithPartial
     {
         get;

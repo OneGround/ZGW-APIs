@@ -124,9 +124,6 @@ class UpdateVerzendingCommandHandler
                 await audittrail.UpdatedAsync(verzending.InformatieObject, verzending, cancellationToken);
             }
 
-            // TODO: DELETE!!!!!!!!!!!!!
-            await Task.Delay(15000);
-
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogDebug("Verzending {verzendingId} successfully updated.", verzending.Id);
