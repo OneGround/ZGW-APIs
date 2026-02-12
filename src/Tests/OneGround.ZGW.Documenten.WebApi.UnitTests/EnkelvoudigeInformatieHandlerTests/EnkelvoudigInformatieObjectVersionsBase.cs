@@ -12,6 +12,7 @@ using Moq;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
@@ -45,6 +46,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
     protected Mock<ILockGenerator> _mockLockGenerator;
     protected Mock<INotificatieService> _mockNotificatieService;
     protected Mock<IDocumentKenmerkenResolver> _mockDocumentKenmerkenResolver;
+    protected Mock<IEnkelvoudigInformatieObjectMergerFactory> _mockEntityMergerFactory;
     protected DrcDbContext _mockDbContext;
     protected IConfiguration _configuration;
     protected Mock<IOptions<FormOptions>> _mockFormOptions;
@@ -134,6 +136,16 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
         _mockDocumentKenmerkenResolver
             .Setup(m => m.GetKenmerkenAsync(It.IsAny<EnkelvoudigInformatieObject>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>() { { "bronOrganisatie", "123" } });
+
+        // dynamic partialEnkelvoudigInformatieObject,        EnkelvoudigInformatieObject enkelvoudigInformatieObject,    List< ValidationError > errors
+        List<ValidationError> errors = new List<ValidationError>();
+        var mockEnkelvoudigInformatieObjectMerger = new Mock<IEnkelvoudigInformatieObjectMerger>();
+        mockEnkelvoudigInformatieObjectMerger
+            .Setup(m => m.TryMergeWithPartial(It.IsAny<object>(), It.IsAny<EnkelvoudigInformatieObject>(), errors))
+            .Returns(new EnkelvoudigInformatieObjectVersie());
+
+        _mockEntityMergerFactory = new Mock<IEnkelvoudigInformatieObjectMergerFactory>();
+        _mockEntityMergerFactory.Setup(m => m.Create<It.IsAnyType>()).Returns(mockEnkelvoudigInformatieObjectMerger.Object);
     }
 
     protected async Task<DbContextOptions<DrcDbContext>> GetMockedDrcDbContext(
