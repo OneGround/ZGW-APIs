@@ -24,7 +24,6 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
-using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
@@ -302,7 +301,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
-                MergeWithPartial = null,
+                PartialObject = null,
             },
             cancellationToken
         );
@@ -362,8 +361,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             new UpdateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
-                EnkelvoudigInformatieObjectVersie = null, // Note: Indicates that the versie should be merged in the command handler
-                MergeWithPartial = (eoi) => TryMergeWithRequestBody(partialEnkelvoudigInformatieObjectRequest, eoi),
+                EnkelvoudigInformatieObjectVersie = null,
+                PartialObject = partialEnkelvoudigInformatieObjectRequest, // Note: Indicates that the versie should be merged in the command handler
             },
             cancellationToken
         );
@@ -600,28 +599,5 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         }
 
         return NoContent();
-    }
-
-    private (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors) TryMergeWithRequestBody(
-        dynamic partialEnkelvoudigInformatieObjectRequest,
-        EnkelvoudigInformatieObject enkelvoudigInformatieObject
-    )
-    {
-        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
-            EnkelvoudigInformatieObjectUpdateRequestDto,
-            EnkelvoudigInformatieObject
-        >(enkelvoudigInformatieObject, partialEnkelvoudigInformatieObjectRequest);
-
-        if (!_validatorService.IsValid(mergedEnkelvoudigInformatieObjectRequest, out var validationResult))
-        {
-            return (versie: null, errors: validationResult.ToValidationErrors());
-        }
-
-        var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(mergedEnkelvoudigInformatieObjectRequest);
-
-        // Note: we should investigate who send the 2-letter language code so we log for these situations
-        LogInvalidTaalCode(mergedEnkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
-
-        return (versie: enkelvoudigInformatieObjectVersie, errors: null);
     }
 }

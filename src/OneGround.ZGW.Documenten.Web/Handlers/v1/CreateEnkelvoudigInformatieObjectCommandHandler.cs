@@ -20,6 +20,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -27,7 +28,6 @@ using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -41,7 +41,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly Lazy<IDocumentService> _lazyDocumentService;
-    private readonly IFileValidationService _fileValidationService;
+    private readonly IEnkelvoudigInformatieObjectMerger _entityMerger;
 
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -56,7 +56,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -65,9 +65,10 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         _nummerGenerator = nummerGenerator;
         _catalogiServiceAgent = catalogiServiceAgent;
         _auditTrailFactory = auditTrailFactory;
-        _fileValidationService = fileValidationService;
 
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
+
+        _entityMerger = entityMergerFactory.Create<EnkelvoudigInformatieObjectUpdateRequestDto>();
     }
 
     private IDocumentService GetDocumentServiceProvider(IDocumentServicesResolver documentServicesResolver)
@@ -86,6 +87,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     {
         _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
 
+        var errors = new List<ValidationError>();
+
         var versie = request.EnkelvoudigInformatieObjectVersie;
 
         // Use ReadCommitted isolation level:
@@ -95,7 +98,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
         using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
-        bool isPartialUpdate = request.MergeWithPartial != null && request.EnkelvoudigInformatieObjectVersie == null;
+        bool isPartialUpdate = request.PartialObject != null && request.EnkelvoudigInformatieObjectVersie == null;
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
@@ -137,15 +140,12 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             if (isPartialUpdate)
             {
-                // Partial update with merge function provided by the client (e.g. for PATCH endpoint)
-                var mergeResult = request.MergeWithPartial(existingEnkelvoudigInformatieObject);
-
-                // Merged object valid? If not return validation errors to the client
-                if (mergeResult.versie == null && mergeResult.errors?.Any() == true)
+                // Partial update (e.g. for PATCH endpoint) so merge the partial object provided by the client with the existing entity
+                versie = _entityMerger.TryMergeWithPartial(request.PartialObject, existingEnkelvoudigInformatieObject, errors);
+                if (errors.Count != 0)
                 {
-                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, mergeResult.errors.ToArray());
+                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
                 }
-                versie = mergeResult.versie;
             }
             else
             {
@@ -189,8 +189,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             versie.Versie = 1;
             versie.InformatieObject.CatalogusId = catalogusId;
         }
-
-        var errors = new List<ValidationError>();
 
         versie.SetLinkToNullWhenInvalid();
         versie.EscapeBestandsNaamWhenInvalid();
@@ -379,10 +377,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 class CreateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
-    public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public Func<EnkelvoudigInformatieObject, (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors)> MergeWithPartial
-    {
-        get;
-        internal set;
-    }
+    public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; } // For PUT endpoint, contains the full update sent by the client, For POST endpoint this is null
+    public dynamic PartialObject { get; internal set; } // For PATCH endpoint, contains the partial update sent by the client
 }

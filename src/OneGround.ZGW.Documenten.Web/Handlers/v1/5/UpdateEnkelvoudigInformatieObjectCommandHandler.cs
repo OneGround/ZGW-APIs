@@ -19,6 +19,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -34,6 +35,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<UpdateEnkelvoudigInformatieObjectCommandHandler>,
         IRequestHandler<UpdateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
+    private readonly IEnkelvoudigInformatieObjectMerger _entityMerger;
+
     public UpdateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<UpdateEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
@@ -48,7 +51,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory
     )
         : base(
             logger,
@@ -65,7 +69,10 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             formOptions,
             notificatieService,
             documentKenmerkenResolver
-        ) { }
+        )
+    {
+        _entityMerger = entityMergerFactory.Create<EnkelvoudigInformatieObjectUpdateRequestDto>();
+    }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
         UpdateEnkelvoudigInformatieObjectCommand request,
@@ -118,20 +125,17 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
 
-        bool isPartialUpdate = request.MergeWithPartial != null && request.EnkelvoudigInformatieObjectVersie == null;
+        bool isPartialUpdate = request.PartialObject != null && request.EnkelvoudigInformatieObjectVersie == null;
 
         EnkelvoudigInformatieObjectVersie versie;
         if (isPartialUpdate)
         {
-            // Partial update with merge function provided by the client (e.g. for PATCH endpoint)
-            var mergeResult = request.MergeWithPartial(existingEnkelvoudigInformatieObject);
-
-            // Merged object valid? If not return validation errors to the client
-            if (mergeResult.versie == null && mergeResult.errors?.Any() == true)
+            // Partial update (e.g. for PATCH endpoint) so merge the partial object provided by the client with the existing entity
+            versie = _entityMerger.TryMergeWithPartial(request.PartialObject, existingEnkelvoudigInformatieObject, errors);
+            if (errors.Count != 0)
             {
-                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, mergeResult.errors.ToArray());
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
             }
-            versie = mergeResult.versie;
         }
         else
         {
@@ -265,10 +269,6 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
     public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
-    public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public Func<EnkelvoudigInformatieObject, (EnkelvoudigInformatieObjectVersie versie, IList<ValidationError> errors)> MergeWithPartial
-    {
-        get;
-        internal set;
-    }
+    public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; } // For PUT endpoint, contains the full update sent by the client
+    public dynamic PartialObject { get; internal set; } // For PATCH endpoint, contains the partial update sent by the client
 }
