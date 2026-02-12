@@ -268,7 +268,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
 public class UpdateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
-    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
-    public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; } // For PUT endpoint, contains the full update sent by the client
+    public Guid ExistingEnkelvoudigInformatieObjectId { get; internal set; } 
+    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; } // For PUT endpoint, contains the full update sent by the client
     public dynamic PartialObject { get; internal set; } // For PATCH endpoint, contains the partial update sent by the client
 }
