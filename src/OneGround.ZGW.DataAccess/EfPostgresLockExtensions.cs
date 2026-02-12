@@ -39,11 +39,39 @@ public static class EfPostgresLockExtensions
             return set;
         }
 
-        var entityType = context.Model.FindEntityType(typeof(TEntity)) ?? throw new InvalidOperationException("Entity not found");
+        var entityType = context.Model.FindEntityType(typeof(TEntity));
+        if (entityType == null)
+        {
+            throw new InvalidOperationException($"Entity type '{typeof(TEntity).Name}' was not found in the database model.");
+        }
 
         var tableName = entityType.GetTableName();
+        if (string.IsNullOrEmpty(tableName))
+        {
+            throw new InvalidOperationException($"Table name for entity type '{typeof(TEntity).Name}' could not be determined.");
+        }
+
         var schema = entityType.GetSchema() ?? "public";
-        var keyColumn = entityType.FindProperty(((MemberExpression)keySelector.Body).Member.Name)!.GetColumnName();
+
+        // Safely extract the property name from the key selector expression
+        var propertyName = GetPropertyName(keySelector);
+
+        var property = entityType.FindProperty(propertyName);
+        if (property == null)
+        {
+            throw new InvalidOperationException(
+                $"Property '{propertyName}' was not found on entity type '{typeof(TEntity).Name}'. "
+                    + $"Ensure the key selector expression references a valid property."
+            );
+        }
+
+        var keyColumn = property.GetColumnName();
+        if (string.IsNullOrEmpty(keyColumn))
+        {
+            throw new InvalidOperationException(
+                $"Column name for property '{propertyName}' on entity type '{typeof(TEntity).Name}' could not be determined."
+            );
+        }
 
         var skip = skipLocked ? " SKIP LOCKED" : "";
 
@@ -55,11 +83,54 @@ public static class EfPostgresLockExtensions
             FROM ""{schema}"".""{tableName}""
             WHERE ""{keyColumn}"" = ANY(@ids)
             ORDER BY ""{keyColumn}""
-            FOR UPDATE{skip}
-        ";
+            FOR UPDATE{skip}";
+
         return set.FromSqlRaw(sql, new NpgsqlParameter("ids", ids.ToArray()));
     }
 
+    /// <summary>
+    /// Extracts the property name from a lambda expression, handling UnaryExpression (conversions/boxing).
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type</typeparam>
+    /// <typeparam name="TKey">The property type</typeparam>
+    /// <param name="expression">The lambda expression selecting the property</param>
+    /// <returns>The property name</returns>
+    /// <exception cref="ArgumentException">Thrown when the expression is not a valid property selector</exception>
+    private static string GetPropertyName<TEntity, TKey>(Expression<Func<TEntity, TKey>> expression)
+    {
+        if (expression == null)
+        {
+            throw new ArgumentNullException(nameof(expression), "Key selector expression cannot be null.");
+        }
+
+        // Unwrap the lambda body
+        Expression body = expression.Body;
+
+        // Handle UnaryExpression (e.g., boxing, implicit conversions like int to object)
+        if (body is UnaryExpression unaryExpression)
+        {
+            body = unaryExpression.Operand;
+        }
+
+        // The body should now be a MemberExpression
+        if (body is MemberExpression memberExpression)
+        {
+            return memberExpression.Member.Name;
+        }
+
+        // If we still don't have a MemberExpression, the selector is invalid
+        throw new ArgumentException(
+            $"Key selector expression must be a simple property accessor (e.g., 'x => x.Id'). "
+                + $"Received expression type: {expression.Body.GetType().Name}",
+            nameof(expression)
+        );
+    }
+
+    /// <summary>
+    /// Determines if the DbContext is using the InMemory provider, which does not support raw SQL or locking semantics.
+    /// </summary>
+    /// <param name="context">The database context</param>
+    /// <returns>True if running within in-memory context (UnitTest), fFalse oterwise</returns>
     private static bool IsInMemory(this DbContext context)
     {
         return context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";

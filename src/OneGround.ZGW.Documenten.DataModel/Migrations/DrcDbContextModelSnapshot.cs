@@ -319,6 +319,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(9)")
                         .HasColumnName("owner");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("InformatieObjectType");
@@ -454,6 +460,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(9)")
                         .HasColumnName("owner");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<int?>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
@@ -565,6 +577,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("text")
                         .HasColumnName("omschrijvingvoorwaarden");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<DateTime>("Startdatum")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("startdatum");
@@ -621,6 +639,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasMaxLength(9)
                         .HasColumnType("character varying(9)")
                         .HasColumnName("owner");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -715,6 +739,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("date")
                         .HasColumnName("ontvangstdatum");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("Telefoonnummer")
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)")
@@ -754,7 +784,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject", b =>
                 {
                     b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectVersie", "LatestEnkelvoudigInformatieObjectVersie")
-                        .WithOne("LatestEnkelvoudigInformatieObject")
+                        .WithOne("LatestInformatieObject")
                         .HasForeignKey("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject", "LatestEnkelvoudigInformatieObjectVersieId");
 
                     b.Navigation("LatestEnkelvoudigInformatieObjectVersie");
@@ -762,13 +792,13 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObjectVersie", b =>
                 {
-                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject", "EnkelvoudigInformatieObject")
+                    b.HasOne("OneGround.ZGW.Documenten.DataModel.EnkelvoudigInformatieObject", "InformatieObject")
                         .WithMany("EnkelvoudigInformatieObjectVersies")
                         .HasForeignKey("EnkelvoudigInformatieObjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("EnkelvoudigInformatieObject");
+                    b.Navigation("InformatieObject");
                 });
 
             modelBuilder.Entity("OneGround.ZGW.Documenten.DataModel.GebruiksRecht", b =>
@@ -819,7 +849,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                 {
                     b.Navigation("BestandsDelen");
 
-                    b.Navigation("LatestEnkelvoudigInformatieObject");
+                    b.Navigation("LatestInformatieObject");
                 });
 #pragma warning restore 612, 618
         }
