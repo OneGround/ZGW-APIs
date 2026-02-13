@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -42,13 +43,9 @@ public class GebruiksRechtenController : ZGWControllerBase
         IMediator mediator,
         IMapper mapper,
         IRequestMerger requestMerger,
-        IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _validatorService = validatorService;
-    }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle GEBRUIKSRECHTen opvragen.
@@ -64,13 +61,16 @@ public class GebruiksRechtenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllGebruiksRechtenQueryParameters queryParameters)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllGebruiksRechtenQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
         var filter = _mapper.Map<GetAllGebruiksRechtenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter });
+        var result = await _mediator.Send(new GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
         var gebruiksRechtenResponse = _mapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
 
@@ -80,7 +80,8 @@ public class GebruiksRechtenController : ZGWControllerBase
                 RetrieveCatagory = RetrieveCatagory.All,
                 TotalCount = result.Result.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(gebruiksRechtenResponse);
@@ -98,11 +99,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetGebruiksRechtQuery { Id = id });
+        var result = await _mediator.Send(new GetGebruiksRechtQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -123,7 +124,8 @@ public class GebruiksRechtenController : ZGWControllerBase
                 BaseEntity = result.Result.InformatieObject,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(gebruiksRechtResponse);
@@ -146,14 +148,15 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> AddAsync([FromBody] GebruiksRechtRequestDto gebruiksRechtRequest)
+    public async Task<IActionResult> AddAsync([FromBody] GebruiksRechtRequestDto gebruiksRechtRequest, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), gebruiksRechtRequest);
 
         GebruiksRecht gebruiksRecht = _mapper.Map<GebruiksRecht>(gebruiksRechtRequest);
 
         var result = await _mediator.Send(
-            new CreateGebruiksRechtCommand { GebruiksRecht = gebruiksRecht, InformatieObjectUrl = gebruiksRechtRequest.InformatieObject }
+            new CreateGebruiksRechtCommand { GebruiksRecht = gebruiksRecht, InformatieObjectUrl = gebruiksRechtRequest.InformatieObject },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.Forbidden)
@@ -177,16 +180,22 @@ public class GebruiksRechtenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">GebruiksRecht was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.GebruiksRechten.Update, Name = Operations.GebruiksRechten.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> UpdateAsync([FromBody] GebruiksRechtRequestDto gebruiksRechtRequest, Guid id)
+    public async Task<IActionResult> UpdateAsync(
+        [FromBody] GebruiksRechtRequestDto gebruiksRechtRequest,
+        Guid id,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), gebruiksRechtRequest, id);
 
@@ -195,10 +204,12 @@ public class GebruiksRechtenController : ZGWControllerBase
         var result = await _mediator.Send(
             new UpdateGebruiksRechtCommand
             {
-                GebruiksRecht = gebruiksRecht,
                 Id = id,
-                InformatieObject = gebruiksRechtRequest.InformatieObject,
-            }
+                InformatieObjectUrl = gebruiksRechtRequest.InformatieObject,
+                GebruiksRecht = gebruiksRecht, // Note: Indicates that the versie should be fully replaced in the command handler
+                PartialObject = null,
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.Forbidden)
@@ -227,59 +238,38 @@ public class GebruiksRechtenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">GebruiksRecht was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.GebruiksRechten.Update, Name = Operations.GebruiksRechten.PartialUpdate)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialGebruiksRechtRequest, Guid id)
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialGebruiksRechtRequest, Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetGebruiksRechtQuery { Id = id });
-
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        GebruiksRechtRequestDto mergedGebruiksRechtRequest = _requestMerger.MergePartialUpdateToObjectRequest<GebruiksRechtRequestDto, GebruiksRecht>(
-            resultGet.Result,
-            partialGebruiksRechtRequest
-        );
-
-        if (!_validatorService.IsValid(mergedGebruiksRechtRequest, out var validationResult))
-        {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
-
-        GebruiksRecht mergedGebruiksRecht = _mapper.Map<GebruiksRecht>(mergedGebruiksRechtRequest);
-
-        var resultUpd = await _mediator.Send(
+        var result = await _mediator.Send(
             new UpdateGebruiksRechtCommand
             {
-                GebruiksRecht = mergedGebruiksRecht,
                 Id = id,
-                InformatieObject = mergedGebruiksRechtRequest.InformatieObject,
-                IsPartialUpdate = true,
-            }
+                InformatieObjectUrl = GetValueFromPartial<string>(partialGebruiksRechtRequest, "informatieObject"),
+                GebruiksRecht = null,
+                PartialObject = partialGebruiksRechtRequest, // Note: Indicates that the versie should be merged in the command handler
+            },
+            cancellationToken
         );
 
-        if (resultUpd.Status == CommandStatus.ValidationError)
+        if (result.Status == CommandStatus.ValidationError)
         {
-            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(resultUpd.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         return Ok(gebruiksRechtResponse);
     }
@@ -302,11 +292,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> DeleteAsync(Guid id)
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteGebruiksRechtCommand { Id = id });
+        var result = await _mediator.Send(new DeleteGebruiksRechtCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

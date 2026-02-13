@@ -1,4 +1,4 @@
-﻿namespace OneGround.ZGW.Common.Handlers;
+namespace OneGround.ZGW.Common.Handlers;
 
 public enum CommandStatus
 {
@@ -8,4 +8,5 @@ public enum CommandStatus
     NotFound = HanderStatusCodes.NotFound,
     Forbidden = HanderStatusCodes.Forbidden,
     Failed = HanderStatusCodes.Failed,
+    Conflict = HanderStatusCodes.Conflict,
 }

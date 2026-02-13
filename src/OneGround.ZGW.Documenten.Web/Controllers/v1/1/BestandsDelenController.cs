@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -52,7 +53,11 @@ public class BestandsDelenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BestandsDeelResponseDto))]
-    public async Task<IActionResult> UploadAsync([FromForm] BestandsDeelUploadRequestDto bestandsDeelUploadRequest, Guid id)
+    public async Task<IActionResult> UploadAsync(
+        [FromForm] BestandsDeelUploadRequestDto bestandsDeelUploadRequest,
+        Guid id,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(UploadAsync), id);
 
@@ -62,7 +67,8 @@ public class BestandsDelenController : ZGWControllerBase
                 BestandsDeelId = id,
                 Inhoud = bestandsDeelUploadRequest.Inhoud,
                 Lock = bestandsDeelUploadRequest.Lock,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.NotFound)

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -51,11 +52,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ETagFilter]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetGebruiksRechtQuery { Id = id });
+        var result = await _mediator.Send(new GetGebruiksRechtQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -76,7 +77,8 @@ public class GebruiksRechtenController : ZGWControllerBase
                 BaseEntity = result.Result.InformatieObject,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(gebruiksRechtResponse);
@@ -96,8 +98,8 @@ public class GebruiksRechtenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ETagFilter]
-    public Task<IActionResult> HeadAsync(Guid id)
+    public Task<IActionResult> HeadAsync(Guid id, CancellationToken cancellationToken)
     {
-        return GetAsync(id);
+        return GetAsync(id, cancellationToken);
     }
 }

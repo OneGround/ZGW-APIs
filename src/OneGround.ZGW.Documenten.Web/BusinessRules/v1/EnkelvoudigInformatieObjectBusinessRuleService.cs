@@ -8,8 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Configuration;
+using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 
@@ -32,17 +34,20 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
     private readonly DrcDbContext _context;
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly IFileValidationService _fileValidationService;
 
     public EnkelvoudigInformatieObjectBusinessRuleService(
         IConfiguration configuration,
         ILogger<EnkelvoudigInformatieObjectBusinessRuleService> logger,
         DrcDbContext context,
-        ICatalogiServiceAgent catalogiServiceAgent
+        ICatalogiServiceAgent catalogiServiceAgent,
+        IFileValidationService fileValidationService
     )
     {
         _logger = logger;
         _context = context;
         _catalogiServiceAgent = catalogiServiceAgent;
+        _fileValidationService = fileValidationService;
 
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
@@ -227,6 +232,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
             errors.Add(error);
         }
 
+        ValidateFile(enkelvoudigInformatieObjectVersie, errors);
+
         // Note: Statuswijzigingen van informatieobjecten (drc-005). Updated: only older versions than 1.5!
         if (
             apiVersie < 1.5M
@@ -286,5 +293,26 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
         }
 
         return errors.Count == 0;
+    }
+
+    private void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
+    {
+        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
+            return;
+
+        try
+        {
+            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
+        }
+        catch (OneGroundException)
+        {
+            var error = new ValidationError(
+                "bestandsnaam",
+                ErrorCode.Invalid,
+                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
+            );
+
+            errors.Add(error);
+        }
     }
 }

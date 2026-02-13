@@ -44,4 +44,7 @@ public class ObjectInformatieObject : OwnedEntity, IAuditableEntity, IUrlEntity
     [Required]
     [Column("objecttype")]
     public ObjectType ObjectType { get; set; }
+
+    // Note: maps with the Postgres build in xmin concurrency token (uint is the C# equivalent for the Postgres 'xid' type)
+    public uint RowVersion { get; set; }
 }

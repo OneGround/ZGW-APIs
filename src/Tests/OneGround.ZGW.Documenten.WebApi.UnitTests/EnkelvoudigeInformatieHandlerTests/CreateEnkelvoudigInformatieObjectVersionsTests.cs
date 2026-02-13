@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.DataModel;
@@ -422,8 +421,7 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             lockGenerator: _mockLockGenerator.Object,
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
-            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
-            fileValidationService: _mockFileValidationService.Object
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
         );
     }
 }

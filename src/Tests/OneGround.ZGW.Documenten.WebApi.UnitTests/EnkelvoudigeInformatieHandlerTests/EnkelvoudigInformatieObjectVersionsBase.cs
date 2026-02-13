@@ -12,6 +12,7 @@ using Moq;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
@@ -23,7 +24,6 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Services;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
@@ -46,10 +46,10 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
     protected Mock<ILockGenerator> _mockLockGenerator;
     protected Mock<INotificatieService> _mockNotificatieService;
     protected Mock<IDocumentKenmerkenResolver> _mockDocumentKenmerkenResolver;
+    protected Mock<IEnkelvoudigInformatieObjectMergerFactory> _mockEntityMergerFactory;
     protected DrcDbContext _mockDbContext;
     protected IConfiguration _configuration;
     protected Mock<IOptions<FormOptions>> _mockFormOptions;
-    protected Mock<IFileValidationService> _mockFileValidationService;
 
     protected async Task SetupMocksAsync(List<EnkelvoudigInformatieObjectVersie> enkelvoudigeInformatieObjectVersies = null)
     {
@@ -137,7 +137,15 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler>
             .Setup(m => m.GetKenmerkenAsync(It.IsAny<EnkelvoudigInformatieObject>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>() { { "bronOrganisatie", "123" } });
 
-        _mockFileValidationService = new Mock<IFileValidationService>();
+        // dynamic partialEnkelvoudigInformatieObject,        EnkelvoudigInformatieObject enkelvoudigInformatieObject,    List< ValidationError > errors
+        List<ValidationError> errors = new List<ValidationError>();
+        var mockEnkelvoudigInformatieObjectMerger = new Mock<IEnkelvoudigInformatieObjectMerger>();
+        mockEnkelvoudigInformatieObjectMerger
+            .Setup(m => m.TryMergeWithPartial(It.IsAny<object>(), It.IsAny<EnkelvoudigInformatieObject>(), errors))
+            .Returns(new EnkelvoudigInformatieObjectVersie());
+
+        _mockEntityMergerFactory = new Mock<IEnkelvoudigInformatieObjectMergerFactory>();
+        _mockEntityMergerFactory.Setup(m => m.Create<It.IsAnyType>()).Returns(mockEnkelvoudigInformatieObjectMerger.Object);
     }
 
     protected async Task<DbContextOptions<DrcDbContext>> GetMockedDrcDbContext(

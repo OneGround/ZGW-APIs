@@ -15,7 +15,6 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
@@ -129,15 +128,7 @@ class UploadBestandsDeelCommandHandler
 
             _context.BestandsDelen.RemoveRange(versie.BestandsDelen);
 
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
+            await _context.SaveChangesAsync(cancellationToken);
 
             // Document successfully added to documentstore so we could fire the notification
             await SendNotificationAsync(Actie.update, versie.InformatieObject, cancellationToken);

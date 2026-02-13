@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -62,13 +63,16 @@ public class GebruiksRechtenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<GebruiksRechtResponseExpandedDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllGebruiksRechtenQueryParameters queryParameters)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllGebruiksRechtenQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
         var filter = _mapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new Handlers.v1.GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter });
+        var result = await _mediator.Send(new Handlers.v1.GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
         var gebruiksRechtenResponse = _mapper.Map<List<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>>(result.Result);
 
@@ -86,7 +90,8 @@ public class GebruiksRechtenController : ZGWControllerBase
                 RetrieveCatagory = RetrieveCatagory.All,
                 TotalCount = result.Result.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(gebruiksrechtenWithOptionalExpand);
@@ -107,11 +112,15 @@ public class GebruiksRechtenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetGebruiksRechtQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(
+        Guid id,
+        [FromQuery] GetGebruiksRechtQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new Handlers.v1.GetGebruiksRechtQuery { Id = id });
+        var result = await _mediator.Send(new Handlers.v1.GetGebruiksRechtQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -139,7 +148,8 @@ public class GebruiksRechtenController : ZGWControllerBase
                 BaseEntity = result.Result.InformatieObject,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
-            }
+            },
+            cancellationToken
         );
 
         return Ok(gebruiksrechtWithOptionalExpand);
@@ -159,8 +169,8 @@ public class GebruiksRechtenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetGebruiksRechtQueryParameters queryParameters)
+    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetGebruiksRechtQueryParameters queryParameters, CancellationToken cancellationToken)
     {
-        return GetAsync(id, queryParameters);
+        return GetAsync(id, queryParameters, cancellationToken);
     }
 }

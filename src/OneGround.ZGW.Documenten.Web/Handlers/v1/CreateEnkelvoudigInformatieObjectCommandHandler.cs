@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,13 +13,14 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
@@ -26,7 +28,6 @@ using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -40,7 +41,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly Lazy<IDocumentService> _lazyDocumentService;
-    private readonly IFileValidationService _fileValidationService;
+    private readonly IEnkelvoudigInformatieObjectMerger _entityMerger;
 
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -55,7 +56,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -64,9 +65,10 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         _nummerGenerator = nummerGenerator;
         _catalogiServiceAgent = catalogiServiceAgent;
         _auditTrailFactory = auditTrailFactory;
-        _fileValidationService = fileValidationService;
 
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
+
+        _entityMerger = entityMergerFactory.Create<EnkelvoudigInformatieObjectUpdateRequestDto>();
     }
 
     private IDocumentService GetDocumentServiceProvider(IDocumentServicesResolver documentServicesResolver)
@@ -85,14 +87,20 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     {
         _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
 
-        var versie = request.EnkelvoudigInformatieObjectVersie;
-
-        versie.SetLinkToNullWhenInvalid();
-        versie.EscapeBestandsNaamWhenInvalid();
-
         var errors = new List<ValidationError>();
 
-        ValidateFile(versie, errors);
+        var versie = request.EnkelvoudigInformatieObjectVersie;
+
+        // Use ReadCommitted isolation level:
+        // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
+        // - xmin (configured in EnkelvoudigInformatieObject) provides optimistic concurrency detection (detects any changes since read)
+        // - ReadCommitted allows better concurrency than Serializable for this use case
+        // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
+        using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        bool isPartialUpdate = request.PartialObject != null && request.EnkelvoudigInformatieObjectVersie == null;
+
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
         // Set version first because business-rule wants to verify against
         EnkelvoudigInformatieObject existingEnkelvoudigInformatieObject = null;
@@ -100,26 +108,50 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         {
             // Add new version of the EnkelvoudigInformatieObject
             existingEnkelvoudigInformatieObject = await _context
-                .EnkelvoudigInformatieObjecten.Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
+                .Where(rsinFilter)
+                .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
                 .Include(e => e.EnkelvoudigInformatieObjectVersies)
                 .Include(e => e.GebruiksRechten)
                 .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
 
             if (existingEnkelvoudigInformatieObject == null)
             {
-                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+                // The object might be locked OR not exist - check if it exists without lock
+                var exists = await _context
+                    .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                    .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
+
+                if (!exists)
+                {
+                    // Object truly doesn't exist
+                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+                }
+
+                // Object exists but is locked by another process
+                var error = new ValidationError(
+                    "nonFieldErrors",
+                    ErrorCode.Conflict,
+                    $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
+                );
+
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
             }
 
-            // FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only
-            if (existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie == null)
+            if (isPartialUpdate)
             {
-                // Not very elegant but it's a temporary work around until we figure out the problem. So IsAuthorized call next will work now
-                var latestVersion = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
-                existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
-
-                _logger.LogWarning("LatestEnkelvoudigInformatieObjectVersie is NULL -> restored");
+                // Partial update (e.g. for PATCH endpoint) so merge the partial object provided by the client with the existing entity
+                versie = _entityMerger.TryMergeWithPartial(request.PartialObject, existingEnkelvoudigInformatieObject, errors);
+                if (errors.Count != 0)
+                {
+                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, errors.ToArray());
+                }
             }
-            // ----
+            else
+            {
+                // Full update (e.g. for PUT endpoint) with EnkelvoudigInformatieObjectVersie provided by the client
+                versie = request.EnkelvoudigInformatieObjectVersie;
+            }
 
             if (!_authorizationContext.IsAuthorized(existingEnkelvoudigInformatieObject, AuthorizationScopes.Documenten.Update))
             {
@@ -134,8 +166,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         {
             if (
                 !_authorizationContext.IsAuthorized(
-                    request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
-                    request.EnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding,
+                    versie.InformatieObject.InformatieObjectType,
+                    versie.Vertrouwelijkheidaanduiding,
                     AuthorizationScopes.Documenten.Create
                 )
             )
@@ -143,9 +175,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
             }
 
-            var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(
-                request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType
-            );
+            var informatieobjecttype = await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(versie.InformatieObject.InformatieObjectType);
             if (!informatieobjecttype.Success)
             {
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(
@@ -160,11 +190,14 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             versie.InformatieObject.CatalogusId = catalogusId;
         }
 
+        versie.SetLinkToNullWhenInvalid();
+        versie.EscapeBestandsNaamWhenInvalid();
+
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
             _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
             request.ExistingEnkelvoudigInformatieObjectId,
-            request.IsPartialUpdate,
+            isPartialUpdate,
             apiVersie: 1.0M,
             errors,
             cancellationToken
@@ -176,7 +209,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         }
 
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
-        await SetVertrouwelijkheidAanduidingAsync(request.EnkelvoudigInformatieObjectVersie);
+        await SetVertrouwelijkheidAanduidingAsync(versie);
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
@@ -187,7 +220,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
                 var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
 
-                var informatieObjectType = request.EnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType;
+                var informatieObjectType = versie.InformatieObject.InformatieObjectType;
 
                 var indicatieGebruiksrecht = versie.InformatieObject.IndicatieGebruiksrecht;
 
@@ -219,7 +252,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = request.EnkelvoudigInformatieObjectVersie.Bronorganisatie;
+                var organisatie = versie.Bronorganisatie;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
                     organisatie,
@@ -233,47 +266,33 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            try
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
+
+            if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
             {
-                using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-                // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-                await _context.SaveChangesAsync(cancellationToken);
-
-                // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
-
-                if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
+                if (isPartialUpdate)
                 {
-                    if (request.IsPartialUpdate)
-                    {
-                        await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
-                    }
-                    else
-                    {
-                        await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
-                    }
+                    await audittrail.PatchedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
                 }
                 else
                 {
-                    await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
+                    await audittrail.UpdatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
                 }
-
-                await _context.SaveChangesAsync(cancellationToken);
-
-                await trans.CommitAsync(cancellationToken);
             }
-            catch (DbUpdateConcurrencyException ex)
+            else
             {
-                await LogConflictingValuesAsync(ex);
-                throw;
+                await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
             }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await tx.CommitAsync(cancellationToken);
         }
 
         _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);
@@ -349,41 +368,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         }
     }
 
-    private void LogFunctionalEntityKeys(string message, EnkelvoudigInformatieObjectVersie versie)
-    {
-        _logger.LogWarning("Database exception occured: {message}. Key dump creating/updating EnkelvoudigInformatieObject version...", message);
-        _logger.LogWarning(
-            "-{labelVersieEnkelvoudigInformatieObjectId}: {versieEnkelvoudigInformatieObjectId}",
-            nameof(versie.EnkelvoudigInformatieObjectId),
-            versie.EnkelvoudigInformatieObjectId
-        );
-        _logger.LogWarning("-{labelVersieOwner}: {versieOwner}", nameof(versie.Owner), versie.Owner);
-        _logger.LogWarning("-{labelVersieBronorganisatie}: {versieBronorganisatie}", nameof(versie.Bronorganisatie), versie.Bronorganisatie);
-        _logger.LogWarning("-{labelVersieIdentificatie}: {versieIdentificatie}", nameof(versie.Identificatie), versie.Identificatie);
-        _logger.LogWarning("-{labelVersieVersie}: {versieVersie}", nameof(versie.Versie), versie.Versie);
-    }
-
-    private void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
-    {
-        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
-            return;
-
-        try
-        {
-            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
-        }
-        catch (OneGroundException)
-        {
-            var error = new ValidationError(
-                "bestandsnaam",
-                ErrorCode.Invalid,
-                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
-            );
-
-            errors.Add(error);
-        }
-    }
-
     private IDocumentService DocumentService => _lazyDocumentService.Value;
 
     private static AuditTrailOptions AuditTrailOptions =>
@@ -392,7 +376,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
 class CreateEnkelvoudigInformatieObjectCommand : IRequest<CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
-    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; }
     public Guid? ExistingEnkelvoudigInformatieObjectId { get; internal set; }
-    public bool IsPartialUpdate { get; internal set; }
+    public EnkelvoudigInformatieObjectVersie EnkelvoudigInformatieObjectVersie { get; internal set; } // For PUT endpoint, contains the full update sent by the client, For POST endpoint this is null
+    public dynamic PartialObject { get; internal set; } // For PATCH endpoint, contains the partial update sent by the client
 }

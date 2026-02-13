@@ -153,6 +153,9 @@ public class Startup
 
         services.AddSingleton<IDistributedCacheHelper, DistributedCacheHelper>();
 
+        services.AddSingleton<IEnkelvoudigInformatieObjectMergerFactory, EnkelvoudigInformatieObjectMergerFactory>();
+        services.AddSingleton<IGenericObjectMergerFactory, GenericObjectMergerFactory>();
+
         services.AddCorrelationId();
         services.AddBatchId();
 
