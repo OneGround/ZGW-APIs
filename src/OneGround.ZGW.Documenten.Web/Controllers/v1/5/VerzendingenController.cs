@@ -273,11 +273,13 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">Verzending was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.Verzendingen.Update, Name = Operations.Verzendingen.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
     public async Task<IActionResult> UpdateAsync([FromBody] VerzendingRequestDto verzendingRequest, Guid id, CancellationToken cancellationToken)
     {
@@ -325,11 +327,13 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
+    /// <response code="409">Verzending was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.Verzendingen.Update, Name = Operations.Verzendingen.PartialUpdate)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
     public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialVerzendingRequest, Guid id, CancellationToken cancellationToken)
     {
