@@ -43,13 +43,9 @@ public class GebruiksRechtenController : ZGWControllerBase
         IMediator mediator,
         IMapper mapper,
         IRequestMerger requestMerger,
-        IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _validatorService = validatorService;
-    }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle GEBRUIKSRECHTen opvragen.
@@ -206,9 +202,10 @@ public class GebruiksRechtenController : ZGWControllerBase
         var result = await _mediator.Send(
             new UpdateGebruiksRechtCommand
             {
-                GebruiksRecht = gebruiksRecht,
                 Id = id,
-                InformatieObject = gebruiksRechtRequest.InformatieObject,
+                InformatieObjectUrl = gebruiksRechtRequest.InformatieObject,
+                GebruiksRecht = gebruiksRecht, // Note: Indicates that the versie should be fully replaced in the command handler
+                PartialObject = null,
             },
             cancellationToken
         );
@@ -252,47 +249,23 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetGebruiksRechtQuery { Id = id }, cancellationToken);
-
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        GebruiksRechtRequestDto mergedGebruiksRechtRequest = _requestMerger.MergePartialUpdateToObjectRequest<GebruiksRechtRequestDto, GebruiksRecht>(
-            resultGet.Result,
-            partialGebruiksRechtRequest
-        );
-
-        if (!_validatorService.IsValid(mergedGebruiksRechtRequest, out var validationResult))
-        {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
-
-        GebruiksRecht mergedGebruiksRecht = _mapper.Map<GebruiksRecht>(mergedGebruiksRechtRequest);
-
-        var resultUpd = await _mediator.Send(
+        var result = await _mediator.Send(
             new UpdateGebruiksRechtCommand
             {
-                GebruiksRecht = mergedGebruiksRecht,
                 Id = id,
-                InformatieObject = mergedGebruiksRechtRequest.InformatieObject,
-                IsPartialUpdate = true,
+                InformatieObjectUrl = GetValueFromPartial<string>(partialGebruiksRechtRequest, "informatieObject"),
+                GebruiksRecht = null,
+                PartialObject = partialGebruiksRechtRequest, // Note: Indicates that the versie should be merged in the command handler
             },
             cancellationToken
         );
 
-        if (resultUpd.Status == CommandStatus.ValidationError)
+        if (result.Status == CommandStatus.ValidationError)
         {
-            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+            return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(resultUpd.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         return Ok(gebruiksRechtResponse);
     }

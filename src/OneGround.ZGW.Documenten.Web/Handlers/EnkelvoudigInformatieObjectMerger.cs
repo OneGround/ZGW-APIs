@@ -42,8 +42,10 @@ public class EnkelvoudigInformatieObjectMergerFactory : IEnkelvoudigInformatieOb
     }
 }
 
-public class EnkelvoudigInformatieObjectMerger<TEioRequestDto> : IEnkelvoudigInformatieObjectMerger
-    where TEioRequestDto : class
+// Note: We could not use the GenericObjectMerger due to the fact that the return type of TryMergeWithPartial is different (EnkelvoudigInformatieObjectVersie while parameter passed is of type EnkelvoudigInformatieObject).
+//  With this class we can merge all versions (1.0, 1.1, 1.5, etc.) of EnkelvoudigInformatieObjectRequest DTO's while the GenericObjectMerger can be used for other DTO's like VerzendingRequestDto and GebruiksRechtRequestDto
+public class EnkelvoudigInformatieObjectMerger<TEnkelvoudigInformatieObjectRequestDto> : IEnkelvoudigInformatieObjectMerger
+    where TEnkelvoudigInformatieObjectRequestDto : class
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
@@ -62,8 +64,8 @@ public class EnkelvoudigInformatieObjectMerger<TEioRequestDto> : IEnkelvoudigInf
         List<ValidationError> errors
     )
     {
-        TEioRequestDto mergedEnkelvoudigInformatieObjectDto = _requestMerger.MergePartialUpdateToObjectRequest<
-            TEioRequestDto,
+        TEnkelvoudigInformatieObjectRequestDto mergedEnkelvoudigInformatieObjectDto = _requestMerger.MergePartialUpdateToObjectRequest<
+            TEnkelvoudigInformatieObjectRequestDto,
             EnkelvoudigInformatieObject
         >(enkelvoudigInformatieObject, partialEnkelvoudigInformatieObject);
 

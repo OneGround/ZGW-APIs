@@ -59,7 +59,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 public class VerzendingenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IValidatorService _validatorService;
     private readonly IObjectExpander<InformatieObjectContext> _expander;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
@@ -71,13 +70,11 @@ public class VerzendingenController : ZGWControllerBase
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
-        IValidatorService validatorService,
         IExpanderFactory expanderFactory
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
     }
@@ -293,8 +290,8 @@ public class VerzendingenController : ZGWControllerBase
             {
                 Id = id,
                 InformatieObjectUrl = verzendingRequest.InformatieObject,
-                Verzending = verzending,
-                IsPartialUpdate = false,
+                Verzending = verzending, // Note: Indicates that the versie should be fully replaced in the command handler
+                PartialObject = null,
             },
             cancellationToken
         );
@@ -339,37 +336,13 @@ public class VerzendingenController : ZGWControllerBase
         // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
-        var resultGet = await _mediator.Send(new GetVerzendingQuery { Id = id }, cancellationToken);
-
-        if (resultGet.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (resultGet.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        VerzendingRequestDto mergedVerzendingRequest = _requestMerger.MergePartialUpdateToObjectRequest<VerzendingRequestDto, Verzending>(
-            resultGet.Result,
-            partialVerzendingRequest
-        );
-
-        if (!_validatorService.IsValid(mergedVerzendingRequest, out var validationResult))
-        {
-            return _errorResponseBuilder.BadRequest(validationResult);
-        }
-
-        Verzending mergedVerzending = _mapper.Map<Verzending>(mergedVerzendingRequest);
-
         var result = await _mediator.Send(
             new UpdateVerzendingCommand
             {
                 Id = id,
-                Verzending = mergedVerzending,
-                InformatieObjectUrl = mergedVerzendingRequest.InformatieObject,
-                IsPartialUpdate = true,
+                InformatieObjectUrl = GetValueFromPartial<string>(partialVerzendingRequest, "informatieObject"),
+                Verzending = null,
+                PartialObject = partialVerzendingRequest, // Note: Indicates that the versie should be merged in the command handler
             },
             cancellationToken
         );
