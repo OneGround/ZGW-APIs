@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -48,11 +49,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ETagFilter]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id });
+        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -92,8 +93,8 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ETagFilter]
-    public Task<IActionResult> HeadAsync(Guid id)
+    public Task<IActionResult> HeadAsync(Guid id, CancellationToken cancellationToken)
     {
-        return GetAsync(id);
+        return GetAsync(id, cancellationToken);
     }
 }

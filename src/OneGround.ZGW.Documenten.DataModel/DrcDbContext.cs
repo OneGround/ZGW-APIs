@@ -165,5 +165,31 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<ObjectInformatieObject>().Property(c => c.Object).UseCollation("ci_collation");
 
         modelBuilder.Entity<Verzending>().Property(c => c.Betrokkene).UseCollation("ci_collation");
+
+        // Configure optimistic concurrency. Declare PostgreSQL xmin. PostgreSQL automatically maintains an xmin system column for every row, which is updated on every modification. This serves as a natural concurrency token.
+        modelBuilder.Entity<EnkelvoudigInformatieObject>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<ObjectInformatieObject>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<Verzending>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<GebruiksRecht>(builder =>
+        {
+            builder.Property(p => p.RowVersion).HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        });
     }
 }

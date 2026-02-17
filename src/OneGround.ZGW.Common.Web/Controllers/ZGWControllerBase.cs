@@ -96,4 +96,14 @@ public abstract class ZGWControllerBase : ControllerBase
             );
         }
     }
+
+    protected static T GetValueFromPartial<T>(dynamic jsonObject, string name, bool caseSensitive = false)
+    {
+        var value = jsonObject.Property(name, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase)?.Value;
+
+        if (value == null)
+            return default;
+
+        return value.ToObject<T>();
+    }
 }

@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,7 +23,6 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -46,8 +44,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -63,8 +60,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             lockGenerator,
             formOptions,
             notificatieService,
-            documentKenmerkenResolver,
-            fileValidationService
+            documentKenmerkenResolver
         ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -91,8 +87,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         versie.EscapeBestandsNaamWhenInvalid();
 
         var errors = new List<ValidationError>();
-
-        ValidateFile(versie, errors);
 
         versie.Versie = 1;
 
@@ -181,34 +175,21 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            try
-            {
-                using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-                // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-                await _context.SaveChangesAsync(cancellationToken);
+            using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
+            await _context.SaveChangesAsync(cancellationToken);
 
-                // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
-                versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
-                versie.InformatieObject.CatalogusId = catalogusId;
+            // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.CatalogusId = catalogusId;
 
-                audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
+            audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
-                await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
+            await audittrail.CreatedAsync(versie.InformatieObject, versie.InformatieObject, cancellationToken);
 
-                await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
-                await trans.CommitAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                await LogConflictingValuesAsync(ex);
-                throw;
-            }
-            catch (DbUpdateException ex)
-            {
-                LogFunctionalEntityKeys(ex.Message, versie);
-                throw;
-            }
+            await trans.CommitAsync(cancellationToken);
         }
 
         _logger.LogDebug("EnkelvoudigInformatieObject {Id} successfully created", versie.InformatieObject.Id);

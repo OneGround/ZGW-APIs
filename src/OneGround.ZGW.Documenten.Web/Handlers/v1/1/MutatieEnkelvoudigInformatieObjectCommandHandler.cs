@@ -13,7 +13,6 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
@@ -23,7 +22,6 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.Services;
-using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -37,7 +35,6 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
     protected readonly Lazy<IDocumentService> _lazyDocumentService;
     protected readonly ILockGenerator _lockGenerator;
     protected readonly IOptions<FormOptions> _formOptions;
-    private readonly IFileValidationService _fileValidationService;
 
     protected MutatieEnkelvoudigInformatieObjectCommandHandler(
         ILogger<T> logger,
@@ -53,8 +50,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IFileValidationService fileValidationService
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -65,7 +61,7 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         _auditTrailFactory = auditTrailFactory;
         _lockGenerator = lockGenerator;
         _formOptions = formOptions;
-        _fileValidationService = fileValidationService;
+
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
     }
 
@@ -83,27 +79,6 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         return !_context
             .EnkelvoudigInformatieObjectVersies.AsNoTracking()
             .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
-    }
-
-    protected void ValidateFile(EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie, List<ValidationError> errors)
-    {
-        if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Inhoud))
-            return;
-
-        try
-        {
-            _fileValidationService.Validate(enkelvoudigInformatieObjectVersie.Bestandsnaam);
-        }
-        catch (OneGroundException)
-        {
-            var error = new ValidationError(
-                "bestandsnaam",
-                ErrorCode.Invalid,
-                "Het document is geweigerd omdat het type van het bestand niet is toegestaan."
-            );
-
-            errors.Add(error);
-        }
     }
 
     protected async Task<(string inhoud, long bestandsomvang)> TryAddDocumentToDocumentStore(
@@ -219,18 +194,4 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
     protected IDocumentService DocumentService => _lazyDocumentService.Value;
 
     protected AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" };
-
-    protected void LogFunctionalEntityKeys(string message, EnkelvoudigInformatieObjectVersie versie)
-    {
-        _logger.LogWarning("Database exception occured: {message}. Key dump creating/updating EnkelvoudigInformatieObject version...", message);
-        _logger.LogWarning(
-            "-{labelVersieEnkelvoudigInformatieObjectId}: {versieEnkelvoudigInformatieObjectId}",
-            nameof(versie.EnkelvoudigInformatieObjectId),
-            versie.EnkelvoudigInformatieObjectId
-        );
-        _logger.LogWarning("-{labelVersieOwner}: {versieOwner}", nameof(versie.Owner), versie.Owner);
-        _logger.LogWarning("-{labelVersieBronorganisatie}: {versieBronorganisatie}", nameof(versie.Bronorganisatie), versie.Bronorganisatie);
-        _logger.LogWarning("-{labelVersieIdentificatie}: {versieIdentificatie}", nameof(versie.Identificatie), versie.Identificatie);
-        _logger.LogWarning("-{labelVersieVersie}: {versieVersie}", nameof(versie.Versie), versie.Versie);
-    }
 }

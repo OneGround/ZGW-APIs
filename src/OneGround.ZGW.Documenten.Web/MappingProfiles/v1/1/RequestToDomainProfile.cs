@@ -28,7 +28,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.GebruiksRechten, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectVersies, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
+            .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -63,7 +64,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore())
+            .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
         // Create new version of EnkelvoudigInformatieObject: versie 2, versie 3, etc
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObject>()
@@ -77,7 +79,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.GebruiksRechten, opt => opt.Ignore())
             .ForMember(dest => dest.EnkelvoudigInformatieObjectVersies, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
+            .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -113,7 +116,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.BeginRegistratie, opt => opt.Ignore())
             .ForMember(dest => dest.Bestandsomvang, opt => opt.MapFrom(src => src.Bestandsomvang))
             .ForMember(dest => dest.EnkelvoudigInformatieObjectId, opt => opt.Ignore())
-            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore());
+            .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore())
+            .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
     }
 
     private static VertrouwelijkheidAanduiding? VertrouwelijkheidAanduidingFromString(string vertrouwelijkheidaanduiding)

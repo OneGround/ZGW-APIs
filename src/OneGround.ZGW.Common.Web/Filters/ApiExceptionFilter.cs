@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Common.Web.Services;
 
@@ -28,7 +29,11 @@ public class ApiExceptionFilter : ExceptionFilterAttribute
             context.Result = _responseBuilder.BadRequest(context.ModelState);
             context.ExceptionHandled = true;
         }
-
+        else if (context.Exception is DbUpdateConcurrencyException)
+        {
+            context.Result = _responseBuilder.Conflict();
+            context.ExceptionHandled = true;
+        }
         base.OnException(context);
     }
 }

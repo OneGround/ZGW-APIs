@@ -60,4 +60,7 @@ public class EnkelvoudigInformatieObject : OwnedEntity, IAuditableEntity, IUrlEn
 
     [Column("catalogus_id")]
     public Guid CatalogusId { get; set; }
+
+    // Note: maps with the Postgres build in xmin concurrency token (uint is the C# equivalent for the Postgres 'xid' type)
+    public uint RowVersion { get; set; }
 }

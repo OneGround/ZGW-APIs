@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -54,13 +55,19 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters)
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
         var filter = _mapper.Map<GetAllObjectInformatieObjectenFilter>(queryParameters);
 
-        var result = await _mediator.Send(new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter });
+        var result = await _mediator.Send(
+            new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
+            cancellationToken
+        );
 
         var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
@@ -87,11 +94,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id });
+        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -129,16 +136,21 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// </remarks>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ObjectInformatieObjecten.Create, Name = Operations.ObjectInformatieObjecten.Create)]
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ObjectInformatieObjectResponseDto))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> AddAsync([FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest)
+    public async Task<IActionResult> AddAsync(
+        [FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), objectInformatieObjectRequest);
 
@@ -149,7 +161,8 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             {
                 ObjectInformatieObject = objectInformatieObject,
                 InformatieObjectUrl = objectInformatieObjectRequest.InformatieObject,
-            }
+            },
+            cancellationToken
         );
 
         if (result.Status == CommandStatus.ValidationError)
@@ -160,6 +173,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         if (result.Status == CommandStatus.Forbidden)
         {
             return _errorResponseBuilder.Forbidden();
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
         }
 
         var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
@@ -189,11 +207,11 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    public async Task<IActionResult> DeleteAsync(Guid id)
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteObjectInformatieObjectCommand { Id = id });
+        var result = await _mediator.Send(new DeleteObjectInformatieObjectCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

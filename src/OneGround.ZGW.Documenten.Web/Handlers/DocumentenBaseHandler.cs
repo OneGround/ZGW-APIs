@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -120,47 +118,6 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
         else
         {
             _logger.LogDebug("Warning: Notifications are disabled. Notification {@Notification} will not be sent.", notification);
-        }
-    }
-
-    protected async Task LogConflictingValuesAsync(DbUpdateConcurrencyException ex)
-    {
-        try
-        {
-            var differences = new List<string>();
-
-            foreach (var entry in ex.Entries)
-            {
-                var proposedValues = entry.CurrentValues;
-                var databaseValues = await entry.GetDatabaseValuesAsync();
-
-                if (databaseValues != null)
-                {
-                    foreach (var property in proposedValues.Properties)
-                    {
-                        var proposedValue = proposedValues[property];
-                        var databaseValue = databaseValues[property];
-
-                        // Log only the differences (keep in mind that the properties are of type object so we have to convert to string to get the ValueType instead of the object reference)
-                        if (proposedValue?.ToString() != databaseValue?.ToString())
-                        {
-                            differences.Add($"{entry}: '{proposedValue}' -> '{databaseValue}'");
-                        }
-                    }
-                }
-            }
-            if (differences.Count != 0)
-            {
-                _logger.LogInformation("DbUpdateConcurrencyException: Conflicting database- and pending changed values...");
-
-                string error = string.Join(Environment.NewLine, differences);
-
-                _logger.LogInformation("Error: {error}", error);
-            }
-        }
-        catch
-        {
-            // ignore
         }
     }
 }

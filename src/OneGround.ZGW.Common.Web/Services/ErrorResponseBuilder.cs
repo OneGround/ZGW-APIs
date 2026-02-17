@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using FluentValidation.Results;
@@ -260,6 +260,43 @@ public class ErrorResponseBuilder : IErrorResponseBuilder
                 Title = "Internal server error.",
                 Status = statusCode,
                 Detail = message,
+            }
+        )
+        {
+            StatusCode = statusCode,
+        };
+    }
+
+    public JsonResult Conflict()
+    {
+        var statusCode = (int)HttpStatusCode.Conflict;
+
+        return new JsonResult(
+            new ErrorResponse
+            {
+                Type = $"{BaseUrl}{ErrorCategory.ValidationError}",
+                Code = ErrorCode.Conflict,
+                Title = "Resource is vergrendeld.",
+                Status = statusCode,
+            }
+        )
+        {
+            StatusCode = statusCode,
+        };
+    }
+
+    public JsonResult Conflict(IEnumerable<ValidationError> validationErrors)
+    {
+        var statusCode = (int)HttpStatusCode.Conflict;
+
+        return new JsonResult(
+            new ErrorResponse
+            {
+                Type = $"{BaseUrl}{ErrorCategory.ValidationError}",
+                Code = ErrorCode.Conflict,
+                Title = "Resource is vergrendeld.",
+                Status = statusCode,
+                InvalidParams = validationErrors.ToList(),
             }
         )
         {
