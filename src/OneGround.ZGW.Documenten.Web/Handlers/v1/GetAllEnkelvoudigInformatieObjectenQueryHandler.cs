@@ -47,6 +47,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         _logger.LogDebug("Get all EnkelvoudigInformatieObjecten....");
 
         var filter = GetEnkelvoudigInformatieObjectFilterPredicate(request.GetAllEnkelvoudigInformatieObjectenFilter);
+
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
         var query = _context.EnkelvoudigInformatieObjecten.AsNoTracking().Where(rsinFilter).Where(filter);
@@ -66,7 +67,6 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                     i => i.InformatieObjectType,
                     (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-                .Where(i => i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Owner == _rsin)
                 .Where(i =>
                     (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
                     <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
@@ -77,11 +77,11 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         var totalCount = await query.CountAsync(cancellationToken);
 
         var pagedResult = await query
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .Include(e => e.GebruiksRechten)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var result = new PagedResult<EnkelvoudigInformatieObject> { PageResult = pagedResult, Count = totalCount };
@@ -94,8 +94,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     )
     {
         return e =>
-            (filter.Bronorganisatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Bronorganisatie == filter.Bronorganisatie))
-            && (filter.Identificatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Identificatie == filter.Identificatie));
+            (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
+            && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie);
     }
 }
 

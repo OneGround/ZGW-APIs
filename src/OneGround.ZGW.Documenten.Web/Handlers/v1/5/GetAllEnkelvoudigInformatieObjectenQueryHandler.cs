@@ -72,30 +72,19 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                     i => i.InformatieObjectType,
                     (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-                .Join(
-                    _context.EnkelvoudigInformatieObjectVersies.AsNoTracking(),
-                    ea => ea.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId,
-                    e0 => e0.Id,
-                    (i, v) =>
-                        new
-                        {
-                            i.InformatieObject,
-                            InformatieObjectVersie = v,
-                            i.Authorisatie,
-                        }
+                .Where(i =>
+                    (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
+                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
                 )
-                .Where(i => i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Owner == _rsin)
-                .Where(i => (int)i.InformatieObjectVersie.Vertrouwelijkheidaanduiding <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding)
                 .Select(i => i.InformatieObject);
         }
 
         var totalCount = await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
         var pagedResult = await query
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .ThenInclude(e => e.BestandsDelen)
-            .Include(e => e.GebruiksRechten)
-            .OrderBy(e => e.CreationTime)
+            .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .AsSplitQuery()
@@ -138,11 +127,10 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         var filterUuid_In = filter.Uuid_In?.Select(u => u.ToLower()).ToList();
 
         return e =>
-            (filter.Bronorganisatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Bronorganisatie == filter.Bronorganisatie))
-            && (filter.Identificatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Identificatie == filter.Identificatie))
+            (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
+            && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie)
             && (filterUuid_In == null || filterUuid_In.Contains(e.Id.ToString()))
             && (
-                // Note: Filtering on Actief flag (only searching on the current version of the document)
                 filter.Trefwoorden_In == null
                 || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(e => filter.Trefwoorden_In.Any(f => f == e))
             );

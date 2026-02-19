@@ -130,7 +130,7 @@ public static class EfPostgresLockExtensions
     /// Determines if the DbContext is using the InMemory provider, which does not support raw SQL or locking semantics.
     /// </summary>
     /// <param name="context">The database context</param>
-    /// <returns>True if running within in-memory context (UnitTest), fFalse oterwise</returns>
+    /// <returns>True if running within in-memory context (UnitTest), false oterwise</returns>
     private static bool IsInMemory(this DbContext context)
     {
         return context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";

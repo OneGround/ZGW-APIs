@@ -61,14 +61,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             );
 
             query = query
-                .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
                 .Join(
                     _context.TempInformatieObjectAuthorization,
                     o => o.InformatieObjectType,
                     i => i.InformatieObjectType,
                     (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-                .Where(i => i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Owner == _rsin)
                 .Where(i =>
                     (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
                     <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
@@ -79,12 +77,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         var totalCount = await query.CountAsync(cancellationToken);
 
         var pagedResult = await query
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .ThenInclude(e => e.BestandsDelen)
-            .Include(e => e.GebruiksRechten)
             .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var result = new PagedResult<EnkelvoudigInformatieObject> { PageResult = pagedResult, Count = totalCount };
@@ -97,8 +95,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     )
     {
         return e =>
-            (filter.Bronorganisatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Bronorganisatie == filter.Bronorganisatie))
-            && (filter.Identificatie == null || e.EnkelvoudigInformatieObjectVersies.Any(e => e.Identificatie == filter.Identificatie));
+            (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
+            && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie);
     }
 }
 

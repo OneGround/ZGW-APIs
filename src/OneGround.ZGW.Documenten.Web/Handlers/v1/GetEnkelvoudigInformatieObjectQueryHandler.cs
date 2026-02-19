@@ -45,48 +45,44 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         // By default, this returns the latest version of the (SINGLE) INFORMATION OBJECT. Specific versions can
         // be requested by means of query string parameters.
 
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
-
-        var enkelvoudiginformatieobject = await _context
-            .EnkelvoudigInformatieObjecten.AsNoTracking()
-            .Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .Include(e => e.GebruiksRechten)
-            .AsSplitQuery()
-            .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
-
-        if (enkelvoudiginformatieobject == null)
-        {
-            return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
-        }
-
-        EnkelvoudigInformatieObjectVersie requestedVersie;
-
         var filter = request.GetEnkelvoudigInformatieObjectFilter;
+        var rsinFilterVersion = GetRsinFilterPredicate<EnkelvoudigInformatieObjectVersie>();
+
+        // Build a single query that fetches both the parent object and the correct version
+        IQueryable<EnkelvoudigInformatieObjectVersie> versieQuery = _context
+            .EnkelvoudigInformatieObjectVersies.AsNoTracking()
+            .Where(rsinFilterVersion)
+            .Where(v => v.EnkelvoudigInformatieObjectId == request.Id)
+            .Include(e => e.LatestInformatieObject)
+            .Include(v => v.InformatieObject); // Include parent object in one query
+
+        // Apply version filtering logic
+        EnkelvoudigInformatieObjectVersie requestedVersie;
 
         if (!filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
-            // No filter specified so get latest version of the EnkelvoudigInformatieObject
-            requestedVersie = enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
+            // Latest version (Filter: none)
+            requestedVersie = await versieQuery.OrderBy(v => v.Versie).LastOrDefaultAsync(cancellationToken);
         }
         else if (filter.Versie.HasValue && !filter.RegistratieOp.HasValue)
         {
-            // Filter 'versie' is specified so get that version
-            requestedVersie = enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.SingleOrDefault(e => e.Versie == filter.Versie);
+            // Specific version (Filter: 'versie')
+            requestedVersie = await versieQuery.Where(v => v.Versie == filter.Versie).SingleOrDefaultAsync(cancellationToken);
         }
         else if (!filter.Versie.HasValue && filter.RegistratieOp.HasValue)
         {
-            // Filter 'registratieOp' is specified so get the nearest versie before this date-time
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.OrderBy(e => e.BeginRegistratie)
-                .LastOrDefault(e => e.BeginRegistratie <= filter.RegistratieOp);
+            // Nearest version before date (Filter: 'registratieOp')
+            requestedVersie = await versieQuery
+                .Where(v => v.BeginRegistratie <= filter.RegistratieOp)
+                .OrderBy(v => v.BeginRegistratie)
+                .LastOrDefaultAsync(cancellationToken);
         }
         else
         {
-            // Filter 'versie' and 'registratieOp' are specified
-            requestedVersie = enkelvoudiginformatieobject
-                .EnkelvoudigInformatieObjectVersies.Where(e => e.BeginRegistratie <= filter.RegistratieOp && e.Versie == filter.Versie)
-                .SingleOrDefault();
+            // Both filters (Filter: 'registratieOp' and 'versie')
+            requestedVersie = await versieQuery
+                .Where(v => v.BeginRegistratie <= filter.RegistratieOp && v.Versie == filter.Versie)
+                .SingleOrDefaultAsync(cancellationToken);
         }
 
         if (requestedVersie == null)
@@ -94,12 +90,18 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.NotFound);
         }
 
+        var enkelvoudiginformatieobject = requestedVersie.InformatieObject;
+
+        // Authorization check on the requested version
         if (!AuthorizationContextAccessor.AuthorizationContext.IsAuthorized(requestedVersie))
         {
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.Forbidden);
         }
 
-        // Get the requested version only
+        // Set up the relationships
+        enkelvoudiginformatieobject.LatestEnkelvoudigInformatieObjectVersie = requestedVersie;
+
+        // Attach only the requested version
         enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Clear();
         enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Add(requestedVersie);
 

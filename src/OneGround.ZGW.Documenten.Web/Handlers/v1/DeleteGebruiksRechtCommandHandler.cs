@@ -49,7 +49,7 @@ class DeleteGebruiksRechtCommandHandler
 
         var gebruiksrecht = await _context
             .GebruiksRechten.Where(rsinFilter)
-            .Include(g => g.InformatieObject)
+            .Include(g => g.InformatieObject.LatestEnkelvoudigInformatieObjectVersie)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (gebruiksrecht == null)
