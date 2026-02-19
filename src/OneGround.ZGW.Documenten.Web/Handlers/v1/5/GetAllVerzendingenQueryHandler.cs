@@ -78,6 +78,7 @@ class GetAllVerzendingenQueryHandler
         var totalCount = await GetTotalCountCachedAsync(query, request.GetAllVerzendingenFilter, cancellationToken);
 
         var pagedResult = await query
+            .Include(v => v.InformatieObject)
             .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
