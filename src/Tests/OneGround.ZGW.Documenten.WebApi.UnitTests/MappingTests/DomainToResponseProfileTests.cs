@@ -64,17 +64,25 @@ public class ResponseToDomainProfileTests
         // Setup
         _fixture.Customize<EnkelvoudigInformatieObjectVersie>(c => c.With(p => p.Versie, 1).Without(p => p.Inhoud));
 
-        var enkelvoudigInformatieObjectVersies = new List<EnkelvoudigInformatieObjectVersie> { _fixture.Create<EnkelvoudigInformatieObjectVersie>() };
+        var enkelvoudigInformatieObjectVersie = _fixture.Create<EnkelvoudigInformatieObjectVersie>();
+        var enkelvoudigInformatieObjectVersies = new List<EnkelvoudigInformatieObjectVersie> { enkelvoudigInformatieObjectVersie };
 
-        _fixture.Customize<EnkelvoudigInformatieObject>(c => c.With(p => p.EnkelvoudigInformatieObjectVersies, enkelvoudigInformatieObjectVersies));
+        _fixture.Customize<EnkelvoudigInformatieObject>(c =>
+            c.With(p => p.EnkelvoudigInformatieObjectVersies, enkelvoudigInformatieObjectVersies)
+                .With(p => p.LatestEnkelvoudigInformatieObjectVersie, enkelvoudigInformatieObjectVersie)
+        );
 
         var value = _fixture.Create<EnkelvoudigInformatieObject>();
+
+        // Establish bidirectional relationships
+        enkelvoudigInformatieObjectVersie.InformatieObject = value;
+        enkelvoudigInformatieObjectVersie.LatestInformatieObject = value;
 
         // Act
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
 
         // Assert
-        var latest = value.EnkelvoudigInformatieObjectVersies.First();
+        var latest = value.LatestEnkelvoudigInformatieObjectVersie;
 
         Assert.Equal(value.Url, result.Url);
         Assert.Equal(latest.Versie, result.Versie);
@@ -106,8 +114,8 @@ public class ResponseToDomainProfileTests
         Assert.Equal(latest.Integriteit_Datum.Value.ToString("yyyy-MM-dd"), result.Integriteit.Datum);
         Assert.Equal(latest.Integriteit_Waarde, result.Integriteit.Waarde);
 
-        Assert.Equal(latest.InformatieObject.Locked, result.Locked);
-        Assert.Equal(latest.InformatieObject.InformatieObjectType, result.InformatieObjectType);
+        Assert.Equal(latest.LatestInformatieObject.Locked, result.Locked);
+        Assert.Equal(latest.LatestInformatieObject.InformatieObjectType, result.InformatieObjectType);
     }
 
     [Fact]
@@ -124,11 +132,14 @@ public class ResponseToDomainProfileTests
         _fixture.Customize<EnkelvoudigInformatieObject>(c =>
             c.With(p => p.Id, Guid.Parse("292de971-b3b6-4a25-a7d7-d3030f7b9bc5"))
                 .With(p => p.EnkelvoudigInformatieObjectVersies, enkelvoudigInformatieObjectVersies)
+                .With(p => p.LatestEnkelvoudigInformatieObjectVersie, enkelvoudigInformatieObjectVersies[0])
         );
 
         var value = _fixture.Create<EnkelvoudigInformatieObject>();
 
+        // Establish bidirectional relationships
         value.EnkelvoudigInformatieObjectVersies[0].InformatieObject = value;
+        value.EnkelvoudigInformatieObjectVersies[0].LatestInformatieObject = value;
 
         // Act
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
@@ -166,11 +177,19 @@ public class ResponseToDomainProfileTests
         _fixture.Customize<EnkelvoudigInformatieObject>(c =>
             c.With(p => p.Id, Guid.Parse("292de971-b3b6-4a25-a7d7-d3030f7b9bc5"))
                 .With(p => p.EnkelvoudigInformatieObjectVersies, enkelvoudigInformatieObjectVersies)
+                .With(p => p.LatestEnkelvoudigInformatieObjectVersie, enkelvoudigInformatieObjectVersies[1]) // Version 3 is the latest
         );
 
         var value = _fixture.Create<EnkelvoudigInformatieObject>();
 
-        value.EnkelvoudigInformatieObjectVersies.ForEach(e => e.InformatieObject = value);
+        // Establish bidirectional relationships
+        value.EnkelvoudigInformatieObjectVersies.ForEach(e =>
+        {
+            e.InformatieObject = value;
+        });
+
+        // Set the latest version reference
+        value.EnkelvoudigInformatieObjectVersies[1].LatestInformatieObject = value;
 
         // Act
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
