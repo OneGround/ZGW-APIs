@@ -14,6 +14,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
@@ -55,6 +56,11 @@ class DeleteGebruiksRechtCommandHandler
         if (gebruiksrecht == null)
         {
             return new CommandResult(CommandStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(gebruiksrecht.InformatieObject))
+        {
+            return new CommandResult(CommandStatus.Forbidden);
         }
 
         int references = await _context.GebruiksRechten.CountAsync(

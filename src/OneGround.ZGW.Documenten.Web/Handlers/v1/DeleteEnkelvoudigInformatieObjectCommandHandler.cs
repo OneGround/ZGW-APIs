@@ -19,6 +19,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
+using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
@@ -100,6 +101,11 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             );
 
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
+        }
+
+        if (!_authorizationContext.IsAuthorized(enkelvoudigInformatieObject, AuthorizationScopes.Documenten.Delete))
+        {
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
         }
 
         // NOTE: Vernietigen van informatieobjecten (drc-008) => Een EnkelvoudigInformatieObject MAG ALLEEN verwijderd worden indien er geen ObjectInformatieObject-en meer aan hangen.

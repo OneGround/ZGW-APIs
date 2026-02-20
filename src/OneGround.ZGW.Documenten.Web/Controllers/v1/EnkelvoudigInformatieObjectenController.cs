@@ -347,6 +347,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
