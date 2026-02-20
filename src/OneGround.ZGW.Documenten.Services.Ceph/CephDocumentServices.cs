@@ -266,7 +266,7 @@ public class CephDocumentServices : IDocumentService
             BucketName = internalMultiPartDocument.Name,
             Key = internalMultiPartDocument.Key,
             InputStream = content,
-            IsLastPart = false, // Note: This property only needs to be set when using the AmazonS3EncryptionClient. Oterwise: Caller needs to set this to true when uploading the last part.
+            IsLastPart = false, // Note: This property only needs to be set when using the AmazonS3EncryptionClient. Otherwise: Caller needs to set this to true when uploading the last part.
             UploadId = internalMultiPartDocument.UploadId,
             PartSize = size,
             PartNumber = part,
