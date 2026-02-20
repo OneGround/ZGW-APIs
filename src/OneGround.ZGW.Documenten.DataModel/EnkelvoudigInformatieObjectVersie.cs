@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Documenten.DataModel;
 public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, IUrlEntity
 {
     [NotMapped]
-    public string Url => // TODO: Fix this logic to avoid the need for both InformatieObject and LatestInformatieObject (which is currently needed to support the 'latest' version logic in the GET endpoint, but should be refactored to only use one of them)
+    public string Url => 
         InformatieObject != null ? $"{InformatieObject.Url}/download?versie={Versie}"
         : LatestInformatieObject != null ? $"{LatestInformatieObject.Url}/download?versie={Versie}"
         : throw new NullReferenceException();
