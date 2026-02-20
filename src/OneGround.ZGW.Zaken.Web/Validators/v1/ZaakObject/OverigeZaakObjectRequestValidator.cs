@@ -1,4 +1,6 @@
 using FluentValidation;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject;
@@ -18,6 +20,9 @@ public class OverigeZaakObjectDtoValidator : ZGWValidator<OverigeZaakObjectDto>
 {
     public OverigeZaakObjectDtoValidator()
     {
-        CascadeRuleFor(o => o.OverigeData).NotNull().NotEmpty();
+        CascadeRuleFor(o => o.OverigeData)
+            .NotNull()
+            .Must(token => !(token is JValue jv && jv.Type == JTokenType.String && string.IsNullOrWhiteSpace((string)jv)))
+            .WithErrorCode(ErrorCode.Blank);
     }
 }

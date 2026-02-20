@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Newtonsoft.Json.Linq;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Zaken.DataModel.ZaakObject;
