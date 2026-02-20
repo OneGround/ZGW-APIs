@@ -53,7 +53,7 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             .EnkelvoudigInformatieObjectVersies.AsNoTracking()
             .Where(rsinFilterVersion)
             .Where(v => v.EnkelvoudigInformatieObjectId == request.Id)
-            .Include(e => e.LatestInformatieObject)
+            .Include(v => v.LatestInformatieObject)
             .Include(v => v.InformatieObject); // Include parent object in one query
 
         // Apply version filtering logic

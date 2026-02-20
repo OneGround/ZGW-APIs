@@ -79,7 +79,7 @@ class GetAllVerzendingenQueryHandler
 
         var pagedResult = await query
             .Include(v => v.InformatieObject)
-            .OrderBy(e => e.Id)
+            .OrderBy(v => v.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .AsSplitQuery()

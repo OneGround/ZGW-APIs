@@ -56,7 +56,7 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             .Where(rsinFilterVersion)
             .Where(v => v.EnkelvoudigInformatieObjectId == request.Id)
             .Where(notCompletedFilter)
-            .Include(e => e.LatestInformatieObject)
+            .Include(v => v.LatestInformatieObject)
             .Include(v => v.BestandsDelen)
             .Include(v => v.InformatieObject); // Include parent object in one query
 
