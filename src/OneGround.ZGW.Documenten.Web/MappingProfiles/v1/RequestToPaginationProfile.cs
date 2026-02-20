@@ -1,5 +1,6 @@
-﻿using AutoMapper;
+using AutoMapper;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.Web.Models.v1;
@@ -12,6 +13,7 @@ public class RequestToPaginationProfile : Profile
     {
         CreateMap<PaginationQuery, PaginationFilter>();
 
-        CreateMap<GetEnkelvoudigInformatieObjectQueryParameters, GetEnkelvoudigInformatieObjectFilter>();
+        CreateMap<GetEnkelvoudigInformatieObjectQueryParameters, GetEnkelvoudigInformatieObjectFilter>()
+            .ForMember(dest => dest.RegistratieOp, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.RegistratieOp)));
     }
 }

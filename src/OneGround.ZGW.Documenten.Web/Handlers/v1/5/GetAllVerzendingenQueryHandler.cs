@@ -64,32 +64,22 @@ class GetAllVerzendingenQueryHandler
             query = query
                 .Join(
                     _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObject.InformatieObjectType,
+                    o => o.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
                     i => i.InformatieObjectType,
                     (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-                .Join(
-                    _context.EnkelvoudigInformatieObjectVersies.AsNoTracking(),
-                    ea => ea.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId,
-                    e0 => e0.Id,
-                    (i, v) =>
-                        new
-                        {
-                            i.InformatieObject,
-                            InformatieObjectVersie = v,
-                            i.Authorisatie,
-                        }
+                .Where(i =>
+                    (int)i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
+                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
                 )
-                .Where(i => i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Owner == _rsin)
-                .Where(i => (int)i.InformatieObjectVersie.Vertrouwelijkheidaanduiding <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding)
                 .Select(i => i.InformatieObject);
         }
 
         var totalCount = await GetTotalCountCachedAsync(query, request.GetAllVerzendingenFilter, cancellationToken);
 
         var pagedResult = await query
-            .Include(e => e.InformatieObject)
-            .OrderBy(e => e.Id)
+            .Include(v => v.InformatieObject)
+            .OrderBy(v => v.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .AsSplitQuery()

@@ -59,28 +59,18 @@ class GetAllGebruiksRechtenQueryHandler
             query = query
                 .Join(
                     _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObject.InformatieObjectType,
+                    o => o.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
                     i => i.InformatieObjectType,
                     (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-                .Join(
-                    _context.EnkelvoudigInformatieObjectVersies.AsNoTracking(),
-                    ea => ea.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId,
-                    e0 => e0.Id,
-                    (i, v) =>
-                        new
-                        {
-                            i.InformatieObject,
-                            InformatieObjectVersie = v,
-                            i.Authorisatie,
-                        }
+                .Where(i =>
+                    (int)i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
+                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
                 )
-                .Where(i => i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Owner == _rsin)
-                .Where(i => (int)i.InformatieObjectVersie.Vertrouwelijkheidaanduiding <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding)
                 .Select(i => i.InformatieObject);
         }
 
-        var result = await query.Include(z => z.InformatieObject).OrderBy(e => e.Id).AsSplitQuery().ToListAsync(cancellationToken);
+        var result = await query.Include(g => g.InformatieObject).OrderBy(e => e.Id).AsSplitQuery().ToListAsync(cancellationToken);
 
         return new QueryResult<IList<GebruiksRecht>>(result, QueryStatus.OK);
     }

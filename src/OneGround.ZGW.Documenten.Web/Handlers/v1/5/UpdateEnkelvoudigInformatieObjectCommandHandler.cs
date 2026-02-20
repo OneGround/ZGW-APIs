@@ -98,8 +98,6 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             .Where(rsinFilter)
             .AsSplitQuery()
             .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
-            .Include(e => e.GebruiksRechten)
             .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
 
         if (existingEnkelvoudigInformatieObject == null)
@@ -148,7 +146,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
         }
 
-        var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
+        var currentVersie = existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
 
         versie.Versie = currentVersie.Versie + 1;
         versie.Owner = currentVersie.InformatieObject.Owner;

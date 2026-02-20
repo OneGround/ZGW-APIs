@@ -459,6 +459,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
@@ -521,7 +526,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var enkelvoudigInformatieObjectVersie = resultGet.Result.EnkelvoudigInformatieObjectVersies.Single();
+        var enkelvoudigInformatieObjectVersie = resultGet.Result.LatestEnkelvoudigInformatieObjectVersie; // Note: Latest is mapped to the requested version from GetEnkelvoudigInformatieObjectQuery (so it could be a different one)
 
         // Note: New in v1.1: if file size = 0, i.e.EnkelvoudigInformatieObject contains only metadata without file content.The EnkelvoudigInformatieObject is created using a single request to Documenten API.
         if (enkelvoudigInformatieObjectVersie.Bestandsomvang == 0 && enkelvoudigInformatieObjectVersie.Inhoud == null)

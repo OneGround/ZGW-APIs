@@ -27,10 +27,7 @@ public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerk
 
     public async Task<Dictionary<string, string>> GetKenmerkenAsync(EnkelvoudigInformatieObject informatieobject, CancellationToken cancellationToken)
     {
-        // Work-around when LatestEnkelvoudigInformatieObjectVersie is null (See old issue: FUND-1595 latest_enkelvoudiginformatieobjectversie_id [FK] NULL seen on PROD only)
-        var latestEnkelvoudigInformatieObjectVersie =
-            informatieobject.LatestEnkelvoudigInformatieObjectVersie
-            ?? informatieobject.EnkelvoudigInformatieObjectVersies.OrderByDescending(e => e.Versie).First();
+        var latestEnkelvoudigInformatieObjectVersie = informatieobject.LatestEnkelvoudigInformatieObjectVersie;
 
         return new Dictionary<string, string>
         {

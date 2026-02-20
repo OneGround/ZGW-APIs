@@ -20,11 +20,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
     public void Process(EnkelvoudigInformatieObject src, EnkelvoudigInformatieObjectGetResponseDto dest, ResolutionContext context)
     {
         // Note: For update-request-mapping we get always get the latest version
-        var latestVersion = src.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
-        if (latestVersion == null)
-        {
-            return;
-        }
+        var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
 
         dest.Versie = latestVersion.Versie;
         dest.Bronorganisatie = latestVersion.Bronorganisatie;
@@ -47,8 +43,10 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, true);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, true);
-        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
+
+        dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
+        dest.Locked = latestVersion.LatestInformatieObject.Locked;
 
         dest.BestandsDelen = latestVersion.BestandsDelen.OrderBy(d => d.Volgnummer).Select(MapBestandsDeel).ToList();
     }
@@ -63,7 +61,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
             Omvang = bestandsdeel.Omvang,
             Volgnummer = bestandsdeel.Volgnummer,
             Voltooid = bestandsdeel.Voltooid,
-            Lock = bestandsdeel.EnkelvoudigInformatieObjectVersie.InformatieObject.Lock,
+            Lock = bestandsdeel.EnkelvoudigInformatieObjectVersie.LatestInformatieObject.Lock,
         };
     }
 }

@@ -13,6 +13,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.Authorization;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -46,9 +47,9 @@ class DeleteObjectInformatieObjectCommandHandler
 
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.Where(rsinFilter)
-            .Include(e => e.InformatieObject)
+            .Include(o => o.InformatieObject.LatestEnkelvoudigInformatieObjectVersie)
             .AsNoTracking()
-            .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
+            .SingleOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
 
         if (objectInformatieObject == null)
         {
@@ -59,6 +60,11 @@ class DeleteObjectInformatieObjectCommandHandler
         if (informatieObject == null)
         {
             return new CommandResult(CommandStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(objectInformatieObject.InformatieObject))
+        {
+            return new CommandResult(CommandStatus.Forbidden);
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);

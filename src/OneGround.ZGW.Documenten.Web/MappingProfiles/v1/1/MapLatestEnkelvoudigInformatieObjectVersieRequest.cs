@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
@@ -13,9 +11,8 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
     public void Process(EnkelvoudigInformatieObject src, EnkelvoudigInformatieObjectUpdateRequestDto dest, ResolutionContext context)
     {
         // Note: For update-request-mapping we get always get the latest version
-        var latestVersion =
-            src.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last()
-            ?? throw new InvalidOperationException($"EnkelvoudigInformatieObject {src.Id} does not contain any version.");
+        var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
+
         dest.Bronorganisatie = latestVersion.Bronorganisatie;
         dest.Identificatie = latestVersion.Identificatie;
         dest.CreatieDatum = ProfileHelper.StringDateFromDate(latestVersion.CreatieDatum);
@@ -27,7 +24,6 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.Taal = latestVersion.Taal;
         dest.Bestandsnaam = latestVersion.Bestandsnaam;
         dest.Bestandsomvang = latestVersion.Bestandsomvang;
-        dest.Lock = latestVersion.InformatieObject.Lock;
         dest.Inhoud = latestVersion.Inhoud;
         dest.Link = latestVersion.Link;
         dest.Beschrijving = latestVersion.Beschrijving;
@@ -35,7 +31,10 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, false);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, false);
-        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
+        dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
+
+        // Note: Don't merge the lock value because we have to validate the value from request and not the one in the database after the merge)
+        //   (meaning don't: dest.Lock = latestVersion.LatestInformatieObject.Lock)
     }
 }

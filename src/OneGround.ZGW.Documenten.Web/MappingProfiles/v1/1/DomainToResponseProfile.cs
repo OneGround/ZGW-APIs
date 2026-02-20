@@ -98,6 +98,7 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.IndicatieGebruiksrecht, opt => opt.Ignore())
             .ForMember(dest => dest.Ondertekening, opt => opt.Ignore())
             .ForMember(dest => dest.Integriteit, opt => opt.Ignore())
+            .ForMember(dest => dest.Lock, opt => opt.Ignore()) // Note: Don't merge the lock value because we have to validate the value from request and not the one in the database after the merge)
             .AfterMap<MapLatestEnkelvoudigInformatieObjectVersieRequest>();
 
         CreateMap<BestandsDeel, BestandsDeelResponseDto>()

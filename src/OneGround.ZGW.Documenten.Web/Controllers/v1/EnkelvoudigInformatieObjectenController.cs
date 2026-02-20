@@ -347,6 +347,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
@@ -403,7 +408,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var enkelvoudigInformatieObjectVersie = resultGet.Result.EnkelvoudigInformatieObjectVersies.Single();
+        var enkelvoudigInformatieObjectVersie = resultGet.Result.LatestEnkelvoudigInformatieObjectVersie; // Note: Latest is mapped to the requested version from GetEnkelvoudigInformatieObjectQuery (so it could be a different one)
 
         // Note: When a v1.1 multi-part document is uploaded (and not completed yet) the
         //       download under v1 must be handled with care because inhoud field is null so an extra check is needed here!

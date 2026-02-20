@@ -36,8 +36,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1;
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
-    private readonly IValidatorService _validatorService;
-
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,

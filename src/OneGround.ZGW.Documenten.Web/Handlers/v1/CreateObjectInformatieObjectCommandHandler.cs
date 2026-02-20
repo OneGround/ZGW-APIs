@@ -67,8 +67,8 @@ class CreateObjectInformatieObjectCommandHandler
         var informatieObject = await _context
             .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [enkelvoudigInformatieObjectId])
             .Where(rsinFilter)
-            .Include(z => z.ObjectInformatieObjecten)
-            .SingleOrDefaultAsync(e => e.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
+            .Include(o => o.ObjectInformatieObjecten)
+            .SingleOrDefaultAsync(o => o.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
 
         if (informatieObject == null)
         {

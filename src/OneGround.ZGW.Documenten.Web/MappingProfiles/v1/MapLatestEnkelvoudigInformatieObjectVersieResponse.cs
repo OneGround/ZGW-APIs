@@ -1,4 +1,3 @@
-using System.Linq;
 using AutoMapper;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -20,11 +19,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
     public void Process(EnkelvoudigInformatieObject src, EnkelvoudigInformatieObjectGetResponseDto dest, ResolutionContext context)
     {
         // Note: For update-request-mapping we get always get the latest version
-        var latestVersion = src.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).LastOrDefault();
-        if (latestVersion == null)
-        {
-            return;
-        }
+        var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
 
         dest.Versie = latestVersion.Versie;
         dest.Bronorganisatie = latestVersion.Bronorganisatie;
@@ -46,9 +41,9 @@ public class MapLatestEnkelvoudigInformatieObjectVersieResponse
         dest.VerzendDatum = ProfileHelper.StringDateFromDate(latestVersion.VerzendDatum);
         dest.Ondertekening = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto(latestVersion, true);
         dest.Integriteit = EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalIntegriteitDto(latestVersion, true);
-        dest.InformatieObjectType = latestVersion.InformatieObject.InformatieObjectType;
-        dest.IndicatieGebruiksrecht = latestVersion.InformatieObject.IndicatieGebruiksrecht;
 
-        dest.Locked = latestVersion.InformatieObject.Locked;
+        dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
+        dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
+        dest.Locked = latestVersion.LatestInformatieObject.Locked;
     }
 }

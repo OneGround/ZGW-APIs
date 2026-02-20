@@ -181,6 +181,10 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersie = versie;
+
+            versie.LatestInformatieObject = versie.InformatieObject;
+
             versie.InformatieObject.CatalogusId = catalogusId;
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);

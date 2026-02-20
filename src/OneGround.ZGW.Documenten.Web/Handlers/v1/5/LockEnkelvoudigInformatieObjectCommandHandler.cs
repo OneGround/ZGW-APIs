@@ -68,7 +68,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         var enkelvoudigInformatieObject = await _context
             .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
             .Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
 
         ValidationError error;
@@ -131,12 +131,10 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
                 // Handle incompleted multi-part documents here if any
 
-                bool multipleVersions = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.Count > 1;
-
-                var current = enkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
+                var current = enkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
                 if (current.Inhoud == null && current.Bestandsomvang > 0)
                 {
-                    await AbortCurrentBestandsdelenUploadAsync(request, multipleVersions, current, cancellationToken);
+                    await AbortCurrentBestandsdelenUploadAsync(request, current, cancellationToken);
                 }
 
                 enkelvoudigInformatieObject.Locked = false;
@@ -164,48 +162,28 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
     private async Task AbortCurrentBestandsdelenUploadAsync(
         LockEnkelvoudigInformatieObjectCommand request,
-        bool multipleVersions,
         EnkelvoudigInformatieObjectVersie current,
         CancellationToken cancellationToken
     )
     {
         IMultiPartDocument multipartdocument = new MultiPartDocument(current.MultiPartDocumentId);
 
-        if (multipleVersions)
-        {
-            // Yes: remove the incompleted version so the previous one will be the current!
+        // 1. Cleanup underlying (temporary files) from document-storage of the unmerged document
+        await AbortMultiPartUploadsFromDocumentStorage(multipartdocument, cancellationToken);
 
-            // 1. Cleanup underlying (temporary files) from document-storage of the unmerged document
-            await AbortMultiPartUploadsFromDocumentStorage(multipartdocument, cancellationToken);
+        // 2. Cleanup bestandsdelen en reset document versie meta-data
+        var bestandsdelen = await _context
+            .BestandsDelen.Where(e => e.EnkelvoudigInformatieObjectVersieId == current.Id)
+            .ToArrayAsync(cancellationToken);
 
-            // 2. Remove the latest vesion which is not completed (at unlock)
-            _context.Remove(current);
+        _context.BestandsDelen.RemoveRange(bestandsdelen);
 
-            // Note: After SaveChangesAsync the previous version is now the latest
-        }
-        else
-        {
-            // No: Set the only document version we have to null (so it will become a meta-only document)
+        // 3. Reset document versie meta-data (inhoud, bestandsomvang, multipart id) so it becomes a meta-only document
+        current.Inhoud = null;
+        current.Bestandsomvang = 0;
+        current.MultiPartDocumentId = null;
 
-            // 1. Cleanup bestandsdelen en reset document versie meta-data
-            var bestandsdelen = await _context
-                .EnkelvoudigInformatieObjectVersies.Include(e => e.BestandsDelen)
-                .Where(e => e.EnkelvoudigInformatieObjectId == request.Id)
-                .SelectMany(e => e.BestandsDelen)
-                .Select(e => e)
-                .ToArrayAsync(cancellationToken);
-
-            _context.BestandsDelen.RemoveRange(bestandsdelen);
-
-            current.Inhoud = null;
-            current.Bestandsomvang = 0;
-            current.MultiPartDocumentId = null;
-
-            // 2. Cleanup underlying (temporary files) from document-storage of the unmerged document
-            await AbortMultiPartUploadsFromDocumentStorage(multipartdocument, cancellationToken);
-
-            // Note: After SaveChangesAsync the current version (incompleted multi-part document) has become a meta-only document!!
-        }
+        // Note: After SaveChangesAsync the current version (incompleted multi-part document) has become a meta-only document!!
     }
 
     private async Task AbortMultiPartUploadsFromDocumentStorage(IMultiPartDocument multipartdocument, CancellationToken cancellationToken)
@@ -216,6 +194,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         }
         catch (Exception ex)
         {
+            // Only log the error so the Unlock can continue without any problems!
             _logger.LogError(ex, "Could not abort current pending multi-part upload");
         }
     }
