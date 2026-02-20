@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Zaken.DataModel.ZaakObject;
@@ -28,7 +29,7 @@ public class OverigeZaakObject : OwnedEntity, IAuditableEntity
     public string ModifiedBy { get; set; }
 
     [Required]
-    [Column("overigedata")]
+    [Column("overigedata", TypeName = "jsonb")]
     public string OverigeData { get; set; }
 
     [Column("zaakobject_id")]

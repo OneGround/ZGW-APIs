@@ -1,9 +1,10 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace OneGround.ZGW.Zaken.Contracts.v1;
 
 public class OverigeZaakObjectDto
 {
     [JsonProperty("overigeData")]
-    public string OverigeData { get; set; }
+    public JToken OverigeData { get; set; }
 }
