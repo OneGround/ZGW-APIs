@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Documenten.DataModel;
 public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, IUrlEntity
 {
     [NotMapped]
-    public string Url => 
+    public string Url =>
         InformatieObject != null ? $"{InformatieObject.Url}/download?versie={Versie}"
         : LatestInformatieObject != null ? $"{LatestInformatieObject.Url}/download?versie={Versie}"
         : throw new NullReferenceException();
