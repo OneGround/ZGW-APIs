@@ -53,6 +53,7 @@ class GetEnkelvoudigInformatieObjectQueryHandler
         // Build a single query that fetches both the parent object and the correct version
         IQueryable<EnkelvoudigInformatieObjectVersie> versieQuery = _context
             .EnkelvoudigInformatieObjectVersies.AsNoTracking()
+            .AsSplitQuery()
             .Where(rsinFilterVersion)
             .Where(v => v.EnkelvoudigInformatieObjectId == request.Id)
             .Where(notCompletedFilter)
