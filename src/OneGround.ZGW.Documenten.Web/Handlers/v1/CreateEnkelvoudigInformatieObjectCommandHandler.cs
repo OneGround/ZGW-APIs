@@ -111,8 +111,6 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
                 .Where(rsinFilter)
                 .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                .Include(e => e.EnkelvoudigInformatieObjectVersies)
-                .Include(e => e.GebruiksRechten)
                 .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
 
             if (existingEnkelvoudigInformatieObject == null)
@@ -158,7 +156,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Forbidden);
             }
 
-            var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
+            var currentVersie = existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
 
             versie.Versie = currentVersie.Versie + 1;
         }
@@ -218,7 +216,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 // Add new version of the EnkelvoudigInformatieObject
                 audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(existingEnkelvoudigInformatieObject);
 
-                var currentVersie = existingEnkelvoudigInformatieObject.EnkelvoudigInformatieObjectVersies.OrderBy(e => e.Versie).Last();
+                var currentVersie = existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
 
                 var informatieObjectType = versie.InformatieObject.InformatieObjectType;
 
@@ -271,6 +269,9 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersie = versie;
+
+            versie.LatestInformatieObject = versie.InformatieObject;
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 

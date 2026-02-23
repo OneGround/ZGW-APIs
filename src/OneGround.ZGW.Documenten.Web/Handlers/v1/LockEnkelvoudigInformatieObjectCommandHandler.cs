@@ -61,7 +61,7 @@ class LockEnkelvoudigInformatieObjectCommandHandler
         var enkelvoudigInformatieObject = await _context
             .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
             .Where(rsinFilter)
-            .Include(e => e.EnkelvoudigInformatieObjectVersies)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
 
         ValidationError error;

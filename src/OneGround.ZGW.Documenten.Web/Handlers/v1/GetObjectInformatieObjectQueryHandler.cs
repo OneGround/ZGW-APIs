@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.Authorization;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -40,6 +41,7 @@ class GetObjectInformatieObjectQueryHandler
 
         var objectInformatieObject = await _context
             .ObjectInformatieObjecten.AsNoTracking()
+            .Include(z => z.InformatieObject.LatestEnkelvoudigInformatieObjectVersie)
             .Where(rsinFilter)
             .Include(z => z.InformatieObject)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
@@ -47,6 +49,11 @@ class GetObjectInformatieObjectQueryHandler
         if (objectInformatieObject == null)
         {
             return new QueryResult<ObjectInformatieObject>(null, QueryStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(objectInformatieObject.InformatieObject, AuthorizationScopes.Documenten.Read))
+        {
+            return new QueryResult<ObjectInformatieObject>(null, QueryStatus.Forbidden);
         }
 
         return new QueryResult<ObjectInformatieObject>(objectInformatieObject, QueryStatus.OK);
