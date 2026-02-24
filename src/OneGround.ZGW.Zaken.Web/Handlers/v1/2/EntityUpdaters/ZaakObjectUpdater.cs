@@ -136,7 +136,7 @@ public class ZaakObjectUpdater : IEntityUpdater<ZaakObject>
         if (source.Overige == null)
             throw new NullReferenceException(nameof(source.Overige));
 
-        source.Overige.OverigeData = request.Overige.OverigeData;
+        source.Overige.OverigeDataJsonb = request.Overige.OverigeDataJsonb;
     }
 
     private static void UpdatePandZaakObject(ZaakObject request, ZaakObject source)
