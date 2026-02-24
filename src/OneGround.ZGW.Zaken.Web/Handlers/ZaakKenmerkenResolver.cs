@@ -33,7 +33,7 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
 
     public async Task<Dictionary<string, string>> GetKenmerkenAsync(Zaak zaak, CancellationToken cancellationToken)
     {
-        return new Dictionary<string, string>
+        var kenmerken = new Dictionary<string, string>
         {
             { "bronorganisatie", zaak.Bronorganisatie },
             { "zaaktype", zaak.Zaaktype },
@@ -47,6 +47,16 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
             { "domein", await GetDomeinFromZaakAsync(zaak) },
             { "is_eindzaakstatus", await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
         };
+
+        if (zaak.Kenmerken.Count() > 0)
+        {
+            for (int i = 0; i < zaak.Kenmerken.Count; i++)
+            {
+                kenmerken.Add($"kenmerk_bron|{i + 1}", zaak.Kenmerken[i].Bron);
+                kenmerken.Add($"kenmerk_waarde|{i + 1}", zaak.Kenmerken[i].Kenmerk);
+            }
+        }
+        return kenmerken;
     }
 
     private async Task<string> IsEindZaakStatusAsync(Zaak zaak, CancellationToken cancellationToken)

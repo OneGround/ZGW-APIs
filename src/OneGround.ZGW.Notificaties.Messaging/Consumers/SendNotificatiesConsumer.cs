@@ -3,7 +3,6 @@ using Hangfire;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -172,29 +171,76 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
     private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)
     {
-        if (kenmerken != null && kenmerken.TryGetValue(filter.Key, out var value))
+        // Early exit if no kenmerken provided
+        if (kenmerken == null || kenmerken.Count == 0)
         {
-            if (filter.Value == "*")
-            {
-                Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
-                return true;
-            }
-
-            // Note: we support boolean filters now. So handle these if relevant
-            if (bool.TryParse(filter.Value, out var filterAsBool))
-            {
-                if (bool.TryParse(value, out var featureAsBool) && featureAsBool == filterAsBool)
-                {
-                    Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filter.Key, filter.Value);
-                    return true;
-                }
-            }
-            else if (value == filter.Value)
-            {
-                Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
-                return true;
-            }
+            return false;
         }
+
+        // Special handling for kenmerk_bron filter
+        if (filter.Key == "kenmerk_bron")
+        {
+            return FilterKenmerkBron(kenmerken, filter);
+        }
+
+        // Standard filter matching - check if key exists
+        if (!kenmerken.TryGetValue(filter.Key, out var kenmerkValue))
+        {
+            return false;
+        }
+
+        return MatchesFilterValue(filter.Key, filter.Value, kenmerkValue);
+    }
+
+    private bool FilterKenmerkBron(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)
+    {
+        // Check if any kenmerk_bron entries exist
+        var hasKenmerkBron = kenmerken.Any(k => k.Key.StartsWith("kenmerk_bron|"));
+        if (!hasKenmerkBron)
+        {
+            return false;
+        }
+
+        // Wildcard matches if any kenmerk_bron exists
+        if (filter.Value == "*")
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
+            return true;
+        }
+
+        // Check if specific value exists in any kenmerk_bron
+        var matches = kenmerken.Where(k => k.Key.StartsWith("kenmerk_bron|")).Any(k => k.Value == filter.Value);
+        if (matches)
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
+        }
+
+        return matches;
+    }
+
+    private bool MatchesFilterValue(string filterKey, string filterValue, string kenmerkValue)
+    {
+        // Wildcard matches any value for this key
+        if (filterValue == "*")
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"*\"", filterKey);
+            return true;
+        }
+
+        // Try boolean comparison
+        if (bool.TryParse(filterValue, out var filterAsBool) && bool.TryParse(kenmerkValue, out var featureAsBool) && featureAsBool == filterAsBool)
+        {
+            Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filterKey, filterValue);
+            return true;
+        }
+
+        // String comparison
+        if (kenmerkValue == filterValue)
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filterKey, filterValue);
+            return true;
+        }
+
         return false;
     }
 }
