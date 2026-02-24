@@ -141,7 +141,7 @@ public class DomainToResponseProfile : Profile
             .ForAllMembers(opt => opt.Ignore());
 
         CreateMap<OverigeZaakObject, OverigeZaakObjectDto>()
-            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => JToken.Parse(src.OverigeData)));
+            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => JToken.Parse(src.OverigeDataJsonb)));
 
         CreateMap<AanduidingWozObject, AanduidingWozObjectDto>();
         CreateMap<WozObject, WozObjectDto>();
@@ -403,18 +403,4 @@ public class DomainToResponseProfile : Profile
         return result;
     }
 
-    private static JToken ParseOverigeData(string stored)
-    {
-        if (stored == null)
-            return null;
-        try
-        {
-            return JToken.Parse(stored);
-        }
-        catch (Exception)
-        {
-            // Legacy plain-string values stored before JSON enforcement are returned as a JSON string value.
-            return new JValue(stored);
-        }
-    }
 }

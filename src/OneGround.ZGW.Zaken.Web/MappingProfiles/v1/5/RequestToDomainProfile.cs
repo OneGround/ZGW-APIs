@@ -519,7 +519,10 @@ public class RequestToDomainProfile : Profile
 
     private static OverigeZaakObject CreateOverigeZaakObject(OverigeZaakObjectRequestDto source, ResolutionContext context)
     {
-        return new OverigeZaakObject { OverigeData = JsonConvert.SerializeObject(source.ObjectIdentificatie.OverigeData) };
+        return new OverigeZaakObject
+        {
+            OverigeDataJsonb = JsonConvert.SerializeObject(source.ObjectIdentificatie.OverigeData),
+        };
     }
 
     private static AdresZaakObject CreateAdresZaakObject(AdresZaakObjectRequestDto source, ResolutionContext context)
