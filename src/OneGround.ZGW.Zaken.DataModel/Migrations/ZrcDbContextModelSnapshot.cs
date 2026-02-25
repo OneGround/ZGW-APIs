@@ -1141,7 +1141,6 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("modifiedby");
 
                     b.Property<string>("OverigeData")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("overigedata");
 

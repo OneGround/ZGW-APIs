@@ -185,6 +185,7 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakVerzoek>().Property(c => c.Verzoek).UseCollation("ci_collation");
 
         // Temporary partial index to speed up the overigedata_jsonb backfill migration.
+        // Will be droped after migration
         modelBuilder
             .Entity<ZaakObject.OverigeZaakObject>()
             .HasIndex(p => p.Id)
