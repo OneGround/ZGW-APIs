@@ -22,7 +22,28 @@ public class OverigeZaakObjectDtoValidator : ZGWValidator<OverigeZaakObjectDto>
     {
         CascadeRuleFor(o => o.OverigeData)
             .NotNull()
-            .Must(token => !(token is JValue jv && jv.Type == JTokenType.String && string.IsNullOrWhiteSpace((string)jv)))
+            .Must(token =>
+            {
+                // Reject blank string values
+                if (token is JValue jv && jv.Type == JTokenType.String && string.IsNullOrWhiteSpace((string)jv))
+                {
+                    return false;
+                }
+
+                // Reject empty objects: {}
+                if (token is JObject obj && !obj.HasValues)
+                {
+                    return false;
+                }
+
+                // Reject empty arrays: []
+                if (token is JArray arr && !arr.HasValues)
+                {
+                    return false;
+                }
+
+                return true;
+            })
             .WithErrorCode(ErrorCode.Blank);
     }
 }
