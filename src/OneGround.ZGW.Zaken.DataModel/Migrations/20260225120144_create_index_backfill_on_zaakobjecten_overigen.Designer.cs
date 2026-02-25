@@ -15,8 +15,8 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    [Migration("20260225104906_add_column_overigedata_jsonb_to_zaakobjecten_overigen")]
-    partial class add_column_overigedata_jsonb_to_zaakobjecten_overigen
+    [Migration("20260225120144_create_index_backfill_on_zaakobjecten_overigen")]
+    partial class create_index_backfill_on_zaakobjecten_overigen
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
