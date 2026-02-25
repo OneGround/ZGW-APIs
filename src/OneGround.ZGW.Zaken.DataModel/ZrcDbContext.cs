@@ -183,6 +183,13 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakStatus>().Property(c => c.StatusType).UseCollation("ci_collation");
 
         modelBuilder.Entity<ZaakVerzoek>().Property(c => c.Verzoek).UseCollation("ci_collation");
+
+        // Temporary partial index to speed up the overigedata_jsonb backfill migration.
+        modelBuilder
+            .Entity<ZaakObject.OverigeZaakObject>()
+            .HasIndex(p => p.Id)
+            .HasFilter("overigedata_jsonb IS NULL")
+            .HasDatabaseName("idx_zaakobjecten_overigen_backfill");
     }
 
     // Note: To get ST_Transform working to do a tranfomation from one Geometry to another Geometry (without using real tables)
