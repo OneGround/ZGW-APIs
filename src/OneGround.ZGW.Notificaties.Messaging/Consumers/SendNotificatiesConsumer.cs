@@ -66,13 +66,11 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 var abonnementen = await GetCachedAbonnementenAsync(notificatie.Rsin, context.CancellationToken);
 
-                var kenmerken = notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
-
                 Logger.LogDebug("Notification owner matched these subscriptions: {@Subscriptions}", abonnementen.Select(s => s.Id));
 
                 foreach (var abonnement in abonnementen)
                 {
-                    if (ShouldNotifySubscriber(notificatie, kenmerken, abonnement, out var resolvedKenmerkBronnen))
+                    if (ShouldNotifySubscriber(notificatie, abonnement, out var resolvedKenmerkBronnen))
                     {
                         SendNotificatieToSubscriber(context, notificatie, abonnement, resolvedKenmerkBronnen);
                     }
@@ -90,13 +88,13 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         }
     }
 
-    private bool ShouldNotifySubscriber(
-        ISendNotificaties notificatie,
-        Dictionary<string, string> kenmerken,
-        Abonnement abonnement,
-        out string resolvedKenmerkBronnen
-    )
+    private bool ShouldNotifySubscriber(ISendNotificaties notificatie, Abonnement abonnement, out string resolvedKenmerkBronnen)
     {
+        resolvedKenmerkBronnen = "";
+
+        Dictionary<string, string> kenmerken =
+            notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
+
         var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
 
         Logger.LogInformation(
@@ -104,8 +102,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
             kanalen.Select(k => k.Id),
             abonnement.Id
         );
-
-        resolvedKenmerkBronnen = "";
 
         bool shouldNotify = false;
 
