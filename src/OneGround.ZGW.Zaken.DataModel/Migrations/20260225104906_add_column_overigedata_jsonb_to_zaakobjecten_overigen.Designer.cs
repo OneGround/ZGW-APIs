@@ -15,7 +15,7 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    [Migration("20260225092016_add_column_overigedata_jsonb_to_zaakobjecten_overigen")]
+    [Migration("20260225104906_add_column_overigedata_jsonb_to_zaakobjecten_overigen")]
     partial class add_column_overigedata_jsonb_to_zaakobjecten_overigen
     {
         /// <inheritdoc />
@@ -1144,7 +1144,6 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("modifiedby");
 
                     b.Property<string>("OverigeData")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("overigedata");
 

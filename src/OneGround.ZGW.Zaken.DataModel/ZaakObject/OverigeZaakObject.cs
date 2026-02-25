@@ -27,7 +27,6 @@ public class OverigeZaakObject : OwnedEntity, IAuditableEntity
     [Column("modifiedby")]
     public string ModifiedBy { get; set; }
 
-    [Required]
     [Column("overigedata")]
     public string OverigeData { get; set; }
 
