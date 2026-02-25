@@ -274,8 +274,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.ModificationTime, opt => opt.Ignore())
             .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Owner, opt => opt.Ignore())
-            .ForMember(dest => dest.OverigeData, opt => opt.Ignore())
-            .ForMember(dest => dest.OverigeDataJsonb, opt => opt.MapFrom(src => src.OverigeData.ToString(Formatting.None)));
+            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => src.OverigeData.ToString(Formatting.None)));
         CreateMap<OverigeZaakObjectRequestDto, ZaakObject>().ForMember(dest => dest.Overige, opt => opt.MapFrom(src => src.ObjectIdentificatie));
 
         CreateMap<AanduidingWozObjectDto, AanduidingWozObject>().ForMember(dest => dest.Id, opt => opt.Ignore());
@@ -545,7 +544,7 @@ public class RequestToDomainProfile : Profile
 
     private static OverigeZaakObject CreateOverigeZaakObject(OverigeZaakObjectRequestDto source, ResolutionContext context)
     {
-        return new OverigeZaakObject { OverigeDataJsonb = JsonConvert.SerializeObject(source.ObjectIdentificatie.OverigeData) };
+        return new OverigeZaakObject { OverigeData = JsonConvert.SerializeObject(source.ObjectIdentificatie.OverigeData) };
     }
 
     private static AdresZaakObject CreateAdresZaakObject(AdresZaakObjectRequestDto source, ResolutionContext context)

@@ -141,7 +141,7 @@ public class DomainToResponseProfile : Profile
             .ForAllMembers(opt => opt.Ignore());
 
         CreateMap<OverigeZaakObject, OverigeZaakObjectDto>()
-            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => JToken.Parse(src.OverigeDataJsonb)));
+            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => JToken.Parse(src.OverigeData)));
 
         CreateMap<AanduidingWozObject, AanduidingWozObjectDto>();
         CreateMap<WozObject, WozObjectDto>();
