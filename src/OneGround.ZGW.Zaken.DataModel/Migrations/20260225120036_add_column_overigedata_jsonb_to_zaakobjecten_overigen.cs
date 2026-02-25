@@ -21,13 +21,9 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 
             migrationBuilder.AddColumn<string>(name: "overigedata_jsonb", table: "zaakobjecten_overigen", type: "jsonb", nullable: true);
 
-            // Phase 1: column is added, application starts writing to overigedata_jsonb.
-            // The backfill of existing rows is handled by a separate service.
-            // Once the backfill is confirmed complete and the application is fully using the new column,
-            // this UPDATE will be uncommented and applied as part of the next migration stage (Phase 2 cutover).
-            // migrationBuilder.Sql(
-            //     "UPDATE zaakobjecten_overigen SET overigedata_jsonb = to_jsonb(overigedata) WHERE overigedata IS NOT NULL AND overigedata_jsonb IS NULL;"
-            // );
+            migrationBuilder.Sql(
+                "UPDATE zaakobjecten_overigen SET overigedata_jsonb = to_jsonb(overigedata) WHERE overigedata IS NOT NULL AND overigedata_jsonb IS NULL;"
+            );
         }
 
         /// <inheritdoc />
