@@ -275,7 +275,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.OverigeData, opt => opt.Ignore())
-            .ForMember(dest => dest.OverigeDataJsonb, opt => opt.MapFrom(src => JsonConvert.SerializeObject(src.OverigeData)));
+            .ForMember(dest => dest.OverigeDataJsonb, opt => opt.MapFrom(src => src.OverigeData.ToString(Formatting.None)));
         CreateMap<OverigeZaakObjectRequestDto, ZaakObject>().ForMember(dest => dest.Overige, opt => opt.MapFrom(src => src.ObjectIdentificatie));
 
         CreateMap<AanduidingWozObjectDto, AanduidingWozObject>().ForMember(dest => dest.Id, opt => opt.Ignore());
