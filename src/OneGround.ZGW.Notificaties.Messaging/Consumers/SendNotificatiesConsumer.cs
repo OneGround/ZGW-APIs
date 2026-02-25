@@ -72,81 +72,9 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 foreach (var abonnement in abonnementen)
                 {
-                    var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
-
-                    Logger.LogDebug(
-                        "Found following channels: {@ChannelIds} maching subscription: {SubscriptionId}",
-                        kanalen.Select(k => k.Id),
-                        abonnement.Id
-                    );
-
-                    bool shouldNotify = false; // Send only one notification to the current subscriber across multiple kanalen.
-
-                    string resolvedKenmerkBronnen = "";
-
-                    foreach (var kanaal in kanalen)
+                    if (ShouldNotifySubscriber(notificatie, kenmerken, abonnement, out var resolvedKenmerkBronnen))
                     {
-                        var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
-
-                        Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
-
-                        if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
-                        {
-                            continue;
-                        }
-
-                        if (
-                            filters.ContainsKey("#resource")
-                            && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource)
-                        )
-                        {
-                            continue;
-                        }
-
-                        if (
-                            filters.Count != 0
-                            && !filters
-                                .Where(f => f.Key != "#actie" && f.Key != "#resource")
-                                .All(filter => Filter(kenmerken, filter, ref resolvedKenmerkBronnen))
-                        )
-                        {
-                            continue;
-                        }
-
-                        if (_notificationFilterService.IsIgnored(notificatie, abonnement, kanaal))
-                        {
-                            continue;
-                        }
-
-                        shouldNotify = true;
-                    }
-
-                    if (shouldNotify)
-                    {
-                        SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
-
-                        // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
-                        if (resolvedKenmerkBronnen.Length > 0 && subscriberNotificatie.Kenmerken.ContainsKey("kenmerk_bron"))
-                        {
-                            subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
-                        }
-
-                        // Get optional BatchId header
-                        context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
-
-                        // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
-                        var job = _notificatieScheduler.Enqueue<NotificatieJob>(h =>
-                            h.ReQueueNotificatieAsync(abonnement.Id, subscriberNotificatie, null, batchId)
-                        );
-
-                        Logger.LogInformation(
-                            "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
-                            nameof(SendNotificatiesConsumer),
-                            job,
-                            notificatie.Rsin,
-                            notificatie.Kanaal,
-                            abonnement.CallbackUrl
-                        );
+                        SendNotificatieToSubscriber(context, notificatie, abonnement, resolvedKenmerkBronnen);
                     }
                 }
             }
@@ -160,6 +88,97 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 );
             }
         }
+    }
+
+    private bool ShouldNotifySubscriber(
+        ISendNotificaties notificatie,
+        Dictionary<string, string> kenmerken,
+        Abonnement abonnement,
+        out string resolvedKenmerkBronnen
+    )
+    {
+        var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
+
+        Logger.LogInformation(
+            "Found following channels: {@ChannelIds} maching subscription: {SubscriptionId}",
+            kanalen.Select(k => k.Id),
+            abonnement.Id
+        );
+
+        resolvedKenmerkBronnen = "";
+
+        bool shouldNotify = false;
+
+        string resolvingKenmerkBronnen = "";
+
+        foreach (var kanaal in kanalen)
+        {
+            var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
+
+            Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
+
+            if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
+            {
+                continue;
+            }
+
+            if (filters.ContainsKey("#resource") && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource))
+            {
+                continue;
+            }
+
+            if (
+                filters.Count != 0
+                && !filters
+                    .Where(f => f.Key != "#actie" && f.Key != "#resource")
+                    .All(filter => Filter(kenmerken, filter, ref resolvingKenmerkBronnen))
+            )
+            {
+                continue;
+            }
+
+            if (_notificationFilterService.IsIgnored(notificatie, abonnement, kanaal))
+            {
+                continue;
+            }
+
+            shouldNotify = true;
+        }
+
+        resolvedKenmerkBronnen = resolvingKenmerkBronnen;
+
+        return shouldNotify;
+    }
+
+    private void SendNotificatieToSubscriber(
+        ConsumeContext<ISendNotificaties> context,
+        ISendNotificaties notificatie,
+        Abonnement abonnement,
+        string resolvedKenmerkBronnen
+    )
+    {
+        SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
+
+        // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
+        if (resolvedKenmerkBronnen.Length > 0 && subscriberNotificatie.Kenmerken.ContainsKey("kenmerk_bron"))
+        {
+            subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
+        }
+
+        // Get optional BatchId header
+        context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
+
+        // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
+        var job = _notificatieScheduler.Enqueue<NotificatieJob>(h => h.ReQueueNotificatieAsync(abonnement.Id, subscriberNotificatie, null, batchId));
+
+        Logger.LogInformation(
+            "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
+            nameof(SendNotificatiesConsumer),
+            job,
+            notificatie.Rsin,
+            notificatie.Kanaal,
+            abonnement.CallbackUrl
+        );
     }
 
     private async Task<List<Abonnement>> GetCachedAbonnementenAsync(string rsin, CancellationToken cancellationToken)
