@@ -402,5 +402,4 @@ public class DomainToResponseProfile : Profile
         }
         return result;
     }
-
 }
