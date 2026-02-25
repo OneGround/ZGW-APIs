@@ -5,6 +5,8 @@ using AutoFixture;
 using AutoMapper;
 using Moq;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -398,10 +400,13 @@ public class DomainToResponseProfileTests
     [Fact]
     public void OverigeZaakObject_Maps_To_OverigeZaakObjectDto()
     {
+        var jsonValue = JsonConvert.SerializeObject("some plain text value");
+        _fixture.Customize<OverigeZaakObject>(c => c.With(p => p.OverigeDataJsonb, jsonValue));
+
         var value = _fixture.Create<OverigeZaakObject>();
         var result = _mapper.Map<OverigeZaakObjectDto>(value);
 
-        Assert.Equal(value.OverigeData, result.OverigeData);
+        Assert.Equal(JToken.Parse(jsonValue), result.OverigeData);
     }
 
     [Fact]
