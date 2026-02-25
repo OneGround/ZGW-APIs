@@ -483,11 +483,20 @@ public class DomainToResponseProfileTests
     }
 
     public static IEnumerable<object[]> OverigeDataJsonValues =>
-    [
-        [JsonConvert.SerializeObject(new { name = "Test", value = 42, nested = new { flag = true } })],
-        [JsonConvert.SerializeObject(new object[] { "item1", 123, true, new { prop = "value" } })],
-        [JsonConvert.SerializeObject(12345.67)],
-        [JsonConvert.SerializeObject(true)],
-        [JsonConvert.SerializeObject("some plain text value")],
-    ];
+        [
+            [
+                JsonConvert.SerializeObject(
+                    new
+                    {
+                        name = "Test",
+                        value = 42,
+                        nested = new { flag = true },
+                    }
+                ),
+            ],
+            [JsonConvert.SerializeObject(new object[] { "item1", 123, true, new { prop = "value" } })],
+            [JsonConvert.SerializeObject(12345.67)],
+            [JsonConvert.SerializeObject(true)],
+            [JsonConvert.SerializeObject("some plain text value")],
+        ];
 }
