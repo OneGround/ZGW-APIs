@@ -80,6 +80,10 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                         abonnement.Id
                     );
 
+                    bool shouldNotify = false; // Send only one notification to the current subscriber across multiple kanalen.
+
+                    string resolvedKenmerkBronnen = "";
+
                     foreach (var kanaal in kanalen)
                     {
                         var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
@@ -101,7 +105,9 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                         if (
                             filters.Count != 0
-                            && !filters.Where(f => f.Key != "#actie" && f.Key != "#resource").All(filter => Filter(kenmerken, filter))
+                            && !filters
+                                .Where(f => f.Key != "#actie" && f.Key != "#resource")
+                                .All(filter => Filter(kenmerken, filter, ref resolvedKenmerkBronnen))
                         )
                         {
                             continue;
@@ -112,12 +118,25 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                             continue;
                         }
 
+                        shouldNotify = true;
+                    }
+
+                    if (shouldNotify)
+                    {
+                        SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
+
+                        // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
+                        if (resolvedKenmerkBronnen.Length > 0 && subscriberNotificatie.Kenmerken.ContainsKey("kenmerk_bron"))
+                        {
+                            subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
+                        }
+
                         // Get optional BatchId header
                         context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
 
                         // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
                         var job = _notificatieScheduler.Enqueue<NotificatieJob>(h =>
-                            h.ReQueueNotificatieAsync(abonnement.Id, notificatie.ToInstance(), null, batchId)
+                            h.ReQueueNotificatieAsync(abonnement.Id, subscriberNotificatie, null, batchId)
                         );
 
                         Logger.LogInformation(
@@ -169,7 +188,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         );
     }
 
-    private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)
+    private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter, ref string resolvedKenmerkBronnen)
     {
         // Early exit if no kenmerken provided
         if (kenmerken == null || kenmerken.Count == 0)
@@ -180,7 +199,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         // Special handling for kenmerk_bron filter
         if (filter.Key == "kenmerk_bron")
         {
-            return FilterKenmerkBron(kenmerken, filter);
+            return FilterKenmerkBronAndResolve(kenmerken, filter, ref resolvedKenmerkBronnen);
         }
 
         // Standard filter matching - check if key exists
@@ -192,11 +211,14 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         return MatchesFilterValue(filter.Key, filter.Value, kenmerkValue);
     }
 
-    private bool FilterKenmerkBron(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)
+    private bool FilterKenmerkBronAndResolve(
+        IReadOnlyDictionary<string, string> kenmerken,
+        KeyValuePair<string, string> filter,
+        ref string resolvedKenmerkBronnen
+    )
     {
         // Check if any kenmerk_bron entries exist
-        var hasKenmerkBron = kenmerken.Any(k => k.Key.StartsWith("kenmerk_bron|"));
-        if (!hasKenmerkBron)
+        if (!kenmerken.ContainsKey("kenmerk_bron"))
         {
             return false;
         }
@@ -204,18 +226,48 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         // Wildcard matches if any kenmerk_bron exists
         if (filter.Value == "*")
         {
+            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, kenmerken["kenmerk_bron"]);
+
             Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
             return true;
         }
 
         // Check if specific value exists in any kenmerk_bron
-        var matches = kenmerken.Where(k => k.Key.StartsWith("kenmerk_bron|")).Any(k => k.Value == filter.Value);
-        if (matches)
+        var bronnen = kenmerken["kenmerk_bron"].Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+        var matches = bronnen.FirstOrDefault(b => b == filter.Value);
+        if (matches != null)
         {
+            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, matches);
+
             Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
+            return true;
         }
 
-        return matches;
+        return false;
+    }
+
+    private static string ResolveKenmerkBronnen(string resolvedKenmerkBronnen, string matches)
+    {
+        //
+        // Prevent duplicate entries in resolvedKenmerkBronnen when multiple filters match the same kenmerk_bron values
+
+        // Split existing resolved values into a HashSet to track unique elements
+        var existingBronnen =
+            resolvedKenmerkBronnen.Length > 0
+                ? resolvedKenmerkBronnen.Split(';', StringSplitOptions.RemoveEmptyEntries).ToHashSet()
+                : new HashSet<string>();
+
+        // Split incoming matches by semicolons and add only unique values
+        var newBronnen = matches.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var bron in newBronnen)
+        {
+            existingBronnen.Add(bron);
+        }
+
+        // Reconstruct the semicolon-separated string with unique values
+        return string.Join(";", existingBronnen);
     }
 
     private bool MatchesFilterValue(string filterKey, string filterValue, string kenmerkValue)
