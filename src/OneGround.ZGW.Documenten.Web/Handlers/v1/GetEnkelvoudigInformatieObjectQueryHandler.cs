@@ -99,8 +99,9 @@ class GetEnkelvoudigInformatieObjectQueryHandler
             return new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.Forbidden);
         }
 
-        // Set up the relationships
+        // Set up the relationships (both directions)
         enkelvoudiginformatieobject.LatestEnkelvoudigInformatieObjectVersie = requestedVersie;
+        enkelvoudiginformatieobject.LatestEnkelvoudigInformatieObjectVersie.LatestInformatieObject = enkelvoudiginformatieobject;
 
         // Attach only the requested version
         enkelvoudiginformatieobject.EnkelvoudigInformatieObjectVersies.Clear();
