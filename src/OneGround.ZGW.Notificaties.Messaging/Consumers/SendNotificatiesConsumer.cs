@@ -98,7 +98,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
 
         Logger.LogInformation(
-            "Found following channels: {@ChannelIds} maching subscription: {SubscriptionId}",
+            "Found following channels: {@ChannelIds} matching subscription: {SubscriptionId}",
             kanalen.Select(k => k.Id),
             abonnement.Id
         );
@@ -154,13 +154,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     )
     {
         SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
-
-        // Create a per-subscriber copy of the kenmerken dictionary to avoid sharing state between notifications
-        var origineleKenmerken = subscriberNotificatie.Kenmerken;
-        var gekopieerdeKenmerken = origineleKenmerken != null
-            ? new Dictionary<string, string>(origineleKenmerken)
-            : new Dictionary<string, string>();
-        subscriberNotificatie.Kenmerken = gekopieerdeKenmerken;
 
         // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
         if (resolvedKenmerkBronnen.Length > 0)

@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers;
 
@@ -48,7 +47,7 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
             { "is_eindzaakstatus", await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
         };
 
-        if (zaak.Kenmerken.Count() > 0)
+        if (zaak.Kenmerken.Any())
         {
             kenmerken.Add("kenmerk_bron", string.Join(';', zaak.Kenmerken.Select(k => k.Bron)));
         }
