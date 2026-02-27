@@ -50,7 +50,7 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
 
         if (zaak.Kenmerken.Count() > 0)
         {
-            kenmerken.Add($"kenmerk_bron", string.Join(';', zaak.Kenmerken.Select(k => k.Bron)));
+            kenmerken.Add("kenmerk_bron", string.Join(';', zaak.Kenmerken.Select(k => k.Bron)));
         }
 
         return kenmerken;
