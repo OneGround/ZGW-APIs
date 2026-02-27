@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using NodaTime;
@@ -14,9 +15,11 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    partial class ZrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260225120036_add_column_overigedata_jsonb_to_zaakobjecten_overigen")]
+    partial class add_column_overigedata_jsonb_to_zaakobjecten_overigen
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1159,10 +1162,6 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("zaakobject_id");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Id")
-                        .HasDatabaseName("idx_zaakobjecten_overigen_backfill")
-                        .HasFilter("overigedata_jsonb IS NULL");
 
                     b.HasIndex("ZaakObjectId")
                         .IsUnique();

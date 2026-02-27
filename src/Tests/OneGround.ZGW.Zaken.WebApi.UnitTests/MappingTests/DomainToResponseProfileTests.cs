@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using AutoFixture;
 using AutoMapper;
 using Moq;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -395,13 +398,16 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.GemeenteNaam, result.GemeenteNaam);
     }
 
-    [Fact]
-    public void OverigeZaakObject_Maps_To_OverigeZaakObjectDto()
+    [Theory]
+    [MemberData(nameof(OverigeDataJsonValues))]
+    public void OverigeZaakObject_Maps_To_OverigeZaakObjectDto(string jsonValue)
     {
+        _fixture.Customize<OverigeZaakObject>(c => c.With(p => p.OverigeDataJsonb, jsonValue));
+
         var value = _fixture.Create<OverigeZaakObject>();
         var result = _mapper.Map<OverigeZaakObjectDto>(value);
 
-        Assert.Equal(value.OverigeData, result.OverigeData);
+        Assert.Equal(JToken.Parse(jsonValue), result.OverigeData);
     }
 
     [Fact]
@@ -475,4 +481,22 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.Onderwerp, result.Onderwerp);
         Assert.Equal(value.Toelichting, result.Toelichting);
     }
+
+    public static IEnumerable<object[]> OverigeDataJsonValues =>
+        [
+            [
+                JsonConvert.SerializeObject(
+                    new
+                    {
+                        name = "Test",
+                        value = 42,
+                        nested = new { flag = true },
+                    }
+                ),
+            ],
+            [JsonConvert.SerializeObject(new object[] { "item1", 123, true, new { prop = "value" } })],
+            [JsonConvert.SerializeObject(12345.67)],
+            [JsonConvert.SerializeObject(true)],
+            [JsonConvert.SerializeObject("some plain text value")],
+        ];
 }
