@@ -14,7 +14,7 @@ public static class NotificatieExtensions
             ResourceUrl = notificatie.ResourceUrl,
             Actie = notificatie.Actie,
             // Note: Create a copy of the kenmerken dictionary to avoid sharing state between notifications
-            Kenmerken = new Dictionary<string, string>(notificatie.Kenmerken),
+            Kenmerken = new Dictionary<string, string>(notificatie.Kenmerken ?? new Dictionary<string, string>()),
             CorrelationId = notificatie.CorrelationId,
             Rsin = notificatie.Rsin,
         };
