@@ -20,7 +20,10 @@ public class AbonnementRequestValidator : ZGWValidator<AbonnementRequestDto>
                     {
                         v.CascadeRuleFor(r => r.Key).NotNull().NotEmpty().MaximumLength(1000);
                         v.CascadeRuleFor(r => r.Value)
-                            .Must((filter, value) => filter.Key != "kenmerk_bron" || !value.Contains(';'))
+                            .Must((filter, value) =>
+                                filter.Key != "kenmerk_bron"
+                                || string.IsNullOrEmpty(value)
+                                || !value.Contains(';'))
                             .WithMessage("Bij het filter 'kenmerk_bron' mag de waarde geen ';' karakter bevatten.");
                     });
             });
