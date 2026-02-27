@@ -232,8 +232,8 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         ref string resolvedKenmerkBronnen
     )
     {
-        // Check if any kenmerk_bron entries exist
-        if (!kenmerken.ContainsKey("kenmerk_bron"))
+        // Check if any kenmerk_bron entries exist and retrieve its value
+        if (!kenmerken.TryGetValue("kenmerk_bron", out var kenmerkBronValue))
         {
             return false;
         }
@@ -241,14 +241,14 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         // Wildcard matches if any kenmerk_bron exists
         if (filter.Value == "*")
         {
-            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, kenmerken["kenmerk_bron"]);
+            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, kenmerkBronValue);
 
             Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
             return true;
         }
 
         // Check if specific value exists in any kenmerk_bron
-        var bronnen = kenmerken["kenmerk_bron"].Split(';', StringSplitOptions.RemoveEmptyEntries);
+        var bronnen = kenmerkBronValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
         var matches = bronnen.FirstOrDefault(b => b == filter.Value);
         if (matches != null)
