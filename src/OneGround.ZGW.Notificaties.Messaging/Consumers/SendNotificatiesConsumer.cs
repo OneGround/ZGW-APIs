@@ -155,8 +155,15 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     {
         SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
 
+        // Create a per-subscriber copy of the kenmerken dictionary to avoid sharing state between notifications
+        var origineleKenmerken = subscriberNotificatie.Kenmerken;
+        var gekopieerdeKenmerken = origineleKenmerken != null
+            ? new Dictionary<string, string>(origineleKenmerken)
+            : new Dictionary<string, string>();
+        subscriberNotificatie.Kenmerken = gekopieerdeKenmerken;
+
         // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
-        if (resolvedKenmerkBronnen.Length > 0 && subscriberNotificatie.Kenmerken.ContainsKey("kenmerk_bron"))
+        if (resolvedKenmerkBronnen.Length > 0)
         {
             subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
         }
