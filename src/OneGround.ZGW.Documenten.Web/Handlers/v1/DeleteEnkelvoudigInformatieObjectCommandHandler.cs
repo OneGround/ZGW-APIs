@@ -20,6 +20,7 @@ using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
@@ -35,6 +36,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
     private readonly IDocumentServicesResolver _documentServicesResolver;
     private readonly IZakenServiceAgent _zakenServiceAgent;
     private readonly IBesluitenServiceAgent _besluitenServiceAgent;
+    private readonly ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> _concurrencyRetryPipeline;
 
     public DeleteEnkelvoudigInformatieObjectCommandHandler(
         ILogger<DeleteEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -47,7 +49,8 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         IZakenServiceAgent zakenServiceAgent,
         IBesluitenServiceAgent besluitenServiceAgent,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> concurrencyRetryPipeline
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -56,6 +59,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
         _documentServicesResolver = documentServicesResolver;
         _zakenServiceAgent = zakenServiceAgent;
         _besluitenServiceAgent = besluitenServiceAgent;
+        _concurrencyRetryPipeline = concurrencyRetryPipeline;
     }
 
     public async Task<CommandResult> Handle(DeleteEnkelvoudigInformatieObjectCommand request, CancellationToken cancellationToken)
@@ -71,35 +75,56 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
-        // First, try to acquire lock on the EnkelvoudigInformatieObject
-        var enkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
-            .Include(x => x.ObjectInformatieObjecten)
-            .Include(x => x.EnkelvoudigInformatieObjectVersies)
-            .Include(x => x.LatestEnkelvoudigInformatieObjectVersie)
-            .Where(rsinFilter)
-            .AsSplitQuery()
-            .AsNoTracking()
-            .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
-
-        if (enkelvoudigInformatieObject == null)
-        {
-            // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, cancellationToken);
-
-            if (!exists)
+        var (enkelvoudigInformatieObject, status) = await _concurrencyRetryPipeline.ExecuteWithResultAsync(
+            async (token) =>
             {
-                // Object truly doesn't exist
-                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-            }
+                // First, try to acquire lock on the EnkelvoudigInformatieObject
+                var _enkelvoudigInformatieObject = await _context
+                    .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
+                    .Include(x => x.ObjectInformatieObjecten)
+                    .Include(x => x.EnkelvoudigInformatieObjectVersies)
+                    .Include(x => x.LatestEnkelvoudigInformatieObjectVersie)
+                    .Where(rsinFilter)
+                    .AsSplitQuery()
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(z => z.Id == request.Id, token);
 
+                // The object might be locked OR not exist - check if it exists without lock
+                if (_enkelvoudigInformatieObject == null)
+                {
+                    // The object might be locked OR not exist - check if it exists without lock
+                    var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, token);
+
+                    if (!exists)
+                    {
+                        // Object truly doesn't exist
+                        return (enkelvoudiginformatieobject: null, status: CommandStatus.NotFound);
+                    }
+
+                    // Throw the exception again so Polly knows a retry is needed (giving up after maximum reached retries)
+                    throw new ConcurrencyConflictException("Concurrency conflict detected.", request.Id);
+                }
+                else
+                {
+                    return (enkelvoudiginformatieobject: _enkelvoudigInformatieObject, status: CommandStatus.OK);
+                }
+            },
+            cancellationToken
+        );
+
+        if (status == CommandStatus.NotFound)
+        {
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+        }
+
+        if (status == CommandStatus.Conflict)
+        {
             // Object exists but is locked by another process
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Conflict,
                 $"Het enkelvoudiginformatieobject {request.Id} is vergrendeld door een andere bewerking."
             );
-
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
 
