@@ -32,6 +32,7 @@ using OneGround.ZGW.Documenten.Services.Ceph;
 using OneGround.ZGW.Documenten.Services.FileSystem;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
 using OneGround.ZGW.Documenten.Web.Handlers;
@@ -155,6 +156,8 @@ public class Startup
 
         services.AddSingleton<IEnkelvoudigInformatieObjectMergerFactory, EnkelvoudigInformatieObjectMergerFactory>();
         services.AddSingleton<IGenericObjectMergerFactory, GenericObjectMergerFactory>();
+
+        services.AddScoped(typeof(ResilienceConcurrencyRetryPipeline<>));
 
         services.AddCorrelationId();
         services.AddBatchId();
