@@ -118,7 +118,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                         .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
                         .Where(rsinFilter)
                         .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                        .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
+                        .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, token);
 
                     // The object might be locked OR not exist - check if it exists without lock
                     if (_existingEnkelvoudigInformatieObject == null)
@@ -126,7 +126,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                         // The object might be locked OR not exist - check if it exists without lock
                         var exists = await _context
                             .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-                            .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
+                            .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, token);
 
                         if (!exists)
                         {
@@ -156,7 +156,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 var error = new ValidationError(
                     "nonFieldErrors",
                     ErrorCode.Conflict,
-                    $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
+                    $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId.Value} is vergrendeld door een andere bewerking."
                 );
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
             }

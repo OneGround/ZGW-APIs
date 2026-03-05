@@ -104,7 +104,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                     .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId])
                     .Where(rsinFilter)
                     .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                    .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
+                    .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, token);
 
                 // The object might be locked OR not exist - check if it exists without lock
                 if (_existingEnkelvoudigInformatieObject == null)
@@ -112,7 +112,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
                     // The object might be locked OR not exist - check if it exists without lock
                     var exists = await _context
                         .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-                        .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
+                        .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, token);
 
                     if (!exists)
                     {

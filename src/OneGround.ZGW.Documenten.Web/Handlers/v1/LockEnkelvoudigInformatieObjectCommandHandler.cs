@@ -70,13 +70,13 @@ class LockEnkelvoudigInformatieObjectCommandHandler
                     .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
                     .Where(rsinFilter)
                     .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                    .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+                    .SingleOrDefaultAsync(e => e.Id == request.Id, token);
 
                 // The object might be locked OR not exist - check if it exists without lock
                 if (_enkelvoudigInformatieObject == null)
                 {
                     // The object might be locked OR not exist - check if it exists without lock
-                    var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, cancellationToken);
+                    var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, token);
 
                     if (!exists)
                     {

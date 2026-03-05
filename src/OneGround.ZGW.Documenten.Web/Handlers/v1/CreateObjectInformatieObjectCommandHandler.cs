@@ -17,7 +17,6 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
-using OneGround.ZGW.Documenten.Web.Concurrency;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -28,7 +27,6 @@ class CreateObjectInformatieObjectCommandHandler
     private readonly DrcDbContext _context;
     private readonly IObjectInformatieObjectBusinessRuleService _objectInformatieObjectBusinessRuleService;
     private readonly IAuditTrailFactory _auditTrailFactory;
-    private readonly ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> _concurrencyRetryPipeline;
 
     public CreateObjectInformatieObjectCommandHandler(
         ILogger<CreateObjectInformatieObjectCommandHandler> logger,
@@ -38,15 +36,13 @@ class CreateObjectInformatieObjectCommandHandler
         IObjectInformatieObjectBusinessRuleService objectInformatieObjectBusinessRuleService,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> concurrencyRetryPipeline
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
         _objectInformatieObjectBusinessRuleService = objectInformatieObjectBusinessRuleService;
         _auditTrailFactory = auditTrailFactory;
-        _concurrencyRetryPipeline = concurrencyRetryPipeline;
     }
 
     public async Task<CommandResult<ObjectInformatieObject>> Handle(CreateObjectInformatieObjectCommand request, CancellationToken cancellationToken)
@@ -95,15 +91,14 @@ class CreateObjectInformatieObjectCommandHandler
 
             await audittrail.CreatedAsync(objectInformatieObject.InformatieObject, objectInformatieObject, cancellationToken);
 
-            // Gemini PRO answer on how to handle race-condition on INSERT with unique constraint in Postgres:
-            //  If two requests hit your API simultaneously, the "Check-then-Act" might fail. You must catch the DbUpdateException thrown by Postgres when the unique constraint is violated.
-
-            // Try to save changes with potential concurrency conflict
+            // Handle potential race condition on INSERT with unique constraint in Postgres:
+            // if two requests hit this API simultaneously, a "check-then-act" pattern can fail and the INSERT may violate the unique constraint.
             try
             {
+                // Try to save changes with potential concurrency conflict
                 await _context.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
             {
                 // Handle preventing race-condition where another process has created an ObjectInformatieObject for the same EnkelvoudigInformatieObject after our initial read but before our insert
                 var error = new ValidationError("nonFieldErrors", ErrorCode.Conflict, "De combinatie informatieobject en object bestaat al.");
