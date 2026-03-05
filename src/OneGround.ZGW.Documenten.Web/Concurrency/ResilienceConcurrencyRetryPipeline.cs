@@ -57,10 +57,7 @@ public class ResilienceConcurrencyRetryPipeline<TObjectType>
     {
         try
         {
-            return await _concurrencyRetryPipeline.ExecuteAsync(
-                async ct => await action(ct),
-                cancellationToken
-            );
+            return await _concurrencyRetryPipeline.ExecuteAsync(async ct => await action(ct), cancellationToken);
         }
         catch (ConcurrencyConflictException ex)
         {
