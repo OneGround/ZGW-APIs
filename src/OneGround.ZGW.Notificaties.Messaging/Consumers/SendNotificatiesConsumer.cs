@@ -3,7 +3,6 @@ using Hangfire;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -67,68 +66,13 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 var abonnementen = await GetCachedAbonnementenAsync(notificatie.Rsin, context.CancellationToken);
 
-                var kenmerken = notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
-
                 Logger.LogDebug("Notification owner matched these subscriptions: {@Subscriptions}", abonnementen.Select(s => s.Id));
 
                 foreach (var abonnement in abonnementen)
                 {
-                    var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
-
-                    Logger.LogDebug(
-                        "Found following channels: {@ChannelIds} maching subscription: {SubscriptionId}",
-                        kanalen.Select(k => k.Id),
-                        abonnement.Id
-                    );
-
-                    foreach (var kanaal in kanalen)
+                    if (ShouldNotifySubscriber(notificatie, abonnement, out var resolvedKenmerkBronnen))
                     {
-                        var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
-
-                        Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
-
-                        if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
-                        {
-                            continue;
-                        }
-
-                        if (
-                            filters.ContainsKey("#resource")
-                            && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource)
-                        )
-                        {
-                            continue;
-                        }
-
-                        if (
-                            filters.Count != 0
-                            && !filters.Where(f => f.Key != "#actie" && f.Key != "#resource").All(filter => Filter(kenmerken, filter))
-                        )
-                        {
-                            continue;
-                        }
-
-                        if (_notificationFilterService.IsIgnored(notificatie, abonnement, kanaal))
-                        {
-                            continue;
-                        }
-
-                        // Get optional BatchId header
-                        context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
-
-                        // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
-                        var job = _notificatieScheduler.Enqueue<NotificatieJob>(h =>
-                            h.ReQueueNotificatieAsync(abonnement.Id, notificatie.ToInstance(), null, batchId)
-                        );
-
-                        Logger.LogInformation(
-                            "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
-                            nameof(SendNotificatiesConsumer),
-                            job,
-                            notificatie.Rsin,
-                            notificatie.Kanaal,
-                            abonnement.CallbackUrl
-                        );
+                        SendNotificatieToSubscriber(context, notificatie, abonnement, resolvedKenmerkBronnen);
                     }
                 }
             }
@@ -142,6 +86,95 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                 );
             }
         }
+    }
+
+    private bool ShouldNotifySubscriber(ISendNotificaties notificatie, Abonnement abonnement, out string resolvedKenmerkBronnen)
+    {
+        resolvedKenmerkBronnen = "";
+
+        Dictionary<string, string> kenmerken =
+            notificatie.Kenmerken != null ? notificatie.Kenmerken.ToDictionary(k => k.Key.ToLower(), v => v.Value) : [];
+
+        var kanalen = abonnement.AbonnementKanalen.Where(k => k.Kanaal.Naam == notificatie.Kanaal).ToArray();
+
+        Logger.LogInformation(
+            "Found following channels: {@ChannelIds} matching subscription: {SubscriptionId}",
+            kanalen.Select(k => k.Id),
+            abonnement.Id
+        );
+
+        bool shouldNotify = false;
+
+        string resolvingKenmerkBronnen = "";
+
+        foreach (var kanaal in kanalen)
+        {
+            var filters = kanaal.Filters.ToDictionary(k => k.Key.ToLower(), v => v.Value);
+
+            Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
+
+            if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
+            {
+                continue;
+            }
+
+            if (filters.ContainsKey("#resource") && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource))
+            {
+                continue;
+            }
+
+            if (
+                filters.Count != 0
+                && !filters
+                    .Where(f => f.Key != "#actie" && f.Key != "#resource")
+                    .All(filter => Filter(kenmerken, filter, ref resolvingKenmerkBronnen))
+            )
+            {
+                continue;
+            }
+
+            if (_notificationFilterService.IsIgnored(notificatie, abonnement, kanaal))
+            {
+                continue;
+            }
+
+            shouldNotify = true;
+        }
+
+        resolvedKenmerkBronnen = resolvingKenmerkBronnen;
+
+        return shouldNotify;
+    }
+
+    private void SendNotificatieToSubscriber(
+        ConsumeContext<ISendNotificaties> context,
+        ISendNotificaties notificatie,
+        Abonnement abonnement,
+        string resolvedKenmerkBronnen
+    )
+    {
+        SubscriberNotificatie subscriberNotificatie = notificatie.ToInstance();
+
+        // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
+        if (resolvedKenmerkBronnen.Length > 0)
+        {
+            subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
+        }
+
+        // Get optional BatchId header
+        context.TryGetHeader<Guid>("X-Batch-Id", out var batchId);
+
+        // Enqueue Hangfire job which sends the notificatie message (for each subscriber on channel)
+        var job = _notificatieScheduler.Enqueue<NotificatieJob>(h => h.ReQueueNotificatieAsync(abonnement.Id, subscriberNotificatie, null, batchId));
+
+        Logger.LogInformation(
+            "{SendNotificatiesConsumer}: Hangfire job '{job}' enqueued for delivering notificatie to subscriber '{Rsin}', channel '{Kanaal}', endpoint {CallbackUrl}",
+            nameof(SendNotificatiesConsumer),
+            job,
+            notificatie.Rsin,
+            notificatie.Kanaal,
+            abonnement.CallbackUrl
+        );
     }
 
     private async Task<List<Abonnement>> GetCachedAbonnementenAsync(string rsin, CancellationToken cancellationToken)
@@ -170,31 +203,111 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         );
     }
 
-    private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter)
+    private bool Filter(IReadOnlyDictionary<string, string> kenmerken, KeyValuePair<string, string> filter, ref string resolvedKenmerkBronnen)
     {
-        if (kenmerken != null && kenmerken.TryGetValue(filter.Key, out var value))
+        // Early exit if no kenmerken provided
+        if (kenmerken == null || kenmerken.Count == 0)
         {
-            if (filter.Value == "*")
-            {
-                Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
-                return true;
-            }
-
-            // Note: we support boolean filters now. So handle these if relevant
-            if (bool.TryParse(filter.Value, out var filterAsBool))
-            {
-                if (bool.TryParse(value, out var featureAsBool) && featureAsBool == filterAsBool)
-                {
-                    Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filter.Key, filter.Value);
-                    return true;
-                }
-            }
-            else if (value == filter.Value)
-            {
-                Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
-                return true;
-            }
+            return false;
         }
+
+        // Special handling for kenmerk_bron filter
+        if (filter.Key == "kenmerk_bron")
+        {
+            return FilterKenmerkBronAndResolve(kenmerken, filter, ref resolvedKenmerkBronnen);
+        }
+
+        // Standard filter matching - check if key exists
+        if (!kenmerken.TryGetValue(filter.Key, out var kenmerkValue))
+        {
+            return false;
+        }
+
+        return MatchesFilterValue(filter.Key, filter.Value, kenmerkValue);
+    }
+
+    private bool FilterKenmerkBronAndResolve(
+        IReadOnlyDictionary<string, string> kenmerken,
+        KeyValuePair<string, string> filter,
+        ref string resolvedKenmerkBronnen
+    )
+    {
+        // Check if any kenmerk_bron entries exist and retrieve its value
+        if (!kenmerken.TryGetValue("kenmerk_bron", out var kenmerkBronValue))
+        {
+            return false;
+        }
+
+        // Wildcard matches if any kenmerk_bron exists
+        if (filter.Value == "*")
+        {
+            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, kenmerkBronValue);
+
+            Logger.LogDebug(">Filter:{filterKey}=\"*\"", filter.Key);
+            return true;
+        }
+
+        // Check if specific value exists in any kenmerk_bron
+        var bronnen = kenmerkBronValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+        var matches = bronnen.FirstOrDefault(b => b == filter.Value);
+        if (matches != null)
+        {
+            resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, matches);
+
+            Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filter.Key, filter.Value);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string ResolveKenmerkBronnen(string resolvedKenmerkBronnen, string matches)
+    {
+        //
+        // Prevent duplicate entries in resolvedKenmerkBronnen when multiple filters match the same kenmerk_bron values
+
+        // Split existing resolved values into a HashSet to track unique elements
+        var existingBronnen =
+            resolvedKenmerkBronnen.Length > 0
+                ? resolvedKenmerkBronnen.Split(';', StringSplitOptions.RemoveEmptyEntries).ToHashSet()
+                : new HashSet<string>();
+
+        // Split incoming matches by semicolons and add only unique values
+        var newBronnen = matches.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var bron in newBronnen)
+        {
+            existingBronnen.Add(bron);
+        }
+
+        // Reconstruct the semicolon-separated string with unique values
+        return string.Join(";", existingBronnen);
+    }
+
+    private bool MatchesFilterValue(string filterKey, string filterValue, string kenmerkValue)
+    {
+        // Wildcard matches any value for this key
+        if (filterValue == "*")
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"*\"", filterKey);
+            return true;
+        }
+
+        // Try boolean comparison
+        if (bool.TryParse(filterValue, out var filterAsBool) && bool.TryParse(kenmerkValue, out var featureAsBool) && featureAsBool == filterAsBool)
+        {
+            Logger.LogDebug(">Boolean Filter:{filterKey}={filterValue}", filterKey, filterValue);
+            return true;
+        }
+
+        // String comparison
+        if (kenmerkValue == filterValue)
+        {
+            Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filterKey, filterValue);
+            return true;
+        }
+
         return false;
     }
 }
