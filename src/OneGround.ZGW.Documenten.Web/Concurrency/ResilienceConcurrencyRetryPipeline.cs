@@ -14,17 +14,15 @@ public class ResilienceConcurrencyRetryPipeline<TObjectType>
     where TObjectType : class
 {
     private readonly ILogger _logger;
-    private readonly IConfiguration _configuration;
 
     private readonly ResiliencePipeline<(TObjectType enkelvoudiginformatieobject, CommandStatus status)> _concurrencyRetryPipeline;
 
     public ResilienceConcurrencyRetryPipeline(ILogger<ResilienceConcurrencyRetryPipeline<TObjectType>> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _configuration = configuration;
 
         var options =
-            _configuration.GetSection("PollyConfig:ConcurrencyConflict:Retry").Get<HttpRetryStrategyOptions>() ?? new HttpRetryStrategyOptions();
+            configuration.GetSection("PollyConfig:ConcurrencyConflict:Retry").Get<HttpRetryStrategyOptions>() ?? new HttpRetryStrategyOptions();
 
         _concurrencyRetryPipeline = new ResiliencePipelineBuilder<(TObjectType, CommandStatus)>()
             .AddRetry(
