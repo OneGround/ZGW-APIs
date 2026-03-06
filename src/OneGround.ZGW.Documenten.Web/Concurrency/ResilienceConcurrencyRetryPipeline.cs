@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Handlers;
 using Polly;
 using Polly.Retry;
@@ -14,17 +14,27 @@ public class ResilienceConcurrencyRetryPipeline<TObjectType>
     where TObjectType : class
 {
     private readonly ILogger _logger;
+    private readonly IOptionsMonitor<HttpRetryStrategyOptions> _retryOptionsMonitor;
 
-    private readonly ResiliencePipeline<(TObjectType enkelvoudiginformatieobject, CommandStatus status)> _concurrencyRetryPipeline;
-
-    public ResilienceConcurrencyRetryPipeline(ILogger<ResilienceConcurrencyRetryPipeline<TObjectType>> logger, IConfiguration configuration)
+    public ResilienceConcurrencyRetryPipeline(
+        ILogger<ResilienceConcurrencyRetryPipeline<TObjectType>> logger,
+        IOptionsMonitor<HttpRetryStrategyOptions> retryOptionsMonitor
+    )
     {
         _logger = logger;
+        _retryOptionsMonitor = retryOptionsMonitor;
+    }
 
-        var options =
-            configuration.GetSection("PollyConfig:ConcurrencyConflict:Retry").Get<HttpRetryStrategyOptions>() ?? new HttpRetryStrategyOptions();
+    // Method which executes pipeline and return (null, CommandStatus.Conflict) if all retries fail due to ConcurrencyConflictException
+    public async Task<(TObjectType enkelvoudiginformatieobject, CommandStatus status)> ExecuteWithResultAsync(
+        Func<CancellationToken, Task<(TObjectType enkelvoudiginformatieobject, CommandStatus status)>> action,
+        CancellationToken cancellationToken
+    )
+    {
+        // Build pipeline dynamically with current configuration values
+        var options = _retryOptionsMonitor.CurrentValue;
 
-        _concurrencyRetryPipeline = new ResiliencePipelineBuilder<(TObjectType, CommandStatus)>()
+        var concurrencyRetryPipeline = new ResiliencePipelineBuilder<(TObjectType, CommandStatus)>()
             .AddRetry(
                 new RetryStrategyOptions<(TObjectType, CommandStatus)>
                 {
@@ -45,17 +55,10 @@ public class ResilienceConcurrencyRetryPipeline<TObjectType>
                 }
             )
             .Build();
-    }
 
-    // Method which executes pipeline and return (null, CommandStatus.Conflict) if all retries fail due to ConcurrencyConflictException
-    public async Task<(TObjectType enkelvoudiginformatieobject, CommandStatus status)> ExecuteWithResultAsync(
-        Func<CancellationToken, Task<(TObjectType enkelvoudiginformatieobject, CommandStatus status)>> action,
-        CancellationToken cancellationToken
-    )
-    {
         try
         {
-            return await _concurrencyRetryPipeline.ExecuteAsync(async ct => await action(ct), cancellationToken);
+            return await concurrencyRetryPipeline.ExecuteAsync(async ct => await action(ct), cancellationToken);
         }
         catch (ConcurrencyConflictException ex)
         {

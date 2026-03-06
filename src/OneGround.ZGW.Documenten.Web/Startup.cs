@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Http.Resilience;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
@@ -158,6 +159,8 @@ public class Startup
         services.AddSingleton<IGenericObjectMergerFactory, GenericObjectMergerFactory>();
 
         services.AddScoped(typeof(ResilienceConcurrencyRetryPipeline<>));
+
+        services.Configure<HttpRetryStrategyOptions>(Configuration.GetSection("PollyConfig:ConcurrencyConflict:Retry"));
 
         services.AddCorrelationId();
         services.AddBatchId();
