@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,13 +6,13 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
@@ -49,51 +48,7 @@ class CreateObjectInformatieObjectCommandHandler
     {
         _logger.LogDebug("Creating ObjectInformatieObject....");
 
-        ValidationError error;
-
         var objectInformatieObject = request.ObjectInformatieObject;
-
-        // Use ReadCommitted isolation level:
-        // - FOR UPDATE provides pessimistic row-level locking (prevents concurrent modifications)
-        // - xmin (configured in EnkelvoudigInformatieObject) provides optimistic concurrency detection (detects any changes since read)
-        // - ReadCommitted allows better concurrency than Serializable for this use case
-        // - The combination prevents both lost updates (via FOR UPDATE) and write skew (via xmin)
-        using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-
-        var enkelvoudigInformatieObjectId = _uriService.GetId(request.InformatieObjectUrl);
-
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
-
-        var informatieObject = await _context
-            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [enkelvoudigInformatieObjectId])
-            .Where(rsinFilter)
-            .Include(o => o.ObjectInformatieObjecten)
-            .SingleOrDefaultAsync(o => o.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
-
-        if (informatieObject == null)
-        {
-            // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context
-                .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-                .AnyAsync(e => e.Id == enkelvoudigInformatieObjectId, cancellationToken);
-
-            if (!exists)
-            {
-                // Object truly doesn't exist
-                error = new ValidationError("informatieobject", ErrorCode.ObjectDoesNotExist, "Het object bestaat niet in de database.");
-
-                return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
-            }
-
-            // Object exists but is locked by another process
-            error = new ValidationError(
-                "nonFieldErrors",
-                ErrorCode.Conflict,
-                $"Het object {enkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
-            );
-
-            return new CommandResult<ObjectInformatieObject>(null, CommandStatus.Conflict, error);
-        }
 
         var errors = new List<ValidationError>();
 
@@ -110,6 +65,18 @@ class CreateObjectInformatieObjectCommandHandler
             return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+
+        var informatieObject = await _context
+            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+            .SingleOrDefaultAsync(e => e.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
+
+        if (informatieObject == null)
+        {
+            var error = new ValidationError("informatieobject", ErrorCode.ObjectDoesNotExist, "Het object bestaat niet in de database.");
+            return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
+        }
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
             objectInformatieObject.InformatieObjectId = informatieObject.Id;
@@ -122,9 +89,23 @@ class CreateObjectInformatieObjectCommandHandler
 
             await audittrail.CreatedAsync(objectInformatieObject.InformatieObject, objectInformatieObject, cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
-
-            await tx.CommitAsync(cancellationToken);
+            // Handle potential race condition on INSERT with unique constraint in Postgres:
+            // if two requests hit this API simultaneously, a "check-then-act" pattern can fail and the INSERT may violate the unique constraint.
+            try
+            {
+                // Try to save changes with potential concurrency conflict
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                // Handle preventing race-condition where another process has created an ObjectInformatieObject for the same EnkelvoudigInformatieObject after our initial read but before our insert
+                var error = new ValidationError(
+                    "nonFieldErrors",
+                    ErrorCode.InconsistentRelation,
+                    "De combinatie informatieobject en object bestaat al."
+                );
+                return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
+            }
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully created.", objectInformatieObject.Id);
         }

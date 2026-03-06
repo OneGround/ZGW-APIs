@@ -4,6 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using OneGround.ZGW.Common.Handlers;
@@ -11,8 +14,10 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
+using Polly;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
@@ -1014,6 +1019,18 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
     private UpdateEnkelvoudigInformatieObjectCommandHandler CreateHandler()
     {
+        var mockRcrpLogger = new Mock<ILogger<ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>>>();
+        var mockOptionsMonitor = new Mock<IOptionsMonitor<HttpRetryStrategyOptions>>();
+
+        var retryOptions = new HttpRetryStrategyOptions
+        {
+            MaxRetryAttempts = 3,
+            BackoffType = DelayBackoffType.Exponential,
+            Delay = TimeSpan.FromSeconds(1),
+        };
+
+        mockOptionsMonitor.Setup(m => m.CurrentValue).Returns(retryOptions);
+
         return new UpdateEnkelvoudigInformatieObjectCommandHandler(
             logger: _mockLogger.Object,
             configuration: _configuration,
@@ -1029,7 +1046,11 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             formOptions: _mockFormOptions.Object,
             notificatieService: _mockNotificatieService.Object,
             documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
-            entityMergerFactory: _mockEntityMergerFactory.Object
+            entityMergerFactory: _mockEntityMergerFactory.Object,
+            concurrencyRetryPipeline: new ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>(
+                mockRcrpLogger.Object,
+                mockOptionsMonitor.Object
+            )
         );
     }
 
