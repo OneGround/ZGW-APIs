@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,7 +69,6 @@ class CreateObjectInformatieObjectCommandHandler
 
         var informatieObject = await _context
             .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-            .Include(z => z.ObjectInformatieObjecten)
             .SingleOrDefaultAsync(e => e.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
 
         if (informatieObject == null)
@@ -101,8 +99,12 @@ class CreateObjectInformatieObjectCommandHandler
             catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
             {
                 // Handle preventing race-condition where another process has created an ObjectInformatieObject for the same EnkelvoudigInformatieObject after our initial read but before our insert
-                var error = new ValidationError("nonFieldErrors", ErrorCode.Conflict, "De combinatie informatieobject en object bestaat al.");
-                return new CommandResult<ObjectInformatieObject>(null, CommandStatus.Conflict, error);
+                var error = new ValidationError(
+                    "nonFieldErrors",
+                    ErrorCode.InconsistentRelation,
+                    "De combinatie informatieobject en object bestaat al."
+                );
+                return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
             }
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully created.", objectInformatieObject.Id);
