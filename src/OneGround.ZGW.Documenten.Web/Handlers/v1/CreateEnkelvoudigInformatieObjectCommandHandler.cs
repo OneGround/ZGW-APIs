@@ -26,6 +26,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 
@@ -42,6 +43,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly Lazy<IDocumentService> _lazyDocumentService;
     private readonly IEnkelvoudigInformatieObjectMerger _entityMerger;
+    private readonly ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> _concurrencyRetryPipeline;
 
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -56,7 +58,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory
+        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory,
+        ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> concurrencyRetryPipeline
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
@@ -65,6 +68,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         _nummerGenerator = nummerGenerator;
         _catalogiServiceAgent = catalogiServiceAgent;
         _auditTrailFactory = auditTrailFactory;
+        _concurrencyRetryPipeline = concurrencyRetryPipeline;
 
         _lazyDocumentService = new Lazy<IDocumentService>(() => GetDocumentServiceProvider(documentServicesResolver));
 
@@ -106,35 +110,58 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         EnkelvoudigInformatieObject existingEnkelvoudigInformatieObject = null;
         if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
         {
-            // Add new version of the EnkelvoudigInformatieObject
-            existingEnkelvoudigInformatieObject = await _context
-                .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
-                .Where(rsinFilter)
-                .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, cancellationToken);
-
-            if (existingEnkelvoudigInformatieObject == null)
-            {
-                // The object might be locked OR not exist - check if it exists without lock
-                var exists = await _context
-                    .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-                    .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
-
-                if (!exists)
+            var result = await _concurrencyRetryPipeline.ExecuteWithResultAsync(
+                async (token) =>
                 {
-                    // Object truly doesn't exist
-                    return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-                }
+                    // Add new version of the EnkelvoudigInformatieObject, try to acquire lock on the EnkelvoudigInformatieObject
+                    var _existingEnkelvoudigInformatieObject = await _context
+                        .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId.Value])
+                        .Where(rsinFilter)
+                        .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                        .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, token);
 
+                    // The object might be locked OR not exist - check if it exists without lock
+                    if (_existingEnkelvoudigInformatieObject == null)
+                    {
+                        // The object might be locked OR not exist - check if it exists without lock
+                        var exists = await _context
+                            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                            .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId.Value, token);
+
+                        if (!exists)
+                        {
+                            // Object truly doesn't exist
+                            return (enkelvoudiginformatieobject: null, status: CommandStatus.NotFound);
+                        }
+
+                        // Throw the exception again so Polly knows a retry is needed (giving up after maximum reached retries)
+                        throw new ConcurrencyConflictException("Concurrency conflict detected.", request.ExistingEnkelvoudigInformatieObjectId.Value);
+                    }
+                    else
+                    {
+                        return (enkelvoudiginformatieobject: _existingEnkelvoudigInformatieObject, status: CommandStatus.OK);
+                    }
+                },
+                cancellationToken
+            );
+
+            if (result.status == CommandStatus.NotFound)
+            {
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+            }
+
+            if (result.status == CommandStatus.Conflict)
+            {
                 // Object exists but is locked by another process
                 var error = new ValidationError(
                     "nonFieldErrors",
                     ErrorCode.Conflict,
-                    $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
+                    $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId.Value} is vergrendeld door een andere bewerking."
                 );
-
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
             }
+
+            existingEnkelvoudigInformatieObject = result.enkelvoudiginformatieobject;
 
             if (isPartialUpdate)
             {
