@@ -61,7 +61,7 @@ public class ResilienceConcurrencyRetryPipeline<TObjectType>
         }
         catch (ConcurrencyConflictException ex)
         {
-            _logger.LogWarning("All retries on lock 409 exhausted for {ObjectType} with ID {Id}", typeof(TObjectType).Name, ex.Id);
+            _logger.LogWarning("All retries for concurrency conflict exhausted for {ObjectType} with ID {Id}", typeof(TObjectType).Name, ex.Id);
             return (null, CommandStatus.Conflict);
         }
     }
