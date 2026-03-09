@@ -9,6 +9,7 @@ using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Services;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.ServiceAgent;
+using NotificatieConstants = OneGround.ZGW.Common.Web.Kenmerken.Constants;
 
 namespace OneGround.ZGW.Documenten.Jobs.Subscription;
 
@@ -106,8 +107,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Filters = new Dictionary<string, string>
                                 {
                                     // Note: define a filter to receive a notification only if resource is 'zaakinformatieobject' and actie is 'create'
-                                    { "#resource", "zaakinformatieobject" },
-                                    { "#actie", "create" },
+                                    { NotificatieConstants.NotificatieResource, "zaakinformatieobject" },
+                                    { NotificatieConstants.NotificatieActie, "create" },
                                 },
                             },
                             new AbonnementKanaalDto
@@ -116,8 +117,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Filters = new Dictionary<string, string>
                                 {
                                     // Note: define a filter to receive a notification only if resource is 'zaakinformatieobject' and actie is 'destroy'
-                                    { "#resource", "zaakinformatieobject" },
-                                    { "#actie", "destroy" },
+                                    { NotificatieConstants.NotificatieResource, "zaakinformatieobject" },
+                                    { NotificatieConstants.NotificatieActie, "destroy" },
                                 },
                             },
                             new AbonnementKanaalDto
@@ -126,8 +127,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Filters = new Dictionary<string, string>
                                 {
                                     // Note: define a filter to receive a notification only if resource is 'besluitinformatieobject' and actie is 'create'
-                                    { "#resource", "besluitinformatieobject" },
-                                    { "#actie", "create" },
+                                    { NotificatieConstants.NotificatieResource, "besluitinformatieobject" },
+                                    { NotificatieConstants.NotificatieActie, "create" },
                                 },
                             },
                             new AbonnementKanaalDto
@@ -136,8 +137,8 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                                 Filters = new Dictionary<string, string>
                                 {
                                     // Note: define a filter to receive a notification only if resource is 'besluitinformatieobject' and actie is 'destroy'
-                                    { "#resource", "besluitinformatieobject" },
-                                    { "#actie", "destroy" },
+                                    { NotificatieConstants.NotificatieResource, "besluitinformatieobject" },
+                                    { NotificatieConstants.NotificatieActie, "destroy" },
                                 },
                             },
                         },

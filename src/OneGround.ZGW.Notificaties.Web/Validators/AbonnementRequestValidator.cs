@@ -1,4 +1,5 @@
 using FluentValidation;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Notificaties.Contracts.v1.Requests;
 
@@ -20,8 +21,8 @@ public class AbonnementRequestValidator : ZGWValidator<AbonnementRequestDto>
                     {
                         v.CascadeRuleFor(r => r.Key).NotNull().NotEmpty().MaximumLength(1000);
                         v.CascadeRuleFor(r => r.Value)
-                            .Must((filter, value) => filter.Key != "kenmerk_bron" || string.IsNullOrEmpty(value) || !value.Contains(';'))
-                            .WithMessage("Bij het filter 'kenmerk_bron' mag de waarde geen ';' karakter bevatten.");
+                            .Must((filter, value) => filter.Key != Constants.ZrcKenmerkBron || string.IsNullOrEmpty(value) || !value.Contains(';'))
+                            .WithMessage($"Bij het filter '{Constants.ZrcKenmerkBron}' mag de waarde geen ';' karakter bevatten.");
                     });
             });
     }

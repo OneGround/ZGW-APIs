@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Jobs.Notificatie;
@@ -113,12 +114,18 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
             Logger.LogDebug("Channel {ChannelId} filters: {@ChannelFilters}", kanaal.Id, filters);
 
-            if (filters.ContainsKey("#actie") && !(filters.TryGetValue("#actie", out var actie) && notificatie.Actie == actie))
+            if (
+                filters.ContainsKey(Constants.NotificatieActie)
+                && !(filters.TryGetValue(Constants.NotificatieActie, out var actie) && notificatie.Actie == actie)
+            )
             {
                 continue;
             }
 
-            if (filters.ContainsKey("#resource") && !(filters.TryGetValue("#resource", out var resource) && notificatie.Resource == resource))
+            if (
+                filters.ContainsKey(Constants.NotificatieResource)
+                && !(filters.TryGetValue(Constants.NotificatieResource, out var resource) && notificatie.Resource == resource)
+            )
             {
                 continue;
             }
@@ -126,7 +133,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
             if (
                 filters.Count != 0
                 && !filters
-                    .Where(f => f.Key != "#actie" && f.Key != "#resource")
+                    .Where(f => f.Key != Constants.NotificatieActie && f.Key != Constants.NotificatieResource)
                     .All(filter => Filter(kenmerken, filter, ref resolvingKenmerkBronnen))
             )
             {
@@ -158,7 +165,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         // Are there any resolved kenmerk_bronnen from filters? If so, add/update the kenmerk_bron in the kenmerken of the notificatie for this subscriber
         if (resolvedKenmerkBronnen.Length > 0)
         {
-            subscriberNotificatie.Kenmerken["kenmerk_bron"] = resolvedKenmerkBronnen;
+            subscriberNotificatie.Kenmerken[Constants.ZrcKenmerkBron] = resolvedKenmerkBronnen;
         }
 
         // Get optional BatchId header
@@ -212,7 +219,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         }
 
         // Special handling for kenmerk_bron filter
-        if (filter.Key == "kenmerk_bron")
+        if (filter.Key == Constants.ZrcKenmerkBron)
         {
             return FilterKenmerkBronAndResolve(kenmerken, filter, ref resolvedKenmerkBronnen);
         }
@@ -233,7 +240,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
     )
     {
         // Check if any kenmerk_bron entries exist and retrieve its value
-        if (!kenmerken.TryGetValue("kenmerk_bron", out var kenmerkBronValue))
+        if (!kenmerken.TryGetValue(Constants.ZrcKenmerkBron, out var kenmerkBronValue))
         {
             return false;
         }

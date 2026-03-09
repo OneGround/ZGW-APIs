@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
@@ -357,7 +358,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -374,7 +375,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
         });
@@ -393,7 +394,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -415,7 +416,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -432,7 +433,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
         });
@@ -451,7 +452,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN002" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN002" } });
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
@@ -469,7 +470,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -486,7 +487,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
         });
@@ -584,7 +585,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -601,7 +602,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN999" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN999" }],
                 }
             );
         });
@@ -620,7 +621,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;DRN002;DRN003" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
@@ -638,7 +639,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -655,7 +656,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
         });
@@ -692,7 +693,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -709,7 +710,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN002" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN002" }],
                 }
             );
         });
@@ -729,7 +730,7 @@ public class SendNotificatiesConsumerTests
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
         // Semicolon-separated with empty entries
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;;DRN002;;DRN003;" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;;DRN002;;DRN003;" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -751,7 +752,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["bronorganisatie", "kenmerk_bron"];
+        channel.Filters = ["bronorganisatie", Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -771,7 +772,7 @@ public class SendNotificatiesConsumerTests
                     Filters =
                     [
                         new FilterValue { Key = "bronorganisatie", Value = "123" },
-                        new FilterValue { Key = "kenmerk_bron", Value = "DRN001" },
+                        new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" },
                     ],
                 }
             );
@@ -793,7 +794,7 @@ public class SendNotificatiesConsumerTests
         notificatie.Setup(s => s.Rsin).Returns("owner");
         notificatie
             .Setup(s => s.Kenmerken)
-            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { "kenmerk_bron", "DRN001;DRN002" } });
+            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { Constants.ZrcKenmerkBron, "DRN001;DRN002" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -815,7 +816,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["bronorganisatie", "kenmerk_bron"];
+        channel.Filters = ["bronorganisatie", Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -835,7 +836,7 @@ public class SendNotificatiesConsumerTests
                     Filters =
                     [
                         new FilterValue { Key = "bronorganisatie", Value = "999" },
-                        new FilterValue { Key = "kenmerk_bron", Value = "DRN001" },
+                        new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" },
                     ],
                 }
             );
@@ -857,7 +858,7 @@ public class SendNotificatiesConsumerTests
         notificatie.Setup(s => s.Rsin).Returns("owner");
         notificatie
             .Setup(s => s.Kenmerken)
-            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { "kenmerk_bron", "DRN001;DRN002" } });
+            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { Constants.ZrcKenmerkBron, "DRN001;DRN002" } });
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);
@@ -875,12 +876,12 @@ public class SendNotificatiesConsumerTests
     {
         var channel1 = _fixture.Create<Kanaal>();
         channel1.Naam = "zaken";
-        channel1.Filters = ["kenmerk_bron"];
+        channel1.Filters = [Constants.ZrcKenmerkBron];
         channel1.AbonnementKanalen = [];
 
         var channel2 = _fixture.Create<Kanaal>();
         channel2.Naam = "zaken";
-        channel2.Filters = ["kenmerk_bron"];
+        channel2.Filters = [Constants.ZrcKenmerkBron];
         channel2.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -898,7 +899,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel1,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
             c.AbonnementKanalen.Add(
@@ -907,7 +908,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel2,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN002" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN002" }],
                 }
             );
         });
@@ -926,7 +927,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;DRN002;DRN003" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -949,7 +950,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -966,7 +967,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN001" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
                 }
             );
         });
@@ -985,7 +986,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;DRN002;DRN003" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -1007,7 +1008,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -1024,7 +1025,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN003" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN003" }],
                 }
             );
         });
@@ -1043,7 +1044,7 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;DRN002;DRN003;DRN004" } });
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003;DRN004" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
@@ -1065,7 +1066,7 @@ public class SendNotificatiesConsumerTests
     {
         var channel = _fixture.Create<Kanaal>();
         channel.Naam = "zaken";
-        channel.Filters = ["kenmerk_bron"];
+        channel.Filters = [Constants.ZrcKenmerkBron];
         channel.AbonnementKanalen = [];
 
         var subscription = _fixture.Create<Abonnement>();
@@ -1082,7 +1083,7 @@ public class SendNotificatiesConsumerTests
                     Abonnement = subscription,
                     Kanaal = channel,
                     Id = Guid.NewGuid(),
-                    Filters = [new FilterValue { Key = "kenmerk_bron", Value = "DRN005" }],
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN005" }],
                 }
             );
         });
@@ -1101,7 +1102,9 @@ public class SendNotificatiesConsumerTests
         var notificatie = new Mock<ISendNotificaties>();
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
-        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "kenmerk_bron", "DRN001;DRN002;DRN003;DRN004;DRN005" } });
+        notificatie
+            .Setup(s => s.Kenmerken)
+            .Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003;DRN004;DRN005" } });
 
         _notificationFilterService
             .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
