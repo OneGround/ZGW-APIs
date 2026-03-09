@@ -19,6 +19,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 
@@ -29,6 +30,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
     private readonly DrcDbContext _context;
     private readonly IAuditTrailFactory _auditTrailFactory;
     private readonly IDocumentService _documentService;
+    private readonly ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> _concurrencyRetryPipeline;
 
     public LockEnkelvoudigInformatieObjectCommandHandler(
         ILogger<LockEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -39,12 +41,14 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         IAuthorizationContextAccessor authorizationContextAccessor,
         INotificatieService notificatieService,
         IDocumentServicesResolver documentServicesResolver,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> concurrencyRetryPipeline
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, notificatieService, documentKenmerkenResolver)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;
+        _concurrencyRetryPipeline = concurrencyRetryPipeline;
 
         _documentService = documentServicesResolver.GetDefault();
     }
@@ -65,35 +69,52 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
-        var enkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
-            .Where(rsinFilter)
-            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-            .SingleOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
-
-        ValidationError error;
-
-        // The object might be locked OR not exist - check if it exists without lock
-        if (enkelvoudigInformatieObject == null)
-        {
-            // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, cancellationToken);
-
-            if (!exists)
+        var (enkelvoudigInformatieObject, status) = await _concurrencyRetryPipeline.ExecuteWithResultAsync(
+            async (token) =>
             {
-                // Object truly doesn't exist
-                error = new ValidationError("id", ErrorCode.NotFound, $"EnkelvoudigInformatieObject {request.Id} is onbekend.");
+                // First, try to acquire lock on the EnkelvoudigInformatieObject
+                var _enkelvoudigInformatieObject = await _context
+                    .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
+                    .Where(rsinFilter)
+                    .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                    .SingleOrDefaultAsync(e => e.Id == request.Id, token);
 
-                return new CommandResult<string>(null, CommandStatus.NotFound, error);
-            }
+                // The object might be locked OR not exist - check if it exists without lock
+                if (_enkelvoudigInformatieObject == null)
+                {
+                    // The object might be locked OR not exist - check if it exists without lock
+                    var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, token);
 
+                    if (!exists)
+                    {
+                        // Object truly doesn't exist
+                        return (enkelvoudiginformatieobject: null, status: CommandStatus.NotFound);
+                    }
+
+                    // Throw the exception again so Polly knows a retry is needed (giving up after maximum reached retries)
+                    throw new ConcurrencyConflictException("Concurrency conflict detected.", request.Id);
+                }
+                else
+                {
+                    return (enkelvoudiginformatieobject: _enkelvoudigInformatieObject, status: CommandStatus.OK);
+                }
+            },
+            cancellationToken
+        );
+
+        if (status == CommandStatus.NotFound)
+        {
+            return new CommandResult<string>(null, CommandStatus.NotFound);
+        }
+
+        if (status == CommandStatus.Conflict)
+        {
             // Object exists but is locked by another process
-            error = new ValidationError(
+            var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Conflict,
                 $"Het enkelvoudiginformatieobject {request.Id} is vergrendeld door een andere bewerking."
             );
-
             return new CommandResult<string>(null, CommandStatus.Conflict, error);
         }
 
@@ -105,7 +126,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
             {
                 if (enkelvoudigInformatieObject.Locked)
                 {
-                    error = new ValidationError("nonFieldErrors", ErrorCode.ExistingLock, "Het document is al gelockt.");
+                    var error = new ValidationError("nonFieldErrors", ErrorCode.ExistingLock, "Het document is al gelockt.");
                     return new CommandResult<string>(null, CommandStatus.ValidationError, error);
                 }
 
@@ -116,7 +137,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
             {
                 if (request.Lock != null && enkelvoudigInformatieObject.Lock != request.Lock)
                 {
-                    error = new ValidationError("nonFieldErrors", ErrorCode.IncorrectLockId, "Incorrect lock ID.");
+                    var error = new ValidationError("nonFieldErrors", ErrorCode.IncorrectLockId, "Incorrect lock ID.");
                     return new CommandResult<string>(null, CommandStatus.ValidationError, error);
                 }
 
@@ -124,7 +145,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
                 {
                     if (!AuthorizationContextAccessor.AuthorizationContext.IsForcedUnlockAuthorized())
                     {
-                        error = new ValidationError("nonFieldErrors", ErrorCode.MissingLockId, "Dit is een verplicht veld.");
+                        var error = new ValidationError("nonFieldErrors", ErrorCode.MissingLockId, "Dit is een verplicht veld.");
                         return new CommandResult<string>(null, CommandStatus.ValidationError, error);
                     }
                 }

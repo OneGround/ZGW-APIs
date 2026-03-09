@@ -25,6 +25,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services;
@@ -36,6 +37,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         IRequestHandler<UpdateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
     private readonly IEnkelvoudigInformatieObjectMerger _entityMerger;
+    private readonly ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> _concurrencyRetryPipeline;
 
     public UpdateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<UpdateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -52,7 +54,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory
+        IEnkelvoudigInformatieObjectMergerFactory entityMergerFactory,
+        ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject> concurrencyRetryPipeline
     )
         : base(
             logger,
@@ -72,6 +75,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         )
     {
         _entityMerger = entityMergerFactory.Create<EnkelvoudigInformatieObjectUpdateRequestDto>();
+        _concurrencyRetryPipeline = concurrencyRetryPipeline;
     }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
@@ -92,34 +96,54 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
-        // First, try to acquire lock on the EnkelvoudigInformatieObject
-        var existingEnkelvoudigInformatieObject = await _context
-            .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId])
-            .Where(rsinFilter)
-            .AsSplitQuery()
-            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-            .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
-
-        if (existingEnkelvoudigInformatieObject == null)
-        {
-            // The object might be locked OR not exist - check if it exists without lock
-            var exists = await _context
-                .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-                .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, cancellationToken);
-
-            if (!exists)
+        var (existingEnkelvoudigInformatieObject, status) = await _concurrencyRetryPipeline.ExecuteWithResultAsync(
+            async (token) =>
             {
-                // Object truly doesn't exist
-                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-            }
+                // First, try to acquire lock on the EnkelvoudigInformatieObject
+                var _existingEnkelvoudigInformatieObject = await _context
+                    .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.ExistingEnkelvoudigInformatieObjectId])
+                    .Where(rsinFilter)
+                    .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                    .SingleOrDefaultAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, token);
 
+                // The object might be locked OR not exist - check if it exists without lock
+                if (_existingEnkelvoudigInformatieObject == null)
+                {
+                    // The object might be locked OR not exist - check if it exists without lock
+                    var exists = await _context
+                        .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+                        .AnyAsync(e => e.Id == request.ExistingEnkelvoudigInformatieObjectId, token);
+
+                    if (!exists)
+                    {
+                        // Object truly doesn't exist
+                        return (enkelvoudiginformatieobject: null, status: CommandStatus.NotFound);
+                    }
+
+                    // Throw the exception again so Polly knows a retry is needed (giving up after maximum reached retries)
+                    throw new ConcurrencyConflictException("Concurrency conflict detected.", request.ExistingEnkelvoudigInformatieObjectId);
+                }
+                else
+                {
+                    return (enkelvoudiginformatieobject: _existingEnkelvoudigInformatieObject, status: CommandStatus.OK);
+                }
+            },
+            cancellationToken
+        );
+
+        if (status == CommandStatus.NotFound)
+        {
+            return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+        }
+
+        if (status == CommandStatus.Conflict)
+        {
             // Object exists but is locked by another process
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Conflict,
                 $"Het enkelvoudiginformatieobject {request.ExistingEnkelvoudigInformatieObjectId} is vergrendeld door een andere bewerking."
             );
-
             return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.Conflict, error);
         }
 
@@ -188,15 +212,15 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             versie.InformatieObject.InformatieObjectType = informatieObjectType;
             versie.InformatieObject.IndicatieGebruiksrecht = indicatieGebruiksrecht;
 
-            // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
+            // Depending on the specified inhoud and bestandsomvang verschillende manieren om documenten toe te voegen....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
                 // We have enabled (some) metadata fields for the underlying document provider
                 var metadata = new DocumentMeta { Rsin = versie.InformatieObject.Owner, Version = versie.Versie };
 
-                var result = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
+                var multipartUploadResult = await DocumentService.InitiateMultipartUploadAsync(versie.Bestandsnaam, metadata, cancellationToken);
 
-                versie.MultiPartDocumentId = result.Context;
+                versie.MultiPartDocumentId = multipartUploadResult.Context;
 
                 AddBestandsDelenToEnkelvoudigeInformatieObjectVersie(versie);
 
