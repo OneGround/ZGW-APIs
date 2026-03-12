@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using OneGround.ZGW.Common.Messaging;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Messaging.Configuration;
 using OneGround.ZGW.Notificaties.Messaging.Consumers;
@@ -340,6 +341,774 @@ public class SendNotificatiesConsumerTests
         notificatie.Setup(s => s.Kanaal).Returns("zaken");
         notificatie.Setup(s => s.Rsin).Returns("owner");
         notificatie.Setup(s => s.Ignore).Returns(true);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithSpecificValue_ShouldMatch()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithSpecificValue_ShouldNotMatch()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN002" } });
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_NullKenmerken_ShouldNotMatch()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns((Dictionary<string, string>)null!);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenNoKenmerkBronInNotification_ShouldNotAddKenmerkBronToResult()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = ["bronorganisatie"];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = "bronorganisatie", Value = "123" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "bronorganisatie", "123" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+
+        // Since no kenmerk_bron filter exists and notification doesn't have kenmerk_bron,
+        // the notification is sent but without kenmerk_bron added to it
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithSemicolonSeparatedValues_ShouldNotMatchNonExistentValue()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN999" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_MissingInKenmerken_ShouldNotMatch()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { "bronorganisatie", "123" } });
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithSemicolonSeparatedAndEmptyEntries_ShouldMatch()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN002" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        // Semicolon-separated with empty entries
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;;DRN002;;DRN003;" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_CombinedWithOtherFilters_ShouldMatchAllFilters()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = ["bronorganisatie", Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters =
+                    [
+                        new FilterValue { Key = "bronorganisatie", Value = "123" },
+                        new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" },
+                    ],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie
+            .Setup(s => s.Kenmerken)
+            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { Constants.ZrcKenmerkBron, "DRN001;DRN002" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_CombinedWithOtherFilters_OneDoesNotMatch_ShouldNotNotify()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = ["bronorganisatie", Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters =
+                    [
+                        new FilterValue { Key = "bronorganisatie", Value = "999" },
+                        new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" },
+                    ],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie
+            .Setup(s => s.Kenmerken)
+            .Returns(new Dictionary<string, string> { { "bronorganisatie", "123" }, { Constants.ZrcKenmerkBron, "DRN001;DRN002" } });
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenMultipleChannels_WithDifferentKenmerkBronValues_ShouldNotify()
+    {
+        var channel1 = _fixture.Create<Kanaal>();
+        channel1.Naam = "zaken";
+        channel1.Filters = [Constants.ZrcKenmerkBron];
+        channel1.AbonnementKanalen = [];
+
+        var channel2 = _fixture.Create<Kanaal>();
+        channel2.Naam = "zaken";
+        channel2.Filters = [Constants.ZrcKenmerkBron];
+        channel2.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel1);
+            c.Kanalen.Add(channel2);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel1,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel2,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN002" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        // Should notify once since both channels match
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithMultipleSemicolonSeparatedValues_FirstValueMatches()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN001" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithMultipleSemicolonSeparatedValues_MiddleValueMatches()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN003" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie.Setup(s => s.Kenmerken).Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003;DRN004" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenKenmerkBronFilter_WithMultipleSemicolonSeparatedValues_LastValueMatches()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [Constants.ZrcKenmerkBron];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [new FilterValue { Key = Constants.ZrcKenmerkBron, Value = "DRN005" }],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        notificatie
+            .Setup(s => s.Kenmerken)
+            .Returns(new Dictionary<string, string> { { Constants.ZrcKenmerkBron, "DRN001;DRN002;DRN003;DRN004;DRN005" } });
+
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
 
         var message = new Mock<ConsumeContext<ISendNotificaties>>();
         message.Setup(s => s.Message).Returns(notificatie.Object);

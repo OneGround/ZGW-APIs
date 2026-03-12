@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers;
 
@@ -33,20 +32,26 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
 
     public async Task<Dictionary<string, string>> GetKenmerkenAsync(Zaak zaak, CancellationToken cancellationToken)
     {
-        return new Dictionary<string, string>
+        var kenmerken = new Dictionary<string, string>
         {
-            { "bronorganisatie", zaak.Bronorganisatie },
-            { "zaaktype", zaak.Zaaktype },
-            { "vertrouwelijkheidaanduiding", zaak.VertrouwelijkheidAanduiding.ToString() },
-            // Note: New fields that can be filtered on
-            { "zaaktype_identificatie", await GetZaakTypeIdentificatieFromZaakAsync(zaak) },
-            { "archiefstatus", zaak.Archiefstatus.ToString() },
-            { "archiefnominatie", zaak.Archiefnominatie.ToString() },
-            { "opdrachtgevende_organisatie", zaak.OpdrachtgevendeOrganisatie },
-            { "catalogus", GetCatalogusUrlFromResource(zaak.Zaaktype, zaak.CatalogusId) },
-            { "domein", await GetDomeinFromZaakAsync(zaak) },
-            { "is_eindzaakstatus", await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
+            { Constants.ZrcBronorganisatie, zaak.Bronorganisatie },
+            { Constants.ZrcZaaktype, zaak.Zaaktype },
+            { Constants.ZrcVertrouwelijkheidaanduiding, zaak.VertrouwelijkheidAanduiding.ToString() },
+            { Constants.ZrcZaaktypeIdentificatie, await GetZaakTypeIdentificatieFromZaakAsync(zaak) },
+            { Constants.ZrcArchiefstatus, zaak.Archiefstatus.ToString() },
+            { Constants.ZrcArchiefnominatie, zaak.Archiefnominatie.ToString() },
+            { Constants.ZrcOpdrachtgevendeOrganisatie, zaak.OpdrachtgevendeOrganisatie },
+            { Constants.ZrcCatalogus, GetCatalogusUrlFromResource(zaak.Zaaktype, zaak.CatalogusId) },
+            { Constants.ZrcDomein, await GetDomeinFromZaakAsync(zaak) },
+            { Constants.ZrcIsEindzaakstatus, await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
         };
+
+        if (zaak.Kenmerken.Any())
+        {
+            kenmerken.Add(Constants.ZrcKenmerkBron, string.Join(';', zaak.Kenmerken.Select(k => k.Bron)));
+        }
+
+        return kenmerken;
     }
 
     private async Task<string> IsEindZaakStatusAsync(Zaak zaak, CancellationToken cancellationToken)

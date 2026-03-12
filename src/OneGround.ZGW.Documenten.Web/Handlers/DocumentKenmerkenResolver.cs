@@ -31,20 +31,19 @@ public class DocumentKenmerkenResolver : BaseKenmerkenResolver, IDocumentKenmerk
 
         return new Dictionary<string, string>
         {
-            { "bronorganisatie", latestEnkelvoudigInformatieObjectVersie.Bronorganisatie },
-            { "informatieobjecttype", informatieobject.InformatieObjectType },
+            { Constants.DrcBronorganisatie, latestEnkelvoudigInformatieObjectVersie.Bronorganisatie },
+            { Constants.DrcInformatieobjecttype, informatieobject.InformatieObjectType },
             {
-                "vertrouwelijkheidaanduiding",
+                Constants.DrcVertrouwelijkheidaanduiding,
                 latestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding.HasValue
                     ? $"{latestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding}"
                     : null
             },
-            // Note: New fields that can be filtered on
-            { "informatieobjecttype_omschrijving", await GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(informatieobject) },
-            { "catalogus", GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId) },
-            { "domein", await GetDomeinFromInformatieObjectAsync(informatieobject) },
-            { "status", latestEnkelvoudigInformatieObjectVersie.Status.ToString() },
-            { "inhoud_is_vervallen", latestEnkelvoudigInformatieObjectVersie.InhoudIsVervallen.ToString() },
+            { Constants.DrcInformatieobjecttypeOmschrijving, await GetInformatieObjectTypeOmschrijvingFromInformatieObjectAsync(informatieobject) },
+            { Constants.DrcCatalogus, GetCatalogusUrlFromResource(informatieobject.InformatieObjectType, informatieobject.CatalogusId) },
+            { Constants.DrcDomein, await GetDomeinFromInformatieObjectAsync(informatieobject) },
+            { Constants.DrcStatus, latestEnkelvoudigInformatieObjectVersie.Status.ToString() },
+            { Constants.DrcInhoudIsVervallen, latestEnkelvoudigInformatieObjectVersie.InhoudIsVervallen.ToString() },
         };
     }
 

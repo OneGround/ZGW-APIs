@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Web.Kenmerken;
 using OneGround.ZGW.Notificaties.DataModel;
 
 namespace OneGround.ZGW.Notificaties.Web.Validators;
@@ -19,11 +20,11 @@ public class AbonnementKanaalValidator : IAbonnementKanaalValidator
 
         foreach (var filter in abonnementkanaal.Filters)
         {
-            if (filter.Key == "#resource")
+            if (filter.Key == Constants.NotificatieResource)
             {
                 continue;
             }
-            if (filter.Key == "#actie")
+            if (filter.Key == Constants.NotificatieActie)
             {
                 string[] acties = ["create", "update", "destroy"];
 

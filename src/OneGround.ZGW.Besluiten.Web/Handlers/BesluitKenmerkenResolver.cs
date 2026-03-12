@@ -28,12 +28,11 @@ public class BesluitKenmerkenResolver : BaseKenmerkenResolver, IBesluitKenmerken
     {
         return new Dictionary<string, string>
         {
-            { "besluittype", besluit.BesluitType },
-            { "verantwoordelijke_organisatie", besluit.VerantwoordelijkeOrganisatie },
-            // Note: New fields that can be filtered on
-            { "besluittype_omschrijving", await GetBesluitTypeOmschrijvingFromBesluitAsync(besluit) },
-            { "catalogus", GetCatalogusUrlFromResource(besluit.BesluitType, besluit.CatalogusId) },
-            { "domein", await GetDomeinFromBesluitAsync(besluit) },
+            { Constants.BrcBesluittype, besluit.BesluitType },
+            { Constants.BrcVerantwoordelijkeOrganisatie, besluit.VerantwoordelijkeOrganisatie },
+            { Constants.BrcBesluittypeOmschrijving, await GetBesluitTypeOmschrijvingFromBesluitAsync(besluit) },
+            { Constants.BrcCatalogus, GetCatalogusUrlFromResource(besluit.BesluitType, besluit.CatalogusId) },
+            { Constants.BrcDomein, await GetDomeinFromBesluitAsync(besluit) },
         };
     }
 
