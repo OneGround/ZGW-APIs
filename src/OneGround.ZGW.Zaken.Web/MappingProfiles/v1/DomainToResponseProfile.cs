@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Helpers;
@@ -139,7 +140,8 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Identificatie, opt => opt.MapFrom(src => src.Identificatie))
             .ForAllMembers(opt => opt.Ignore());
 
-        CreateMap<OverigeZaakObject, OverigeZaakObjectDto>();
+        CreateMap<OverigeZaakObject, OverigeZaakObjectDto>()
+            .ForMember(dest => dest.OverigeData, opt => opt.MapFrom(src => JToken.Parse(src.OverigeDataJsonb)));
 
         CreateMap<AanduidingWozObject, AanduidingWozObjectDto>();
         CreateMap<WozObject, WozObjectDto>();

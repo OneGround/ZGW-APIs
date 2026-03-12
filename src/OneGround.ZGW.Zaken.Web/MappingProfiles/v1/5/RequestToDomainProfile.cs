@@ -1,5 +1,7 @@
 using System;
 using AutoMapper;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._5;
@@ -517,7 +519,7 @@ public class RequestToDomainProfile : Profile
 
     private static OverigeZaakObject CreateOverigeZaakObject(OverigeZaakObjectRequestDto source, ResolutionContext context)
     {
-        return new OverigeZaakObject { OverigeData = source.ObjectIdentificatie.OverigeData };
+        return new OverigeZaakObject { OverigeDataJsonb = source.ObjectIdentificatie.OverigeData.ToString(Formatting.None) };
     }
 
     private static AdresZaakObject CreateAdresZaakObject(AdresZaakObjectRequestDto source, ResolutionContext context)
