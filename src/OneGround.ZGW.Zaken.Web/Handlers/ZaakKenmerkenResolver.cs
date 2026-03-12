@@ -46,7 +46,7 @@ public class ZaakKenmerkenResolver : BaseKenmerkenResolver, IZaakKenmerkenResolv
             { Constants.ZrcIsEindzaakstatus, await IsEindZaakStatusAsync(zaak, cancellationToken) }, // Note: "False" or "True"
         };
 
-        if (zaak.Kenmerken.Any())
+        if (zaak.Kenmerken?.Any() == true)
         {
             kenmerken.Add(Constants.ZrcKenmerkBron, string.Join(';', zaak.Kenmerken.Select(k => k.Bron)));
         }
