@@ -402,7 +402,7 @@ public class DomainToResponseProfileTests
     [MemberData(nameof(OverigeDataJsonValues))]
     public void OverigeZaakObject_Maps_To_OverigeZaakObjectDto(string jsonValue)
     {
-        _fixture.Customize<OverigeZaakObject>(c => c.With(p => p.OverigeDataJsonb, jsonValue));
+        _fixture.Customize<OverigeZaakObject>(c => c.With(p => p.OverigeData, jsonValue));
 
         var value = _fixture.Create<OverigeZaakObject>();
         var result = _mapper.Map<OverigeZaakObjectDto>(value);
