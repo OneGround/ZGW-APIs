@@ -34,9 +34,13 @@ jobs:
 
       - name: Check for README Changes (git)
         id: changed-files
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+          README_PATH: ${{ inputs.readme_filepath }}
         run: |
           # Check if the README file has changed in the latest commit range
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "${{ inputs.readme_filepath }}"; then
+          if git diff --name-only $BEFORE_SHA $CURRENT_SHA | grep -q "$README_PATH"; then
             echo "any_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "any_changed=false" >> "$GITHUB_OUTPUT"
