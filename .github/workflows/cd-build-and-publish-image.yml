@@ -48,12 +48,17 @@ jobs:
       - name: Get next application version
         id: get_next_application_version
         shell: pwsh
+        env:
+          GIT_TAG_NAME: ${{ inputs.git_tag_name }}
+          MAJOR_VERSION: ${{ inputs.major_version }}
+          MINOR_VERSION: ${{ inputs.minor_version }}
+          PATCH_VERSION_STARTS_FROM: ${{ inputs.patch_version_starts_from }}
         run: >-
           ./.github/scripts/Get-NextApplicationVersion.ps1
-          -GitTagName "${{ inputs.git_tag_name }}"
-          -MajorVersion "${{ inputs.major_version }}"
-          -MinorVersion "${{ inputs.minor_version }}"
-          -PatchVersionStartsFrom "${{ inputs.patch_version_starts_from }}"
+          -GitTagName "$env:GIT_TAG_NAME"
+          -MajorVersion "$env:MAJOR_VERSION"
+          -MinorVersion "$env:MINOR_VERSION"
+          -PatchVersionStartsFrom "$env:PATCH_VERSION_STARTS_FROM"
 
   docker-build-push:
     needs: get-next-application-version
