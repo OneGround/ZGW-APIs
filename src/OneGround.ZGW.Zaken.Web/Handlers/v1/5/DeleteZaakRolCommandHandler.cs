@@ -56,7 +56,7 @@ class DeleteZaakRolCommandHandler : ZakenBaseHandler<DeleteZaakRolCommandHandler
         var zaakRol = await _context
             .ZaakRollen.Where(rsinFilter)
             .Include(r => r.Zaak)
-            .ThenInclude(r => r.Kenmerken)
+                .ThenInclude(r => r.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakRol == null)

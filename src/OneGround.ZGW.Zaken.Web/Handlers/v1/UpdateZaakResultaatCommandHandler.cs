@@ -61,7 +61,7 @@ class UpdateZaakResultaatCommandHandler
         var zaakResultaat = await _context
             .ZaakResultaten.Where(rsinFilter)
             .Include(z => z.Zaak)
-            .ThenInclude(z => z.Kenmerken)
+                .ThenInclude(z => z.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakResultaat == null)

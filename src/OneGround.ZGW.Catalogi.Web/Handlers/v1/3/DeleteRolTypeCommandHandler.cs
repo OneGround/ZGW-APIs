@@ -54,7 +54,7 @@ class DeleteRolTypeCommandHandler : CatalogiBaseHandler<DeleteRolTypeCommandHand
 
         var rolType = await _context
             .RolTypen.Include(z => z.ZaakType)
-            .ThenInclude(z => z.Catalogus)
+                .ThenInclude(z => z.Catalogus)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 

@@ -56,7 +56,7 @@ class DeleteResultaatTypeCommandHandler
 
         var resultType = await _context
             .ResultaatTypen.Include(z => z.ZaakType)
-            .ThenInclude(z => z.Catalogus)
+                .ThenInclude(z => z.Catalogus)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
