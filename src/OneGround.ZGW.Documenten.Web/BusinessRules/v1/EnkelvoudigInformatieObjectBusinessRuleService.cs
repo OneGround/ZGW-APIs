@@ -62,15 +62,24 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
         CancellationToken cancellationToken = default
     )
     {
+        // TODO: FUND-2391 DRC The combination of identificatie+versie+owner should be unique
+        //   (Create unique index after DATA-MIGRATION!!)
         if (!string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Identificatie))
         {
             bool existingEnkelvoudigInformatieObject = await _context
                 .EnkelvoudigInformatieObjectVersies.AsNoTracking()
                 .AnyAsync(
                     z =>
-                        z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
-                        && z.Bronorganisatie == enkelvoudigInformatieObjectVersie.Bronorganisatie
-                        && z.Versie == enkelvoudigInformatieObjectVersie.Versie,
+                        (
+                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
+                            && z.Bronorganisatie == enkelvoudigInformatieObjectVersie.Bronorganisatie
+                            && z.Versie == enkelvoudigInformatieObjectVersie.Versie
+                        )
+                        || (
+                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
+                            && z.Owner == enkelvoudigInformatieObjectVersie.Bronorganisatie
+                            && z.Versie == enkelvoudigInformatieObjectVersie.Versie
+                        ),
                     cancellationToken
                 );
 

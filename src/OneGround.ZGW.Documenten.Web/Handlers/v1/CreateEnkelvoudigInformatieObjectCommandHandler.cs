@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
@@ -291,8 +292,20 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-            await _context.SaveChangesAsync(cancellationToken);
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion.
+            // Handle potential race condition on INSERT with unique constraint in Postgres:
+            // if two requests hit this API simultaneously, a "check-then-act" pattern can fail and the INSERT may violate the unique constraint.
+            try
+            {
+                // Try to save changes with potential concurrency conflict
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+bronorganisatie/owner after our initial read but before our insert
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze bronorganisatie.");
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
+            }
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
