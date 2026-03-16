@@ -46,7 +46,7 @@ class GetZaakTypeInformatieObjectTypeQueryHandler
             .ZaakTypeInformatieObjectTypen.AsNoTracking()
             .Where(rsinFilter)
             .Include(z => z.ZaakType)
-            .ThenInclude(z => z.Catalogus)
+                .ThenInclude(z => z.Catalogus)
             .Include(s => s.StatusType)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 

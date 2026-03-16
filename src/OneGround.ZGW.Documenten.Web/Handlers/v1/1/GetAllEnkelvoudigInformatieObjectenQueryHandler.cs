@@ -78,7 +78,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
 
         var pagedResult = await query
             .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-            .ThenInclude(e => e.BestandsDelen)
+                .ThenInclude(e => e.BestandsDelen)
             .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)

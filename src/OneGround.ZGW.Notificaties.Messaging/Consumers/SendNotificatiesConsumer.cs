@@ -198,9 +198,9 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
                     .Abonnementen.AsNoTracking()
                     .Where(a => a.Owner == rsin)
                     .Include(a => a.AbonnementKanalen)
-                    .ThenInclude(a => a.Kanaal)
+                        .ThenInclude(a => a.Kanaal)
                     .Include(a => a.AbonnementKanalen)
-                    .ThenInclude(a => a.Filters)
+                        .ThenInclude(a => a.Filters)
                     .ToListAsync(cancellationToken);
 
                 Logger.LogDebug("{Count} abonnementen retrieved and cached for {Rsin}", _abonnementen.Count, rsin);

@@ -6,7 +6,7 @@
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.7.309.4" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.511" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />

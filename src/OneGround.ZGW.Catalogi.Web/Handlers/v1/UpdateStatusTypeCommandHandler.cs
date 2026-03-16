@@ -65,7 +65,7 @@ class UpdateStatusTypeCommandHandler
         var statusType = await _context
             .StatusTypen.Where(rsinFilter)
             .Include(s => s.ZaakType)
-            .ThenInclude(s => s.Catalogus)
+                .ThenInclude(s => s.Catalogus)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (statusType == null)
