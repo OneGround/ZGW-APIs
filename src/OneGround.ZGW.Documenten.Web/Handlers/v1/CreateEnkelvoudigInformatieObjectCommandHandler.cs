@@ -308,6 +308,12 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
                 var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
             }
+            catch (Exception)
+            {
+                // Rollback and re-throw the exception to be handled by the global exception handler, but first try to rollback the document just added to DMS if any
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+                throw;
+            }
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
