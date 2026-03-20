@@ -90,7 +90,11 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         var errors = new List<ValidationError>();
 
+        // Create the new (initial) version of the EnkelvoudigInformatieObject
         versie.Versie = 1;
+        versie.InformatieObject.Owner = _rsin;
+        versie.BeginRegistratie = DateTime.UtcNow;
+        versie.Owner = _rsin;
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
@@ -125,11 +129,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
-            // Create the new (initial) version of the EnkelvoudigInformatieObject
-            versie.InformatieObject.Owner = _rsin;
-            versie.BeginRegistratie = DateTime.UtcNow;
-            versie.Owner = versie.InformatieObject.Owner;
-
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
@@ -163,12 +162,12 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = request.EnkelvoudigInformatieObjectVersie.Bronorganisatie;
+                var owner = request.EnkelvoudigInformatieObjectVersie.Owner;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
-                    organisatie,
+                    owner,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique(owner, id),
                     cancellationToken
                 );
 
@@ -189,8 +188,10 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             }
             catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
             {
-                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+bronorganisatie/owner after our initial read but before our insert
-                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze bronorganisatie.");
+                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+owner+versie after our initial read but before our insert
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
             }
 
@@ -220,6 +221,19 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         }
 
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
+    }
+
+    private async Task RollbackDocumentJustAddedToDmsAsync(string urnDocument)
+    {
+        try
+        {
+            await DocumentService.DeleteDocumentAsync(new DocumentUrn(urnDocument));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback document with urn {UrnDocument} just added to DMS", urnDocument);
+            // Do not throw an exception on the rollback failure
+        }
     }
 }
 

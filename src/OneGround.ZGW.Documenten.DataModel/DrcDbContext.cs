@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -47,11 +48,13 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             .Entity<EnkelvoudigInformatieObjectVersie>()
             .HasIndex(e => new
             {
-                e.Bronorganisatie,
+                e.Owner,
                 e.Identificatie,
                 e.Versie,
             })
-            .IsUnique(true);
+            .IsUnique()
+            .HasDatabaseName("IX_eiov_owner_identificatie_versie");
+        //.HasFilter($"creationtime > '{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}'"); // Note: Removed filter here. Stored in database once; not here at startup, otherwise the index will not be used for queries with creationtime filter in the past. The creationtime filter is needed to prevent unique constraint violation when creating a new version of an existing information object with the same identificatie and versie, but with a different creationtime. By filtering out old versions, we can ensure that the unique constraint is only applied to the latest version of each information object.
 
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Inhoud); // Note: In Inhoud the DMS urn's are stored to the underlying documentservice providers (Ceph, MongoDB, etc). To count the organisation total storage size efficient an index is added therefore
 

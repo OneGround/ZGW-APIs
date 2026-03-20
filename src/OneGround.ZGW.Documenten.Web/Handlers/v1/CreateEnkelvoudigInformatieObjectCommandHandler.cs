@@ -278,12 +278,12 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = versie.Bronorganisatie;
+                var owner = versie.Owner;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
-                    organisatie,
+                    owner,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique(owner, id),
                     cancellationToken
                 );
 
@@ -302,8 +302,10 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             }
             catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
             {
-                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+bronorganisatie/owner after our initial read but before our insert
-                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze bronorganisatie.");
+                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+owner+versie after our initial read but before our insert
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
                 return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
             }
 
@@ -345,11 +347,22 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
     }
 
-    private bool IsEnkelvoudigInformatieObjectVersieUnique(string organisatie, string identificatie, int versie)
+    private async Task RollbackDocumentJustAddedToDmsAsync(string urnDocument)
     {
-        return !_context
-            .EnkelvoudigInformatieObjectVersies.AsNoTracking()
-            .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
+        try
+        {
+            await DocumentService.DeleteDocumentAsync(new DocumentUrn(urnDocument));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback document with urn {UrnDocument} just added to DMS", urnDocument);
+            // Do not throw an exception on the rollback failure
+        }
+    }
+
+    private bool IsEnkelvoudigInformatieObjectVersieUnique(string owner, string identificatie)
+    {
+        return !_context.EnkelvoudigInformatieObjectVersies.AsNoTracking().Any(e => e.Identificatie == identificatie && e.Owner == owner);
     }
 
     private async Task AddDocumentToDocumentStore(

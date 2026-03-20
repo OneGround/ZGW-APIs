@@ -62,30 +62,24 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
         CancellationToken cancellationToken = default
     )
     {
-        // TODO: FUND-2391 DRC The combination of identificatie+versie+owner should be unique
-        //   (Create unique index after DATA-MIGRATION!!)
         if (!string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Identificatie))
         {
             bool existingEnkelvoudigInformatieObject = await _context
                 .EnkelvoudigInformatieObjectVersies.AsNoTracking()
                 .AnyAsync(
                     z =>
-                        (
-                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
-                            && z.Bronorganisatie == enkelvoudigInformatieObjectVersie.Bronorganisatie
-                            && z.Versie == enkelvoudigInformatieObjectVersie.Versie
-                        )
-                        || (
-                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
-                            && z.Owner == enkelvoudigInformatieObjectVersie.Bronorganisatie
-                            && z.Versie == enkelvoudigInformatieObjectVersie.Versie
+                        z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
+                        && z.Owner == enkelvoudigInformatieObjectVersie.Owner
+                        && (
+                            !existingEnkelvoudigInformatieObjectId.HasValue
+                            || (existingEnkelvoudigInformatieObjectId != z.EnkelvoudigInformatieObjectId)
                         ),
                     cancellationToken
                 );
 
             if (existingEnkelvoudigInformatieObject)
             {
-                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze bronorganisatie.");
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
 
                 errors.Add(error);
             }
@@ -110,6 +104,19 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
                 .Where(e => e.InformatieObject.Id == existingEnkelvoudigInformatieObjectId.Value)
                 .OrderBy(e => e.Versie)
                 .Last();
+
+            //if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Identificatie))
+            //{
+            //    var error = new ValidationError(
+            //        "identificatie",
+            //        ErrorCode.Invalid,
+            //        "Automatisch genereren van een identificatie bij wijzigen niet ondersteund."
+            //    );
+
+            //    errors.Add(error);
+
+            //    return false;
+            //}
 
             // Note: Locken en unlocken van documenten (drc-009)
             if (!existing.InformatieObject.Locked)

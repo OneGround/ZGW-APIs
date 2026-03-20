@@ -21,14 +21,14 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1;
 public class EnkelvoudigInformatieObjectBusinessRuleTests
 {
     [Fact]
-    public async Task Add_With_Existing_Bronorganisatie_And_Identificatie_Should_Be_Invalid()
+    public async Task Add_With_Existing_Owner_And_Identificatie_Should_Be_Invalid()
     {
         var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
 
-        var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+        var addEnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
             InformatieObject = new EnkelvoudigInformatieObject(),
-            Bronorganisatie = "1234",
+            Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
             Owner = "813264571",
@@ -37,7 +37,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         var errors = new List<ValidationError>();
 
         var valid = await svc.ValidateAsync(
-            enkelvoudigInformatieObjectVersie,
+            addEnkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: null,
             isPartialUpdate: false,
@@ -54,23 +54,23 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     }
 
     [Fact]
-    public async Task Add_With_Unqiue_Bronorganisatie_And_Identificatie_Should_Be_Valid()
+    public async Task Add_With_Unqiue_Owner_And_Identificatie_Should_Be_Valid()
     {
         var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
 
-        var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+        var addEnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
             InformatieObject = new EnkelvoudigInformatieObject(),
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "000001375",
         };
 
         var errors = new List<ValidationError>();
 
         var valid = await svc.ValidateAsync(
-            enkelvoudigInformatieObjectVersie,
+            addEnkelvoudigInformatieObjectVersie,
             ignoreInformatieObjectTypeValidation: true,
             existingEnkelvoudigInformatieObjectId: null,
             isPartialUpdate: false,
@@ -80,6 +80,78 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         Assert.True(valid);
         Assert.Empty(errors);
+    }
+
+    [Fact]
+    public async Task Patch_With_Existing_Owner_And_Identificatie_Should_Be_Invalid()
+    {
+        var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
+
+        var addEnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+        {
+            InformatieObject = new EnkelvoudigInformatieObject(),
+            Bronorganisatie = "2345",
+            Identificatie = "DOCUMENT-2020-00000002",
+            Versie = 1,
+            Owner = "813264571",
+        };
+
+        var existingEnkelvoudigInformatieObjectId = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221");
+
+        var errors = new List<ValidationError>();
+
+        var valid = await svc.ValidateAsync(
+            addEnkelvoudigInformatieObjectVersie,
+            ignoreInformatieObjectTypeValidation: true,
+            existingEnkelvoudigInformatieObjectId: existingEnkelvoudigInformatieObjectId,
+            isPartialUpdate: true,
+            apiVersie: 1.0M,
+            errors
+        );
+
+        Assert.False(valid);
+
+        var error = errors.SingleOrDefault(e => e.Code == ErrorCode.Unique);
+
+        Assert.NotNull(error);
+        Assert.Equal("identificatie", error.Name);
+    }
+
+    [Fact]
+    public async Task Patch_With_Existing_Owner_And_Non_Existing_Identificatie_Should_Be_Valid()
+    {
+        var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
+
+        var addEnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+        {
+            InformatieObject = new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                Owner = "813264571",
+                Lock = "e205101a45ab4fb082a35231d63f4151",
+                Locked = true,
+            },
+            Bronorganisatie = "2345",
+            Identificatie = "DOCUMENT-2020-00000009",
+            Versie = 1,
+            Owner = "813264571",
+        };
+
+        var existingEnkelvoudigInformatieObjectId = new Guid("8a92aae3-bb25-4020-be90-8ef4132ada13");
+
+        var errors = new List<ValidationError>();
+
+        var valid = await svc.ValidateAsync(
+            addEnkelvoudigInformatieObjectVersie,
+            ignoreInformatieObjectTypeValidation: true,
+            existingEnkelvoudigInformatieObjectId: existingEnkelvoudigInformatieObjectId,
+            isPartialUpdate: true,
+            apiVersie: 1.0M,
+            errors
+        );
+
+        Assert.True(valid);
     }
 
     [Fact]
@@ -124,6 +196,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
@@ -164,6 +237,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
@@ -197,6 +271,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
@@ -243,7 +318,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             },
             Bronorganisatie = "1234",
-            Identificatie = "DOCUMENT-2020-00000001",
+            Identificatie = "DOCUMENT-2020-00000004",
             // Change some fields within a definitive document
             Beschrijving = "Some fields may be changed for a definitive document!",
             Auteur = "Sombody else",
@@ -278,6 +353,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject { Locked = false, Lock = null },
             Owner = "813264571",
         };
@@ -310,6 +386,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
@@ -346,6 +423,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
 
         var enkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
         {
+            Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
@@ -699,6 +777,29 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Identificatie = "DOCUMENT-2020-00000003",
                         Versie = 1,
                         Status = Status.definitief,
+                        Taal = string.Empty,
+                        Owner = "813264571",
+                    },
+                ],
+                Owner = "813264571",
+                Locked = true,
+                Lock = "e205101a45ab4fb082a35231d63f4151",
+            }
+        );
+
+        context.EnkelvoudigInformatieObjecten.Add(
+            new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("8a92aae3-bb25-4020-be90-8ef4132ada13"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                EnkelvoudigInformatieObjectVersies =
+                [
+                    new EnkelvoudigInformatieObjectVersie
+                    {
+                        Bronorganisatie = "1234",
+                        Identificatie = "DOCUMENT-2020-00000003",
+                        Versie = 1,
+                        Status = Status.in_bewerking,
                         Taal = string.Empty,
                         Owner = "813264571",
                     },

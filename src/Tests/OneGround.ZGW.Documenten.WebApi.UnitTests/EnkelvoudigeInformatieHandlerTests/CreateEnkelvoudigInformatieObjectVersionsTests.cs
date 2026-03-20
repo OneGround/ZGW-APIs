@@ -14,6 +14,9 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandle
 
 public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInformatieObjectVersionsBase<CreateEnkelvoudigInformatieObjectCommandHandler>
 {
+    public CreateEnkelvoudigInformatieObjectVersionsTests(TestMocksFixture fixture)
+        : base(fixture) { }
+
     [Fact]
     public async Task Create_Base64_Document_Should_Send_Notification()
     {

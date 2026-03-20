@@ -74,11 +74,9 @@ public abstract class MutatieEnkelvoudigInformatieObjectCommandHandler<T> : Docu
         return documentService;
     }
 
-    protected bool IsEnkelvoudigInformatieObjectVersieUnique(string organisatie, string identificatie, int versie)
+    protected bool IsEnkelvoudigInformatieObjectVersieUnique(string owner, string identificatie)
     {
-        return !_context
-            .EnkelvoudigInformatieObjectVersies.AsNoTracking()
-            .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
+        return !_context.EnkelvoudigInformatieObjectVersies.AsNoTracking().Any(e => e.Identificatie == identificatie && e.Owner == owner);
     }
 
     protected async Task<(string inhoud, long bestandsomvang)> TryAddDocumentToDocumentStore(
