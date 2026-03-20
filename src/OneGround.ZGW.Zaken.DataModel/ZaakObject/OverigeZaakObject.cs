@@ -27,9 +27,11 @@ public class OverigeZaakObject : OwnedEntity, IAuditableEntity
     [Column("modifiedby")]
     public string ModifiedBy { get; set; }
 
-    [Required]
     [Column("overigedata")]
     public string OverigeData { get; set; }
+
+    [Column("overigedata_jsonb", TypeName = "jsonb")]
+    public string OverigeDataJsonb { get; set; }
 
     [Column("zaakobject_id")]
     public Guid ZaakObjectId { get; set; }

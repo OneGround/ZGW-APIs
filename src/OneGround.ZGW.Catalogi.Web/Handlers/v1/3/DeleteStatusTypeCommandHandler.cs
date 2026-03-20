@@ -54,9 +54,9 @@ class DeleteStatusTypeCommandHandler : CatalogiBaseHandler<DeleteStatusTypeComma
 
         var statusType = await _context
             .StatusTypen.Include(z => z.ZaakType)
-            .ThenInclude(z => z.Catalogus)
+                .ThenInclude(z => z.Catalogus)
             .Include(z => z.StatusTypeVerplichteEigenschappen)
-            .ThenInclude(z => z.Eigenschap)
+                .ThenInclude(z => z.Eigenschap)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 

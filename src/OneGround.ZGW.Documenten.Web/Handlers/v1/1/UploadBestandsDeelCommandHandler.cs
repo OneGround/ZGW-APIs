@@ -54,7 +54,7 @@ class UploadBestandsDeelCommandHandler
         var bestandsdeel = await _context
             .BestandsDelen.Where(rsinFilter)
             .Include(d => d.EnkelvoudigInformatieObjectVersie)
-            .ThenInclude(d => d.InformatieObject)
+                .ThenInclude(d => d.InformatieObject)
             .SingleOrDefaultAsync(d => d.Id == request.BestandsDeelId, cancellationToken);
 
         if (bestandsdeel == null)

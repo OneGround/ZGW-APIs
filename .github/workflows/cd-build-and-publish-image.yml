@@ -48,12 +48,17 @@ jobs:
       - name: Get next application version
         id: get_next_application_version
         shell: pwsh
+        env:
+          GIT_TAG_NAME: ${{ inputs.git_tag_name }}
+          MAJOR_VERSION: ${{ inputs.major_version }}
+          MINOR_VERSION: ${{ inputs.minor_version }}
+          PATCH_VERSION_STARTS_FROM: ${{ inputs.patch_version_starts_from }}
         run: >-
           ./.github/scripts/Get-NextApplicationVersion.ps1
-          -GitTagName "${{ inputs.git_tag_name }}"
-          -MajorVersion "${{ inputs.major_version }}"
-          -MinorVersion "${{ inputs.minor_version }}"
-          -PatchVersionStartsFrom "${{ inputs.patch_version_starts_from }}"
+          -GitTagName "$env:GIT_TAG_NAME"
+          -MajorVersion "$env:MAJOR_VERSION"
+          -MinorVersion "$env:MINOR_VERSION"
+          -PatchVersionStartsFrom "$env:PATCH_VERSION_STARTS_FROM"
 
   docker-build-push:
     needs: get-next-application-version
@@ -104,10 +109,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create and push Git tag
+        env:
+          GIT_TAG_NAME: ${{ inputs.git_tag_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.specific_version }}" -m "Specific version ${{ needs.get-next-application-version.outputs.specific_version }} for ${{ inputs.git_tag_name }}"
-          git tag -f "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.floating_version }}" -m "Floating version ${{ needs.get-next-application-version.outputs.floating_version }} for ${{ inputs.git_tag_name }}"
-          git push origin "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.specific_version }}"
-          git push origin -f "${{ inputs.git_tag_name }}@${{ needs.get-next-application-version.outputs.floating_version }}"
+          git tag "$GIT_TAG_NAME@${{ needs.get-next-application-version.outputs.specific_version }}" -m "Specific version ${{ needs.get-next-application-version.outputs.specific_version }} for $GIT_TAG_NAME"
+          git tag -f "$GIT_TAG_NAME@${{ needs.get-next-application-version.outputs.floating_version }}" -m "Floating version ${{ needs.get-next-application-version.outputs.floating_version }} for $GIT_TAG_NAME"
+          git push origin "$GIT_TAG_NAME@${{ needs.get-next-application-version.outputs.specific_version }}"
+          git push origin -f "$GIT_TAG_NAME@${{ needs.get-next-application-version.outputs.floating_version }}"

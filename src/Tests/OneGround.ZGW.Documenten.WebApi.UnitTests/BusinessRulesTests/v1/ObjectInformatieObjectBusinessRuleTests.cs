@@ -373,14 +373,12 @@ public class ObjectInformatieObjectBusinessRuleTests
             )
             .Returns(
                 Task.FromResult(
-                    new ServiceAgentResponse<IEnumerable<BesluitInformatieObjectResponseDto>>(
-                        [
-                            new BesluitInformatieObjectResponseDto
-                            {
-                                Besluit = "http://besluiten.user.local:5013/api/v1/besluiten/03018e8e-f8ab-4295-8222-842cf450a2da",
-                            },
-                        ]
-                    )
+                    new ServiceAgentResponse<IEnumerable<BesluitInformatieObjectResponseDto>>([
+                        new BesluitInformatieObjectResponseDto
+                        {
+                            Besluit = "http://besluiten.user.local:5013/api/v1/besluiten/03018e8e-f8ab-4295-8222-842cf450a2da",
+                        },
+                    ])
                 )
             );
 

@@ -70,7 +70,7 @@ public class UpdateResultaatTypeCommandHandler
         var resultType = await _context
             .ResultaatTypen.Where(rsinFilter)
             .Include(s => s.ZaakType)
-            .ThenInclude(s => s.Catalogus)
+                .ThenInclude(s => s.Catalogus)
             .Include(s => s.BronDatumArchiefProcedure)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 

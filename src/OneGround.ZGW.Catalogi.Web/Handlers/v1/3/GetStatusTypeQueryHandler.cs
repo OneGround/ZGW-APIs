@@ -44,7 +44,7 @@ class GetStatusTypeQueryHandler : CatalogiBaseHandler<GetStatusTypeQueryHandler>
             .Where(rsinFilter)
             .Include(s => s.ZaakType.Catalogus)
             .Include(s => s.StatusTypeVerplichteEigenschappen)
-            .ThenInclude(s => s.Eigenschap)
+                .ThenInclude(s => s.Eigenschap)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (statusType == null)
