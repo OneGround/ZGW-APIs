@@ -56,7 +56,7 @@ class DeleteZaakInformatieObjectCommandHandler
         var zaakInformatieObject = await _context
             .ZaakInformatieObjecten.Where(rsinFilter)
             .Include(z => z.Zaak)
-            .ThenInclude(z => z.Kenmerken)
+                .ThenInclude(z => z.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakInformatieObject == null)

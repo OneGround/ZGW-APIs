@@ -51,7 +51,7 @@ class GetAllStatusTypenQueryHandler
         var pagedResult = await query
             .Include(s => s.ZaakType.Catalogus)
             .Include(s => s.StatusTypeVerplichteEigenschappen)
-            .ThenInclude(s => s.Eigenschap)
+                .ThenInclude(s => s.Eigenschap)
             .OrderBy(s => s.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)

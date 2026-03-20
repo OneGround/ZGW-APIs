@@ -54,7 +54,7 @@ class GetAllZaakTypeInformatieObjectTypenQueryHandler
         var pagedResult = await query
             .AsSplitQuery()
             .Include(z => z.ZaakType)
-            .ThenInclude(z => z.Catalogus)
+                .ThenInclude(z => z.Catalogus)
             .Include(s => s.StatusType)
             .OrderBy(z => z.ZaakTypeId)
             .ThenBy(z => z.VolgNummer)

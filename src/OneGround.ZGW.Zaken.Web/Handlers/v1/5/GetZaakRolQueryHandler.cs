@@ -42,7 +42,7 @@ class GetZaakRolQueryHandler : ZakenBaseHandler<GetZaakRolQueryHandler>, IReques
             .ZaakRollen.AsNoTracking()
             .Where(rsinFilter)
             .Include(z => z.Zaak)
-            .ThenInclude(z => z.ZaakStatussen)
+                .ThenInclude(z => z.ZaakStatussen)
             .Include(z => z.ContactpersoonRol)
             .Include(z => z.NatuurlijkPersoon.Verblijfsadres)
             .Include(z => z.NatuurlijkPersoon.SubVerblijfBuitenland)

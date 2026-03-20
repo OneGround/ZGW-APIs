@@ -40,9 +40,9 @@ class GetAllAbonnementenQueryHandler : ZGWBaseHandler, IRequestHandler<GetAllAbo
             .Abonnementen.AsNoTracking()
             .Where(rsinFilter)
             .Include(a => a.AbonnementKanalen)
-            .ThenInclude(a => a.Kanaal)
+                .ThenInclude(a => a.Kanaal)
             .Include(a => a.AbonnementKanalen)
-            .ThenInclude(a => a.Filters)
+                .ThenInclude(a => a.Filters)
             .ToListAsync(cancellationToken);
 
         return new QueryResult<IReadOnlyList<Abonnement>>(result, QueryStatus.OK);
