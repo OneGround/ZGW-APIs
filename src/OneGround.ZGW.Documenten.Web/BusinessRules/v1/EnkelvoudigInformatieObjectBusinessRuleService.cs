@@ -105,19 +105,6 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
                 .OrderBy(e => e.Versie)
                 .Last();
 
-            //if (string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Identificatie))
-            //{
-            //    var error = new ValidationError(
-            //        "identificatie",
-            //        ErrorCode.Invalid,
-            //        "Automatisch genereren van een identificatie bij wijzigen niet ondersteund."
-            //    );
-
-            //    errors.Add(error);
-
-            //    return false;
-            //}
-
             // Note: Locken en unlocken van documenten (drc-009)
             if (!existing.InformatieObject.Locked)
             {
