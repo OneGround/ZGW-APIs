@@ -16,13 +16,15 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                 table: "enkelvoudiginformatieobjectversies"
             );
 
-            migrationBuilder.CreateIndex(
-                name: "IX_eiov_owner_identificatie_versie",
-                table: "enkelvoudiginformatieobjectversies",
-                columns: new[] { "owner", "identificatie", "versie" },
-                unique: true,
-                filter: $"creationtime > '{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}'"
-            );
+            migrationBuilder
+                .CreateIndex(
+                    name: "IX_eiov_owner_identificatie_versie",
+                    table: "enkelvoudiginformatieobjectversies",
+                    columns: new[] { "owner", "identificatie", "versie" },
+                    unique: true,
+                    filter: $"creationtime > '{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}'"
+                )
+                .Annotation("Npgsql:CreatedConcurrently", true);
         }
 
         /// <inheritdoc />
