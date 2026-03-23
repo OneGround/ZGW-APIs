@@ -231,6 +231,11 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
     private async Task RollbackDocumentJustAddedToDmsAsync(string urnDocument)
     {
+        if (string.IsNullOrEmpty(urnDocument))
+        {
+            return;
+        }
+
         try
         {
             await DocumentService.DeleteDocumentAsync(new DocumentUrn(urnDocument));
