@@ -23,7 +23,8 @@
       "catalogus",
       "domein",
       "zaaktype_identificatie",
-      "is_eindzaakstatus"
+      "is_eindzaakstatus",
+      "kenmerk_bron"
     ]
   },
   {

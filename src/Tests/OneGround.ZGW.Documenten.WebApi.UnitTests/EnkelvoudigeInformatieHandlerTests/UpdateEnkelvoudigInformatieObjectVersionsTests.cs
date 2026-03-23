@@ -27,7 +27,8 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
     private readonly IRequestMerger _requestMerger;
     private readonly IMapper _mapper;
 
-    public UpdateEnkelvoudigInformatieObjectVersionsTests()
+    public UpdateEnkelvoudigInformatieObjectVersionsTests(TestMocksFixture fixture)
+        : base(fixture)
     {
         var configuration = new MapperConfiguration(config =>
         {

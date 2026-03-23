@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
@@ -277,12 +278,12 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = versie.Bronorganisatie;
+                var owner = versie.Owner;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
-                    organisatie,
+                    owner,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique(owner, id),
                     cancellationToken
                 );
 
@@ -291,8 +292,28 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
-            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-            await _context.SaveChangesAsync(cancellationToken);
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion.
+            // Handle potential race condition on INSERT with unique constraint in Postgres:
+            // if two requests hit this API simultaneously, a "check-then-act" pattern can fail and the INSERT may violate the unique constraint.
+            try
+            {
+                // Try to save changes with potential concurrency conflict
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+owner+versie after our initial read but before our insert
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
+            }
+            catch (Exception)
+            {
+                // Rollback and re-throw the exception to be handled by the global exception handler, but first try to rollback the document just added to DMS if any
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+                throw;
+            }
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
@@ -332,11 +353,22 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
     }
 
-    private bool IsEnkelvoudigInformatieObjectVersieUnique(string organisatie, string identificatie, int versie)
+    private async Task RollbackDocumentJustAddedToDmsAsync(string urnDocument)
     {
-        return !_context
-            .EnkelvoudigInformatieObjectVersies.AsNoTracking()
-            .Any(e => e.Identificatie == identificatie && e.Bronorganisatie == organisatie && e.Versie == versie);
+        try
+        {
+            await DocumentService.DeleteDocumentAsync(new DocumentUrn(urnDocument));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback document with urn {UrnDocument} just added to DMS", urnDocument);
+            // Do not throw an exception on the rollback failure
+        }
+    }
+
+    private bool IsEnkelvoudigInformatieObjectVersieUnique(string owner, string identificatie)
+    {
+        return !_context.EnkelvoudigInformatieObjectVersies.AsNoTracking().Any(e => e.Identificatie == identificatie && e.Owner == owner);
     }
 
     private async Task AddDocumentToDocumentStore(

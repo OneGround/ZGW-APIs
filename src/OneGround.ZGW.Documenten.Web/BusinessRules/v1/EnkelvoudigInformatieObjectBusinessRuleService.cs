@@ -69,14 +69,17 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
                 .AnyAsync(
                     z =>
                         z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
-                        && z.Bronorganisatie == enkelvoudigInformatieObjectVersie.Bronorganisatie
-                        && z.Versie == enkelvoudigInformatieObjectVersie.Versie,
+                        && z.Owner == enkelvoudigInformatieObjectVersie.Owner
+                        && (
+                            !existingEnkelvoudigInformatieObjectId.HasValue
+                            || (existingEnkelvoudigInformatieObjectId != z.EnkelvoudigInformatieObjectId)
+                        ),
                     cancellationToken
                 );
 
             if (existingEnkelvoudigInformatieObject)
             {
-                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze bronorganisatie.");
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
 
                 errors.Add(error);
             }

@@ -4,9 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -88,7 +90,11 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         var errors = new List<ValidationError>();
 
+        // Create the new (initial) version of the EnkelvoudigInformatieObject
         versie.Versie = 1;
+        versie.InformatieObject.Owner = _rsin;
+        versie.BeginRegistratie = DateTime.UtcNow;
+        versie.Owner = _rsin;
 
         await _enkelvoudigInformatieObjectBusinessRuleService.ValidateAsync(
             versie,
@@ -123,11 +129,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
         {
-            // Create the new (initial) version of the EnkelvoudigInformatieObject
-            versie.InformatieObject.Owner = _rsin;
-            versie.BeginRegistratie = DateTime.UtcNow;
-            versie.Owner = versie.InformatieObject.Owner;
-
             // Depending on the specified inhoud and bestandsomvang several ways on how to add documents....
             if (IsDocumentUploadWithBestandsdelen(versie.Bestandsomvang, versie.Inhoud))
             {
@@ -161,12 +162,12 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = request.EnkelvoudigInformatieObjectVersie.Bronorganisatie;
+                var owner = request.EnkelvoudigInformatieObjectVersie.Owner;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
-                    organisatie,
+                    owner,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique(owner, id),
                     cancellationToken
                 );
 
@@ -176,8 +177,29 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
             using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion
-            await _context.SaveChangesAsync(cancellationToken);
+
+            // Saves the new added EnkelvoudigInformationObject and EnkelvoudigInformationObjectVersion.
+            // Handle potential race condition on INSERT with unique constraint in Postgres:
+            // if two requests hit this API simultaneously, a "check-then-act" pattern can fail and the INSERT may violate the unique constraint.
+            try
+            {
+                // Try to save changes with potential concurrency conflict
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                // Handle preventing race-condition where another process has created already EnkelvoudigInformatieObject with the same identificatie+owner+versie after our initial read but before our insert
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+
+                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
+                return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.ValidationError, error);
+            }
+            catch (Exception)
+            {
+                // Rollback and re-throw the exception to be handled by the global exception handler, but first try to rollback the document just added to DMS if any
+                await RollbackDocumentJustAddedToDmsAsync(versie.Inhoud);
+                throw;
+            }
 
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
@@ -205,6 +227,19 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         }
 
         return new CommandResult<EnkelvoudigInformatieObjectVersie>(versie, CommandStatus.OK);
+    }
+
+    private async Task RollbackDocumentJustAddedToDmsAsync(string urnDocument)
+    {
+        try
+        {
+            await DocumentService.DeleteDocumentAsync(new DocumentUrn(urnDocument));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback document with urn {UrnDocument} just added to DMS", urnDocument);
+            // Do not throw an exception on the rollback failure
+        }
     }
 }
 

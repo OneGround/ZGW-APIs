@@ -244,12 +244,12 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             // Use external identificatie if specified generate otherwise
             if (string.IsNullOrEmpty(versie.Identificatie))
             {
-                var organisatie = versie.Bronorganisatie;
+                var owner = versie.Owner;
 
                 var enkelvoudigInformatieObjectNummer = await _nummerGenerator.GenerateAsync(
-                    organisatie,
+                    owner,
                     "documenten",
-                    id => IsEnkelvoudigInformatieObjectVersieUnique(organisatie, id, versie.Versie),
+                    id => IsEnkelvoudigInformatieObjectVersieUnique(owner, id),
                     cancellationToken
                 );
 
