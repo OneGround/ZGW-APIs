@@ -257,7 +257,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         // Check if specific value exists in any kenmerk_bron
         var bronnen = kenmerkBronValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        var matches = bronnen.FirstOrDefault(b => b == filter.Value);
+        var matches = bronnen.FirstOrDefault(b => string.Equals(b, filter.Value, StringComparison.OrdinalIgnoreCase));
         if (matches != null)
         {
             resolvedKenmerkBronnen = ResolveKenmerkBronnen(resolvedKenmerkBronnen, matches);
@@ -309,7 +309,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
         }
 
         // String comparison
-        if (kenmerkValue == filterValue)
+        if (string.Equals(kenmerkValue, filterValue, StringComparison.OrdinalIgnoreCase))
         {
             Logger.LogDebug(">Filter:{filterKey}=\"{filterValue}\"", filterKey, filterValue);
             return true;
