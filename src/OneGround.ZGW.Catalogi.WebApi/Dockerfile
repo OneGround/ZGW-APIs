@@ -19,6 +19,8 @@ LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
 
 WORKDIR /app
 
+COPY LICENSE ./
+
 COPY --from=build /app/publish .
 
 RUN apt-get update -yq \
