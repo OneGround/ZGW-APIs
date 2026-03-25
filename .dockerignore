@@ -22,7 +22,6 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 **/out
-LICENSE
 README.md
 .dotnet
 .Microsoft.DotNet.ImageBuilder
