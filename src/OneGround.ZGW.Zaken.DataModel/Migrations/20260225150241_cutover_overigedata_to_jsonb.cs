@@ -10,7 +10,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "idx_zaakobjecten_overigen_backfill", table: "zaakobjecten_overigen");
+            migrationBuilder.Sql("DROP INDEX CONCURRENTLY IF EXISTS idx_zaakobjecten_overigen_backfill;", suppressTransaction: true);
 
             migrationBuilder.DropColumn(name: "overigedata", table: "zaakobjecten_overigen");
 
@@ -28,11 +28,9 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 
             migrationBuilder.AddColumn<string>(name: "overigedata", table: "zaakobjecten_overigen", type: "text", nullable: true);
 
-            migrationBuilder.CreateIndex(
-                name: "idx_zaakobjecten_overigen_backfill",
-                table: "zaakobjecten_overigen",
-                column: "id",
-                filter: "overigedata_jsonb IS NULL"
+            migrationBuilder.Sql(
+                "CREATE INDEX CONCURRENTLY idx_zaakobjecten_overigen_backfill ON zaakobjecten_overigen (id) WHERE overigedata_jsonb IS NULL;",
+                suppressTransaction: true
             );
         }
     }
