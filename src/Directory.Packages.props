@@ -9,8 +9,8 @@
     <PackageVersion Include="CSharpier.MsBuild" Version="1.2.6" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="Dapper" Version="2.1.72" />
-    <PackageVersion Include="Duende.AspNetCore.Authentication.OAuth2Introspection" Version="6.3.0" />
-    <PackageVersion Include="Duende.IdentityModel" Version="7.0.0" />
+    <PackageVersion Include="Duende.AspNetCore.Authentication.OAuth2Introspection" Version="7.0.1" />
+    <PackageVersion Include="Duende.IdentityModel" Version="8.1.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="Hangfire" Version="1.8.22" />
