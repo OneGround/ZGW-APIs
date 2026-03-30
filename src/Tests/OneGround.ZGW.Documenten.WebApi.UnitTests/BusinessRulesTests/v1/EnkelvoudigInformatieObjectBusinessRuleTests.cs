@@ -116,6 +116,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         Assert.NotNull(error);
         Assert.Equal("identificatie", error.Name);
     }
+
     [Fact]
     public async Task Patch_With_Existing_Owner_And_Identificatie_Within_The_Same_Eio_Should_Be_Valid()
     {
