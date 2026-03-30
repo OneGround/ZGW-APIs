@@ -62,26 +62,51 @@ public class EnkelvoudigInformatieObjectBusinessRuleService : IEnkelvoudigInform
         CancellationToken cancellationToken = default
     )
     {
+        /* Rule for 'identificatie' within 'owner' (organisatie)
+          check 1: is equal to identificatie in one of the earlier versions of the same eio.
+
+          If not:
+            check 2: Identificatie in request does not exist for owner => Error reply (on check 2)
+        */
         if (!string.IsNullOrEmpty(enkelvoudigInformatieObjectVersie.Identificatie))
         {
-            bool existingEnkelvoudigInformatieObject = await _context
-                .EnkelvoudigInformatieObjectVersies.AsNoTracking()
-                .AnyAsync(
-                    z =>
-                        z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
-                        && z.Owner == enkelvoudigInformatieObjectVersie.Owner
-                        && (
-                            !existingEnkelvoudigInformatieObjectId.HasValue
-                            || (existingEnkelvoudigInformatieObjectId != z.EnkelvoudigInformatieObjectId)
-                        ),
-                    cancellationToken
-                );
-
-            if (existingEnkelvoudigInformatieObject)
+            //  check 1: is equal to identificatie in one of the earlier versions of the same eio.
+            bool identificationMatchesCurrentEio = false;
+            if (existingEnkelvoudigInformatieObjectId.HasValue)
             {
-                var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
+                identificationMatchesCurrentEio = await _context
+                    .EnkelvoudigInformatieObjectVersies.AsNoTracking()
+                    .AnyAsync(
+                        z =>
+                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
+                            && z.EnkelvoudigInformatieObjectId == existingEnkelvoudigInformatieObjectId.Value,
+                        cancellationToken
+                    );
+            }
 
-                errors.Add(error);
+            // If identificatie matches current EIO, skip uniqueness check for other EIOs
+            if (!identificationMatchesCurrentEio)
+            {
+                // check 2: Identificatie in request does not exist for owner
+                bool existingEnkelvoudigInformatieObject = await _context
+                    .EnkelvoudigInformatieObjectVersies.AsNoTracking()
+                    .AnyAsync(
+                        z =>
+                            z.Identificatie == enkelvoudigInformatieObjectVersie.Identificatie
+                            && z.Owner == enkelvoudigInformatieObjectVersie.Owner
+                            && (
+                                !existingEnkelvoudigInformatieObjectId.HasValue
+                                || (existingEnkelvoudigInformatieObjectId != z.EnkelvoudigInformatieObjectId)
+                            ),
+                        cancellationToken
+                    );
+
+                if (existingEnkelvoudigInformatieObject)
+                {
+                    var error = new ValidationError("identificatie", ErrorCode.Unique, "Deze identificatie bestaat al voor deze organisatie.");
+
+                    errors.Add(error);
+                }
             }
         }
 

@@ -259,6 +259,8 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             await _context.EnkelvoudigInformatieObjectVersies.AddAsync(versie, cancellationToken); // Note: Sequential Guid for Id is generated here by the DBMS
 
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
+            versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersie = versie;
+            versie.LatestInformatieObject = versie.InformatieObject;
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);
 
