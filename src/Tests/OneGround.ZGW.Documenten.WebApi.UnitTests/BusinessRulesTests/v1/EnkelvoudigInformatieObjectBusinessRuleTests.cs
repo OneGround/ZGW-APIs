@@ -118,6 +118,44 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
     }
 
     [Fact]
+    public async Task Patch_With_Existing_Owner_And_Identificatie_Within_The_Same_Eio_Should_Be_Valid()
+    {
+        var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
+
+        var addEnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+        {
+            InformatieObject = new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                Owner = "813264571",
+                Lock = "e205101a45ab4fb082a35231d63f4151",
+                Locked = true,
+            },
+            Bronorganisatie = "1234",
+            Identificatie = "DOCUMENT-2020-00000002",
+            Versie = 2,
+            Owner = "813264571",
+        };
+
+        var existingEnkelvoudigInformatieObjectId = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
+
+        var errors = new List<ValidationError>();
+
+        var valid = await svc.ValidateAsync(
+            addEnkelvoudigInformatieObjectVersie,
+            ignoreInformatieObjectTypeValidation: true,
+            existingEnkelvoudigInformatieObjectId: existingEnkelvoudigInformatieObjectId,
+            isPartialUpdate: true,
+            apiVersie: 1.0M,
+            errors
+        );
+
+        Assert.True(valid);
+        Assert.Empty(errors);
+    }
+
+    [Fact]
     public async Task Patch_With_Existing_Owner_And_Non_Existing_Identificatie_Should_Be_Valid()
     {
         var svc = await CreateEnkelvoudigInformatieObjectBusinessRuleService();
