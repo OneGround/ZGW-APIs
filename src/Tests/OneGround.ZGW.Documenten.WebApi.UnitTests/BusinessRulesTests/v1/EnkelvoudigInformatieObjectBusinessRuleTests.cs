@@ -116,7 +116,6 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         Assert.NotNull(error);
         Assert.Equal("identificatie", error.Name);
     }
-
     [Fact]
     public async Task Patch_With_Existing_Owner_And_Identificatie_Within_The_Same_Eio_Should_Be_Valid()
     {
@@ -126,19 +125,19 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         {
             InformatieObject = new EnkelvoudigInformatieObject
             {
-                Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
+                Id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911"),
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Owner = "813264571",
                 Lock = "e205101a45ab4fb082a35231d63f4151",
                 Locked = true,
             },
             Bronorganisatie = "1234",
-            Identificatie = "DOCUMENT-2020-00000001",
+            Identificatie = "DOCUMENT-2020-00000002",
             Versie = 2,
             Owner = "813264571",
         };
 
-        var existingEnkelvoudigInformatieObjectId = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221");
+        var existingEnkelvoudigInformatieObjectId = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
 
         var errors = new List<ValidationError>();
 
@@ -152,6 +151,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         );
 
         Assert.True(valid);
+        Assert.Empty(errors);
     }
 
     [Fact]
