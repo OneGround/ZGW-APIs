@@ -1626,6 +1626,15 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("character varying(9)")
                         .HasColumnName("inpbsn");
 
+                    b.Property<string>("InpBsnEncrypted")
+                        .HasColumnType("text")
+                        .HasColumnName("inpbsn_encrypted");
+
+                    b.Property<string>("InpBsnHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("inpbsn_hash");
+
                     b.Property<Guid?>("SubVerblijfBuitenlandId")
                         .HasColumnType("uuid")
                         .HasColumnName("subverblijfbuitenland_id");
@@ -1660,6 +1669,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                     b.HasIndex("InpANummer");
 
                     b.HasIndex("InpBsn");
+
+                    b.HasIndex("InpBsnHash");
 
                     b.HasIndex("SubVerblijfBuitenlandId");
 

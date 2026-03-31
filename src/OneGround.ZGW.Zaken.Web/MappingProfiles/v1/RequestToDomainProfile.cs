@@ -374,7 +374,9 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.SubVerblijfBuitenlandId, opt => opt.Ignore())
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.ZaakRol, opt => opt.Ignore())
-            .ForMember(dest => dest.ZaakRolId, opt => opt.Ignore());
+            .ForMember(dest => dest.ZaakRolId, opt => opt.Ignore())
+            .ForMember(dest => dest.InpBsnHash, opt => opt.MapFrom(src => src.InpBsn))
+            .ForMember(dest => dest.InpBsnEncrypted, opt => opt.MapFrom(src => src.InpBsn));
         CreateMap<NatuurlijkPersoonZaakRolRequestDto, ZaakRol>()
             .ForMember(dest => dest.NatuurlijkPersoon, opt => opt.MapFrom(src => src.BetrokkeneIdentificatie));
 

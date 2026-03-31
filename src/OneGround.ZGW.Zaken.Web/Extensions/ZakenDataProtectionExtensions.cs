@@ -1,0 +1,45 @@
+using System;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.DataModel.Encryption;
+
+namespace OneGround.ZGW.Zaken.Web.Extensions;
+
+public static class ZakenDataProtectionExtensions
+{
+    public static IServiceCollection AddZakenDataProtection(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<BsnHasherConfiguration>(configuration.GetSection("BsnHasher"));
+        services.AddSingleton<IBsnHasher, BsnHasher>();
+        services.AddSingleton<IDatabaseProtector, ZakenDatabaseProtector>();
+
+        var builder = services
+            .AddDataProtection()
+            .PersistKeysToDbContext<ZrcDbContext>()
+            .SetApplicationName("OneGround.ZGW.Zaken")
+            .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
+
+        var certBase64 = configuration["DataProtection:Certificate"];
+        if (!string.IsNullOrWhiteSpace(certBase64))
+        {
+            var certPassword = configuration["DataProtection:CertificatePassword"];
+            var cert = string.IsNullOrWhiteSpace(certPassword)
+                ? new X509Certificate2(Convert.FromBase64String(certBase64))
+                : new X509Certificate2(Convert.FromBase64String(certBase64), certPassword);
+            builder.ProtectKeysWithCertificate(cert);
+        }
+        else
+        {
+            Console.Error.WriteLine(
+                "[SECURITY WARNING] DataProtection:Certificate is not configured. "
+                    + "DataProtection keys will be persisted to the database in unencrypted form. "
+                    + "Configure DataProtection:Certificate for production deployments."
+            );
+        }
+
+        return services;
+    }
+}

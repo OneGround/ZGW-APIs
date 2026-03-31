@@ -12,6 +12,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.DataModel.Encryption;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 using OneGround.ZGW.Zaken.Web.Models.v1;
 using OneGround.ZGW.Zaken.Web.Services;
@@ -24,6 +25,7 @@ class GetAllZaakRollenQueryHandler
 {
     private readonly ZrcDbContext _context;
     private readonly IZaakAuthorizationTempTableService _zaakAuthorizationTempTableService;
+    private readonly IBsnHasher _bsnHasher;
 
     public GetAllZaakRollenQueryHandler(
         ILogger<GetAllZaakRollenQueryHandler> logger,
@@ -32,19 +34,25 @@ class GetAllZaakRollenQueryHandler
         IEntityUriService uriService,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
-        IZaakKenmerkenResolver zaakKenmerkenResolver
+        IZaakKenmerkenResolver zaakKenmerkenResolver,
+        IBsnHasher bsnHasher
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;
+        _bsnHasher = bsnHasher;
     }
 
     public async Task<QueryResult<PagedResult<ZaakRol>>> Handle(GetAllZaakRolQuery request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Get all ZaakRollen....");
 
-        var filter = GetZaakRolFilterPredicate(request.GetAllZaakRolFilter);
+        var inpBsnHash =
+            request.GetAllZaakRolFilter.NatuurlijkPersoonInpBsn != null
+                ? _bsnHasher.ComputeHash(request.GetAllZaakRolFilter.NatuurlijkPersoonInpBsn)
+                : null;
+        var filter = GetZaakRolFilterPredicate(request.GetAllZaakRolFilter, inpBsnHash);
 
         var rsinFilter = GetRsinFilterPredicate<ZaakRol>();
 
@@ -81,13 +89,13 @@ class GetAllZaakRollenQueryHandler
         return new QueryResult<PagedResult<ZaakRol>>(result, QueryStatus.OK);
     }
 
-    private Expression<Func<ZaakRol, bool>> GetZaakRolFilterPredicate(GetAllZaakRollenFilter filter)
+    private Expression<Func<ZaakRol, bool>> GetZaakRolFilterPredicate(GetAllZaakRollenFilter filter, string inpBsnHash)
     {
         return z =>
             (filter.Zaak == null || z.Zaak.Id == _uriService.GetId(filter.Zaak))
             && (filter.Betrokkene == null || z.Betrokkene == filter.Betrokkene)
             && (!filter.BetrokkeneType.HasValue || z.BetrokkeneType == filter.BetrokkeneType.Value)
-            && (filter.NatuurlijkPersoonInpBsn == null || z.NatuurlijkPersoon.InpBsn == filter.NatuurlijkPersoonInpBsn)
+            && (filter.NatuurlijkPersoonInpBsn == null || z.NatuurlijkPersoon.InpBsnHash == inpBsnHash)
             && (filter.NatuurlijkPersoonAnpIdentificatie == null || z.NatuurlijkPersoon.AnpIdentificatie == filter.NatuurlijkPersoonAnpIdentificatie)
             && (filter.NatuurlijkPersoonInpANummer == null || z.NatuurlijkPersoon.InpANummer == filter.NatuurlijkPersoonInpANummer)
             && (filter.NietNatuurlijkPersoonInnNnpId == null || z.NietNatuurlijkPersoon.InnNnpId == filter.NietNatuurlijkPersoonInnNnpId)

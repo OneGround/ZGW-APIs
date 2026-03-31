@@ -63,4 +63,7 @@ public class NatuurlijkPersoonZaakRol : IBaseEntity
 
     [ForeignKey("ZaakRolId")]
     public ZaakRol ZaakRol { get; set; }
+
+    public string InpBsnHash { get; set; }
+    public string InpBsnEncrypted { get; set; }
 }
