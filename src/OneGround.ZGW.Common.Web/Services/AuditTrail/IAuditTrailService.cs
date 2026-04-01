@@ -1,12 +1,19 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.DataAccess.AuditTrail;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public interface IAuditTrailService : IDisposable
 {
+    // Mata data properties
+    string Name { get; }
+    bool Legacy { get; }
+
+    // Operations to log audit trail entries
     void SetOptions(AuditTrailOptions options);
 
     void SetOld<TDto>(IBaseEntity entity);
@@ -23,6 +30,10 @@ public interface IAuditTrailService : IDisposable
 
     Task GetAsync(IBaseEntity entity, IUrlEntity subEntity, string overruleActieWeergave, CancellationToken cancellationToken = default);
 
-    Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken);
-    Task GetListAsync(int totalCount, CancellationToken cancellationToken);
+    Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken = default);
+    Task GetListAsync(int totalCount, CancellationToken cancellationToken = default);
+
+    // Retrieval methods for audit trail entries
+    Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default);
+    Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default); // TODO: Maybe add hoofdobjectId here
 }

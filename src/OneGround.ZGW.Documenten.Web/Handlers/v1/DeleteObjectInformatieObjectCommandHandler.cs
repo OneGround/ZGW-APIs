@@ -67,8 +67,9 @@ class DeleteObjectInformatieObjectCommandHandler
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        //await using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
 
@@ -78,10 +79,12 @@ class DeleteObjectInformatieObjectCommandHandler
 
             await audittrail.DestroyedAsync(informatieObject, objectInformatieObject, cancellationToken);
 
+            await _context.SaveChangesAsync(cancellationToken);
+
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        //await trans.CommitAsync(cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }

@@ -16,6 +16,7 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
     public DbSet<Besluit> Besluiten { get; set; }
     public DbSet<BesluitInformatieObject> BesluitInformatieObjecten { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
     public DbSet<OrganisatieNummer> OrganisatieNummers { get; set; }
     public DbSet<TempBesluitAuthorization> TempBesluitAuthorization { get; set; }
 

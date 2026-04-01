@@ -107,6 +107,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
 
         var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
 
+        bool legacyAuditTrail = false;
+
         // Set version first because business-rule wants to verify against
         EnkelvoudigInformatieObject existingEnkelvoudigInformatieObject = null;
         if (request.ExistingEnkelvoudigInformatieObjectId.HasValue)
@@ -187,6 +189,8 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             var currentVersie = existingEnkelvoudigInformatieObject.LatestEnkelvoudigInformatieObjectVersie;
 
             versie.Versie = currentVersie.Versie + 1;
+
+            legacyAuditTrail = existingEnkelvoudigInformatieObject.LegacyAuditTrail;
         }
         else
         {
@@ -237,7 +241,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
         await SetVertrouwelijkheidAanduidingAsync(versie);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacyAuditTrail))
         {
             if (existingEnkelvoudigInformatieObject != null)
             {

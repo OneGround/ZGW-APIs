@@ -196,7 +196,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
         // Note: Vertrouwelijkheidaanduiding van een informatieobject (drc-007) => get from request or get from Catalogi.InformatieObjectType
         await SetVertrouwelijkheidAanduidingAsync(versie);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, currentVersie.LatestInformatieObject.LegacyAuditTrail))
         {
             // Add a new version of the existing EnkelvoudigInformatieObject
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(existingEnkelvoudigInformatieObject);

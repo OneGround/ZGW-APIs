@@ -61,7 +61,7 @@ class DeleteVerzendingCommandHandler : DocumentenBaseHandler<DeleteVerzendingCom
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, verzending.InformatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting Verzending {verzendingId}....", verzending.Id);
 

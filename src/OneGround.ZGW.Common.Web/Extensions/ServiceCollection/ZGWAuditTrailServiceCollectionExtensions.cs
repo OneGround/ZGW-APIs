@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -11,6 +11,7 @@ public static class ZGWAuditTrailServiceCollectionExtensions
         where TDbContext : DbContext, IDbContextWithAuditTrail
     {
         services.AddTransient<IAuditTrailService, AuditTrailService>();
+        services.AddTransient<IAuditTrailService, DeltaBasedAuditTrail>();
         services.AddScoped<IAuditTrailFactory, AuditTrailFactory>();
         services.AddScoped(typeof(IDbContextWithAuditTrail), (f) => f.GetService<TDbContext>());
     }
