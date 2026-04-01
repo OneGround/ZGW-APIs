@@ -48,6 +48,11 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<BesluitInformatieObject>().HasIndex(p => p.InformatieObject);
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
+
+        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.AanmaakDatum);
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
+
 
         // Source: https://www.npgsql.org/efcore/misc/collations-and-case-sensitivity.html?tabs=data-annotations
         // And:    https://dba.stackexchange.com/questions/255780/case-insensitive-collation-still-comparing-case-sensitive
