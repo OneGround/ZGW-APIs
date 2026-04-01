@@ -14,13 +14,15 @@ public class BsnHasher : IBsnHasher
         var config = options.Value;
 
         if (string.IsNullOrEmpty(config.HmacKey))
-            throw new InvalidOperationException("BsnHasherConfiguration.HmacKey must be a non-empty Base64-encoded HMAC key.");
+            throw new InvalidOperationException(
+                $"{nameof(BsnHasherConfiguration)}.{nameof(BsnHasherConfiguration.HmacKey)} must be a non-empty Base64-encoded HMAC key."
+            );
 
         _key = Convert.FromBase64String(config.HmacKey);
 
         if (_key.Length < 32)
             throw new InvalidOperationException(
-                $"BsnHasherConfiguration.HmacKey must decode to at least 32 bytes (got {_key.Length}). Generate a key with: Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))."
+                $"{nameof(BsnHasherConfiguration)}.{nameof(BsnHasherConfiguration.HmacKey)} must decode to at least 32 bytes (got {_key.Length}). Generate a key with: Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))."
             );
     }
 

@@ -16,7 +16,6 @@ using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.DataModel.Encryption;
 using OneGround.ZGW.Zaken.Web.Models.v1._5;
 using OneGround.ZGW.Zaken.Web.Services;
 
@@ -27,7 +26,6 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
     private readonly ZrcDbContext _context;
     private readonly IDistributedCacheHelper _cache;
     private readonly IZaakAuthorizationTempTableService _zaakAuthorizationTempTableService;
-    private readonly IBsnHasher _bsnHasher;
 
     public GetAllZakenQueryHandler(
         ILogger<GetAllZakenQueryHandler> logger,
@@ -37,15 +35,13 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         IAuthorizationContextAccessor authorizationContextAccessor,
         IDistributedCacheHelper cache,
         IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
-        IZaakKenmerkenResolver zaakKenmerkenResolver,
-        IBsnHasher bsnHasher
+        IZaakKenmerkenResolver zaakKenmerkenResolver
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;
         _cache = cache;
-        _bsnHasher = bsnHasher;
     }
 
     public async Task<QueryResult<PagedResult<Zaak>>> Handle(GetAllZakenQuery request, CancellationToken cancellationToken)
@@ -60,12 +56,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         var geometryFilter = GetZaakGeometryFilterPredicate(request.WithinZaakGeometry, request.SRID);
         var rsinFilter = GetRsinFilterPredicate<Zaak>();
 
-        var inpBsnHash =
-            request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn != null
-                ? _bsnHasher.ComputeHash(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn)
-                : null;
-
-        var query = _context.Zaken.AsSplitQuery().AsNoTracking().Where(rsinFilter).Where(request.GetAllZakenFilter, inpBsnHash).Where(geometryFilter);
+        var query = _context.Zaken.AsSplitQuery().AsNoTracking().Where(rsinFilter).Where(request.GetAllZakenFilter).Where(geometryFilter);
 
         if (!_authorizationContext.Authorization.HasAllAuthorizations)
         {
@@ -160,7 +151,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
 internal static class IQueryableExtension
 {
-    public static IQueryable<Zaak> Where(this IQueryable<Zaak> zaken, GetAllZakenFilter filter, string inpBsnHash)
+    public static IQueryable<Zaak> Where(this IQueryable<Zaak> zaken, GetAllZakenFilter filter)
     {
         return zaken
             .WhereIf(filter.Startdatum != null, z => z.Startdatum == filter.Startdatum)
@@ -212,7 +203,11 @@ internal static class IQueryableExtension
             )
             .WhereIf(
                 filter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn != null,
-                z => z.ZaakRollen.Any(r => r.BetrokkeneType == BetrokkeneType.natuurlijk_persoon && r.NatuurlijkPersoon.InpBsnHash == inpBsnHash)
+                z =>
+                    z.ZaakRollen.Any(r =>
+                        r.BetrokkeneType == BetrokkeneType.natuurlijk_persoon
+                        && r.NatuurlijkPersoon.InpBsnHash == filter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn
+                    )
             )
             .WhereIf(
                 filter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__anpIdentificatie != null,
