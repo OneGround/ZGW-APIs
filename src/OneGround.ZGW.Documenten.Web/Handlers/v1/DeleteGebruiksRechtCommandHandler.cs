@@ -72,7 +72,7 @@ class DeleteGebruiksRechtCommandHandler
             gebruiksrecht.InformatieObject.IndicatieGebruiksrecht = null;
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, gebruiksrecht.InformatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting GebruiksRecht {Id}....", gebruiksrecht.Id);
 

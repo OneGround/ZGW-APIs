@@ -77,7 +77,7 @@ class CreateObjectInformatieObjectCommandHandler
             return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             objectInformatieObject.InformatieObjectId = informatieObject.Id;
             objectInformatieObject.InformatieObject = informatieObject;

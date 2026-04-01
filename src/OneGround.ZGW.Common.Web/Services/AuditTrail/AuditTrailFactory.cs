@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
@@ -12,12 +13,21 @@ public class AuditTrailFactory : IAuditTrailFactory
         _serviceProvider = serviceProvider;
     }
 
-    public IAuditTrailService Create(AuditTrailOptions options)
+    public IAuditTrailService Create(AuditTrailOptions options, bool legacy = true)
     {
-        var result = _serviceProvider.GetService<IAuditTrailService>();
+        //var requestService = _serviceProvider
+        //    .GetServices<IAuditTrailService>()
+        //    .SingleOrDefault(s => legacy && s.Name == "Legacy" || !legacy && s.Name == "Deltas");
 
-        result.SetOptions(options);
+        var requestService = _serviceProvider.GetServices<IAuditTrailService>().SingleOrDefault(s => legacy == s.Legacy);
 
-        return result;
+        if (requestService == null)
+        {
+            throw new InvalidOperationException($"No audit trailservice found for useDeltas={legacy}");
+        }
+
+        requestService.SetOptions(options ?? new AuditTrailOptions());
+
+        return requestService;
     }
 }

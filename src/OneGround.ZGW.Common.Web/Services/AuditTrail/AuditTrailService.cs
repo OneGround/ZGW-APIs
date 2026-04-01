@@ -1,9 +1,12 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -31,6 +34,10 @@ public class AuditTrailService : IAuditTrailService
         _httpContextAccessor = httpContextAccessor;
         _uriService = uriService;
     }
+
+    public string Name => "Legacy";
+
+    public bool Legacy => true;
 
     public void SetOptions(AuditTrailOptions options)
     {
@@ -101,7 +108,7 @@ public class AuditTrailService : IAuditTrailService
             );
     }
 
-    public Task GetListAsync(int totalCount, CancellationToken cancellationToken)
+    public Task GetListAsync(int totalCount, CancellationToken cancellationToken = default)
     {
         return totalCount == 0
             ? WriteAsync(
@@ -186,6 +193,30 @@ public class AuditTrailService : IAuditTrailService
             toelichting: toelichting ?? "",
             cancellationToken: cancellationToken
         );
+    }
+
+    public async Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default)
+    {
+        var result = await _context
+            .AuditTrailRegels.AsNoTracking()
+            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId.Value == hoofdobjectId)
+            .OrderBy(a => a.AanmaakDatum)
+            .ToListAsync(cancellationToken);
+
+        return result;
+    }
+
+    public async Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(
+        Guid hoofdobjectId,
+        Guid audittrailId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var result = await _context
+            .AuditTrailRegels.AsNoTracking()
+            .SingleOrDefaultAsync(a => a.Id == audittrailId && a.HoofdObjectId == hoofdobjectId, cancellationToken);
+
+        return result;
     }
 
     private async Task WriteAsync(

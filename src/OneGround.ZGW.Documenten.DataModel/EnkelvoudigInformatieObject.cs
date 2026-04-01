@@ -63,4 +63,7 @@ public class EnkelvoudigInformatieObject : OwnedEntity, IAuditableEntity, IUrlEn
 
     // Note: maps with the Postgres build in xmin concurrency token (uint is the C# equivalent for the Postgres 'xid' type)
     public uint RowVersion { get; set; }
+
+    [Column("legacy_audittrail")]
+    public bool LegacyAuditTrail { get; set; }
 }

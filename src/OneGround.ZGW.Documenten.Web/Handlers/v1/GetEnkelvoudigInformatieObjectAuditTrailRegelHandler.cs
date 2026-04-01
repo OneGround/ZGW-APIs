@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Documenten.DataModel;
@@ -19,6 +20,7 @@ class GetEnkelvoudigInformatieObjectAuditTrailRegelHandler
         IRequestHandler<GetEnkelvoudigInformatieObjectAuditTrailRegel, QueryResult<AuditTrailRegel>>
 {
     private readonly DrcDbContext _context;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetEnkelvoudigInformatieObjectAuditTrailRegelHandler(
         ILogger<GetEnkelvoudigInformatieObjectAuditTrailRegelHandler> logger,
@@ -26,11 +28,13 @@ class GetEnkelvoudigInformatieObjectAuditTrailRegelHandler
         IEntityUriService uriService,
         DrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, documentKenmerkenResolver)
     {
         _context = context;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<AuditTrailRegel>> Handle(GetEnkelvoudigInformatieObjectAuditTrailRegel request, CancellationToken cancellationToken)
@@ -49,12 +53,13 @@ class GetEnkelvoudigInformatieObjectAuditTrailRegelHandler
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.NotFound);
         }
 
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.Id == request.AuditTrailRegelId)
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
-            .SingleOrDefaultAsync(cancellationToken);
+        using var audittrail = _auditTrailFactory.Create(new AuditTrailOptions(), enkelvoudigInformatieObject.LegacyAuditTrail); // TODO: Only retrieve why options?
 
+        var result = await audittrail.GetAuditTrailEntryByIdAsync(
+            request.EnkelvoudigInformatieObjectId,
+            request.AuditTrailRegelId,
+            cancellationToken
+        );
         if (result == null)
         {
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.NotFound);

@@ -40,6 +40,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
     public DbSet<NotAnEntity> WithoutEntity { get; set; }
     public DbSet<TempZaakAuthorization> TempZaakAuthorization { get; set; }
 
+    public DbSet<AuditTrailDelta> AuditTrailDeltas => throw new NotImplementedException();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("pgcrypto");

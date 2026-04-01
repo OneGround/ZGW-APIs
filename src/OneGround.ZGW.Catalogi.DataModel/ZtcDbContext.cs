@@ -33,6 +33,8 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
     public DbSet<ResultaatTypeBesluitType> ResultaatTypeBesluitTypen { get; set; }
     public DbSet<BronDatumArchiefProcedure> BronDatumArchiefProcedures { get; set; }
 
+    public DbSet<AuditTrailDelta> AuditTrailDeltas => throw new System.NotImplementedException();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Catalogus>().HasIndex(c => new { c.Rsin, c.Domein }).IsUnique();

@@ -73,6 +73,8 @@ class UpdateGebruiksRechtCommandHandler
             return new CommandResult<GebruiksRecht>(null, CommandStatus.NotFound);
         }
 
+        bool legacyAuditTrail = existingGebruiksRecht.InformatieObject.LegacyAuditTrail;
+
         GebruiksRecht gebruiksrecht;
         if (isPartialUpdate)
         {
@@ -118,7 +120,7 @@ class UpdateGebruiksRechtCommandHandler
 
         _logger.LogDebug("Updating GebruiksRecht {Id}....", existingGebruiksRecht.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacyAuditTrail))
         {
             audittrail.SetOld<GebruiksRechtResponseDto>(existingGebruiksRecht);
 
