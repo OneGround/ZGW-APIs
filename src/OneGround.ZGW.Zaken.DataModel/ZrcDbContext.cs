@@ -150,6 +150,10 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakResultaat>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
+
+        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.AanmaakDatum);
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
         modelBuilder.Entity<ZaakContactmoment>().HasIndex(p => p.Contactmoment);
 
