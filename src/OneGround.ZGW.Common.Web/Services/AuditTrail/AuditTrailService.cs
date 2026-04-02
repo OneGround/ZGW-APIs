@@ -37,8 +37,6 @@ public class AuditTrailService : IAuditTrailService
 
     public string Name => "Legacy";
 
-    public bool Legacy => true;
-
     public void SetOptions(AuditTrailOptions options)
     {
         _options = options;
@@ -217,6 +215,13 @@ public class AuditTrailService : IAuditTrailService
             .SingleOrDefaultAsync(a => a.Id == audittrailId && a.HoofdObjectId == hoofdobjectId, cancellationToken);
 
         return result;
+    }
+
+    public async Task ImportAsync(AuditTrailRegel audit, CancellationToken cancellationToken = default)
+    {
+        await _context.AuditTrailRegels.AddAsync(audit, cancellationToken);
+
+        Reset();
     }
 
     private async Task WriteAsync(

@@ -15,15 +15,29 @@ public class AuditTrailFactory : IAuditTrailFactory
 
     public IAuditTrailService Create(AuditTrailOptions options, bool legacy = true)
     {
-        //var requestService = _serviceProvider
-        //    .GetServices<IAuditTrailService>()
-        //    .SingleOrDefault(s => legacy && s.Name == "Legacy" || !legacy && s.Name == "Deltas");
+        //var requestService = _serviceProvider.GetServices<IAuditTrailService>().SingleOrDefault(s => legacy == s.Legacy);
 
-        var requestService = _serviceProvider.GetServices<IAuditTrailService>().SingleOrDefault(s => legacy == s.Legacy);
+        var requestService = _serviceProvider
+            .GetServices<IAuditTrailService>()
+            .SingleOrDefault(s => legacy && s.Name == "Legacy" || !legacy && s.Name == "Deltas");
 
         if (requestService == null)
         {
             throw new InvalidOperationException($"No audit trailservice found for useDeltas={legacy}");
+        }
+
+        requestService.SetOptions(options ?? new AuditTrailOptions());
+
+        return requestService;
+    }
+
+    public IAuditTrailService Create(AuditTrailOptions options, string name)
+    {
+        var requestService = _serviceProvider.GetServices<IAuditTrailService>().SingleOrDefault(s => s.Name == name);
+
+        if (requestService == null)
+        {
+            throw new InvalidOperationException($"No audit trailservice found for name={name}");
         }
 
         requestService.SetOptions(options ?? new AuditTrailOptions());
