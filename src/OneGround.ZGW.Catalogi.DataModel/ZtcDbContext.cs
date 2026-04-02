@@ -11,6 +11,8 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         : base(options, dbUserContext) { }
 
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
+
     public DbSet<FinishedDataMigration> FinishedDataMigrations { get; set; }
 
     public DbSet<ZaakType> ZaakTypen { get; set; }
@@ -33,8 +35,6 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
     public DbSet<ResultaatTypeBesluitType> ResultaatTypeBesluitTypen { get; set; }
     public DbSet<BronDatumArchiefProcedure> BronDatumArchiefProcedures { get; set; }
 
-    public DbSet<AuditTrailDelta> AuditTrailDeltas => throw new System.NotImplementedException();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Catalogus>().HasIndex(c => new { c.Rsin, c.Domein }).IsUnique();
@@ -51,10 +51,7 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<InformatieObjectType>().HasIndex(b => b.CreationTime);
 
-        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
-
-        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.AanmaakDatum);
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
         modelBuilder

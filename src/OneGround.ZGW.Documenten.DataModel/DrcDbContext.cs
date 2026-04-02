@@ -102,11 +102,9 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex("Object", "InformatieObjectId", "ObjectType").IsUnique();
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
-
-        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.AanmaakDatum);
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
-
 
         modelBuilder.Entity<Verzending>().HasIndex(e => e.AardRelatie);
 
