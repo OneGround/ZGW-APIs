@@ -3,9 +3,8 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.DataModel.Encryption;
+using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.DataModel.Encryption;
 
 namespace OneGround.ZGW.Zaken.Web.Extensions;
 
@@ -15,7 +14,10 @@ public static class ZakenDataProtectionExtensions
     {
         services.Configure<HmacHasherConfiguration>(configuration.GetSection("HmacHasher"));
         services.AddSingleton<IHmacHasher, HmacSha256Hasher>();
-        services.AddSingleton<IDatabaseProtector, ZakenDatabaseProtector>();
+        services.AddSingleton<IDatabaseProtector<ZrcDbContext>>(sp => new DatabaseProtector<ZrcDbContext>(
+            sp.GetRequiredService<IDataProtectionProvider>(),
+            "ZakenDatabaseProtection"
+        ));
 
         var builder = services
             .AddDataProtection()

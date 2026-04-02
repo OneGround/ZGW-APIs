@@ -5,25 +5,24 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.DataModel.Encryption;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
+using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.DataAccess.Migrations;
 using OneGround.ZGW.DataAccess.NumberGenerator;
 using OneGround.ZGW.Zaken.DataModel.Authorization;
-using OneGround.ZGW.Zaken.DataModel.Encryption;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.DataModel;
 
 public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrationsDbContext, IDbContextWithNummerGenerator
 {
-    private readonly IDatabaseProtector _databaseProtector;
+    private readonly IDatabaseProtector<ZrcDbContext> _databaseProtector;
     private readonly IHmacHasher _hmacHasher;
 
     public ZrcDbContext(
         DbContextOptions<ZrcDbContext> options,
-        IDatabaseProtector databaseProtector,
+        IDatabaseProtector<ZrcDbContext> databaseProtector,
         IHmacHasher hmacHasher,
         IDbUserContext dbUserContext = null
     )
@@ -59,6 +58,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.HasPostgresExtension("postgis");
 
+        modelBuilder.ApplyDataProtectionConverters(_databaseProtector);
+
         modelBuilder
             .Entity<TempZaakAuthorization>()
             .ToTable(nameof(Authorization.TempZaakAuthorization), t => t.ExcludeFromMigrations())
@@ -90,15 +91,11 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
 
         // Capture for use in lambda
-        var databaseProtector = _databaseProtector;
         var hmacHasher = _hmacHasher;
 
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>(entity =>
         {
-            entity
-                .Property(p => p.InpBsnEncrypted)
-                .HasColumnName("inpbsn_encrypted")
-                .HasConversion(v => databaseProtector.Protect(v), v => databaseProtector.Unprotect(v));
+            entity.Property(p => p.InpBsnEncrypted).HasColumnName("inpbsn_encrypted");
 
             entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64).HasConversion(v => hmacHasher.ComputeHash(v), v => v);
 
