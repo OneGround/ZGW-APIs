@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 
-namespace OneGround.ZGW.Common.DataModel.Encryption;
+namespace OneGround.ZGW.DataAccess.Encryption;
 
 public class HmacSha256Hasher : IHmacHasher
 {

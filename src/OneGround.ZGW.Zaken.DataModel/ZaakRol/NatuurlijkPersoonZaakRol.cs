@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.DataAccess.Encryption;
 
 namespace OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
@@ -65,5 +66,7 @@ public class NatuurlijkPersoonZaakRol : IBaseEntity
     public ZaakRol ZaakRol { get; set; }
 
     public string InpBsnHash { get; set; }
+
+    [ProtectedData]
     public string InpBsnEncrypted { get; set; }
 }

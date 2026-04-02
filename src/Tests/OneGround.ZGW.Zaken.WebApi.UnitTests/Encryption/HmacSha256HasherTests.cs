@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.Options;
-using OneGround.ZGW.Common.DataModel.Encryption;
+using OneGround.ZGW.DataAccess.Encryption;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.Encryption;

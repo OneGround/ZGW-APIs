@@ -1,4 +1,4 @@
-namespace OneGround.ZGW.Common.DataModel.Encryption;
+namespace OneGround.ZGW.DataAccess.Encryption;
 
 public class HmacHasherConfiguration
 {
