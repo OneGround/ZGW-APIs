@@ -20,17 +20,16 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 
             migrationBuilder.AddColumn<string>(name: "inpbsn_encrypted", table: "zaakrollen_natuurlijk_personen", type: "text", nullable: true);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_zaakrollen_natuurlijk_personen_inpbsn_hash",
-                table: "zaakrollen_natuurlijk_personen",
-                column: "inpbsn_hash"
+            migrationBuilder.Sql(
+                "CREATE INDEX CONCURRENTLY IF NOT EXISTS IX_zaakrollen_natuurlijk_personen_inpbsn_hash ON zaakrollen_natuurlijk_personen (inpbsn_hash);",
+                suppressTransaction: true
             );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "IX_zaakrollen_natuurlijk_personen_inpbsn_hash", table: "zaakrollen_natuurlijk_personen");
+            migrationBuilder.Sql("DROP INDEX CONCURRENTLY IF EXISTS IX_zaakrollen_natuurlijk_personen_inpbsn_hash;", suppressTransaction: true);
 
             migrationBuilder.DropColumn(name: "inpbsn_hash", table: "zaakrollen_natuurlijk_personen");
 

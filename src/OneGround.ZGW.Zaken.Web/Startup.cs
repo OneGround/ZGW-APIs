@@ -62,8 +62,6 @@ public class Startup
     {
         services.AddSingleton(Serilog.Log.Logger);
 
-        services.AddZakenDataProtection(Configuration);
-
         services.AddZGWDbContext<ZrcDbContext>(Configuration);
 
         services.AddZGWApi(

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.Zaken.DataModel;
 
-namespace OneGround.ZGW.Zaken.Web.Extensions;
+namespace OneGround.ZGW.Zaken.WebApi.Extensions;
 
 public static class ZakenDataProtectionExtensions
 {
