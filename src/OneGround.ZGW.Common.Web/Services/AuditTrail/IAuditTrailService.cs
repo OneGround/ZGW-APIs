@@ -9,7 +9,7 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public interface IAuditTrailService : IDisposable
 {
-    // Mata data properties
+    // Meta data properties
     string Name { get; }
     bool Legacy { get; }
 
@@ -35,5 +35,5 @@ public interface IAuditTrailService : IDisposable
 
     // Retrieval methods for audit trail entries
     Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default);
-    Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default); // TODO: Maybe add hoofdobjectId here
+    Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default);
 }

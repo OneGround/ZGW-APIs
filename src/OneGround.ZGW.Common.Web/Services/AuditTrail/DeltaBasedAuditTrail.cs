@@ -7,14 +7,12 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
-using static MassTransit.ValidationResultExtensions;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
@@ -432,68 +430,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             }
         }
         return auditTrailRegel;
-
-        //var requestedVersion = await _context.AuditTrailDeltas
-        //    .AsNoTracking()
-        //    .SingleOrDefaultAsync(a => a.Id == audittrailId && a.HoofdObjectId == hoofdobjectId, cancellationToken);
-
-        //if (requestedVersion == null)
-        //{
-        //    return null;
-        //}
-
-        //var audits = await _context
-        //    .AuditTrailDeltas
-        //    .AsNoTracking()
-        //    .Where(a => a.ResourceId.HasValue && a.ResourceId.Value == requestedVersion.ResourceId)
-        //    .OrderBy(a => a.Versie)
-        //    .ToListAsync();
-
-        //if (!audits.Any())
-        //    return default;
-
-        //JsonNode? current = null;
-
-        //foreach (var audit in audits)
-        //{
-        //    if (audit.Actie == $"{AuditActie.create}")
-        //    {
-        //        current = JsonNode.Parse(audit.SnapshotJson!);
-
-        //        //ConsoleEx.WriteLine($">>> snapshot (initial)", ConsoleColor.Green);
-        //    }
-        //    else if (audit.Actie == $"{AuditActie.update}" || audit.Actie == $"{AuditActie.partial_update}")
-        //    {
-        //        // Handle periodic snapshots
-        //        if (!string.IsNullOrEmpty(audit.SnapshotJson))
-        //        {
-        //            current = JsonNode.Parse(audit.SnapshotJson!);
-        //            //ConsoleEx.WriteLine($">>> snapshot (periodic at version {audit.Version})", ConsoleColor.Green);
-        //        }
-        //        else
-        //        {
-        //            var delta = JsonNode.Parse(audit.DeltaJson!)!.AsObject();
-        //            ApplyDelta(current!.AsObject(), delta);
-
-        //            //ConsoleEx.WriteLine($">>> delta: {audit.DeltaJson}", ConsoleColor.Green);
-        //        }
-        //    }
-        //    else if (audit.Actie == $"{AuditActie.destroy}")
-        //    {
-        //        //Console.WriteLine($">>> delta: (null)");
-        //        return default;
-        //    }
-        //    else // Retrieve List, etc.
-        //    {
-        //        return default;
-        //    }
-        //}
-
-        //// Reconstructed object
-        //requestedVersion.Nieuw = newVersion != null ? JsonSerializer.SerializeToNode(newVersion)?.ToString() : null;
-        //requestedVersion.Oud = oldVersion != null ? JsonSerializer.SerializeToNode(oldVersion)?.ToString() : null;
-
-        //return requestedVersion;
     }
 
     private async Task WriteAsync(
@@ -877,158 +813,5 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     private static string ToJson(object obj)
     {
         return obj != null ? Newtonsoft.Json.JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
-    }
-}
-
-public static class AuditDeltaGenerator
-{
-    public static JsonObject GenerateDelta<T>(T original, T current)
-    {
-        var originalNode = JsonNode.Parse(JsonSerializer.Serialize(original))!.AsObject();
-        var currentNode = JsonNode.Parse(JsonSerializer.Serialize(current))!.AsObject();
-
-        return CompareObjects(originalNode, currentNode);
-    }
-
-    private static JsonObject CompareObjects(JsonObject original, JsonObject current)
-    {
-        var delta = new JsonObject();
-
-        foreach (var kv in current)
-        {
-            original.TryGetPropertyValue(kv.Key, out var oldValue);
-
-            if (kv.Value is JsonObject newObj && oldValue is JsonObject oldObj)
-            {
-                var child = CompareObjects(oldObj, newObj);
-                if (child.Count > 0)
-                    delta[kv.Key] = child;
-            }
-            else if (kv.Value is JsonArray newArr && oldValue is JsonArray oldArr)
-            {
-                var arrDelta = CompareArrays(oldArr, newArr);
-                if (arrDelta.Count > 0)
-                    delta[kv.Key] = arrDelta;
-            }
-            else if (kv.Value != null) // TODO: Added this check: 'kv.Value != null' instead of 'else' only
-            {
-                if (!JsonEquals(oldValue, kv.Value))
-                    delta[kv.Key] = kv.Value!.DeepClone();
-            }
-        }
-
-        return delta;
-    }
-
-    private static JsonObject CompareArrays(JsonArray original, JsonArray current)
-    {
-        var result = new JsonObject();
-
-        var added = new JsonArray();
-        var removed = new JsonArray();
-        var updated = new JsonArray();
-
-        var hasObjects = original.Any(x => x is JsonObject) || current.Any(x => x is JsonObject);
-
-        if (hasObjects)
-        {
-            var originalDict = original.OfType<JsonObject>().ToDictionary(GetIdOrHash);
-
-            var currentDict = current.OfType<JsonObject>().ToDictionary(GetIdOrHash);
-
-            foreach (var key in originalDict.Keys)
-            {
-                if (!currentDict.ContainsKey(key))
-                    removed.Add(originalDict[key].DeepClone());
-            }
-
-            foreach (var key in currentDict.Keys)
-            {
-                if (!originalDict.ContainsKey(key))
-                    added.Add(currentDict[key].DeepClone());
-            }
-
-            foreach (var key in originalDict.Keys)
-            {
-                if (!currentDict.ContainsKey(key))
-                    continue;
-
-                var delta = CompareObjects(originalDict[key], currentDict[key]);
-
-                if (delta.Count > 0)
-                {
-                    if (currentDict[key].TryGetPropertyValue("Id", out var id))
-                        delta["Id"] = id!.DeepClone();
-
-                    updated.Add(delta);
-                }
-            }
-        }
-        else
-        {
-            // For primitive arrays, track counts to handle duplicates
-            var originalCounts = original.Select(x => x?.ToJsonString()).GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
-
-            var currentCounts = current.Select(x => x?.ToJsonString()).GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
-
-            // Find removed items (including duplicates)
-            foreach (var kvp in originalCounts)
-            {
-                var originalCount = kvp.Value;
-                var currentCount = currentCounts.TryGetValue(kvp.Key, out var cc) ? cc : 0;
-
-                if (currentCount < originalCount)
-                {
-                    var item = original.First(x => x?.ToJsonString() == kvp.Key);
-                    for (int i = 0; i < originalCount - currentCount; i++)
-                    {
-                        removed.Add(item!.DeepClone());
-                    }
-                }
-            }
-
-            // Find added items (including duplicates)
-            foreach (var kvp in currentCounts)
-            {
-                var currentCount = kvp.Value;
-                var originalCount = originalCounts.TryGetValue(kvp.Key, out var oc) ? oc : 0;
-
-                if (currentCount > originalCount)
-                {
-                    var item = current.First(x => x?.ToJsonString() == kvp.Key);
-                    for (int i = 0; i < currentCount - originalCount; i++)
-                    {
-                        added.Add(item!.DeepClone());
-                    }
-                }
-            }
-        }
-
-        if (added.Count > 0)
-            result["added"] = added;
-        if (removed.Count > 0)
-            result["removed"] = removed;
-        if (updated.Count > 0)
-            result["updated"] = updated;
-
-        return result;
-    }
-
-    private static string GetIdOrHash(JsonObject obj)
-    {
-        if (obj.TryGetPropertyValue("Id", out var id))
-            return id!.ToJsonString();
-
-        return obj.ToJsonString();
-    }
-
-    private static bool JsonEquals(JsonNode? a, JsonNode? b)
-    {
-        if (a == null && b == null)
-            return true;
-        if (a == null || b == null)
-            return false;
-
-        return a.ToJsonString() == b.ToJsonString();
     }
 }

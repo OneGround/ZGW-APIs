@@ -23,6 +23,7 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
     public DbSet<Zaak> Zaken { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
     public DbSet<ZaakObject.ZaakObject> ZaakObjecten { get; set; }
     public DbSet<RelevanteAndereZaak> RelevanteAndereZaken { get; set; }
     public DbSet<ZaakKenmerk> ZaakKenmerken { get; set; }
@@ -39,8 +40,6 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
     public DbSet<NotAnEntity> WithoutEntity { get; set; }
     public DbSet<TempZaakAuthorization> TempZaakAuthorization { get; set; }
-
-    public DbSet<AuditTrailDelta> AuditTrailDeltas => throw new NotImplementedException();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -150,9 +149,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakResultaat>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
-        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
 
-        modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.AanmaakDatum);
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
         modelBuilder.Entity<ZaakContactmoment>().HasIndex(p => p.Contactmoment);

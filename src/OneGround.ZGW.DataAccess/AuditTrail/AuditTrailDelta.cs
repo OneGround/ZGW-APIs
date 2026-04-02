@@ -4,8 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OneGround.ZGW.DataAccess.AuditTrail;
 
-[Table("audittrail")]
-public class AuditTrailRegel : IZgwAuditTrailRegel
+[Table("audittrail_deltas")]
+public class AuditTrailDelta : IZgwAuditTrailRegel
 {
     [NotMapped]
     public string Url => HoofdObject;
@@ -79,11 +79,14 @@ public class AuditTrailRegel : IZgwAuditTrailRegel
     [Column("aanmaakdatum")]
     public DateTime AanmaakDatum { get; set; }
 
-    [Column("oud", TypeName = "jsonb")]
-    public string Oud { get; set; }
+    [Column("delta_json", TypeName = "jsonb")]
+    public string DeltaJson { get; set; }
 
-    [Column("nieuw", TypeName = "jsonb")]
-    public string Nieuw { get; set; }
+    [Column("snapshot_json", TypeName = "jsonb")]
+    public string SnapshotJson { get; set; }
+
+    [Column("versie")]
+    public int Versie { get; set; }
 
     [MaxLength(255)]
     [Column("request_id")]
@@ -91,4 +94,7 @@ public class AuditTrailRegel : IZgwAuditTrailRegel
 
     [Column("hoofdobject_id")]
     public Guid? HoofdObjectId { get; set; }
+
+    [Column("resource_id")]
+    public Guid? ResourceId { get; set; }
 }
