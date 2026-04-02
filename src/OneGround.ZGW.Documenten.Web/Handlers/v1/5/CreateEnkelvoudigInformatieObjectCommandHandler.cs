@@ -32,6 +32,11 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<CreateEnkelvoudigInformatieObjectCommandHandler>,
         IRequestHandler<CreateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
+    // TODO: ZZZ
+    private readonly IAuditTrailMigrator _auditTrailMigrator;
+    private readonly IAuditTrailExporter _auditTrailExporter;
+    // ----
+
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
@@ -46,7 +51,11 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver
+        IDocumentKenmerkenResolver documentKenmerkenResolver,
+        // TODO: ZZZ
+        IAuditTrailMigrator auditTrailMigrator,
+        IAuditTrailExporter auditTrailExporter
+        // ----
     )
         : base(
             logger,
@@ -63,7 +72,13 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             formOptions,
             notificatieService,
             documentKenmerkenResolver
-        ) { }
+        )
+    {
+        // TODO: ZZZ
+        _auditTrailMigrator = auditTrailMigrator;
+        _auditTrailExporter = auditTrailExporter;
+        // ----
+    }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
         CreateEnkelvoudigInformatieObjectCommand request,
@@ -71,6 +86,30 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
     )
     {
         _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
+
+        // TODO: ZZZ
+
+        //
+        // Note: Test AuditTrailMigrator
+
+        //var hoofdobjectId = new Guid("6b8dfe38-a70b-430c-b52d-0df5368dc6ae");
+
+        //await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
+
+
+        //
+        // Note: Test AuditTrailMigrator
+
+        //var hoofdobjectId = new Guid("6b8dfe38-a70b-430c-b52d-0df5368dc6ae");
+
+        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
+
+        //await Task.Delay(1100);
+
+        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
+
+        //return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+        // ----
 
         var versie = request.EnkelvoudigInformatieObjectVersie;
 

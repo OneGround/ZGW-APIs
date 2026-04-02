@@ -11,7 +11,6 @@ public interface IAuditTrailService : IDisposable
 {
     // Meta data properties
     string Name { get; }
-    bool Legacy { get; }
 
     // Operations to log audit trail entries
     void SetOptions(AuditTrailOptions options);

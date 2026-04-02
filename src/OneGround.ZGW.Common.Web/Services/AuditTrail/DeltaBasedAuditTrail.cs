@@ -18,17 +18,17 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class DeltaBasedAuditTrail : IAuditTrailService
 {
-    private readonly IDbContextWithAuditTrail _context;
-    private readonly IMapper _mapper;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IEntityUriService _uriService;
+    protected const int _snapshotInterval = 25; // TODO: May be add this in AuditTrailOptions? API could configire via appsettings or something like that.
 
-    private const int _snapshotInterval = 25; // TODO: May be add this in AuditTrailOptions? API could configire via appsettings or something like that.
-
-    private AuditTrailOptions _options = new AuditTrailOptions();
+    protected readonly IDbContextWithAuditTrail _context;
+    protected readonly IMapper _mapper;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
+    protected readonly IEntityUriService _uriService;
 
     private string _oldJson;
     private string _newJson;
+
+    protected AuditTrailOptions _options = new AuditTrailOptions();
 
     public DeltaBasedAuditTrail(
         IDbContextWithAuditTrail context,
@@ -43,9 +43,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         _uriService = uriService;
     }
 
-    public string Name => "Deltas";
-
-    public bool Legacy => false;
+    public virtual string Name => "Deltas";
 
     public void SetOptions(AuditTrailOptions options)
     {
@@ -472,7 +470,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     }
 
     private async Task WriteAsync(
-        AuditActie auditActie,
+        AuditActie actie,
         string actieWeergave,
         IBaseEntity hoofdobject,
         string resourceUrl,
@@ -504,7 +502,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             GebruikersWeergave = httpContext.GetUserRepresentation(),
             Bron = _options.Bron,
             RequestId = httpContext.GetRequestId(),
-            Actie = $"{auditActie}",
+            Actie = $"{actie}",
             ActieWeergave = actieWeergave,
             Resource = _options.Resource,
             ResourceUrl = resourceUrl,
@@ -517,53 +515,61 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         if (!dontWriteEntity)
         {
-            switch (auditActie)
+            bool result = await ResolveSnapshotOrDeltaAsync(actie, _newJson, _oldJson, audittrail);
+            if (!result)
             {
-                case AuditActie.create:
-                {
-                    audittrail.Versie = 1; //  await GetNextVersion(audittrail.ResourceId.Value); // TODO: test!!
-                    audittrail.SnapshotJson = _newJson;
-                    break;
-                }
-
-                case AuditActie.destroy:
-                {
-                    audittrail.Versie = await GetNextVersion(audittrail.ResourceId.Value);
-                    audittrail.DeltaJson = _oldJson;
-                    break;
-                }
-
-                case AuditActie.update:
-                case AuditActie.partial_update:
-                {
-                    var original = JsonSerializer.Deserialize<JsonObject>(_oldJson);
-                    var current = JsonSerializer.Deserialize<JsonObject>(_newJson);
-
-                    // Genereer delta
-                    var delta = AuditDeltaGenerator.GenerateDelta(original, current);
-
-                    // No changes → Do not log
-                    if (delta == null || delta.Count == 0)
-                        return;
-
-                    var versie = await GetNextVersion(audittrail.ResourceId.Value);
-
-                    // Check if this is a snapshot version
-                    bool isSnapshotVersion = versie % _snapshotInterval == 0;
-
-                    audittrail.DeltaJson = isSnapshotVersion ? null : delta.ToJsonString();
-                    audittrail.SnapshotJson = isSnapshotVersion ? _newJson : null;
-                    audittrail.Versie = versie;
-                    break;
-                }
-
-                case AuditActie.retrieve:
-                {
-                    // No delta for reads, only snapshot
-                    audittrail.SnapshotJson = _newJson;
-                    break;
-                }
+                // No changes → Do not log
+                return;
             }
+
+            // TODO: How it was
+            //switch (actie)
+            //{
+            //    case AuditActie.create:
+            //    {
+            //        audittrail.Versie = 1; //  await GetNextVersion(audittrail.ResourceId.Value); // TODO: test!!
+            //        audittrail.SnapshotJson = _newJson;
+            //        break;
+            //    }
+
+            //    case AuditActie.destroy:
+            //    {
+            //        audittrail.Versie = await GetNextVersion(audittrail.ResourceId.Value);
+            //        audittrail.DeltaJson = _oldJson;
+            //        break;
+            //    }
+
+            //    case AuditActie.update:
+            //    case AuditActie.partial_update:
+            //    {
+            //        var original = JsonSerializer.Deserialize<JsonObject>(_oldJson);
+            //        var current = JsonSerializer.Deserialize<JsonObject>(_newJson);
+
+            //        // Genereer delta
+            //        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
+
+            //        // No changes → Do not log
+            //        if (delta == null || delta.Count == 0)
+            //            return;
+
+            //        var versie = await GetNextVersion(audittrail.ResourceId.Value);
+
+            //        // Check if this is a snapshot version
+            //        bool isSnapshotVersion = versie % _snapshotInterval == 0;
+
+            //        audittrail.DeltaJson = isSnapshotVersion ? null : delta.ToJsonString();
+            //        audittrail.SnapshotJson = isSnapshotVersion ? _newJson : null;
+            //        audittrail.Versie = versie;
+            //        break;
+            //    }
+
+            //    case AuditActie.retrieve:
+            //    {
+            //        // No delta for reads, only snapshot
+            //        audittrail.SnapshotJson = _newJson;
+            //        break;
+            //    }
+            //}
         }
 
         await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
@@ -571,7 +577,59 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         Reset();
     }
 
-    private async Task<int> GetNextVersion(Guid resourceId)
+    protected async Task<bool> ResolveSnapshotOrDeltaAsync(AuditActie actie, string nieuw, string oud, AuditTrailDelta delta)
+    {
+        switch (actie)
+        {
+            case AuditActie.create:
+            {
+                delta.Versie = 1; // await GetNextVersion(audittrail.ResourceId.Value); // TODO: test!!
+                delta.SnapshotJson = nieuw;
+                break;
+            }
+
+            case AuditActie.destroy:
+            {
+                delta.Versie = await GetNextVersion(delta.ResourceId.Value);
+                delta.DeltaJson = oud;
+                break;
+            }
+
+            case AuditActie.update:
+            case AuditActie.partial_update:
+            {
+                var original = JsonSerializer.Deserialize<JsonObject>(oud);
+                var current = JsonSerializer.Deserialize<JsonObject>(nieuw);
+
+                // Genereer delta
+                var _delta = AuditDeltaGenerator.GenerateDelta(original, current);
+
+                // No changes → Do not log
+                if (_delta == null || _delta.Count == 0)
+                    return false;
+
+                var versie = await GetNextVersion(delta.ResourceId.Value);
+
+                // Check if this is a snapshot version
+                bool isSnapshotVersion = versie % _snapshotInterval == 0;
+
+                delta.DeltaJson = isSnapshotVersion ? null : _delta.ToJsonString();
+                delta.SnapshotJson = isSnapshotVersion ? nieuw : null;
+                delta.Versie = versie;
+                break;
+            }
+
+            case AuditActie.retrieve:
+            {
+                // No delta for reads, only snapshot
+                delta.SnapshotJson = nieuw;
+                break;
+            }
+        }
+        return true;
+    }
+
+    protected async Task<int> GetNextVersion(Guid resourceId)
     {
         var last = await _context.AuditTrailDeltas.Where(a => a.ResourceId == resourceId).MaxAsync(a => (int?)a.Versie) ?? 0;
 
@@ -799,7 +857,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return a.ToJsonString() == b.ToJsonString();
     }
 
-    private void Reset()
+    protected void Reset()
     {
         _oldJson = "";
         _newJson = "";
