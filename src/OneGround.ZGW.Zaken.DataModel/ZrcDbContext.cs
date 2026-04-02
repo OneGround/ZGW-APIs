@@ -2,10 +2,10 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.DataModel.Encryption;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.DataAccess.Migrations;
@@ -16,26 +16,21 @@ using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.DataModel;
 
-public partial class ZrcDbContext
-    : BaseDbContext,
-        IDbContextWithAuditTrail,
-        IDataMigrationsDbContext,
-        IDbContextWithNummerGenerator,
-        IDataProtectionKeyContext
+public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrationsDbContext, IDbContextWithNummerGenerator
 {
     private readonly IDatabaseProtector _databaseProtector;
-    private readonly IBsnHasher _bsnHasher;
+    private readonly IHmacHasher _hmacHasher;
 
     public ZrcDbContext(
         DbContextOptions<ZrcDbContext> options,
         IDatabaseProtector databaseProtector,
-        IBsnHasher bsnHasher,
+        IHmacHasher hmacHasher,
         IDbUserContext dbUserContext = null
     )
         : base(options, dbUserContext)
     {
         _databaseProtector = databaseProtector;
-        _bsnHasher = bsnHasher;
+        _hmacHasher = hmacHasher;
     }
 
     public DbSet<FinishedDataMigration> FinishedDataMigrations { get; set; }
@@ -58,7 +53,6 @@ public partial class ZrcDbContext
 
     public DbSet<NotAnEntity> WithoutEntity { get; set; }
     public DbSet<TempZaakAuthorization> TempZaakAuthorization { get; set; }
-    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,7 +91,7 @@ public partial class ZrcDbContext
 
         // Capture for use in lambda
         var databaseProtector = _databaseProtector;
-        var bsnHasher = _bsnHasher;
+        var hmacHasher = _hmacHasher;
 
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>(entity =>
         {
@@ -106,7 +100,7 @@ public partial class ZrcDbContext
                 .HasColumnName("inpbsn_encrypted")
                 .HasConversion(v => databaseProtector.Protect(v), v => databaseProtector.Unprotect(v));
 
-            entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64).HasConversion(v => bsnHasher.ComputeHash(v), v => v);
+            entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64).HasConversion(v => hmacHasher.ComputeHash(v), v => v);
 
             entity.HasIndex(p => p.InpBsnHash);
         });

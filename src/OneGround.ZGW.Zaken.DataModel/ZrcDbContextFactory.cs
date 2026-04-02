@@ -14,6 +14,6 @@ public class ZrcDbContextFactory : BaseDbContextFactory<ZrcDbContext>
     public override ZrcDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = CreateDbContextOptionsBuilder();
-        return new ZrcDbContext(optionsBuilder.Options, databaseProtector: null!, bsnHasher: null!);
+        return new ZrcDbContext(optionsBuilder.Options, databaseProtector: null!, hmacHasher: null!);
     }
 }

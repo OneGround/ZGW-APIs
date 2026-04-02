@@ -3,26 +3,26 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 
-namespace OneGround.ZGW.Zaken.DataModel.Encryption;
+namespace OneGround.ZGW.Common.DataModel.Encryption;
 
-public class BsnHasher : IBsnHasher
+public class HmacSha256Hasher : IHmacHasher
 {
     private readonly byte[] _key;
 
-    public BsnHasher(IOptions<BsnHasherConfiguration> options)
+    public HmacSha256Hasher(IOptions<HmacHasherConfiguration> options)
     {
         var config = options.Value;
 
         if (string.IsNullOrEmpty(config.HmacKey))
             throw new InvalidOperationException(
-                $"{nameof(BsnHasherConfiguration)}.{nameof(BsnHasherConfiguration.HmacKey)} must be a non-empty Base64-encoded HMAC key."
+                $"{nameof(HmacHasherConfiguration)}.{nameof(HmacHasherConfiguration.HmacKey)} must be a non-empty Base64-encoded HMAC key."
             );
 
         _key = Convert.FromBase64String(config.HmacKey);
 
         if (_key.Length < 32)
             throw new InvalidOperationException(
-                $"{nameof(BsnHasherConfiguration)}.{nameof(BsnHasherConfiguration.HmacKey)} must decode to at least 32 bytes (got {_key.Length}). Generate a key with: Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))."
+                $"{nameof(HmacHasherConfiguration)}.{nameof(HmacHasherConfiguration.HmacKey)} must decode to at least 32 bytes (got {_key.Length}). Generate a key with: Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))."
             );
     }
 

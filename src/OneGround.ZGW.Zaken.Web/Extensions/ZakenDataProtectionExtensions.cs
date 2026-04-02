@@ -3,6 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.DataModel.Encryption;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.Encryption;
 
@@ -12,13 +13,13 @@ public static class ZakenDataProtectionExtensions
 {
     public static IServiceCollection AddZakenDataProtection(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<BsnHasherConfiguration>(configuration.GetSection("BsnHasher"));
-        services.AddSingleton<IBsnHasher, BsnHasher>();
+        services.Configure<HmacHasherConfiguration>(configuration.GetSection("HmacHasher"));
+        services.AddSingleton<IHmacHasher, HmacSha256Hasher>();
         services.AddSingleton<IDatabaseProtector, ZakenDatabaseProtector>();
 
         var builder = services
             .AddDataProtection()
-            .PersistKeysToDbContext<ZrcDbContext>()
+            .PersistKeysToDbContext<DataProtectionKeyDbContext>()
             .SetApplicationName("OneGround.ZGW.Zaken")
             .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
 

@@ -1,17 +1,17 @@
 using System;
 using Microsoft.Extensions.Options;
-using OneGround.ZGW.Zaken.DataModel.Encryption;
+using OneGround.ZGW.Common.DataModel.Encryption;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.Encryption;
 
-public class BsnHasherTests
+public class HmacSha256HasherTests
 {
-    private static BsnHasher CreateHasher(string hmacKey = null)
+    private static HmacSha256Hasher CreateHasher(string hmacKey = null)
     {
         hmacKey ??= Convert.ToBase64String(new byte[32]);
-        var options = Options.Create(new BsnHasherConfiguration { HmacKey = hmacKey });
-        return new BsnHasher(options);
+        var options = Options.Create(new HmacHasherConfiguration { HmacKey = hmacKey });
+        return new HmacSha256Hasher(options);
     }
 
     [Fact]
@@ -52,9 +52,9 @@ public class BsnHasherTests
     [InlineData("")]
     public void Constructor_NullOrEmptyHmacKey_ThrowsInvalidOperationException(string hmacKey)
     {
-        var options = Options.Create(new BsnHasherConfiguration { HmacKey = hmacKey });
+        var options = Options.Create(new HmacHasherConfiguration { HmacKey = hmacKey });
 
-        Assert.Throws<InvalidOperationException>(() => new BsnHasher(options));
+        Assert.Throws<InvalidOperationException>(() => new HmacSha256Hasher(options));
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public class BsnHasherTests
     {
         // A Base64-encoded key that decodes to only 16 bytes (below the 32-byte minimum)
         var shortKey = Convert.ToBase64String(new byte[16]);
-        var options = Options.Create(new BsnHasherConfiguration { HmacKey = shortKey });
+        var options = Options.Create(new HmacHasherConfiguration { HmacKey = shortKey });
 
-        Assert.Throws<InvalidOperationException>(() => new BsnHasher(options));
+        Assert.Throws<InvalidOperationException>(() => new HmacSha256Hasher(options));
     }
 }
