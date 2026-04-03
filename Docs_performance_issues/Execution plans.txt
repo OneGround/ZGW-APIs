@@ -1,0 +1,67 @@
+---BEFORE OPTIMAZATION---
+
+--1. Count query
+"Aggregate  (cost=35455.12..35455.13 rows=1 width=4) (actual time=285148.389..285148.392 rows=1 loops=1)"
+"  ->  Nested Loop  (cost=1.26..35436.33 rows=7514 width=0) (actual time=3.984..284987.377 rows=998538 loops=1)"
+"        Join Filter: (e0.vertrouwelijkheidaanduiding <= t.""MaximumVertrouwelijkheidAanduiding"")"
+"        Rows Removed by Join Filter: 11171"
+"        ->  Nested Loop  (cost=0.69..9052.05 rows=22541 width=20) (actual time=2.880..100470.318 rows=1009709 loops=1)"
+"              ->  Seq Scan on ""InformatieObjectAuthorization_1"" t  (cost=0.00..1.20 rows=20 width=102) (actual time=0.006..0.049 rows=20 loops=1)"
+"              ->  Index Only Scan using ix_enkelvoudiginformatieobjecten_owner_informatieobjecttype_la on enkelvoudiginformatieobjecten e  (cost=0.69..441.27 rows=1127 width=114) (actual time=1.075..5016.400 rows=50485 loops=20)"
+"                    Index Cond: ((owner = '852256450'::text) AND (informatieobjecttype = t.""InformatieObjectType""))"
+"                    Heap Fetches: 327918"
+"        ->  Index Only Scan using idx_e0_light_covering on enkelvoudiginformatieobjectversies e0  (cost=0.57..1.16 rows=1 width=20) (actual time=0.182..0.182 rows=1 loops=1009709)"
+"              Index Cond: (id = e.latest_enkelvoudiginformatieobjectversie_id)"
+"              Heap Fetches: 13497"
+"Planning Time: 44.662 ms"
+"Execution Time: 285149.395 ms"
+
+
+--2a. GetAll split query 1/2
+"Limit  (cost=65561.11..65561.36 rows=100 width=1386) (actual time=762944.379..762944.397 rows=100 loops=1)"
+"  ->  Sort  (cost=65561.11..65579.89 rows=7514 width=1386) (actual time=762944.376..762944.389 rows=100 loops=1)"
+"        Sort Key: e.id, e.informatieobjecttype, e.latest_enkelvoudiginformatieobjectversie_id"
+"        Sort Method: top-N heapsort  Memory: 195kB"
+"        ->  Nested Loop  (cost=1.26..65273.93 rows=7514 width=1386) (actual time=3.413..760237.157 rows=998545 loops=1)"
+"              Join Filter: (e0.vertrouwelijkheidaanduiding <= t.""MaximumVertrouwelijkheidAanduiding"")"
+"              Rows Removed by Join Filter: 11171"
+"              ->  Nested Loop  (cost=0.69..26165.71 rows=22541 width=354) (actual time=1.908..234500.105 rows=1009716 loops=1)"
+"                    ->  Seq Scan on ""InformatieObjectAuthorization_1"" t  (cost=0.00..1.20 rows=20 width=102) (actual time=0.005..0.043 rows=20 loops=1)"
+"                    ->  Index Scan using ix_enkelvoudiginformatieobjecten_owner_informatieobjecttype_la on enkelvoudiginformatieobjecten e  (cost=0.69..1296.96 rows=1127 width=252) (actual time=1.423..11706.118 rows=50486 loops=20)"
+"                          Index Cond: (((owner)::text = '852256450'::text) AND ((informatieobjecttype)::text = t.""InformatieObjectType""))"
+"              ->  Index Scan using ""PK_enkelvoudiginformatieobjectversies"" on enkelvoudiginformatieobjectversies e0  (cost=0.57..1.72 rows=1 width=1036) (actual time=0.519..0.519 rows=1 loops=1009716)"
+"                    Index Cond: (id = e.latest_enkelvoudiginformatieobjectversie_id)"
+"Planning Time: 38.032 ms"
+"Execution Time: 762946.180 ms"
+
+--2b. GetAll split query 2/2
+"Sort  (cost=36362.20..36362.90 rows=281 width=276) (actual time=208055.641..208055.646 rows=0 loops=1)"
+"  Sort Key: e.id, t.""InformatieObjectType"", b.enkelvoudiginformatieobjectversie_id"
+"  Sort Method: quicksort  Memory: 25kB"
+"  ->  Hash Join  (cost=36254.01..36350.77 rows=281 width=276) (actual time=208055.533..208055.537 rows=0 loops=1)"
+"        Hash Cond: (b.enkelvoudiginformatieobjectversie_id = e0.id)"
+"        ->  Seq Scan on bestandsdelen b  (cost=0.00..88.51 rows=1451 width=146) (actual time=0.077..0.531 rows=1451 loops=1)"
+"        ->  Hash  (cost=36252.76..36252.76 rows=100 width=130) (actual time=208054.855..208054.858 rows=100 loops=1)"
+"              Buckets: 1024  Batches: 1  Memory Usage: 24kB"
+"              ->  Limit  (cost=36251.51..36251.76 rows=100 width=130) (actual time=208054.799..208054.813 rows=100 loops=1)"
+"                    ->  Sort  (cost=36251.51..36270.30 rows=7514 width=130) (actual time=208054.797..208054.805 rows=100 loops=1)"
+"                          Sort Key: e.id"
+"                          Sort Method: top-N heapsort  Memory: 71kB"
+"                          ->  Nested Loop  (cost=1.26..35964.33 rows=7514 width=130) (actual time=4.839..207479.699 rows=998576 loops=1)"
+"                                Join Filter: (e0.vertrouwelijkheidaanduiding <= t.""MaximumVertrouwelijkheidAanduiding"")"
+"                                Rows Removed by Join Filter: 11171"
+"                                ->  Nested Loop  (cost=0.69..9580.05 rows=22541 width=134) (actual time=2.621..73933.928 rows=1009747 loops=1)"
+"                                      ->  Seq Scan on ""InformatieObjectAuthorization_1"" t  (cost=0.00..1.20 rows=20 width=102) (actual time=0.005..0.037 rows=20 loops=1)"
+"                                      ->  Index Only Scan using tmp_idx_e_owner_iotype_crtime_id_lvid on enkelvoudiginformatieobjecten e  (cost=0.69..467.67 rows=1127 width=130) (actual time=1.181..3686.271 rows=50487 loops=20)"
+"                                            Index Cond: ((owner = '852256450'::text) AND (informatieobjecttype = t.""InformatieObjectType""))"
+"                                            Heap Fetches: 319452"
+"                                ->  Index Only Scan using idx_e0_light_covering on enkelvoudiginformatieobjectversies e0  (cost=0.57..1.16 rows=1 width=20) (actual time=0.131..0.131 rows=1 loops=1009747)"
+"                                      Index Cond: (id = e.latest_enkelvoudiginformatieobjectversie_id)"
+"                                      Heap Fetches: 13597"
+"Planning Time: 13.506 ms"
+"Execution Time: 208055.722 ms"
+
+
+
+---AFTER OPTIMAZATION---
+

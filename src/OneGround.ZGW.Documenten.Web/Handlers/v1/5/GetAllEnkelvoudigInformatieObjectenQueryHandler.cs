@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -65,18 +66,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            query = query
-                .Join(
-                    _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObjectType,
-                    i => i.InformatieObjectType,
-                    (i, a) => new { InformatieObject = i, Authorisatie = a }
+            query = query.Where(e =>
+                _context.TempInformatieObjectAuthorization.Any(a =>
+                    a.InformatieObjectType == e.InformatieObjectType
+                    && (int)e.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
                 )
-                .Where(i =>
-                    (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
-                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
-                )
-                .Select(i => i.InformatieObject);
+            );
         }
 
         var totalCount = await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
@@ -124,16 +119,14 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         GetAllEnkelvoudigInformatieObjectenFilter filter
     )
     {
-        var filterUuid_In = filter.Uuid_In?.Select(u => u.ToLower()).ToList();
+        var filterUuid_In = filter.Uuid_In?.Select(Guid.Parse).ToList();
+        var filterTrefwoorden_In = filter.Trefwoorden_In?.ToList();
 
         return e =>
             (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
             && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie)
-            && (filterUuid_In == null || filterUuid_In.Contains(e.Id.ToString()))
-            && (
-                filter.Trefwoorden_In == null
-                || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(e => filter.Trefwoorden_In.Any(f => f == e))
-            );
+            && (filterUuid_In == null || filterUuid_In.Contains(e.Id))
+            && (filterTrefwoorden_In == null || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(t => filterTrefwoorden_In.Contains(t)));
     }
 }
 

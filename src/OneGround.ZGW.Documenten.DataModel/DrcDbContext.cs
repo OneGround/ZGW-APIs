@@ -134,6 +134,8 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 e.Owner,
                 e.Vertrouwelijkheidaanduiding,
                 e.EnkelvoudigInformatieObjectId,
+                e.Bronorganisatie,
+                e.Identificatie,
             });
 
         modelBuilder
@@ -144,6 +146,16 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 e.Id,
                 e.Owner,
             });
+
+        // GIN index on Trefwoorden array column for efficient overlap queries (trefwoorden filter)
+        modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Trefwoorden).HasMethod("gin");
+
+        // Covering index for the main list query pattern: RSIN filter → PK sort → FK lookup
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObject>()
+            .HasIndex(e => new { e.Owner, e.Id })
+            .IncludeProperties(e => new { e.InformatieObjectType, e.LatestEnkelvoudigInformatieObjectVersieId })
+            .HasDatabaseName("IX_eio_owner_id_incl_type_latest");
 
         // Define 1:N relation between EnkelvoudigInformatieObject and EnkelvoudigInformatieObjectVersie
         modelBuilder
