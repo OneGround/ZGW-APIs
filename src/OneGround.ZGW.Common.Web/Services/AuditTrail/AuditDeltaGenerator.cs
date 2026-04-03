@@ -40,6 +40,10 @@ internal static class AuditDeltaGenerator
                 if (!JsonEquals(oldValue, kv.Value))
                     delta[kv.Key] = kv.Value!.DeepClone();
             }
+            else // TODO: Added this assignment to handle null values in the current object
+            {
+                delta[kv.Key] = null;
+            }
         }
 
         return delta;
