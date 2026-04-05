@@ -77,6 +77,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
                     .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
                     .Where(rsinFilter)
                     .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                        .ThenInclude(v => v.BestandsDelen) // Note: Important here to keep audittrail consistent with the actual locked/unlocked state of the document (see handling of incompleted multi-part documents in the code below)
                     .SingleOrDefaultAsync(e => e.Id == request.Id, token);
 
                 // The object might be locked OR not exist - check if it exists without lock
@@ -203,6 +204,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
         current.Inhoud = null;
         current.Bestandsomvang = 0;
         current.MultiPartDocumentId = null;
+        current.BestandsDelen.Clear(); // Note: Important here to keep audittrail consistent with the actual locked/unlocked state of the document (see handling of incompleted multi-part documents in the code below)
 
         // Note: After SaveChangesAsync the current version (incompleted multi-part document) has become a meta-only document!!
     }

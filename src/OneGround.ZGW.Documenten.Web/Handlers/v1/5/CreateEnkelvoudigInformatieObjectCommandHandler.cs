@@ -86,27 +86,27 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         CancellationToken cancellationToken
     )
     {
-        _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
+        //_logger.LogDebug("Creating EnkelvoudigInformatieObject....");
 
-        // TODO: ZZZ
+        //// TODO: ZZZ
 
-        //
-        // Note: Test AuditTrailMigrator
+        ////
+        //// Note: Test AuditTrailMigrator
 
-        var hoofdobjectId = new Guid("23f861a8-6730-4235-9278-06d357c4622e");
+        //var hoofdobjectId = new Guid("74b7241c-518d-4756-ab76-6385b48bad55");
 
-        await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
+        //await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
 
-        //
-        // Note: Test AuditTrailMigrator
+        ////
+        //// Note: Test AuditTrailMigrator
 
-        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
+        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
 
-        await Task.Delay(1100);
+        //await Task.Delay(1100);
 
-        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
+        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
 
-        return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
+        //return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
 
         // ----
 
