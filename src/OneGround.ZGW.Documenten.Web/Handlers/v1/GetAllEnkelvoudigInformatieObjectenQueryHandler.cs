@@ -60,12 +60,18 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            query = query.Where(e =>
-                _context.TempInformatieObjectAuthorization.Any(a =>
-                    a.InformatieObjectType == e.InformatieObjectType
-                    && (int)e.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+            query = query
+                .Join(
+                    _context.TempInformatieObjectAuthorization,
+                    o => o.InformatieObjectType,
+                    i => i.InformatieObjectType,
+                    (i, a) => new { InformatieObject = i, Authorisatie = a }
                 )
-            );
+                .Where(i =>
+                    (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
+                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
+                )
+                .Select(i => i.InformatieObject);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
