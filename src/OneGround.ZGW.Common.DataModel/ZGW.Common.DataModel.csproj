@@ -4,6 +4,4 @@
     <AssemblyName>OneGround.ZGW.Common.DataModel</AssemblyName>
     <RootNamespace>OneGround.ZGW.Common.DataModel</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup></ItemGroup>
 </Project>
