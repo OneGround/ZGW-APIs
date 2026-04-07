@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
@@ -39,6 +40,9 @@ public class InformatieObjectAuthorizationTempTableService : IInformatieObjectAu
         await drcDbContext.TempInformatieObjectAuthorization.AddRangeAsync(informatieObjectTypeAuthorizations, cancellationToken);
 
         await drcDbContext.SaveChangesAsync(cancellationToken);
+
+        // Give the planner accurate statistics for the temp table so it picks optimal join strategies.
+        await drcDbContext.Database.ExecuteSqlRawAsync($"ANALYZE \"{nameof(TempInformatieObjectAuthorization)}\"", cancellationToken);
     }
 
     private async Task CreateTempTableAsync(DrcDbContext drcDbContext, CancellationToken cancellationToken)

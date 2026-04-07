@@ -12,22 +12,12 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         {
             migrationBuilder.DropIndex(name: "idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies");
 
-            //migrationBuilder.DropIndex(
-            //    name: "IX_eiov_owner_identificatie_versie",
-            //    table: "enkelvoudiginformatieobjectversies");
-
             migrationBuilder
                 .CreateIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies", column: "id")
                 .Annotation(
                     "Npgsql:IndexInclude",
                     new[] { "owner", "vertrouwelijkheidaanduiding", "enkelvoudiginformatieobject_id", "bronorganisatie", "identificatie" }
                 );
-
-            //migrationBuilder.CreateIndex(
-            //    name: "IX_eiov_owner_identificatie_versie",
-            //    table: "enkelvoudiginformatieobjectversies",
-            //    columns: new[] { "owner", "identificatie", "versie" },
-            //    unique: true);
 
             migrationBuilder
                 .CreateIndex(
@@ -47,10 +37,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         {
             migrationBuilder.DropIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies");
 
-            //migrationBuilder.DropIndex(
-            //    name: "IX_eiov_owner_identificatie_versie",
-            //    table: "enkelvoudiginformatieobjectversies");
-
             migrationBuilder.DropIndex(name: "t3b_IX_enkelvoudiginformatieobjectversies_trefwoorden", table: "enkelvoudiginformatieobjectversies");
 
             migrationBuilder.DropIndex(name: "IX_eio_owner_id_incl_type_latest", table: "enkelvoudiginformatieobjecten");
@@ -58,13 +44,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
             migrationBuilder
                 .CreateIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies", column: "id")
                 .Annotation("Npgsql:IndexInclude", new[] { "owner", "vertrouwelijkheidaanduiding", "enkelvoudiginformatieobject_id" });
-
-            //migrationBuilder.CreateIndex(
-            //    name: "IX_eiov_owner_identificatie_versie",
-            //    table: "enkelvoudiginformatieobjectversies",
-            //    columns: new[] { "owner", "identificatie", "versie" },
-            //    unique: true,
-            //    filter: "creationtime > '2026-03-20T09:34:16Z'");
         }
     }
 }
