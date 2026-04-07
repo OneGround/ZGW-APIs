@@ -80,31 +80,13 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             );
         }
 
-        // For count, use a JOIN-based query instead of EXISTS. The EXISTS subquery is optimal for
-        // paginated queries (early termination per-row) but causes 1M individual index lookups for
-        // count. A JOIN lets PostgreSQL use a Hash Join — single streaming pass over the versie
-        // table — which is O(N+M) instead of O(N × log M).
-        var totalCount = await GetTotalCountCachedAsync(
-            hasAuthorizationFilter
-                ? _context.EnkelvoudigInformatieObjecten.AsNoTracking()
-                    .Where(rsinFilter)
-                    .Where(filter)
-                    .Join(
-                        _context.EnkelvoudigInformatieObjectVersies,
-                        e => e.LatestEnkelvoudigInformatieObjectVersieId,
-                        v => v.Id,
-                        (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
-                    )
-                    .Where(ev =>
-                        _context.TempInformatieObjectAuthorization.Any(a =>
-                            a.InformatieObjectType == ev.InformatieObjectType
-                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                        )
-                    )
-                : query.Select(e => new { e.InformatieObjectType, Vertrouwelijkheidaanduiding = 0 }),
-            request.GetAllEnkelvoudigInformatieObjectenFilter,
-            cancellationToken
-        );
+        // For count, use a JOIN-based query instead of EXISTS when authorization filtering is active.
+        // The EXISTS subquery is optimal for paginated queries (early termination per-row) but causes
+        // 1M individual index lookups for count. A JOIN lets PostgreSQL use a Hash Join — single
+        // streaming pass over the versie table — which is O(N+M) instead of O(N × log M).
+        var totalCount = hasAuthorizationFilter
+            ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
+            : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted (owner, id)
         // covering index with early termination, instead of materializing all matching rows.
@@ -132,8 +114,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         return new QueryResult<PagedResult<EnkelvoudigInformatieObject>>(result, QueryStatus.OK);
     }
 
-    private async Task<int> GetTotalCountCachedAsync<T>(
-        IQueryable<T> query,
+    private async Task<int> GetTotalCountCachedAsync(
+        IQueryable<EnkelvoudigInformatieObject> query,
         GetAllEnkelvoudigInformatieObjectenFilter filter,
         CancellationToken cancellationToken
     )
@@ -160,6 +142,76 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 {
                     _logger.LogError(ex, "Error occured, set total number of EnkelvoudigInformatieObjecten to -1");
                     return -1;
+                }
+            },
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
+            cancellationToken
+        );
+
+        return totalCount;
+    }
+
+    private async Task<int> GetAuthorizationCountCachedAsync(
+        Expression<Func<EnkelvoudigInformatieObject, bool>> rsinFilter,
+        Expression<Func<EnkelvoudigInformatieObject, bool>> filter,
+        GetAllEnkelvoudigInformatieObjectenFilter filterModel,
+        CancellationToken cancellationToken
+    )
+    {
+        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+
+        int totalCount = await _cache.GetAsync(
+            key,
+            factory: async () =>
+            {
+                try
+                {
+                    // The planner severely underestimates cardinality (7K vs 1M actual) due to
+                    // stale/missing statistics on the temporary authorization table. This makes it
+                    // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
+                    // (single streaming pass = ~5s). Temporarily disable nested loops and increase
+                    // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
+                    // Session-scoped SET is used (not SET LOCAL) because there may be no active
+                    // transaction. The finally block RESETs both settings for the pooled connection.
+                    await _context.Database.ExecuteSqlRawAsync("SET enable_nestloop = off; SET work_mem = '256MB'", cancellationToken);
+
+                    var result = await _context
+                        .EnkelvoudigInformatieObjecten.AsNoTracking()
+                        .Where(rsinFilter)
+                        .Where(filter)
+                        .Join(
+                            // Filter versie by owner too — without this, the Hash Join probes ALL
+                            // 69M versie rows. With the filter, it only scans ~1M versie rows for
+                            // this RSIN, using the existing (Owner, Id, Vertrouwelijkheidaanduiding) index.
+                            _context.EnkelvoudigInformatieObjectVersies.Where(v => v.Owner == _rsin),
+                            e => e.LatestEnkelvoudigInformatieObjectVersieId,
+                            v => v.Id,
+                            (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
+                        )
+                        .Where(ev =>
+                            _context.TempInformatieObjectAuthorization.Any(a =>
+                                a.InformatieObjectType == ev.InformatieObjectType
+                                && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                            )
+                        )
+                        .CountAsync(cancellationToken);
+
+                    return result;
+                }
+                catch (NpgsqlException ex)
+                {
+                    _logger.LogError(ex, "Npgsql error, set total number of EnkelvoudigInformatieObjecten to -1");
+                    return -1;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error occured, set total number of EnkelvoudigInformatieObjecten to -1");
+                    return -1;
+                }
+                finally
+                {
+                    // Restore the server defaults for the pooled connection.
+                    await _context.Database.ExecuteSqlRawAsync("RESET enable_nestloop; RESET work_mem", CancellationToken.None);
                 }
             },
             absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
