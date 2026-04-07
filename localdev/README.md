@@ -14,7 +14,8 @@
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-    - [6. Stopping the Services](#6-stopping-the-services)
+    - [6. Configure Data Protection & Encryption (Zaken API)](#6-configure-data-protection--encryption-zaken-api)
+    - [7. Stopping the Services](#7-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services/listeners](#zgw-api-serviceslisteners)
     - [Hosted Tools](#hosted-tools)
@@ -195,7 +196,71 @@ See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
 See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
-### 6. Stopping the Services
+### 6. Configure Data Protection & Encryption (Zaken API)
+
+The Zaken API supports encryption of sensitive personal data (BSN - Burgerservicenummer) stored in the database. This uses two mechanisms:
+
+#### HMAC Hashing (for searchable lookups)
+
+BSN values are hashed using HMAC-SHA256 so they can be searched without storing plaintext. Configure the HMAC key via an environment variable on the Zaken container in `default.env`:
+
+```text
+HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
+```
+
+To generate a key:
+
+```bash
+# Linux/macOS
+openssl rand -base64 32
+
+# PowerShell
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+```
+
+> **Warning**: The HMAC key is permanent — if you change it, existing hashes become unsearchable. Back it up securely.
+
+#### DataProtection Encryption (for reversible encryption at rest)
+
+BSN values are also encrypted using ASP.NET Core DataProtection. Encryption keys are stored in the database (`data_protection.DataProtectionKeys` table). Optionally, these keys can be protected with an X.509 certificate.
+
+Add the following to `default.env`:
+
+```text
+DataProtection__Certificate=<base64-encoded-pfx>
+DataProtection__CertificatePassword=<pfx-password>
+```
+
+To generate a self-signed certificate:
+
+```bash
+# Generate cert + key
+openssl req -x509 -newkey rsa:4096 \
+  -keyout dp-key.pem -out dp-cert.pem \
+  -sha256 -days 3650 -nodes \
+  -subj "/CN=OneGround-DataProtection"
+
+# Convert to PFX
+openssl pkcs12 -export \
+  -in dp-cert.pem -inkey dp-key.pem \
+  -out dataprotection.pfx \
+  -passout pass:YourStrongPassword
+
+# Base64 encode
+base64 -w 0 dataprotection.pfx
+```
+
+> **Warning**: If the certificate is lost, all encrypted data in the database becomes permanently unreadable. Always back up the PFX file.
+
+If no certificate is configured, DataProtection keys are stored unencrypted in the database. This is acceptable for local development but not recommended for production.
+
+After updating `default.env`, restart the services:
+
+```bash
+docker compose --env-file ./.env up -d
+```
+
+### 7. Stopping the Services
 
 To stop all running Docker containers, run the following command from the `localdev` directory:
 
