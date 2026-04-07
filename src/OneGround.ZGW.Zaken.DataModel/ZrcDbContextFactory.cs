@@ -17,7 +17,23 @@ public class ZrcDbContextFactory : BaseDbContextFactory<ZrcDbContext>
     }
 
     public ZrcDbContextFactory()
-        : base() { }
+        : base()
+    {
+        _databaseProtector = new DesignTimeDatabaseProtector();
+        _hmacHasher = new DesignTimeHmacHasher();
+    }
+
+    private sealed class DesignTimeDatabaseProtector : IDatabaseProtector<ZrcDbContext>
+    {
+        public string Protect(string plaintext) => plaintext;
+
+        public string Unprotect(string ciphertext) => ciphertext;
+    }
+
+    private sealed class DesignTimeHmacHasher : IHmacHasher
+    {
+        public string ComputeHash(string plaintext) => plaintext;
+    }
 
     public override ZrcDbContext CreateDbContext(string[] args)
     {
