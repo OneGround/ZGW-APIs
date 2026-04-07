@@ -3,7 +3,6 @@ using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace OneGround.ZGW.DataAccess;
 
@@ -47,12 +46,6 @@ public abstract class BaseDbContextFactory<TDbContext> : IDesignTimeDbContextFac
                 x.UseNetTopologySuite().UseNodaTime();
             }
         );
-
-        // TODO: Delete this
-        optionsBuilder.EnableSensitiveDataLogging(); // Shows parameter values
-        optionsBuilder.EnableDetailedErrors();
-        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
-        // ----
 
         return optionsBuilder;
     }
