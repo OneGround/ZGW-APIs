@@ -150,45 +150,41 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             key,
             factory: async () =>
             {
-                try
-                {
-                    // The planner severely underestimates cardinality (7K vs 1M actual) due to
-                    // stale/missing statistics on the temporary authorization table. This makes it
-                    // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
-                    // (single streaming pass = ~5s). Temporarily disable nested loops and increase
-                    // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
-                    // Session-scoped SET is used (not SET LOCAL) because there may be no active
-                    // transaction. The finally block RESETs both settings for the pooled connection.
-                    await _context.Database.ExecuteSqlRawAsync("SET enable_nestloop = off; SET work_mem = '256MB'", cancellationToken);
+                // The planner severely underestimates cardinality (7K vs 1M actual) due to
+                // stale/missing statistics on the temporary authorization table. This makes it
+                // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
+                // (single streaming pass = ~5s). Temporarily disable nested loops and increase
+                // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
+                // SET LOCAL requires an active transaction — without one, PostgreSQL silently
+                // treats it as session-scoped SET. Settings revert automatically when the
+                // transaction is disposed (no manual RESET needed, safe for pooled connections).
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-                    var result = await _context
-                        .EnkelvoudigInformatieObjecten.AsNoTracking()
-                        .Where(rsinFilter)
-                        .Where(filter)
-                        .Join(
-                            // Filter versie by owner too — without this, the Hash Join probes ALL
-                            // 69M versie rows. With the filter, it only scans ~1M versie rows for
-                            // this RSIN, using the existing (Owner, Id, Vertrouwelijkheidaanduiding) index.
-                            _context.EnkelvoudigInformatieObjectVersies.Where(v => v.Owner == _rsin),
-                            e => e.LatestEnkelvoudigInformatieObjectVersieId,
-                            v => v.Id,
-                            (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
-                        )
-                        .Where(ev =>
-                            _context.TempInformatieObjectAuthorization.Any(a =>
-                                a.InformatieObjectType == ev.InformatieObjectType
-                                && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                            )
-                        )
-                        .CountAsync(cancellationToken);
+                await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
 
-                    return result;
-                }
-                finally
-                {
-                    // Restore the server defaults for the pooled connection.
-                    await _context.Database.ExecuteSqlRawAsync("RESET enable_nestloop; RESET work_mem", CancellationToken.None);
-                }
+                var result = await _context
+                    .EnkelvoudigInformatieObjecten.AsNoTracking()
+                    .Where(rsinFilter)
+                    .Where(filter)
+                    .Join(
+                        // Filter versie by owner too — without this, the Hash Join probes ALL
+                        // 69M versie rows. With the filter, it only scans ~1M versie rows for
+                        // this RSIN, using the existing (Owner, Id, Vertrouwelijkheidaanduiding) index.
+                        _context.EnkelvoudigInformatieObjectVersies.Where(v => v.Owner == _rsin),
+                        e => e.LatestEnkelvoudigInformatieObjectVersieId,
+                        v => v.Id,
+                        (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
+                    )
+                    .Where(ev =>
+                        _context.TempInformatieObjectAuthorization.Any(a =>
+                            a.InformatieObjectType == ev.InformatieObjectType
+                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                        )
+                    )
+                    .CountAsync(cancellationToken);
+
+                // Note: Settings automatically reverted — no RESET needed
+                return result;
             },
             absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5), // Note: Keep the calculated total count the same for 5 minutes!
             cancellationToken
@@ -201,7 +197,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         GetAllEnkelvoudigInformatieObjectenFilter filter
     )
     {
-        var filterUuid_In = filter.Uuid_In?.Select(Guid.Parse).ToList();
+        var filterUuid_In = filter
+            .Uuid_In?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? (Guid?)parsedUuid : null)
+            .Where(uuid => uuid.HasValue)
+            .Select(uuid => uuid.Value)
+            .ToList();
+
         var filterTrefwoorden_In = filter.Trefwoorden_In?.ToList();
 
         // Only reference the versie navigation when versie-based filters are actually set.

@@ -10,40 +10,39 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies");
+            migrationBuilder.Sql(@"DROP INDEX IF EXISTS public.""idx_e0_light_covering""");
 
-            migrationBuilder
-                .CreateIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies", column: "id")
-                .Annotation(
-                    "Npgsql:IndexInclude",
-                    new[] { "owner", "vertrouwelijkheidaanduiding", "enkelvoudiginformatieobject_id", "bronorganisatie", "identificatie" }
-                );
+            migrationBuilder.Sql(
+                @"
+CREATE INDEX CONCURRENTLY IF NOT EXISTS ""t3b_IX_eio_owner_id_incl_type_latest""
+    ON public.enkelvoudiginformatieobjecten USING btree
+    (owner COLLATE pg_catalog.""default"" ASC NULLS LAST, id ASC NULLS LAST)
+    INCLUDE(informatieobjecttype, latest_enkelvoudiginformatieobjectversie_id)
+    TABLESPACE pg_default
+",
+                suppressTransaction: true
+            );
 
-            migrationBuilder
-                .CreateIndex(
-                    name: "t3b_IX_enkelvoudiginformatieobjectversies_trefwoorden",
-                    table: "enkelvoudiginformatieobjectversies",
-                    column: "trefwoorden"
-                )
-                .Annotation("Npgsql:IndexMethod", "gin");
+            migrationBuilder.Sql(
+                @"
+CREATE INDEX CONCURRENTLY IF NOT EXISTS ""t3b_IX_enkelvoudiginformatieobjectversies_trefwoorden""
+    ON public.enkelvoudiginformatieobjectversies USING gin
+    (trefwoorden COLLATE pg_catalog.""default"")
+    TABLESPACE pg_default;
+",
+                suppressTransaction: true
+            );
 
-            migrationBuilder
-                .CreateIndex(name: "t3b_IX_eio_owner_id_incl_type_latest", table: "enkelvoudiginformatieobjecten", columns: new[] { "owner", "id" })
-                .Annotation("Npgsql:IndexInclude", new[] { "informatieobjecttype", "latest_enkelvoudiginformatieobjectversie_id" });
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies");
-
-            migrationBuilder.DropIndex(name: "t3b_IX_enkelvoudiginformatieobjectversies_trefwoorden", table: "enkelvoudiginformatieobjectversies");
-
-            migrationBuilder.DropIndex(name: "IX_eio_owner_id_incl_type_latest", table: "enkelvoudiginformatieobjecten");
-
-            migrationBuilder
-                .CreateIndex(name: "t3b_idx_e0_light_covering", table: "enkelvoudiginformatieobjectversies", column: "id")
-                .Annotation("Npgsql:IndexInclude", new[] { "owner", "vertrouwelijkheidaanduiding", "enkelvoudiginformatieobject_id" });
+            migrationBuilder.Sql(
+                @"
+CREATE INDEX CONCURRENTLY IF NOT EXISTS t3b_idx_e0_light_covering
+    ON public.enkelvoudiginformatieobjectversies USING btree
+    (id ASC NULLS LAST)
+    INCLUDE(owner, vertrouwelijkheidaanduiding, enkelvoudiginformatieobject_id, bronorganisatie, identificatie)
+    TABLESPACE pg_default
+",
+                suppressTransaction: true
+            );
         }
     }
 }
