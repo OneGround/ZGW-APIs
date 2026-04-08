@@ -19,7 +19,7 @@ builder.Services.RegisterZgwTokenClient(builder.Configuration, builder.Environme
 
 startup.ConfigureServices(builder.Services);
 
-builder.Services.AddZGWDbContext<DataProtectionKeyDbContext>(builder.Configuration);
+builder.Services.AddZGWDbContext<DataProtectionKeyDbContext>(builder.Configuration, "DataProtectionConnectionString");
 builder.Services.AddDatabaseInitializerService<DataProtectionKeyDbContext, DataProtectionKeyDbContextFactory>();
 
 var app = builder.Build();

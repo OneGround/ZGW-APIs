@@ -13,6 +13,7 @@ public class NatuurlijkPersoonZaakRol : IBaseEntity
     [Column("id")]
     public Guid Id { get; set; }
 
+    [Obsolete("Use InpBsnHash and InpBsnEncrypted instead of InpBsn for new implementations.")]
     [MaxLength(9)]
     [Column("inpbsn")]
     public string InpBsn { get; set; }
