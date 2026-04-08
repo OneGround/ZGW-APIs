@@ -6,7 +6,6 @@ using OneGround.ZGW.Common.Web.Configuration;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web;
-using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);

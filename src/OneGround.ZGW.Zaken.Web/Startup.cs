@@ -35,7 +35,6 @@ using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using OneGround.ZGW.Zaken.Web.Expands.v1._5;
-using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.Web.Handlers;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
 using OneGround.ZGW.Zaken.Web.Handlers.v1.EntityUpdaters;
