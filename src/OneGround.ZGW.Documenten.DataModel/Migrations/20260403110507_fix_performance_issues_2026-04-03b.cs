@@ -10,7 +10,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"DROP INDEX IF EXISTS public.""idx_e0_light_covering""");
+            migrationBuilder.Sql(@"DROP INDEX CONCURRENTLY IF EXISTS public.""idx_e0_light_covering""");
 
             migrationBuilder.Sql(
                 @"
