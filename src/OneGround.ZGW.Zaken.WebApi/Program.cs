@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Autorisaties.ServiceAgent;
 using OneGround.ZGW.Common.Constants;
+using OneGround.ZGW.Common.DataProtection.DataModel;
 using OneGround.ZGW.Common.Web.Authentication;
 using OneGround.ZGW.Common.Web.Configuration;
-using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web;
+using OneGround.ZGW.Zaken.WebApi.BackgroundServices;
 using OneGround.ZGW.Zaken.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,10 +20,12 @@ builder.Services.RegisterZgwTokenClient(builder.Configuration, builder.Environme
 
 startup.ConfigureServices(builder.Services);
 
-builder.Services.AddZGWDbContext<DataProtectionKeyDbContext>(builder.Configuration, "DataProtectionConnectionString");
-builder.Services.AddDatabaseInitializerService<DataProtectionKeyDbContext, DataProtectionKeyDbContextFactory>();
+builder.Services.AddDataProtectionDbContext(builder.Configuration);
+builder.Services.AddHostedService<InpBsnBackfillService>();
 
 var app = builder.Build();
+
+await app.MigrateDataProtectionDatabaseAsync();
 
 Startup.Configure(app, builder.Environment);
 

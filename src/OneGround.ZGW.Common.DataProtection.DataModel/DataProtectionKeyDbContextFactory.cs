@@ -1,19 +1,21 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.DataAccess;
 
-namespace OneGround.ZGW.Zaken.DataModel;
+namespace OneGround.ZGW.Common.DataProtection.DataModel;
 
 public class DataProtectionKeyDbContextFactory : BaseDbContextFactory<DataProtectionKeyDbContext>
 {
     public DataProtectionKeyDbContextFactory(IConfiguration configuration)
-        : base(configuration) { }
+        : base(configuration, "DataProtectionConnectionString") { }
 
     public DataProtectionKeyDbContextFactory()
-        : base() { }
+        : base("DataProtectionConnectionString") { }
 
     public override DataProtectionKeyDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = CreateDbContextOptionsBuilder();
+        var optionsBuilder = new DbContextOptionsBuilder<DataProtectionKeyDbContext>();
+        optionsBuilder.UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "data_protection"));
         return new DataProtectionKeyDbContext(optionsBuilder.Options);
     }
 }

@@ -231,23 +231,20 @@ DataProtection__Certificate=<base64-encoded-pfx>
 DataProtection__CertificatePassword=<pfx-password>
 ```
 
-To generate a self-signed certificate:
+Use the provided generator script to create a certificate. Run the following commands **from the `localdev` directory**. The script outputs the values ready to paste into `default.env`:
+
+**Linux/macOS:**
 
 ```bash
-# Generate cert + key
-openssl req -x509 -newkey rsa:4096 \
-  -keyout dp-key.pem -out dp-cert.pem \
-  -sha256 -days 3650 -nodes \
-  -subj "/CN=OneGround-DataProtection"
+chmod +x ../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
+../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
+```
 
-# Convert to PFX
-openssl pkcs12 -export \
-  -in dp-cert.pem -inkey dp-key.pem \
-  -out dataprotection.pfx \
-  -passout pass:YourStrongPassword
+**Windows (PowerShell):**
 
-# Base64 encode
-base64 -w 0 dataprotection.pfx
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+..\tools\oneground-certificates-generator\generate-dataprotection-certificate.ps1
 ```
 
 > **Warning**: If the certificate is lost, all encrypted data in the database becomes permanently unreadable. Always back up the PFX file.

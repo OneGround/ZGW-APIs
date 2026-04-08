@@ -3,6 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.DataProtection.DataModel;
 using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.Zaken.DataModel;
 

@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace OneGround.ZGW.Zaken.DataModel.Migrations.DataProtectionKeyDb
+namespace OneGround.ZGW.Common.DataProtection.DataModel.Migrations
 {
     /// <inheritdoc />
     public partial class create_data_protection_keys : Migration

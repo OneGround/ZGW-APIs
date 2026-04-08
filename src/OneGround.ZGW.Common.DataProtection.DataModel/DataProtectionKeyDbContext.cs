@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace OneGround.ZGW.Zaken.DataModel;
+namespace OneGround.ZGW.Common.DataProtection.DataModel;
 
 public class DataProtectionKeyDbContext : DbContext, IDataProtectionKeyContext
 {
