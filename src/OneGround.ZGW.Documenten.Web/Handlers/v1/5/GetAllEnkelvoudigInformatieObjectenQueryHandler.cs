@@ -7,7 +7,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Helpers;
@@ -123,26 +122,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // Create a key for the current request+ClientId (uri contains the query-parameters as well)
         var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
 
-        // Note: Cache the Count from SQL for 5 minutes. And also Note: If an error occurs (e.g. due to a complex query plan), log the error and cache -1 to avoid repeated expensive queries until the cache expires.
+        // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(
             key,
             factory: async () =>
             {
-                try
-                {
-                    var result = await query.CountAsync(cancellationToken);
-                    return result;
-                }
-                catch (NpgsqlException ex)
-                {
-                    _logger.LogError(ex, "Npgsql error, set total number of EnkelvoudigInformatieObjecten to -1");
-                    return -1;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occured, set total number of EnkelvoudigInformatieObjecten to -1");
-                    return -1;
-                }
+                return await query.CountAsync(cancellationToken);
             },
             absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
             cancellationToken
@@ -160,6 +145,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     {
         var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
 
+        // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(
             key,
             factory: async () =>
@@ -198,23 +184,13 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
 
                     return result;
                 }
-                catch (NpgsqlException ex)
-                {
-                    _logger.LogError(ex, "Npgsql error, set total number of EnkelvoudigInformatieObjecten to -1");
-                    return -1;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occured, set total number of EnkelvoudigInformatieObjecten to -1");
-                    return -1;
-                }
                 finally
                 {
                     // Restore the server defaults for the pooled connection.
                     await _context.Database.ExecuteSqlRawAsync("RESET enable_nestloop; RESET work_mem", CancellationToken.None);
                 }
             },
-            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5), // Note: Keep the calculated total count the same for 5 minutes!
             cancellationToken
         );
 
