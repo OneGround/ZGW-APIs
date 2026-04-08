@@ -198,9 +198,9 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     )
     {
         var filterUuid_In = filter
-            .Uuid_In?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? (Guid?)parsedUuid : null)
-            .Where(uuid => uuid.HasValue)
-            .Select(uuid => uuid.Value)
+            .Uuid_In?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? parsedUuid : (Guid?)null)
+            .Where(parsedUuid => parsedUuid != null)
+            .Select(parsedUuid => parsedUuid!.Value)
             .ToList();
 
         var filterTrefwoorden_In = filter.Trefwoorden_In?.ToList();
