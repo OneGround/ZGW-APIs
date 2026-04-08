@@ -17,6 +17,7 @@ on:
       - 'src/OneGround.ZGW.Common.Abstractions/**'
       - 'src/OneGround.ZGW.Common.Contracts/**'
       - 'src/OneGround.ZGW.Common.DataModel/**'
+      - 'src/OneGround.ZGW.Common.DataProtection.DataModel/**'
       - 'src/OneGround.ZGW.Common.Messaging/**'
       - 'src/OneGround.ZGW.Common.ServiceAgent/**'
       - 'src/OneGround.ZGW.Common.Web/**'
