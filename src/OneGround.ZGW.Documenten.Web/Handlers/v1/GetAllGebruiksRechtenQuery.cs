@@ -56,18 +56,17 @@ class GetAllGebruiksRechtenQueryHandler
                 cancellationToken
             );
 
-            query = query
-                .Join(
-                    _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
-                    i => i.InformatieObjectType,
-                    (i, a) => new { InformatieObject = i, Authorisatie = a }
+            // Use explicit subquery instead of top-level JOIN to avoid materializing
+            // all versie rows. With EXISTS, PostgreSQL can evaluate authorization per-row.
+            query = query.Where(g =>
+                _context.EnkelvoudigInformatieObjectVersies.Any(v =>
+                    v.Id == g.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
+                    && _context.TempInformatieObjectAuthorization.Any(a =>
+                        a.InformatieObjectType == g.InformatieObject.InformatieObjectType
+                        && (int)v.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                    )
                 )
-                .Where(i =>
-                    (int)i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
-                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
-                )
-                .Select(i => i.InformatieObject);
+            );
         }
 
         var result = await query.Include(g => g.InformatieObject).OrderBy(e => e.Id).AsSplitQuery().ToListAsync(cancellationToken);

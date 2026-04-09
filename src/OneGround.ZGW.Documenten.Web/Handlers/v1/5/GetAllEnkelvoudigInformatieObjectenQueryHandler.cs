@@ -57,7 +57,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
 
         var query = _context.EnkelvoudigInformatieObjecten.AsNoTracking().Where(rsinFilter).Where(filter);
 
-        if (!_authorizationContext.Authorization.HasAllAuthorizations)
+        bool hasAuthorizationFilter = !_authorizationContext.Authorization.HasAllAuthorizations;
+        if (hasAuthorizationFilter)
         {
             await _informatieObjectAuthorizationTempTableService.InsertInformatieObjectTypeAuthorizationsToTempTableAsync(
                 _authorizationContext,
@@ -65,30 +66,47 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            query = query
-                .Join(
-                    _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObjectType,
-                    i => i.InformatieObjectType,
-                    (i, a) => new { InformatieObject = i, Authorisatie = a }
+            // Use explicit subquery instead of navigation property to avoid a top-level LEFT JOIN
+            // to the versie table. With EXISTS, PostgreSQL can scan the (owner, id) covering index
+            // in order and stop after LIMIT matches (early termination), instead of materializing all rows.
+            query = query.Where(e =>
+                _context.EnkelvoudigInformatieObjectVersies.Any(v =>
+                    v.Id == e.LatestEnkelvoudigInformatieObjectVersieId
+                    && _context.TempInformatieObjectAuthorization.Any(a =>
+                        a.InformatieObjectType == e.InformatieObjectType && (int)v.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                    )
                 )
-                .Where(i =>
-                    (int)i.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
-                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
-                )
-                .Select(i => i.InformatieObject);
+            );
         }
 
-        var totalCount = await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
+        // For count, use a JOIN-based query instead of EXISTS when authorization filtering is active.
+        // The EXISTS subquery is optimal for paginated queries (early termination per-row) but causes
+        // 1M individual index lookups for count. A JOIN lets PostgreSQL use a Hash Join — single
+        // streaming pass over the versie table — which is O(N+M) instead of O(N × log M).
+        var totalCount = hasAuthorizationFilter
+            ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
+            : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
-        var pagedResult = await query
-            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                .ThenInclude(e => e.BestandsDelen)
+        // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted (owner, id)
+        // covering index with early termination, instead of materializing all matching rows.
+        var pageIds = await query
             .OrderBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
-            .AsSplitQuery()
+            .Select(e => e.Id)
             .ToListAsync(cancellationToken);
+
+        // Phase 2: Fetch complete data for only the matched IDs (typically 100 PK lookups).
+        var pagedResult =
+            pageIds.Count > 0
+                ? await _context
+                    .EnkelvoudigInformatieObjecten.AsNoTracking()
+                    .Where(e => pageIds.Contains(e.Id))
+                    .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                        .ThenInclude(e => e.BestandsDelen)
+                    .OrderBy(e => e.Id)
+                    .ToListAsync(cancellationToken)
+                : [];
 
         var result = new PagedResult<EnkelvoudigInformatieObject> { PageResult = pagedResult, Count = totalCount };
 
@@ -104,16 +122,71 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // Create a key for the current request+ClientId (uri contains the query-parameters as well)
         var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
 
-        // Note: Cache the Count from SQL for 1 minute
+        // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(
             key,
             factory: async () =>
             {
-                var result = await query.CountAsync(cancellationToken);
+                return await query.CountAsync(cancellationToken);
+            },
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
+            cancellationToken
+        );
 
+        return totalCount;
+    }
+
+    private async Task<int> GetAuthorizationCountCachedAsync(
+        Expression<Func<EnkelvoudigInformatieObject, bool>> rsinFilter,
+        Expression<Func<EnkelvoudigInformatieObject, bool>> filter,
+        GetAllEnkelvoudigInformatieObjectenFilter filterModel,
+        CancellationToken cancellationToken
+    )
+    {
+        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+
+        // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
+        int totalCount = await _cache.GetAsync(
+            key,
+            factory: async () =>
+            {
+                // The planner severely underestimates cardinality (7K vs 1M actual) due to
+                // stale/missing statistics on the temporary authorization table. This makes it
+                // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
+                // (single streaming pass = ~5s). Temporarily disable nested loops and increase
+                // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
+                // SET LOCAL requires an active transaction — without one, PostgreSQL silently
+                // treats it as session-scoped SET. Settings revert automatically when the
+                // transaction is disposed (no manual RESET needed, safe for pooled connections).
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+                await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+
+                var result = await _context
+                    .EnkelvoudigInformatieObjecten.AsNoTracking()
+                    .Where(rsinFilter)
+                    .Where(filter)
+                    .Join(
+                        // Filter versie by owner too — without this, the Hash Join probes ALL
+                        // 69M versie rows. With the filter, it only scans ~1M versie rows for
+                        // this RSIN, using the existing (Owner, Id, Vertrouwelijkheidaanduiding) index.
+                        _context.EnkelvoudigInformatieObjectVersies.Where(v => v.Owner == _rsin),
+                        e => e.LatestEnkelvoudigInformatieObjectVersieId,
+                        v => v.Id,
+                        (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
+                    )
+                    .Where(ev =>
+                        _context.TempInformatieObjectAuthorization.Any(a =>
+                            a.InformatieObjectType == ev.InformatieObjectType
+                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                        )
+                    )
+                    .CountAsync(cancellationToken);
+
+                // Note: Settings automatically reverted — no RESET needed
                 return result;
             },
-            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(1),
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5), // Note: Keep the calculated total count the same for 5 minutes!
             cancellationToken
         );
 
@@ -124,16 +197,29 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         GetAllEnkelvoudigInformatieObjectenFilter filter
     )
     {
-        var filterUuid_In = filter.Uuid_In?.Select(u => u.ToLower()).ToList();
+        var filterUuid_In = filter
+            .Uuid_In?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? parsedUuid : (Guid?)null)
+            .Where(parsedUuid => parsedUuid != null)
+            .Select(parsedUuid => parsedUuid!.Value)
+            .ToList();
+
+        var filterTrefwoorden_In = filter.Trefwoorden_In?.ToList();
+
+        // Only reference the versie navigation when versie-based filters are actually set.
+        // This avoids an unnecessary LEFT JOIN that prevents the planner from using the
+        // sorted (owner, id) covering index with early termination.
+        bool hasVersieFilters = filter.Bronorganisatie != null || filter.Identificatie != null || filterTrefwoorden_In != null;
+
+        if (!hasVersieFilters)
+        {
+            return e => filterUuid_In == null || filterUuid_In.Contains(e.Id);
+        }
 
         return e =>
             (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
             && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie)
-            && (filterUuid_In == null || filterUuid_In.Contains(e.Id.ToString()))
-            && (
-                filter.Trefwoorden_In == null
-                || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(e => filter.Trefwoorden_In.Any(f => f == e))
-            );
+            && (filterUuid_In == null || filterUuid_In.Contains(e.Id))
+            && (filterTrefwoorden_In == null || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(t => filterTrefwoorden_In.Contains(t)));
     }
 }
 

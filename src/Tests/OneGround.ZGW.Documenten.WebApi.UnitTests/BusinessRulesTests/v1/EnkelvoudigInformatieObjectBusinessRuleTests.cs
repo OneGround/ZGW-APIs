@@ -134,7 +134,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             },
             Bronorganisatie = "1234",
             Identificatie = "DOCUMENT-2020-00000002",
-            Versie = 2,
+            Versie = 1,
             Owner = "813264571",
         };
 
@@ -771,6 +771,26 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                     {
                         Bronorganisatie = "1234",
                         Identificatie = "DOCUMENT-2020-00000001",
+                        Versie = 1,
+                        Taal = string.Empty,
+                        Owner = "813264571",
+                    },
+                ],
+                Owner = "813264571",
+            }
+        );
+
+        context.EnkelvoudigInformatieObjecten.Add(
+            new EnkelvoudigInformatieObject
+            {
+                Id = new Guid("990ef517-8f97-4646-8b6e-02899eb8024a"),
+                InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
+                EnkelvoudigInformatieObjectVersies =
+                [
+                    new EnkelvoudigInformatieObjectVersie
+                    {
+                        Bronorganisatie = "1234",
+                        Identificatie = "DOCUMENT-2020-00000002",
                         Versie = 1,
                         Taal = string.Empty,
                         Owner = "813264571",
