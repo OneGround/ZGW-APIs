@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations
 {
     [DbContext(typeof(DrcDbContext))]
-    partial class DrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403110507_fix_performance_issues_2026-04-03b")]
+    partial class fix_performance_issues_20260403b
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -533,8 +536,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding")
                         .IsDescending(false, false, true);
-
-                    b.HasIndex("Owner", "Vertrouwelijkheidaanduiding", "Id");
 
                     b.HasIndex("Vertrouwelijkheidaanduiding", "Id", "Owner");
 

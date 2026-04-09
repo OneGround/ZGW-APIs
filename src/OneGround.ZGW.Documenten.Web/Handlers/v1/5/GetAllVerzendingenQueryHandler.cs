@@ -53,7 +53,8 @@ class GetAllVerzendingenQueryHandler
 
         var query = _context.Verzendingen.AsNoTracking().Where(rsinFilter).Where(filter);
 
-        if (!_authorizationContext.Authorization.HasAllAuthorizations)
+        bool hasAuthorizationFilter = !_authorizationContext.Authorization.HasAllAuthorizations;
+        if (hasAuthorizationFilter)
         {
             await _informatieObjectAuthorizationTempTableService.InsertInformatieObjectTypeAuthorizationsToTempTableAsync(
                 _authorizationContext,
@@ -61,29 +62,45 @@ class GetAllVerzendingenQueryHandler
                 cancellationToken
             );
 
-            query = query
-                .Join(
-                    _context.TempInformatieObjectAuthorization,
-                    o => o.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.InformatieObject.InformatieObjectType,
-                    i => i.InformatieObjectType,
-                    (i, a) => new { InformatieObject = i, Authorisatie = a }
+            // Use explicit subquery instead of navigation property to avoid a top-level LEFT JOIN
+            // to the versie table. With EXISTS, PostgreSQL can use early termination for pagination.
+            query = query.Where(v =>
+                _context.EnkelvoudigInformatieObjectVersies.Any(ver =>
+                    ver.Id == v.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
+                    && _context.TempInformatieObjectAuthorization.Any(a =>
+                        a.InformatieObjectType == v.InformatieObject.InformatieObjectType
+                        && (int)ver.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                    )
                 )
-                .Where(i =>
-                    (int)i.InformatieObject.InformatieObject.LatestEnkelvoudigInformatieObjectVersie.Vertrouwelijkheidaanduiding
-                    <= i.Authorisatie.MaximumVertrouwelijkheidAanduiding
-                )
-                .Select(i => i.InformatieObject);
+            );
         }
 
-        var totalCount = await GetTotalCountCachedAsync(query, request.GetAllVerzendingenFilter, cancellationToken);
+        // For count, use a JOIN-based query instead of EXISTS when authorization filtering is active.
+        // The EXISTS subquery is optimal for paginated queries (early termination per-row) but causes
+        // individual index lookups for count. A JOIN lets PostgreSQL use a Hash Join — single
+        // streaming pass over the versie table — which is O(N+M) instead of O(N × log M).
+        var totalCount = hasAuthorizationFilter
+            ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllVerzendingenFilter, cancellationToken)
+            : await GetTotalCountCachedAsync(query, request.GetAllVerzendingenFilter, cancellationToken);
 
-        var pagedResult = await query
-            .Include(v => v.InformatieObject)
+        // Phase 1: Get page IDs using a narrow SELECT so the planner can use early termination.
+        var pageIds = await query
             .OrderBy(v => v.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
-            .AsSplitQuery()
+            .Select(v => v.Id)
             .ToListAsync(cancellationToken);
+
+        // Phase 2: Fetch complete data for only the matched IDs.
+        var pagedResult =
+            pageIds.Count > 0
+                ? await _context
+                    .Verzendingen.AsNoTracking()
+                    .Where(v => pageIds.Contains(v.Id))
+                    .Include(v => v.InformatieObject)
+                    .OrderBy(v => v.Id)
+                    .ToListAsync(cancellationToken)
+                : [];
 
         var result = new PagedResult<Verzending> { PageResult = pagedResult, Count = totalCount };
 
@@ -96,19 +113,71 @@ class GetAllVerzendingenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        // Create a key for the current request+ClientId (uri contains the query-parameters as well)
         var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllVerzendingenFilter = filter });
 
-        // Note: Cache the Count from SQL for 1 minute
         int totalCount = await _cache.GetAsync(
             key,
             factory: async () =>
             {
-                var result = await query.CountAsync(cancellationToken);
+                return await query.CountAsync(cancellationToken);
+            },
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
+            cancellationToken
+        );
+
+        return totalCount;
+    }
+
+    private async Task<int> GetAuthorizationCountCachedAsync(
+        Expression<Func<Verzending, bool>> rsinFilter,
+        Expression<Func<Verzending, bool>> filter,
+        GetAllVerzendingenFilter filterModel,
+        CancellationToken cancellationToken
+    )
+    {
+        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllVerzendingenFilter = filterModel });
+
+        int totalCount = await _cache.GetAsync(
+            key,
+            factory: async () =>
+            {
+                // The planner severely underestimates cardinality due to stale/missing statistics
+                // on the temporary authorization table. Temporarily disable nested loops and increase
+                // work_mem so the planner picks Hash Join for the versie join.
+                // SET LOCAL requires an active transaction — without one, PostgreSQL silently
+                // treats it as session-scoped SET. Settings revert automatically when the
+                // transaction is disposed (no manual RESET needed, safe for pooled connections).
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+                await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+
+                var result = await _context
+                    .Verzendingen.AsNoTracking()
+                    .Where(rsinFilter)
+                    .Where(filter)
+                    .Join(
+                        _context.EnkelvoudigInformatieObjecten,
+                        v => v.InformatieObjectId,
+                        e => e.Id,
+                        (v, e) => new { e.InformatieObjectType, e.LatestEnkelvoudigInformatieObjectVersieId }
+                    )
+                    .Join(
+                        _context.EnkelvoudigInformatieObjectVersies.Where(ver => ver.Owner == _rsin),
+                        ve => ve.LatestEnkelvoudigInformatieObjectVersieId,
+                        ver => ver.Id,
+                        (ve, ver) => new { ve.InformatieObjectType, ver.Vertrouwelijkheidaanduiding }
+                    )
+                    .Where(ev =>
+                        _context.TempInformatieObjectAuthorization.Any(a =>
+                            a.InformatieObjectType == ev.InformatieObjectType
+                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
+                        )
+                    )
+                    .CountAsync(cancellationToken);
 
                 return result;
             },
-            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(1),
+            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
             cancellationToken
         );
 
