@@ -11,7 +11,7 @@ using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.WebApi.BackgroundServices;
 
-public class InpBsnBackfillService : IHostedService
+public class InpBsnBackfillService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<InpBsnBackfillService> _logger;
@@ -22,7 +22,7 @@ public class InpBsnBackfillService : IHostedService
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         const int batchSize = 5_000;
         int totalMigrated = 0;
@@ -31,12 +31,12 @@ public class InpBsnBackfillService : IHostedService
         do
         {
             using var scope = _serviceProvider.CreateScope();
-            using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+            await using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
             var batch = await db.Set<NatuurlijkPersoonZaakRol>()
                 .Where(r => r.InpBsn != null && r.InpBsnHash == null)
                 .Take(batchSize)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(stoppingToken);
 
             batchCount = batch.Count;
 
@@ -46,21 +46,18 @@ public class InpBsnBackfillService : IHostedService
                 record.InpBsnEncrypted = record.InpBsn;
             }
 
-            await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(stoppingToken);
+            db.ChangeTracker.Clear();
 
             totalMigrated += batchCount;
 
-            _logger.LogInformation(
-                "Migrated {BatchCount} InpBsn records to Hash and Encrypted (total: {TotalMigrated})",
-                batchCount,
-                totalMigrated);
+            _logger.LogInformation("Migrated {BatchCount} InpBsn records to Hash and Encrypted (total: {TotalMigrated})", batchCount, totalMigrated);
 
             if (batchCount > 0)
             {
-                await Task.Delay(50, cancellationToken);
+                await Task.Delay(50, stoppingToken);
             }
-        }
-        while (batchCount > 0);
+        } while (batchCount > 0);
 
         _logger.LogInformation("Completed InpBsn migration. Total records migrated: {TotalMigrated}", totalMigrated);
     }

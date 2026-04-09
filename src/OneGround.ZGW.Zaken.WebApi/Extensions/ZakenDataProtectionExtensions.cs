@@ -30,9 +30,20 @@ public static class ZakenDataProtectionExtensions
         if (!string.IsNullOrWhiteSpace(certBase64))
         {
             var certPassword = configuration["DataProtection:CertificatePassword"];
+            var flags = X509KeyStorageFlags.EphemeralKeySet;
+            var certBytes = Convert.FromBase64String(certBase64);
             var cert = string.IsNullOrWhiteSpace(certPassword)
-                ? new X509Certificate2(Convert.FromBase64String(certBase64))
-                : new X509Certificate2(Convert.FromBase64String(certBase64), certPassword);
+                ? new X509Certificate2(certBytes, (string?)null, flags)
+                : new X509Certificate2(certBytes, certPassword, flags);
+
+            if (!cert.HasPrivateKey)
+            {
+                throw new InvalidOperationException(
+                    "DataProtection:Certificate does not contain a private key. "
+                        + "A certificate with a private key is required to protect DataProtection keys."
+                );
+            }
+
             builder.ProtectKeysWithCertificate(cert);
         }
         else

@@ -40,6 +40,7 @@ openssl pkcs12 -export \
   -inkey "${CERT_DIR}/dp-key.pem" \
   -out "${CERT_DIR}/dataprotection.pfx" \
   -passout "pass:${CERT_PASSWORD}" 2>/dev/null
+  -certpbe AES-256-CBC -keypbe AES-256-CBC -macalg SHA256 2>/dev/null
 
 # Base64 encode the PFX
 CERT_BASE64=$(base64 -w 0 "${CERT_DIR}/dataprotection.pfx" 2>/dev/null || base64 -i "${CERT_DIR}/dataprotection.pfx" 2>/dev/null)
