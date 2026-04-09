@@ -534,6 +534,8 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                     b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding")
                         .IsDescending(false, false, true);
 
+                    b.HasIndex("Owner", "Vertrouwelijkheidaanduiding", "Id");
+
                     b.HasIndex("Vertrouwelijkheidaanduiding", "Id", "Owner");
 
                     b.HasIndex("Owner", "EnkelvoudigInformatieObjectId", "Versie", "Vertrouwelijkheidaanduiding")

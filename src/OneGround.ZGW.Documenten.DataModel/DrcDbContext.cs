@@ -95,6 +95,15 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             })
             .IsDescending(false, false, true, false);
 
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObjectVersie>()
+            .HasIndex(b => new
+            {
+                b.Owner,
+                b.Vertrouwelijkheidaanduiding,
+                b.Id,
+            });
+
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.InformatieObjectId);
 
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.Object);
