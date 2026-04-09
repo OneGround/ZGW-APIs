@@ -24,23 +24,45 @@ public class InpBsnBackfillService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+        const int batchSize = 5_000;
+        int totalMigrated = 0;
+        int batchCount;
 
-        var records = await db.Set<NatuurlijkPersoonZaakRol>().Where(r => r.InpBsn != null && r.InpBsnHash == null).ToListAsync(cancellationToken);
-
-        if (records.Count == 0)
-            return;
-
-        foreach (var record in records)
+        do
         {
-            record.InpBsnHash = record.InpBsn;
-            record.InpBsnEncrypted = record.InpBsn;
+            using var scope = _serviceProvider.CreateScope();
+            using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+            var batch = await db.Set<NatuurlijkPersoonZaakRol>()
+                .Where(r => r.InpBsn != null && r.InpBsnHash == null)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+
+            batchCount = batch.Count;
+
+            foreach (var record in batch)
+            {
+                record.InpBsnHash = record.InpBsn;
+                record.InpBsnEncrypted = record.InpBsn;
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+
+            totalMigrated += batchCount;
+
+            _logger.LogInformation(
+                "Migrated {BatchCount} InpBsn records to Hash and Encrypted (total: {TotalMigrated})",
+                batchCount,
+                totalMigrated);
+
+            if (batchCount > 0)
+            {
+                await Task.Delay(50, cancellationToken);
+            }
         }
+        while (batchCount > 0);
 
-        await db.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("InpBsn backfill complete. Migrated {Count} records.", records.Count);
+        _logger.LogInformation("Completed InpBsn migration. Total records migrated: {TotalMigrated}", totalMigrated);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
