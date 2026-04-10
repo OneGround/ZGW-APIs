@@ -15,8 +15,6 @@ public class AuditTrailFactory : IAuditTrailFactory
 
     public IAuditTrailService Create(AuditTrailOptions options, bool legacy = true)
     {
-        //var requestService = _serviceProvider.GetServices<IAuditTrailService>().SingleOrDefault(s => legacy == s.Legacy);
-
         var requestService = _serviceProvider
             .GetServices<IAuditTrailService>()
             .SingleOrDefault(s => legacy && s.Name == "Legacy" || !legacy && s.Name == "Deltas");

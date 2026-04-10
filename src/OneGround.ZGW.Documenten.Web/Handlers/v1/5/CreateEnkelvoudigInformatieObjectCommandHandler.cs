@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -32,11 +33,9 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<CreateEnkelvoudigInformatieObjectCommandHandler>,
         IRequestHandler<CreateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
-    // TODO: ZZZ
+    // TODO: MIGRATOR AND EXPORTER TESTING.....
     private readonly IAuditTrailMigrator _auditTrailMigrator;
     private readonly IAuditTrailExporter _auditTrailExporter;
-
-    // ----
 
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
@@ -53,7 +52,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
         IDocumentKenmerkenResolver documentKenmerkenResolver,
-        // TODO: ZZZ
+        // TODO: MIGRATOR AND EXPORTER TESTING.....
         IAuditTrailMigrator auditTrailMigrator,
         IAuditTrailExporter auditTrailExporter
     // ----
@@ -75,7 +74,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             documentKenmerkenResolver
         )
     {
-        // TODO: ZZZ
+        // TODO: MIGRATOR AND EXPORTER TESTINGG.....
         _auditTrailMigrator = auditTrailMigrator;
         _auditTrailExporter = auditTrailExporter;
         // ----
@@ -86,29 +85,29 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         CancellationToken cancellationToken
     )
     {
-        //_logger.LogDebug("Creating EnkelvoudigInformatieObject....");
+        _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
 
-        //// TODO: ZZZ
+        /*
+        // TODO: MIGRATOR AND EXPORTER TESTING.....
+        //
+        // Note: Test AuditTrailMigrator
 
-        ////
-        //// Note: Test AuditTrailMigrator
+        var hoofdobjectId = new Guid("f767ccce-43a0-4ff4-84b8-13b7b502af63");
 
-        //var hoofdobjectId = new Guid("74b7241c-518d-4756-ab76-6385b48bad55");
+        await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
 
-        //await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
+        //
+        // Note: Test AuditTrailMigrator
 
-        ////
-        //// Note: Test AuditTrailMigrator
+        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
 
-        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
+        await Task.Delay(1100);
 
-        //await Task.Delay(1100);
+        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
 
-        //await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
-
-        //return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-
+        return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
         // ----
+        */
 
         var versie = request.EnkelvoudigInformatieObjectVersie;
 

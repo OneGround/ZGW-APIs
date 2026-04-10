@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class DeltaBasedAuditTrail : IAuditTrailService
 {
-    protected const int _snapshotInterval = 25; // TODO: May be add this in AuditTrailOptions? API could configire via appsettings or something like that.
+    protected const int _snapshotInterval = 25; 
 
     protected readonly IDbContextWithAuditTrail _context;
     protected readonly IMapper _mapper;
@@ -216,10 +216,10 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         foreach (var auditsForResource in auditsGroupedByResource)
         {
-            JsonNode? current = null;
+            JsonNode current = null;
             foreach (var audit in auditsForResource)
             {
-                JsonDocument? oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
+                JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
                 var oldVersionJson = ToJson(oldVersion);
 
                 if (audit.Actie == $"{AuditActie.create}")
@@ -247,7 +247,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                     result.Add(
                         new AuditTrailRegel
                         {
-                            Id = audit.ResourceId.GetValueOrDefault(Guid.NewGuid()),
+                            Id = audit.Id,
                             AanmaakDatum = audit.AanmaakDatum,
                             Actie = audit.Actie,
                             ActieWeergave = audit.ActieWeergave,
@@ -273,7 +273,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                     continue;
                 }
 
-                JsonDocument? newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
+                JsonDocument newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
                 var newVersionJson = ToJson(newVersion);
 
                 if (oldVersion != null || newVersion != null)
@@ -336,10 +336,10 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         AuditTrailRegel auditTrailRegel = null;
 
-        JsonNode? current = null;
+        JsonNode current = null;
         foreach (var audit in audits)
         {
-            JsonDocument? oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
+            JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
             var oldVersionJson = ToJson(oldVersion);
 
             if (audit.Actie == $"{AuditActie.create}")
@@ -351,12 +351,12 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 // Handle periodic snapshots
                 if (!string.IsNullOrEmpty(audit.SnapshotJson))
                 {
-                    current = JsonNode.Parse(audit.SnapshotJson!);
+                    current = JsonNode.Parse(audit.SnapshotJson);
                 }
                 else
                 {
-                    var delta = JsonNode.Parse(audit.DeltaJson!)!.AsObject();
-                    ApplyDelta(current!.AsObject(), delta);
+                    var delta = JsonNode.Parse(audit.DeltaJson).AsObject();
+                    ApplyDelta(current.AsObject(), delta);
                 }
             }
             else if (audit.Actie == $"{AuditActie.destroy}")
@@ -366,7 +366,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
                 auditTrailRegel = new AuditTrailRegel
                 {
-                    Id = audit.ResourceId.GetValueOrDefault(Guid.NewGuid()),
+                    Id = audit.Id,
                     AanmaakDatum = audit.AanmaakDatum,
                     Actie = audit.Actie,
                     ActieWeergave = audit.ActieWeergave,
@@ -397,7 +397,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 return null;
             }
 
-            JsonDocument? newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
+            JsonDocument newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
             var newVersionJson = ToJson(newVersion);
 
             if (oldVersion != null || newVersion != null)
@@ -521,55 +521,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 // No changes → Do not log
                 return;
             }
-
-            // TODO: How it was
-            //switch (actie)
-            //{
-            //    case AuditActie.create:
-            //    {
-            //        audittrail.Versie = 1; //  await GetNextVersion(audittrail.ResourceId.Value); // TODO: test!!
-            //        audittrail.SnapshotJson = _newJson;
-            //        break;
-            //    }
-
-            //    case AuditActie.destroy:
-            //    {
-            //        audittrail.Versie = await GetNextVersion(audittrail.ResourceId.Value);
-            //        audittrail.DeltaJson = _oldJson;
-            //        break;
-            //    }
-
-            //    case AuditActie.update:
-            //    case AuditActie.partial_update:
-            //    {
-            //        var original = JsonSerializer.Deserialize<JsonObject>(_oldJson);
-            //        var current = JsonSerializer.Deserialize<JsonObject>(_newJson);
-
-            //        // Genereer delta
-            //        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
-
-            //        // No changes → Do not log
-            //        if (delta == null || delta.Count == 0)
-            //            return;
-
-            //        var versie = await GetNextVersion(audittrail.ResourceId.Value);
-
-            //        // Check if this is a snapshot version
-            //        bool isSnapshotVersion = versie % _snapshotInterval == 0;
-
-            //        audittrail.DeltaJson = isSnapshotVersion ? null : delta.ToJsonString();
-            //        audittrail.SnapshotJson = isSnapshotVersion ? _newJson : null;
-            //        audittrail.Versie = versie;
-            //        break;
-            //    }
-
-            //    case AuditActie.retrieve:
-            //    {
-            //        // No delta for reads, only snapshot
-            //        audittrail.SnapshotJson = _newJson;
-            //        break;
-            //    }
-            //}
         }
 
         await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
@@ -583,7 +534,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         {
             case AuditActie.create:
             {
-                delta.Versie = 1; // await GetNextVersion(audittrail.ResourceId.Value); // TODO: test!!
+                delta.Versie = 1;
                 delta.SnapshotJson = nieuw;
                 break;
             }
@@ -669,7 +620,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     {
         if (delta.TryGetPropertyValue("removed", out var removedNode))
         {
-            foreach (var r in removedNode!.AsArray())
+            foreach (var r in removedNode.AsArray())
             {
                 if (r is JsonObject rObj)
                 {
@@ -688,13 +639,13 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         if (delta.TryGetPropertyValue("added", out var addedNode))
         {
-            foreach (var a in addedNode!.AsArray())
-                target.Add(a!.DeepClone());
+            foreach (var a in addedNode.AsArray())
+                target.Add(a.DeepClone());
         }
 
         if (delta.TryGetPropertyValue("updated", out var updatedNode))
         {
-            foreach (var u in updatedNode!.AsArray())
+            foreach (var u in updatedNode.AsArray())
             {
                 if (u is JsonObject updateObj)
                 {
@@ -713,11 +664,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         {
             for (int i = 0; i < array.Count; i++)
             {
-                if (
-                    array[i] is JsonObject obj
-                    && obj.TryGetPropertyValue("Id", out var targetId)
-                    && targetId!.ToJsonString() == idNode!.ToJsonString()
-                )
+                if (array[i] is JsonObject obj && obj.TryGetPropertyValue("Id", out var targetId) && targetId.ToJsonString() == idNode.ToJsonString())
                 {
                     return i;
                 }
@@ -728,14 +675,14 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         for (int i = 0; i < array.Count; i++)
         {
-            if (array[i]!.ToJsonString() == json)
+            if (array[i].ToJsonString() == json)
                 return i;
         }
 
         return -1;
     }
 
-    private int FindPrimitiveIndex(JsonArray array, JsonNode? value)
+    private int FindPrimitiveIndex(JsonArray array, JsonNode value)
     {
         var json = value?.ToJsonString();
 
@@ -746,115 +693,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         }
 
         return -1;
-    }
-
-    private static JsonObject CompareObjects(JsonObject original, JsonObject current)
-    {
-        var delta = new JsonObject();
-
-        foreach (var kv in current)
-        {
-            original.TryGetPropertyValue(kv.Key, out var oldValue);
-
-            if (kv.Value is JsonObject newObj && oldValue is JsonObject oldObj)
-            {
-                var child = CompareObjects(oldObj, newObj);
-                if (child.Count > 0)
-                    delta[kv.Key] = child;
-            }
-            else if (kv.Value is JsonArray newArr && oldValue is JsonArray oldArr)
-            {
-                var arrDelta = CompareArrays(oldArr, newArr);
-                if (arrDelta.Count > 0)
-                    delta[kv.Key] = arrDelta;
-            }
-            else
-            {
-                if (!JsonEquals(oldValue, kv.Value))
-                    delta[kv.Key] = kv.Value!.DeepClone();
-            }
-        }
-
-        return delta;
-    }
-
-    private static JsonObject CompareArrays(JsonArray original, JsonArray current)
-    {
-        var result = new JsonObject();
-
-        var added = new JsonArray();
-        var removed = new JsonArray();
-        var updated = new JsonArray();
-
-        var originalObjects = original.OfType<JsonObject>().ToDictionary(GetIdOrHash);
-        var currentObjects = current.OfType<JsonObject>().ToDictionary(GetIdOrHash);
-
-        // removed
-        foreach (var key in originalObjects.Keys)
-        {
-            if (!currentObjects.ContainsKey(key))
-            {
-                removed.Add(originalObjects[key].DeepClone());
-            }
-        }
-
-        // added
-        foreach (var key in currentObjects.Keys)
-        {
-            if (!originalObjects.ContainsKey(key))
-            {
-                added.Add(currentObjects[key].DeepClone());
-            }
-        }
-
-        // updated
-        foreach (var key in originalObjects.Keys)
-        {
-            if (!currentObjects.ContainsKey(key))
-                continue;
-
-            var oldObj = originalObjects[key];
-            var newObj = currentObjects[key];
-
-            var delta = CompareObjects(oldObj, newObj);
-
-            if (delta.Count > 0)
-            {
-                if (newObj.TryGetPropertyValue("Id", out var id))
-                    delta["Id"] = id!.DeepClone();
-
-                updated.Add(delta);
-            }
-        }
-
-        if (added.Count > 0)
-            result["added"] = added;
-
-        if (removed.Count > 0)
-            result["removed"] = removed;
-
-        if (updated.Count > 0)
-            result["updated"] = updated;
-
-        return result;
-    }
-
-    private static string GetIdOrHash(JsonObject obj)
-    {
-        if (obj.TryGetPropertyValue("Id", out var id))
-            return id!.ToJsonString();
-
-        return obj.ToJsonString();
-    }
-
-    private static bool JsonEquals(JsonNode? a, JsonNode? b)
-    {
-        if (a == null && b == null)
-            return true;
-        if (a == null || b == null)
-            return false;
-
-        return a.ToJsonString() == b.ToJsonString();
     }
 
     protected void Reset()

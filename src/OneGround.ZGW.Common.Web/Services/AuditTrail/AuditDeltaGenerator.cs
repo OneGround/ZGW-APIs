@@ -35,12 +35,12 @@ internal static class AuditDeltaGenerator
                 if (arrDelta.Count > 0)
                     delta[kv.Key] = arrDelta;
             }
-            else if (kv.Value != null) // TODO: Added this check: 'kv.Value != null' instead of 'else' only
+            else if (kv.Value != null)
             {
                 if (!JsonEquals(oldValue, kv.Value))
-                    delta[kv.Key] = kv.Value!.DeepClone();
+                    delta[kv.Key] = kv.Value.DeepClone();
             }
-            else // TODO: Added this assignment to handle null values in the current object
+            else if (kv.Value == null && oldValue != null)
             {
                 delta[kv.Key] = null;
             }
@@ -151,7 +151,7 @@ internal static class AuditDeltaGenerator
         return obj.ToJsonString();
     }
 
-    private static bool JsonEquals(JsonNode? a, JsonNode? b)
+    private static bool JsonEquals(JsonNode a, JsonNode b)
     {
         if (a == null && b == null)
             return true;
