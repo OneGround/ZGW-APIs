@@ -9,25 +9,33 @@ This guide provides all the necessary steps to run any of the OneGround ZGW APIs
   - [Core Prerequisites](#core-prerequisites)
   - [Authentication](#authentication)
     - [Required JWT Claims](#required-jwt-claims)
+
   - [Notifications Configuration](#notifications-configuration)
   - [API-Specific Configuration](#api-specific-configuration)
     - [Autorisaties API (AC)](#autorisaties-api-ac)
       - [Required Autorisaties API (AC) Environment Variables (`.env`)](#required-autorisaties-api-ac-environment-variables-env)
+
     - [Besluiten API (BRC)](#besluiten-api-brc)
       - [Required Besluiten API (BRC) Environment Variables (`.env`)](#required-besluiten-api-brc-environment-variables-env)
+
     - [Catalogi API (ZTC)](#catalogi-api-ztc)
       - [Required Catalogi API (ZTC) Environment Variables (`.env`)](#required-catalogi-api-ztc-environment-variables-env)
+
     - [Documenten API (DRC)](#documenten-api-drc)
       - [Required Documenten API (DRC) Environment Variables (`.env`)](#required-documenten-api-drc-environment-variables-env)
+
     - [Notificaties API (NRC)](#notificaties-api-nrc)
       - [Required Notificaties API (NRC) Environment Variables (`.env`)](#required-notificaties-api-nrc-environment-variables-env)
+
     - [Referentielijsten API (RC)](#referentielijsten-api-rc)
     - [Zaken API (ZRC)](#zaken-api-zrc)
       - [Required Zaken API (ZRC) Environment Variables (`.env`)](#required-zaken-api-zrc-environment-variables-env)
+
   - [Configuring and Running the Service](#configuring-and-running-the-service)
     - [Step 1: Create and Configure `.env` File](#step-1-create-and-configure-env-file)
     - [Step 2: Configure `docker-compose.yml`](#step-2-configure-docker-composeyml)
     - [Step 3: Run the Service](#step-3-run-the-service)
+
   - [Advanced Configuration](#advanced-configuration)
   - [License](#license)
 
@@ -41,7 +49,7 @@ Before you begin, ensure you have the following components installed and running
 - A running **PostgreSQL** instance
 - A running **Redis** instance
 - An **OAuth2** compliant Identity Provider
-- A running **RabbitMQ** instance (*only required for the Notificaties API or if using the event bus for notifications*)
+- A running **RabbitMQ** instance (_only required for the Notificaties API or if using the event bus for notifications_)
 
 > **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
 
@@ -86,6 +94,7 @@ This section contains the unique prerequisites, environment variables, and defau
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api)
 - **Prerequisites:**
   - Core Prerequisites
+
 - **Default Port:** `5009`
 
 #### Required Autorisaties API (AC) Environment Variables (`.env`)
@@ -109,6 +118,7 @@ Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
 NotificatieService__Type="Http"
+
 ```
 
 ---
@@ -119,6 +129,7 @@ NotificatieService__Type="Http"
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5013`
 
 #### Required Besluiten API (BRC) Environment Variables (`.env`)
@@ -151,6 +162,7 @@ Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
 ```
 
 ---
@@ -161,6 +173,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5011`
 
 #### Required Catalogi API (ZTC) Environment Variables (`.env`)
@@ -193,6 +206,7 @@ Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
 ```
 
 ---
@@ -206,6 +220,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
   - A running **Catalogi API (ZTC)** instance
   - A running **Notificaties API (NRC)** instance
   - A running **Zaken API (ZRC)** instance
+
 - **Default Port:** `5007`
 
 #### Required Documenten API (DRC) Environment Variables (`.env`)
@@ -241,6 +256,7 @@ Services__ZRC__Api="https://zaken.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
 ```
 
 ---
@@ -251,6 +267,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **RabbitMQ** instance
+
 - **Default Port:** `5015`
 
 #### Required Notificaties API (NRC) Environment Variables (`.env`)
@@ -285,6 +302,7 @@ Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
 ```
 
 ---
@@ -294,6 +312,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/referentielijsten-api)
 - **Prerequisites:**
   - Docker and Docker Compose only.
+
 - **Default Port:** `5018`
 - **Environment Variables:** None required for basic setup. An optional `.env` file can be used for advanced configuration.
 
@@ -308,6 +327,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
   - A running **Catalogi API (ZTC)** instance
   - A running **Documenten API (DRC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5005`
 
 #### Required Zaken API (ZRC) Environment Variables (`.env`)
@@ -320,6 +340,7 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # --- Database Connection Strings ---
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_user;Password=oneground_user"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_admin;Password=oneground_admin"
+ConnectionStrings__DataProtectionConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -343,6 +364,13 @@ Services__ZTC__Api="https://catalogi.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
+# --- HMAC Hashing ---
+HmacHasher__HmacKey="<base64-encoded-key-minimum-32-bytes>"
+
+# --- DataProtection Encryption ---
+DataProtection__Certificate="<base64-encoded-pfx>"
+DataProtection__CertificatePassword="<pfx-password>"
 ```
 
 ---
@@ -396,12 +424,14 @@ Once you have configured your `.env` and `docker-compose.yml` files, you can sta
 
 ```bash
 docker compose up -d
+
 ```
 
 To verify that the service has started correctly and to follow its log output, use the following command:
 
 ```bash
 docker compose logs -f
+
 ```
 
 If the startup is successful, the API will be running and accessible on its default port on your Docker host (e.g., `http://localhost:<DEFAULT_PORT>`).
@@ -419,7 +449,10 @@ For example, to change the default log level, add the following line to your `.e
 ```dotenv
 # Example: Overriding a nested setting from appsettings.json
 Logging__LogLevel__Default=Warning
+
 ```
+
+---
 
 ---
 

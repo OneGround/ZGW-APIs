@@ -2,23 +2,12 @@
 
 ## Featured Tags
 
- ```bash
- docker pull ghcr.io/oneground/zaken-api:<version>
- ```
+```bash
+docker pull ghcr.io/oneground/zaken-api:<version>
+
+```
 
 The complete list of available versions for the OneGround Zaken API is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/zaken-api/versions).
-
-> **⚠️ Security Notice: DataProtection Key Storage**
->
-> By default, ASP.NET Core DataProtection keys are stored in the **same PostgreSQL database** as application data, separated only by a dedicated `data_protection` schema. Without additional configuration, these keys are stored **as plaintext**, which could expose sensitive data if the database is compromised.
->
-> **Secure alternatives:**
->
-> - **Certificate encryption** — Set `DataProtection:Certificate` to a Base64-encoded PFX certificate and optionally `DataProtection:CertificatePassword` to protect keys at rest.
-> - **Azure Key Vault** — Use Azure Key Vault to manage and protect DataProtection keys.
-> - **File-system storage** — Store keys on the file system with restricted OS-level permissions to limit access.
->
-> For more information, see the [Microsoft ASP.NET Core DataProtection documentation](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/introduction).
 
 ## About
 
@@ -49,6 +38,7 @@ The OneGround Zaken API depends on:
 
 ```bash
 docker run -it -p 8080:80 ghcr.io/oneground/zaken-api:<version>
+
 ```
 
 ## Configuration

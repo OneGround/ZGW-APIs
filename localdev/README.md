@@ -14,7 +14,9 @@
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-    - [6. Configure Data Protection & Encryption (Zaken API)](#6-configure-data-protection--encryption-zaken-api)
+    - [6. Configure Data Protection & Encryption](#6-configure-data-protection--encryption)
+      - [Step 6.1: Generate Encryption Keys and Certificates](#step-61-generate-encryption-keys-and-certificates)
+      - [Step 6.2: Update Environment File and Restart Services](#step-62-update-environment-file-and-restart-services)
     - [7. Stopping the Services](#7-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services/listeners](#zgw-api-serviceslisteners)
@@ -47,15 +49,15 @@ Before you begin, ensure you have the following software installed:
 
 1. Clone the repository:
 
-    ```bash
-    git clone https://github.com/OneGround/ZGW-APIs.git
-    ```
+   ```bash
+   git clone https://github.com/OneGround/ZGW-APIs.git
+   ```
 
 2. Open your terminal and navigate into the `localdev` directory:
 
-    ```bash
-    cd ZGW_APIs/localdev
-    ```
+   ```bash
+   cd ZGW_APIs/localdev
+   ```
 
 ### 2. Start the ZGW API Services
 
@@ -80,57 +82,56 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
-
-    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+   - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
 
-    ```powershell
-    cd ZGW_APIs/tools/oneground-certificates-installer
-    ```
+   ```powershell
+   cd ZGW_APIs/tools/oneground-certificates-installer
+   ```
 
 3. **Run the following command to check your current execution policy:**
 
-    ```powershell
-    Get-ExecutionPolicy -List
-    ```
+   ```powershell
+   Get-ExecutionPolicy -List
+   ```
 
 4. **To allow the script to run just for this session, execute the following command. This bypasses the policy for the current process only:**
 
-    ```powershell
-    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-    ```
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+   ```
 
 5. **Run the installation script:**
 
-    ```powershell
-    .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
-    ```
+   ```powershell
+   .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
+   ```
 
-  The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
+The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
 #### For macOS and Linux (using Bash)
 
 1. **Open your terminal.**
 2. **Navigate to the certificate installer directory:**
 
-    ```bash
-    cd ZGW_APIs/tools/oneground-certificates-installer
-    ```
+   ```bash
+   cd ZGW_APIs/tools/oneground-certificates-installer
+   ```
 
 3. **Make the script executable** (you only need to do this once):
 
-    ```bash
-    chmod +x ./install-oneground-certificate.sh
-    ```
+   ```bash
+   chmod +x ./install-oneground-certificate.sh
+   ```
 
 4. **Run the installation script.** (you may be prompted for your password):
 
-    ```bash
-    ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
-    ```
+   ```bash
+   ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
+   ```
 
-  This script installs the certificate into your system's keychain or trust store.
+This script installs the certificate into your system's keychain or trust store.
 
 > **Note:** After installing the certificate, we recommend restarting your web browser to ensure the changes take effect.
 
@@ -139,28 +140,27 @@ Follow the steps for your operating system.
 To ensure all services can communicate with each other and are accessible in your browser, you need to map the service hostnames to your local machine. This is a crucial step for the local domain names (e.g., `zaken.oneground.local`) to work correctly.
 
 1. Open your `hosts` file as an administrator.
-
-    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-    - **macOS/Linux:** `/etc/hosts`
+   - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+   - **macOS/Linux:** `/etc/hosts`
 
 2. Add the following lines to the end of the file and save it:
 
-    ```txt
-    127.0.0.1 autorisaties.oneground.local
-    127.0.0.1 besluiten.oneground.local
-    127.0.0.1 catalogi.oneground.local
-    127.0.0.1 documenten.oneground.local
-    127.0.0.1 documentlistener.oneground.local
-    127.0.0.1 notificaties.oneground.local
-    127.0.0.1 notificaties-receiver.oneground.local
-    127.0.0.1 notificatielistener.oneground.local
-    127.0.0.1 referentielijsten.oneground.local
-    127.0.0.1 zaken.oneground.local
-    127.0.0.1 haproxy-tool.oneground.local
-    127.0.0.1 keycloak-tool.oneground.local
-    127.0.0.1 rabbitmq-tool.oneground.local
+   ```txt
+   127.0.0.1 autorisaties.oneground.local
+   127.0.0.1 besluiten.oneground.local
+   127.0.0.1 catalogi.oneground.local
+   127.0.0.1 documenten.oneground.local
+   127.0.0.1 documentlistener.oneground.local
+   127.0.0.1 notificaties.oneground.local
+   127.0.0.1 notificaties-receiver.oneground.local
+   127.0.0.1 notificatielistener.oneground.local
+   127.0.0.1 referentielijsten.oneground.local
+   127.0.0.1 zaken.oneground.local
+   127.0.0.1 haproxy-tool.oneground.local
+   127.0.0.1 keycloak-tool.oneground.local
+   127.0.0.1 rabbitmq-tool.oneground.local
 
-    ```
+   ```
 
 ### 5. Configure API Authentication
 
@@ -174,88 +174,59 @@ See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
 1. Return to the `ZGW_APIs/localdev` directory in your terminal:
 
-    ```bash
-    cd ZGW_APIs/localdev
-    ```
+   ```bash
+   cd ZGW_APIs/localdev
+   ```
 
 2. Open the [ZGW_APIs/localdev/default.env](./default.env) file in a text editor.
 3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
-    ```text
-    ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
-    ```
+   ```text
+   ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
+   ```
 
 4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
-    ```bash
-    docker compose --env-file ./.env up -d
-    ```
+   ```bash
+   docker compose --env-file ./.env up -d
+   ```
 
 #### Step 5.3: Request an Access Token
 
 See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
-### 6. Configure Data Protection & Encryption (Zaken API)
+### 6. Configure Data Protection & Encryption
 
-The Zaken API supports encryption of sensitive personal data (BSN - Burgerservicenummer) stored in the database. This uses two mechanisms:
+To securely store sensitive personal data in your services, you must configure HMAC hashing and DataProtection encryption.
 
-#### HMAC Hashing (for searchable lookups)
+#### Step 6.1: Generate Encryption Keys and Certificates
 
-BSN values are hashed using HMAC-SHA256 so they can be searched without storing plaintext. Configure the HMAC key via an environment variable on the Zaken container in `default.env`:
+See [DATAPROTECTION.md](../docs/DATAPROTECTION.md).
 
-```text
-HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
-```
+#### Step 6.2: Update Environment File and Restart Services
 
-To generate a key:
+1. Return to the `ZGW_APIs/localdev` directory in your terminal:
 
-```bash
-# Linux/macOS
-openssl rand -base64 32
+   ```bash
+   cd ZGW_APIs/localdev
+   ```
 
-# PowerShell
-[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
-```
+2. Open the [ZGW_APIs/localdev/default.env](./default.env) file in a text editor.
+3. Add the generated HMAC key and DataProtection certificate values as described in the Data Protection guide.
 
-> **Warning**: The HMAC key is permanent — if you change it, existing hashes become unsearchable. Back it up securely.
+   ```text
+   HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
+   DataProtection__Certificate=<base64-encoded-pfx>
+   DataProtection__CertificatePassword=<pfx-password>
+   ```
 
-#### DataProtection Encryption (for reversible encryption at rest)
+4. Save the `default.env` file.
+5. Restart the Docker containers to apply the new configuration:
 
-BSN values are also encrypted using ASP.NET Core DataProtection. Encryption keys are stored in the database (`data_protection.DataProtectionKeys` table). Optionally, these keys can be protected with an X.509 certificate.
-
-Add the following to `default.env`:
-
-```text
-DataProtection__Certificate=<base64-encoded-pfx>
-DataProtection__CertificatePassword=<pfx-password>
-```
-
-Use the provided generator script to create a certificate. Run the following commands **from the `localdev` directory**. The script outputs the values ready to paste into `default.env`:
-
-**Linux/macOS:**
-
-```bash
-chmod +x ../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
-../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
-```
-
-**Windows (PowerShell):**
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-..\tools\oneground-certificates-generator\generate-dataprotection-certificate.ps1
-```
-
-> **Warning**: If the certificate is lost, all encrypted data in the database becomes permanently unreadable. Always back up the PFX file.
-
-If no certificate is configured, DataProtection keys are stored unencrypted in the database. This is acceptable for local development but not recommended for production.
-
-After updating `default.env`, restart the services:
-
-```bash
-docker compose --env-file ./.env up -d
-```
+   ```bash
+   docker compose --env-file ./.env up -d
+   ```
 
 ### 7. Stopping the Services
 
