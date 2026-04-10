@@ -58,6 +58,30 @@ grant_hangfire_permissions() {
 EOSQL
 }
 
+grant_protection_permissions() {
+    local db_name=$1
+    local admin_role="oneground_admin"
+    local user_role="oneground_user"
+    
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db_name" <<-EOSQL
+        CREATE SCHEMA IF NOT EXISTS data_protection AUTHORIZATION ${user_role};
+
+        GRANT ALL ON SCHEMA data_protection TO ${user_role};
+        GRANT ALL ON ALL TABLES IN SCHEMA data_protection TO ${user_role};
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA data_protection TO ${user_role};
+
+        GRANT ALL ON SCHEMA data_protection TO ${admin_role};
+        GRANT ALL ON ALL TABLES IN SCHEMA data_protection TO ${admin_role};
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA data_protection TO ${admin_role};
+
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA data_protection GRANT ALL ON TABLES TO ${user_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA data_protection GRANT ALL ON SEQUENCES TO ${user_role};
+
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA data_protection GRANT ALL ON TABLES TO ${admin_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${admin_role} IN SCHEMA data_protection GRANT ALL ON SEQUENCES TO ${admin_role};
+EOSQL
+}
+
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
     CREATE ROLE oneground_admin WITH LOGIN PASSWORD 'oneground_admin' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
     CREATE ROLE oneground_user WITH LOGIN PASSWORD 'oneground_user' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
@@ -78,4 +102,10 @@ DATABASES_WITH_HANGFIRE="drc_db nrc_db"
 
 for db in $DATABASES_WITH_HANGFIRE; do
     grant_hangfire_permissions "$db"
+done
+
+DATABASES_WITH_PROTECTION="zrc_db"
+
+for db in $DATABASES_WITH_PROTECTION; do
+    grant_protection_permissions "$db"
 done

@@ -206,7 +206,7 @@ internal static class IQueryableExtension
                 z =>
                     z.ZaakRollen.Any(r =>
                         r.BetrokkeneType == BetrokkeneType.natuurlijk_persoon
-                        && r.NatuurlijkPersoon.InpBsn == filter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn
+                        && r.NatuurlijkPersoon.InpBsnHash == filter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn
                     )
             )
             .WhereIf(

@@ -2,9 +2,10 @@
 
 ## Featured Tags
 
- ```bash
- docker pull ghcr.io/oneground/zaken-api:<version>
- ```
+```bash
+docker pull ghcr.io/oneground/zaken-api:<version>
+
+```
 
 The complete list of available versions for the OneGround Zaken API is maintained on their [GitHub versions page](https://github.com/OneGround/ZGW-APIs/pkgs/container/zaken-api/versions).
 
@@ -37,6 +38,7 @@ The OneGround Zaken API depends on:
 
 ```bash
 docker run -it -p 8080:80 ghcr.io/oneground/zaken-api:<version>
+
 ```
 
 ## Configuration
