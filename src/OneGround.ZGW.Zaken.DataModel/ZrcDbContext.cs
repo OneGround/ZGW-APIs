@@ -88,8 +88,6 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
         modelBuilder.Entity<ZaakRol.ZaakRol>().HasIndex(p => p.Owner);
 
-        modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
-
         // Capture for use in lambda
         var hmacHasher = _hmacHasher;
 

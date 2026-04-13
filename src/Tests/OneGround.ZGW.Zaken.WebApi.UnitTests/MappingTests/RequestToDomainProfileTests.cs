@@ -418,7 +418,6 @@ public class RequestToDomainProfileTests
         var value = _fixture.Create<NatuurlijkPersoonZaakRolDto>();
         var result = _mapper.Map<NatuurlijkPersoonZaakRol>(value);
 
-        Assert.Equal(value.InpBsn, result.InpBsn);
         Assert.Equal(value.InpBsn, result.InpBsnHash);
         Assert.Equal(value.InpBsn, result.InpBsnEncrypted);
         Assert.Equal(value.AnpIdentificatie, result.AnpIdentificatie);
