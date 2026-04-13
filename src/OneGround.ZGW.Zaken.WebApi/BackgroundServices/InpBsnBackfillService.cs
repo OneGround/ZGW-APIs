@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,43 +25,96 @@ public class InpBsnBackfillService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Check whether the legacy inpbsn column still exists. After migration
+        // 20260413000000_remove_inpbsn_plain_column_from_zaakrollen has run, there
+        // is nothing left to backfill and this service exits immediately.
+        using var scope = _serviceProvider.CreateScope();
+        await using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+        var columnExists = await db
+            .Database.SqlQuery<bool>(
+                $"""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name  = 'zaakrollen_natuurlijk_personen'
+                      AND column_name = 'inpbsn'
+                )
+                """
+            )
+            .SingleAsync(stoppingToken);
+
+        if (!columnExists)
+        {
+            _logger.LogInformation("InpBsnBackfillService: inpbsn column no longer exists, nothing to backfill.");
+            return;
+        }
+
         const int batchSize = 5_000;
         int totalMigrated = 0;
         int batchCount;
 
         do
         {
-            using var scope = _serviceProvider.CreateScope();
-            await using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+            using var batchScope = _serviceProvider.CreateScope();
+            await using var batchDb = batchScope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
-            var batch = await db.Set<NatuurlijkPersoonZaakRol>()
-                .Where(r => r.InpBsn != null && r.InpBsnHash == null)
-                .Take(batchSize)
+            // Read raw inpbsn values via SQL because the entity property has been removed.
+            var rawRecords = await batchDb
+                .Database.SqlQuery<InpBsnRawRecord>(
+                    $"""
+                    SELECT id, inpbsn AS bsn
+                    FROM zaakrollen_natuurlijk_personen
+                    WHERE inpbsn IS NOT NULL
+                      AND inpbsn_hash IS NULL
+                    LIMIT {batchSize}
+                    """
+                )
                 .ToListAsync(stoppingToken);
 
-            batchCount = batch.Count;
-
-            foreach (var record in batch)
-            {
-                record.InpBsnHash = record.InpBsn;
-                record.InpBsnEncrypted = record.InpBsn;
-            }
-
-            await db.SaveChangesAsync(stoppingToken);
-            db.ChangeTracker.Clear();
-
-            totalMigrated += batchCount;
-
-            _logger.LogInformation("Migrated {BatchCount} InpBsn records to Hash and Encrypted (total: {TotalMigrated})", batchCount, totalMigrated);
+            batchCount = rawRecords.Count;
 
             if (batchCount > 0)
             {
+                var ids = new List<Guid>(batchCount);
+                var bsnById = new Dictionary<Guid, string>(batchCount);
+                foreach (var r in rawRecords)
+                {
+                    ids.Add(r.Id);
+                    bsnById[r.Id] = r.Bsn;
+                }
+
+                var entities = await batchDb.Set<NatuurlijkPersoonZaakRol>().Where(e => ids.Contains(e.Id)).ToListAsync(stoppingToken);
+
+                foreach (var entity in entities)
+                {
+                    var bsn = bsnById[entity.Id];
+                    entity.InpBsnHash = bsn;
+                    entity.InpBsnEncrypted = bsn;
+                }
+
+                await batchDb.SaveChangesAsync(stoppingToken);
+                batchDb.ChangeTracker.Clear();
+
+                totalMigrated += batchCount;
+
+                _logger.LogInformation(
+                    "Migrated {BatchCount} InpBsn records to Hash and Encrypted (total: {TotalMigrated})",
+                    batchCount,
+                    totalMigrated
+                );
+
                 await Task.Delay(50, stoppingToken);
             }
         } while (batchCount > 0);
 
-        _logger.LogInformation("Completed InpBsn migration. Total records migrated: {TotalMigrated}", totalMigrated);
+        _logger.LogInformation("Completed InpBsn backfill. Total records migrated: {TotalMigrated}", totalMigrated);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    // Keyless projection type for EF8 SqlQuery<T>
+    private sealed class InpBsnRawRecord
+    {
+        public Guid Id { get; init; }
+        public string Bsn { get; init; }
+    }
 }
