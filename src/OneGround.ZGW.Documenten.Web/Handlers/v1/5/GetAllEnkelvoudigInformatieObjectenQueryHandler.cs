@@ -156,6 +156,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             key,
             factory: async () =>
             {
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
                 if (!anyFiltersSet)
                 {
                     // The planner severely underestimates cardinality (7K vs 1M actual) due to
@@ -166,8 +167,6 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                     // SET LOCAL requires an active transaction — without one, PostgreSQL silently
                     // treats it as session-scoped SET. Settings revert automatically when the
                     // transaction is disposed (no manual RESET needed, safe for pooled connections).
-                    using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
                     await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
                 }
 
