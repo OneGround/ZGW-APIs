@@ -131,7 +131,7 @@ Follow the steps for your operating system.
     ./install-oneground-certificate.sh ../../getting-started/docker-compose/oneground-certificates/oneground.local.pem
     ```
 
-This script installs the certificate into your system's keychain or trust store.
+    This script installs the certificate into your system's keychain or trust store.
 
 > **Note:** After installing the certificate, we recommend restarting your web browser to ensure the changes take effect.
 
