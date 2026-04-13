@@ -145,22 +145,30 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     {
         var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
 
+        bool anyFiltersSet =
+            !string.IsNullOrEmpty(filterModel.Identificatie)
+            || !string.IsNullOrEmpty(filterModel.Bronorganisatie)
+            || (filterModel.Uuid_In != null && filterModel.Uuid_In.Any())
+            || (filterModel.Trefwoorden_In != null && filterModel.Trefwoorden_In.Any());
+
         // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(
             key,
             factory: async () =>
             {
-                // The planner severely underestimates cardinality (7K vs 1M actual) due to
-                // stale/missing statistics on the temporary authorization table. This makes it
-                // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
-                // (single streaming pass = ~5s). Temporarily disable nested loops and increase
-                // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
-                // SET LOCAL requires an active transaction — without one, PostgreSQL silently
-                // treats it as session-scoped SET. Settings revert automatically when the
-                // transaction is disposed (no manual RESET needed, safe for pooled connections).
                 using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
-                await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+                if (!anyFiltersSet)
+                {
+                    // The planner severely underestimates cardinality (7K vs 1M actual) due to
+                    // stale/missing statistics on the temporary authorization table. This makes it
+                    // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
+                    // (single streaming pass = ~5s). Temporarily disable nested loops and increase
+                    // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
+                    // SET LOCAL requires an active transaction — without one, PostgreSQL silently
+                    // treats it as session-scoped SET. Settings revert automatically when the
+                    // transaction is disposed (no manual RESET needed, safe for pooled connections).
+                    await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+                }
 
                 var result = await _context
                     .EnkelvoudigInformatieObjecten.AsNoTracking()
