@@ -81,7 +81,7 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
-   - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
 
@@ -140,8 +140,8 @@ Follow the steps for your operating system.
 To ensure all services can communicate with each other and are accessible in your browser, you need to map the service hostnames to your local machine. This is a crucial step for the local domain names (e.g., `zaken.oneground.local`) to work correctly.
 
 1. Open your `hosts` file as an administrator.
-   - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-   - **macOS/Linux:** `/etc/hosts`
+    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+    - **macOS/Linux:** `/etc/hosts`
 
 2. Add the following lines to the end of the file and save it:
 
@@ -209,25 +209,25 @@ See [DATAPROTECTION.md](../../docs/DATAPROTECTION.md).
 
 1. Return to the `ZGW_APIs/getting-started/docker-compose` directory in your terminal:
 
-   ```bash
-   cd ZGW_APIs/getting-started/docker-compose
-   ```
+    ```bash
+    cd ZGW_APIs/getting-started/docker-compose
+    ```
 
 2. Open the [ZGW_APIs/getting-started/docker-compose/default.env](./default.env) file in a text editor.
 3. Add the generated HMAC key and DataProtection certificate values as described in the Data Protection guide.
 
-   ```text
-   HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
-   DataProtection__Certificate=<base64-encoded-pfx>
-   DataProtection__CertificatePassword=<pfx-password>
-   ```
+    ```text
+    HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
+    DataProtection__Certificate=<base64-encoded-pfx>
+    DataProtection__CertificatePassword=<pfx-password>
+    ```
 
 4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
-   ```bash
-   docker compose --env-file ./.env up -d
-   ```
+    ```bash
+    docker compose --env-file ./.env up -d
+    ```
 
 ### 7. Creating a Sample Case Using Postman
 
@@ -237,23 +237,23 @@ You can quickly use the Zaken API by creating a sample case ("zaak") using Postm
 
 1. **Import the Create Case collection and environment**
 
-   - Open Postman;
-   - Go to the Collections tab. Import [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
-   - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
+    - Open Postman;
+    - Go to the Collections tab. Import [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
+    - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
 
 2. **Obtain an Access Token**
 
-   - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
-   - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
+    - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
+    - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
 
 3. **Set Up Other Environment Variables**
 
-   - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
+    - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
 
 4. **Create a Sample Case**
 
-   - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
-   - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
+    - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
+    - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
 
 > For more details and advanced scenarios, see the documentation in the Postman collection.
 

@@ -49,15 +49,15 @@ Before you begin, ensure you have the following software installed:
 
 1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/OneGround/ZGW-APIs.git
-   ```
+    ```bash
+    git clone https://github.com/OneGround/ZGW-APIs.git
+    ```
 
 2. Open your terminal and navigate into the `localdev` directory:
 
-   ```bash
-   cd ZGW_APIs/localdev
-   ```
+    ```bash
+    cd ZGW_APIs/localdev
+    ```
 
 ### 2. Start the ZGW API Services
 
@@ -83,7 +83,7 @@ Follow the steps for your operating system.
 
 1. **Open PowerShell as an Administrator.**
 
-     - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+    - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
 
@@ -142,8 +142,8 @@ To ensure all services can communicate with each other and are accessible in you
 
 1. Open your `hosts` file as an administrator.
 
-   - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-   - **macOS/Linux:** `/etc/hosts`
+    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
+    - **macOS/Linux:** `/etc/hosts`
 
 2. Add the following lines to the end of the file and save it:
 
