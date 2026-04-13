@@ -9,23 +9,19 @@
     - [3. Install the Local SSL Certificate](#3-install-the-local-ssl-certificate)
       - [For Windows (using PowerShell)](#for-windows-using-powershell)
       - [For macOS and Linux (using Bash)](#for-macos-and-linux-using-bash)
-
     - [4. Update Your `hosts` File](#4-update-your-hosts-file)
     - [5. Configure API Authentication](#5-configure-api-authentication)
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-
-    - [6. Configure Data Protection & Encryption](#6-configure-data-protection--encryption)
+    - [6. Configure Data Protection \& Encryption](#6-configure-data-protection--encryption)
       - [Step 6.1: Generate Encryption Keys and Certificates](#step-61-generate-encryption-keys-and-certificates)
       - [Step 6.2: Update Environment File and Restart Services](#step-62-update-environment-file-and-restart-services)
     - [7. Creating a Sample Case Using Postman](#7-creating-a-sample-case-using-postman)
     - [8. Stopping the Services](#8-stopping-the-services)
-
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services/Listeners](#zgw-api-serviceslisteners)
     - [Hosted Tools](#hosted-tools)
-
   - [License](#license)
 
 ## About This Guide

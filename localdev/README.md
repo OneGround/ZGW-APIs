@@ -14,7 +14,7 @@
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-    - [6. Configure Data Protection & Encryption](#6-configure-data-protection--encryption)
+    - [6. Configure Data Protection \& Encryption](#6-configure-data-protection--encryption)
       - [Step 6.1: Generate Encryption Keys and Certificates](#step-61-generate-encryption-keys-and-certificates)
       - [Step 6.2: Update Environment File and Restart Services](#step-62-update-environment-file-and-restart-services)
     - [7. Stopping the Services](#7-stopping-the-services)
