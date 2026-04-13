@@ -236,18 +236,22 @@ You can quickly use the Zaken API by creating a sample case ("zaak") using Postm
 **Steps:**
 
 1. **Import the Create Case collection and environment**
+
    - Open Postman;
    - Go to the Collections tab. Import [ZGW Create Case.postman_collection.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.postman_collection.json);
    - Go to the Environments tab. Import [ZGW Create Case.environment.json](https://github.com/OneGround/ZGW-APIs-postman-tests/blob/main/ZGW%20Create%20Case.environment.json).
 
 2. **Obtain an Access Token**
+
    - Follow the instructions in the "Configure API Authentication" section above to get a valid access token.
    - Paste the token into the `jwt_token` variable in your Postman Create Case Environment.
 
 3. **Set Up Other Environment Variables**
+
    - Update the variables for your local setup if they deviate from standard set up, such as `zrc_url`.
 
 4. **Create a Sample Case**
+
    - In the imported collection `ZGW Create Case`, find the folder named `Casetype`. Click 'run' and 'Run ZGW Create Case'. The catalog will be created, a case and other types will be added.
    - Find the folder named `Case`. Click 'run' and 'Run ZGW Create Case'. The case with related entities (status, result, document) will be added. If you need more cases run it multiple times.
 
@@ -259,7 +263,6 @@ To stop all running Docker containers, run the following command from the `docke
 
 ```bash
 docker compose down
-
 ```
 
 ## Service Endpoints and Tools

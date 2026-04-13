@@ -82,6 +82,7 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
+
      - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
@@ -108,7 +109,7 @@ Follow the steps for your operating system.
     .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
     ```
 
-The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
+    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
 #### For macOS and Linux (using Bash)
 
@@ -131,7 +132,7 @@ The script will import the certificate into the Windows "Trusted Root Certificat
     ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
     ```
 
-This script installs the certificate into your system's keychain or trust store.
+    This script installs the certificate into your system's keychain or trust store.
 
 > **Note:** After installing the certificate, we recommend restarting your web browser to ensure the changes take effect.
 
@@ -140,6 +141,7 @@ This script installs the certificate into your system's keychain or trust store.
 To ensure all services can communicate with each other and are accessible in your browser, you need to map the service hostnames to your local machine. This is a crucial step for the local domain names (e.g., `zaken.oneground.local`) to work correctly.
 
 1. Open your `hosts` file as an administrator.
+
    - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
    - **macOS/Linux:** `/etc/hosts`
 

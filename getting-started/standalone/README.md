@@ -41,7 +41,7 @@ Before you begin, ensure you have the following components installed and running
 - A running **PostgreSQL** instance
 - A running **Redis** instance
 - An **OAuth2** compliant Identity Provider
-- A running **RabbitMQ** instance (_only required for the Notificaties API or if using the event bus for notifications_)
+- A running **RabbitMQ** instance (*only required for the Notificaties API or if using the event bus for notifications*)
 
 > **Note:** Not all APIs require every component. See the [API-Specific Configuration](#api-specific-configuration) section for the exact prerequisites for each service.
 
@@ -435,8 +435,6 @@ For example, to change the default log level, add the following line to your `.e
 # Example: Overriding a nested setting from appsettings.json
 Logging__LogLevel__Default=Warning
 ```
-
----
 
 ---
 
