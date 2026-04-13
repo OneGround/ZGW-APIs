@@ -110,7 +110,6 @@ Auth__ValidAudience="account"
 
 # --- Notifications Configuration ---
 NotificatieService__Type="Http"
-
 ```
 
 ---
@@ -154,7 +153,6 @@ Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
-
 ```
 
 ---
@@ -198,7 +196,6 @@ Services__NRC__Api="https://notificaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
-
 ```
 
 ---
@@ -248,7 +245,6 @@ Services__ZRC__Api="https://zaken.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
-
 ```
 
 ---
@@ -294,7 +290,6 @@ Services__AC__Api="https://autorisaties.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
-
 ```
 
 ---
@@ -416,14 +411,12 @@ Once you have configured your `.env` and `docker-compose.yml` files, you can sta
 
 ```bash
 docker compose up -d
-
 ```
 
 To verify that the service has started correctly and to follow its log output, use the following command:
 
 ```bash
 docker compose logs -f
-
 ```
 
 If the startup is successful, the API will be running and accessible on its default port on your Docker host (e.g., `http://localhost:<DEFAULT_PORT>`).
@@ -441,7 +434,6 @@ For example, to change the default log level, add the following line to your `.e
 ```dotenv
 # Example: Overriding a nested setting from appsettings.json
 Logging__LogLevel__Default=Warning
-
 ```
 
 ---

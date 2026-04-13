@@ -66,22 +66,22 @@ The system includes two message listeners for asynchronous processing:
 
 1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/OneGround/ZGW-APIs.git
-   cd ZGW-APIs
-   ```
+    ```bash
+    git clone https://github.com/OneGround/ZGW-APIs.git
+    cd ZGW-APIs
+    ```
 
 2. Build the solution:
 
-   ```bash
-   dotnet build ./src/ZGW.all.sln
-   ```
+    ```bash
+    dotnet build ./src/ZGW.all.sln
+    ```
 
 3. Run the tests:
 
-   ```bash
-   dotnet test ./src/ZGW.UnitTests.slnf
-   ```
+    ```bash
+    dotnet test ./src/ZGW.UnitTests.slnf
+    ```
 
 ### Docker Deployment
 

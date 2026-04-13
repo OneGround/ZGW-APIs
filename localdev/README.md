@@ -82,31 +82,31 @@ Follow the steps for your operating system.
 #### For Windows (using PowerShell)
 
 1. **Open PowerShell as an Administrator.**
-   - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
+     - Click the Start menu, type "PowerShell", right-click on "Windows PowerShell", and select "Run as administrator".
 
 2. **Navigate to the certificate installer directory:**
 
-   ```powershell
-   cd ZGW_APIs/tools/oneground-certificates-installer
-   ```
+    ```powershell
+    cd ZGW_APIs/tools/oneground-certificates-installer
+    ```
 
 3. **Run the following command to check your current execution policy:**
 
-   ```powershell
-   Get-ExecutionPolicy -List
-   ```
+    ```powershell
+    Get-ExecutionPolicy -List
+    ```
 
 4. **To allow the script to run just for this session, execute the following command. This bypasses the policy for the current process only:**
 
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-   ```
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+    ```
 
 5. **Run the installation script:**
 
-   ```powershell
-   .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
-   ```
+    ```powershell
+    .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
+    ```
 
 The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
@@ -115,21 +115,21 @@ The script will import the certificate into the Windows "Trusted Root Certificat
 1. **Open your terminal.**
 2. **Navigate to the certificate installer directory:**
 
-   ```bash
-   cd ZGW_APIs/tools/oneground-certificates-installer
-   ```
+    ```bash
+    cd ZGW_APIs/tools/oneground-certificates-installer
+    ```
 
 3. **Make the script executable** (you only need to do this once):
 
-   ```bash
-   chmod +x ./install-oneground-certificate.sh
-   ```
+    ```bash
+    chmod +x ./install-oneground-certificate.sh
+    ```
 
 4. **Run the installation script.** (you may be prompted for your password):
 
-   ```bash
-   ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
-   ```
+    ```bash
+    ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
+    ```
 
 This script installs the certificate into your system's keychain or trust store.
 
@@ -145,22 +145,21 @@ To ensure all services can communicate with each other and are accessible in you
 
 2. Add the following lines to the end of the file and save it:
 
-   ```txt
-   127.0.0.1 autorisaties.oneground.local
-   127.0.0.1 besluiten.oneground.local
-   127.0.0.1 catalogi.oneground.local
-   127.0.0.1 documenten.oneground.local
-   127.0.0.1 documentlistener.oneground.local
-   127.0.0.1 notificaties.oneground.local
-   127.0.0.1 notificaties-receiver.oneground.local
-   127.0.0.1 notificatielistener.oneground.local
-   127.0.0.1 referentielijsten.oneground.local
-   127.0.0.1 zaken.oneground.local
-   127.0.0.1 haproxy-tool.oneground.local
-   127.0.0.1 keycloak-tool.oneground.local
-   127.0.0.1 rabbitmq-tool.oneground.local
-
-   ```
+    ```txt
+    127.0.0.1 autorisaties.oneground.local
+    127.0.0.1 besluiten.oneground.local
+    127.0.0.1 catalogi.oneground.local
+    127.0.0.1 documenten.oneground.local
+    127.0.0.1 documentlistener.oneground.local
+    127.0.0.1 notificaties.oneground.local
+    127.0.0.1 notificaties-receiver.oneground.local
+    127.0.0.1 notificatielistener.oneground.local
+    127.0.0.1 referentielijsten.oneground.local
+    127.0.0.1 zaken.oneground.local
+    127.0.0.1 haproxy-tool.oneground.local
+    127.0.0.1 keycloak-tool.oneground.local
+    127.0.0.1 rabbitmq-tool.oneground.local
+    ```
 
 ### 5. Configure API Authentication
 
@@ -174,23 +173,23 @@ See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
 1. Return to the `ZGW_APIs/localdev` directory in your terminal:
 
-   ```bash
-   cd ZGW_APIs/localdev
-   ```
+    ```bash
+    cd ZGW_APIs/localdev
+    ```
 
 2. Open the [ZGW_APIs/localdev/default.env](./default.env) file in a text editor.
 3. Find the following line and replace the placeholder with the secret you copied from Keycloak:
 
-   ```text
-   ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
-   ```
+    ```text
+    ZgwServiceAccounts__Credentials__0__ClientSecret=<oneground-client-secret>
+    ```
 
 4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
-   ```bash
-   docker compose --env-file ./.env up -d
-   ```
+    ```bash
+    docker compose --env-file ./.env up -d
+    ```
 
 #### Step 5.3: Request an Access Token
 
@@ -208,25 +207,25 @@ See [DATAPROTECTION.md](../docs/DATAPROTECTION.md).
 
 1. Return to the `ZGW_APIs/localdev` directory in your terminal:
 
-   ```bash
-   cd ZGW_APIs/localdev
-   ```
+    ```bash
+    cd ZGW_APIs/localdev
+    ```
 
 2. Open the [ZGW_APIs/localdev/default.env](./default.env) file in a text editor.
 3. Add the generated HMAC key and DataProtection certificate values as described in the Data Protection guide.
 
-   ```text
-   HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
-   DataProtection__Certificate=<base64-encoded-pfx>
-   DataProtection__CertificatePassword=<pfx-password>
-   ```
+    ```text
+    HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
+    DataProtection__Certificate=<base64-encoded-pfx>
+    DataProtection__CertificatePassword=<pfx-password>
+    ```
 
 4. Save the `default.env` file.
 5. Restart the Docker containers to apply the new configuration:
 
-   ```bash
-   docker compose --env-file ./.env up -d
-   ```
+    ```bash
+    docker compose --env-file ./.env up -d
+    ```
 
 ### 7. Stopping the Services
 
