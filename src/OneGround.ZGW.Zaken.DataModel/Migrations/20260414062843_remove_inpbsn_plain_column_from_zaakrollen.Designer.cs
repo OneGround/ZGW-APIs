@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using NodaTime;
@@ -14,9 +15,11 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    partial class ZrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414062843_remove_inpbsn_plain_column_from_zaakrollen")]
+    partial class remove_inpbsn_plain_column_from_zaakrollen
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
