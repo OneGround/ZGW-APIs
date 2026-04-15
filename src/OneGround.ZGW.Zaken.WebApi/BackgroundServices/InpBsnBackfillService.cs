@@ -28,22 +28,25 @@ public class InpBsnBackfillService : BackgroundService
         // Check whether the legacy inpbsn column still exists. After migration
         // 20260413000000_remove_inpbsn_plain_column_from_zaakrollen has run, there
         // is nothing left to backfill and this service exits immediately.
-        using var scope = _serviceProvider.CreateScope();
-        await using var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+        bool columnExists;
 
-        var columnExists = await db
-            .Database.SqlQuery<bool>(
-                $"""
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_name  = 'zaakrollen_natuurlijk_personen'
-                      AND column_name = 'inpbsn'
+        await using (var scope = _serviceProvider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+            columnExists = await db
+                .Database.SqlQuery<bool>(
+                    $"""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name  = 'zaakrollen_natuurlijk_personen'
+                        AND column_name = 'inpbsn'
+                    ) AS "Value"
+                    """
                 )
-                """
-            )
-            .SingleAsync(stoppingToken);
-
+                .SingleAsync(stoppingToken);
+        }
         if (!columnExists)
         {
             _logger.LogInformation("InpBsnBackfillService: inpbsn column no longer exists, nothing to backfill.");
@@ -56,8 +59,8 @@ public class InpBsnBackfillService : BackgroundService
 
         do
         {
-            using var batchScope = _serviceProvider.CreateScope();
-            await using var batchDb = batchScope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+            await using var batchScope = _serviceProvider.CreateAsyncScope();
+            var batchDb = batchScope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
             // Read raw inpbsn values via SQL because the entity property has been removed.
             var rawRecords = await batchDb
