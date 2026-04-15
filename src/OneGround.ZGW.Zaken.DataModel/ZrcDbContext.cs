@@ -7,6 +7,7 @@ using NetTopologySuite.Geometries;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
+using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.DataAccess.Migrations;
 using OneGround.ZGW.DataAccess.NumberGenerator;
 using OneGround.ZGW.Zaken.DataModel.Authorization;
@@ -16,8 +17,20 @@ namespace OneGround.ZGW.Zaken.DataModel;
 
 public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrationsDbContext, IDbContextWithNummerGenerator
 {
-    public ZrcDbContext(DbContextOptions<ZrcDbContext> options, IDbUserContext dbUserContext = null)
-        : base(options, dbUserContext) { }
+    private readonly IDatabaseProtector<ZrcDbContext> _databaseProtector;
+    private readonly IHmacHasher _hmacHasher;
+
+    public ZrcDbContext(
+        DbContextOptions<ZrcDbContext> options,
+        IDatabaseProtector<ZrcDbContext> databaseProtector,
+        IHmacHasher hmacHasher,
+        IDbUserContext dbUserContext = null
+    )
+        : base(options, dbUserContext)
+    {
+        _databaseProtector = databaseProtector;
+        _hmacHasher = hmacHasher;
+    }
 
     public DbSet<FinishedDataMigration> FinishedDataMigrations { get; set; }
 
@@ -44,6 +57,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
     {
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.HasPostgresExtension("postgis");
+
+        modelBuilder.ApplyDataProtectionConverters(_databaseProtector);
 
         modelBuilder
             .Entity<TempZaakAuthorization>()
@@ -74,6 +89,18 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakRol.ZaakRol>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
+
+        // Capture for use in lambda
+        var hmacHasher = _hmacHasher;
+
+        modelBuilder.Entity<NatuurlijkPersoonZaakRol>(entity =>
+        {
+            entity.Property(p => p.InpBsnEncrypted).HasColumnName("inpbsn_encrypted");
+
+            entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64).HasConversion(v => hmacHasher.ComputeHash(v), v => v);
+
+            entity.HasIndex(p => p.InpBsnHash);
+        });
 
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.AnpIdentificatie);
 
