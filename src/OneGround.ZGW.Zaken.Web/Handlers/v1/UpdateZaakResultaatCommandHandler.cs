@@ -81,7 +81,7 @@ class UpdateZaakResultaatCommandHandler
             return new CommandResult<ZaakResultaat>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakResultaat.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Updating ZaakResultaat {Id}....", zaakResultaat.Id);
 

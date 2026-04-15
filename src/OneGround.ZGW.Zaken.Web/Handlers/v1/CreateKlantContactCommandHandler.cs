@@ -86,7 +86,7 @@ class CreateKlantContactCommandHandler
             klantContact.Identificatie = klantcontactennummer;
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             await _zrcDbContext.KlantContacten.AddAsync(klantContact, cancellationToken);
 

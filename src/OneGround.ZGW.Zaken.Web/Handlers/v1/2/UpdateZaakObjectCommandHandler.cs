@@ -78,7 +78,7 @@ class UpdateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.Forbidden);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakobject.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Updating ZaakObject {zaakobjectId}....", zaakobject.Id);
 

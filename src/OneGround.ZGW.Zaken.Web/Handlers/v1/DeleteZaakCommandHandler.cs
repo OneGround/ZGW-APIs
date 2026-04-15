@@ -42,14 +42,16 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
 
     public async Task<CommandResult> Handle(DeleteZaakCommand request, CancellationToken cancellationToken)
     {
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        var zakenAndDeelZaken = await GetAllZakenAndDeelZakenAsync(request.Id, cancellationToken);
+        if (!zakenAndDeelZaken.Any())
         {
-            var zakenAndDeelZaken = await GetAllZakenAndDeelZakenAsync(request.Id, cancellationToken);
-            if (!zakenAndDeelZaken.Any())
-            {
-                return new CommandResult(CommandStatus.NotFound);
-            }
+            return new CommandResult(CommandStatus.NotFound);
+        }
 
+        var hoofdzaak = zakenAndDeelZaken.Single(z => z.Id == request.Id);
+
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, hoofdzaak.LegacyAuditTrail))
+        {
             foreach (var zaak in zakenAndDeelZaken)
             {
                 DeleteZaak(zaak); // Including audittrail with all details!
@@ -136,9 +138,13 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
     {
         _logger.LogDebug("Deleting audit for Zaak {Id} ...", zaak.Id);
 
-        var zaakAuditTrails = _context.AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == zaak.Id);
+        var zaakAuditTrailsLegacy = _context.AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == zaak.Id);
 
-        _context.AuditTrailRegels.RemoveRange(zaakAuditTrails);
+        _context.AuditTrailRegels.RemoveRange(zaakAuditTrailsLegacy);
+
+        var zaakAuditTrailsDeltas = _context.AuditTrailDeltas.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == zaak.Id);
+
+        _context.AuditTrailDeltas.RemoveRange(zaakAuditTrailsDeltas);
     }
 
     private async Task SendInformationObjectNotificationAsync(Zaak zaak, CancellationToken cancellationToken)

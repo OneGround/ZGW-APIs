@@ -12,6 +12,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.Authorization;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
 
@@ -45,6 +46,7 @@ class GetEnkelvoudigInformatieObjectAuditTrailRegelHandler
 
         var enkelvoudigInformatieObject = await _context
             .EnkelvoudigInformatieObjecten.AsNoTracking()
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(a => a.Id == request.EnkelvoudigInformatieObjectId, cancellationToken);
 
@@ -53,7 +55,12 @@ class GetEnkelvoudigInformatieObjectAuditTrailRegelHandler
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.NotFound);
         }
 
-        using var audittrail = _auditTrailFactory.Create(new AuditTrailOptions(), enkelvoudigInformatieObject.LegacyAuditTrail); // TODO: Only retrieve why options?
+        if (!_authorizationContext.IsAuthorized(enkelvoudigInformatieObject))
+        {
+            return new QueryResult<AuditTrailRegel>(null, QueryStatus.Forbidden);
+        }
+
+        using var audittrail = _auditTrailFactory.Create(enkelvoudigInformatieObject.LegacyAuditTrail);
 
         var result = await audittrail.GetAuditTrailEntryByIdAsync(
             request.EnkelvoudigInformatieObjectId,

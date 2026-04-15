@@ -73,7 +73,7 @@ class DeleteZaakInformatieObjectCommandHandler
 
         // keep the reference for later, because saving context removed relation from zaakInformatieObject.Zaak
         var zaak = zaakInformatieObject.Zaak;
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakInformatieObject {Id}....", zaakInformatieObject.Id);
 

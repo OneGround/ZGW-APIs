@@ -5,7 +5,7 @@ using System.Text.Json.Nodes;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
-internal static class AuditDeltaGenerator
+public static class AuditDeltaGenerator
 {
     public static JsonObject GenerateDelta<T>(T original, T current)
     {
@@ -43,6 +43,17 @@ internal static class AuditDeltaGenerator
             else if (kv.Value == null && oldValue != null)
             {
                 delta[kv.Key] = null;
+            }
+        }
+
+        // Check for properties that exist in original but not in current (removed properties)
+        // Use a special marker to distinguish between "removed" and "set to null"
+        // => Edge case: find in patching Geometry complex type to a different type, eg. "GeometryCollection" to "Point"
+        foreach (var kv in original)
+        {
+            if (!current.ContainsKey(kv.Key))
+            {
+                delta[kv.Key] = new JsonObject { ["__removed"] = true };
             }
         }
 

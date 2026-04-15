@@ -85,9 +85,9 @@ class UpdateZaakInformatieObjectCommandHandler
             return new CommandResult<ZaakInformatieObject>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakInformatieObject.Zaak.LegacyAuditTrail))
         {
-            _logger.LogDebug("Updating ZaakResultaat {Id}....", zaakInformatieObject.Id);
+            _logger.LogDebug("Updating ZaakInformatieObject {Id}....", zaakInformatieObject.Id);
 
             audittrail.SetOld<ZaakInformatieObjectResponseDto>(zaakInformatieObject);
 

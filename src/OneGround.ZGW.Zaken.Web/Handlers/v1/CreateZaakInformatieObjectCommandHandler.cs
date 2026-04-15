@@ -132,7 +132,7 @@ class CreateZaakInformatieObjectCommandHandler
             return new CommandResult<ZaakInformatieObject>(null, CommandStatus.ValidationError, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             zaakInformatieObject.RegistratieDatum = DateTime.UtcNow;
             zaakInformatieObject.ZaakId = zaak.Id;

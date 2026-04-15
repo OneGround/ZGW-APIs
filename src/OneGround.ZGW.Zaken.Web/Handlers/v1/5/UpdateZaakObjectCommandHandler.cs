@@ -94,7 +94,7 @@ class UpdateZaakObjectCommandHandler
             }
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakobject.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Updating ZaakObject {zaakobjectId}....", zaakobject.Id);
 

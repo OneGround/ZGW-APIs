@@ -138,6 +138,7 @@ public class ZaakStatussenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "status" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

@@ -137,6 +137,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakobject" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

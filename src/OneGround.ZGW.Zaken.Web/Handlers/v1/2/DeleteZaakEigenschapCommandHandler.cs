@@ -76,7 +76,7 @@ class DeleteZaakEigenschapCommandHandler
             return new CommandResult<KlantContact>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakEigenschap.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakEigenschap {Id}....", zaakEigenschap.Id);
 

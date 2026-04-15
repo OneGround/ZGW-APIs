@@ -49,7 +49,16 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
 
-        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.HoofdObjectId);
+        modelBuilder
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
+
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
         // Source: https://www.npgsql.org/efcore/misc/collations-and-case-sensitivity.html?tabs=data-annotations

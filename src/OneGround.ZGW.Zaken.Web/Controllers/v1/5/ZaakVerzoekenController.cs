@@ -115,6 +115,7 @@ public class ZaakVerzoekenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakverzoek" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

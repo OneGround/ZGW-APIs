@@ -69,7 +69,7 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
 
         Geometry savedZaakgeometrie = null;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, request.OriginalZaak.LegacyAuditTrail))
         {
             audittrail.SetOld<ZaakResponseDto>(request.OriginalZaak);
 

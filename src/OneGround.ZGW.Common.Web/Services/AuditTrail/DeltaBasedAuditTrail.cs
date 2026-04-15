@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class DeltaBasedAuditTrail : IAuditTrailService
 {
-    protected const int _snapshotInterval = 25; 
+    protected const int _snapshotInterval = 25;
 
     protected readonly IDbContextWithAuditTrail _context;
     protected readonly IMapper _mapper;
@@ -214,6 +214,9 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         var result = new List<AuditTrailRegel>();
 
+        //
+        // Rebuild the complete audittrail starting with snapshot and applying deltas....
+
         foreach (var auditsForResource in auditsGroupedByResource)
         {
             JsonNode current = null;
@@ -265,11 +268,40 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                             Resultaat = audit.Resultaat,
                             Toelichting = audit.Toelichting,
                             // Reconstructed object
-                            Nieuw = default!,
+                            Nieuw = default,
                             Oud = deletedVersion != null ? JsonSerializer.SerializeToNode(deletedVersion)?.ToString() : null,
                         }
                     );
                     current = null;
+                    continue;
+                }
+                else if (audit.Actie == $"{AuditActie.retrieve}")
+                {
+                    result.Add(
+                        new AuditTrailRegel
+                        {
+                            Id = audit.Id,
+                            AanmaakDatum = audit.AanmaakDatum,
+                            Actie = audit.Actie,
+                            ActieWeergave = audit.ActieWeergave,
+                            ApplicatieId = audit.ApplicatieId,
+                            ApplicatieWeergave = audit.ApplicatieWeergave,
+                            Bron = audit.Bron,
+                            GebruikersId = audit.GebruikersId,
+                            GebruikersWeergave = audit.GebruikersWeergave,
+                            HoofdObject = audit.HoofdObject,
+                            HoofdObjectId = audit.HoofdObjectId,
+                            Resource = audit.Resource,
+                            ResourceUrl = audit.ResourceUrl,
+                            ResourceWeergave = audit.ResourceWeergave,
+                            RequestId = audit.RequestId,
+                            Resultaat = audit.Resultaat,
+                            Toelichting = audit.Toelichting,
+                            // Log retrieve operation only
+                            Nieuw = default,
+                            Oud = default,
+                        }
+                    );
                     continue;
                 }
 
@@ -316,11 +348,10 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         CancellationToken cancellationToken = default
     )
     {
-        var requestedAuditVersie = await _context
+        // Use a subquery to resolve ResourceId and Versie, combining both queries into a single database round-trip
+        var requestedAuditSubquery = _context
             .AuditTrailDeltas.AsNoTracking()
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId)
-            .Where(a => a.Id == audittrailId)
-            .SingleOrDefaultAsync(cancellationToken);
+            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId && a.Id == audittrailId);
 
         var audits = await _context
             .AuditTrailDeltas.AsNoTracking()
@@ -328,16 +359,48 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 a.HoofdObjectId.HasValue
                 && a.HoofdObjectId == hoofdobjectId
                 && a.ResourceId.HasValue
-                && a.ResourceId == requestedAuditVersie.ResourceId
-                && a.Versie <= requestedAuditVersie.Versie
+                && requestedAuditSubquery.Any(r => r.ResourceId == a.ResourceId && a.Versie <= r.Versie)
             )
             .OrderBy(a => a.Versie)
             .ToListAsync(cancellationToken);
 
         AuditTrailRegel auditTrailRegel = null;
 
+        // First try to find the requested audittrail regel as 'retrieve' operation, if found return immediately (without rebuilding the object state)
+        var retrieveAudit = audits.SingleOrDefault(a => a.Id == audittrailId && a.Actie == $"{AuditActie.retrieve}");
+        if (retrieveAudit != null)
+        {
+            auditTrailRegel = new AuditTrailRegel
+            {
+                Id = retrieveAudit.Id,
+                AanmaakDatum = retrieveAudit.AanmaakDatum,
+                Actie = retrieveAudit.Actie,
+                ActieWeergave = retrieveAudit.ActieWeergave,
+                ApplicatieId = retrieveAudit.ApplicatieId,
+                ApplicatieWeergave = retrieveAudit.ApplicatieWeergave,
+                Bron = retrieveAudit.Bron,
+                GebruikersId = retrieveAudit.GebruikersId,
+                GebruikersWeergave = retrieveAudit.GebruikersWeergave,
+                HoofdObject = retrieveAudit.HoofdObject,
+                HoofdObjectId = retrieveAudit.HoofdObjectId,
+                Resource = retrieveAudit.Resource,
+                ResourceUrl = retrieveAudit.ResourceUrl,
+                ResourceWeergave = retrieveAudit.ResourceWeergave,
+                RequestId = retrieveAudit.RequestId,
+                Resultaat = retrieveAudit.Resultaat,
+                Toelichting = retrieveAudit.Toelichting,
+                // Log retrieve operation only
+                Nieuw = default,
+                Oud = default,
+            };
+            return auditTrailRegel;
+        }
+
+        //
+        // Rebuild the requested audittrail regel starting with snapshot and applying deltas....
+
         JsonNode current = null;
-        foreach (var audit in audits)
+        foreach (var audit in audits.Where(a => a.Actie != $"{AuditActie.retrieve}"))
         {
             JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
             var oldVersionJson = ToJson(oldVersion);
@@ -384,7 +447,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                     Resultaat = audit.Resultaat,
                     Toelichting = audit.Toelichting,
                     // Reconstructed object
-                    Nieuw = default!,
+                    Nieuw = default,
                     Oud = deletedVersion != null ? JsonSerializer.SerializeToNode(deletedVersion)?.ToString() : null,
                 };
 
@@ -393,8 +456,8 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             }
             else
             {
-                // TODO: Handle retrieve of list, etc. For now, we just return null, as reconstructing those can be complex and may not be worth the effort.
-                return null;
+                // Note: In case of 'retrieve' operations we do not want to reconstruct the object state. Is is handle separately at the beginning of this method.
+                continue;
             }
 
             JsonDocument newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
@@ -427,6 +490,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 };
             }
         }
+
         return auditTrailRegel;
     }
 
@@ -515,7 +579,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
         if (!dontWriteEntity)
         {
-            bool result = await ResolveSnapshotOrDeltaAsync(actie, _newJson, _oldJson, audittrail);
+            bool result = await ResolveSnapshotOrDeltaAsync(hoofdobject.Id, actie, _newJson, _oldJson, audittrail, cancellationToken);
             if (!result)
             {
                 // No changes → Do not log
@@ -528,7 +592,14 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         Reset();
     }
 
-    protected async Task<bool> ResolveSnapshotOrDeltaAsync(AuditActie actie, string nieuw, string oud, AuditTrailDelta delta)
+    protected async Task<bool> ResolveSnapshotOrDeltaAsync(
+        Guid hoofdObjectId,
+        AuditActie actie,
+        string nieuw,
+        string oud,
+        AuditTrailDelta delta,
+        CancellationToken cancellationToken
+    )
     {
         switch (actie)
         {
@@ -541,7 +612,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
             case AuditActie.destroy:
             {
-                delta.Versie = await GetNextVersion(delta.ResourceId.Value);
+                delta.Versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
                 delta.DeltaJson = oud;
                 break;
             }
@@ -559,7 +630,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 if (_delta == null || _delta.Count == 0)
                     return false;
 
-                var versie = await GetNextVersion(delta.ResourceId.Value);
+                var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
 
                 // Check if this is a snapshot version
                 bool isSnapshotVersion = versie % _snapshotInterval == 0;
@@ -574,15 +645,33 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             {
                 // No delta for reads, only snapshot
                 delta.SnapshotJson = nieuw;
+                delta.Versie = 0;
                 break;
             }
         }
         return true;
     }
 
-    protected async Task<int> GetNextVersion(Guid resourceId)
+    /* TODO: Add following index:
+
+        CREATE INDEX "IX_AuditTrailDeltas_Hoofd_Resource_Versie" ON "AuditTrailDeltas" ("HoofdObjectId", "ResourceId", "Versie" DESC);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AuditTrailDelta>()
+                .HasIndex(a => new { a.HoofdObjectId, a.ResourceId, a.Versie })
+                // Optional: specifically mark Versie as descending (Supported in EF Core 7.0+)
+                .IsDescending(false, false, true);
+        }
+    */
+
+    protected async Task<int> GetNextVersionAsync(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
     {
-        var last = await _context.AuditTrailDeltas.Where(a => a.ResourceId == resourceId).MaxAsync(a => (int?)a.Versie) ?? 0;
+        var last =
+            await _context
+                .AuditTrailDeltas.Where(a => a.HoofdObjectId == hoofdObjectId && a.ResourceId == resourceId)
+                .MaxAsync(a => (int?)a.Versie, cancellationToken)
+            ?? 0;
 
         return last + 1;
     }
@@ -594,23 +683,30 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             var key = kv.Key;
             var value = kv.Value;
 
-            if (value is JsonObject obj)
+            // Check for special removal marker
+            // => Edge case: find in patching Geometry complex type to a different type, eg. "GeometryCollection" to "Point"
+            if (value is JsonObject obj && obj.ContainsKey("__removed"))
             {
-                if (obj.ContainsKey("added") || obj.ContainsKey("removed") || obj.ContainsKey("updated"))
+                target.Remove(key);
+            }
+            else if (value is JsonObject obj2)
+            {
+                if (obj2.ContainsKey("added") || obj2.ContainsKey("removed") || obj2.ContainsKey("updated"))
                 {
                     var array = target[key] as JsonArray ?? new JsonArray();
-                    ApplyArrayDelta(array, obj);
+                    ApplyArrayDelta(array, obj2);
                     target[key] = array;
                 }
                 else
                 {
                     var nested = target[key] as JsonObject ?? new JsonObject();
-                    ApplyDelta(nested, obj);
+                    ApplyDelta(nested, obj2);
                     target[key] = nested;
                 }
             }
             else
             {
+                // This handles both setting to null and setting to other values
                 target[key] = value?.DeepClone();
             }
         }
@@ -708,6 +804,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
     private static string ToJson(object obj)
     {
+        // Note: We should use the custom ZGWJsonSerializerSettings, handling specific types (eg. Geometry)
         return obj != null ? Newtonsoft.Json.JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
     }
 }

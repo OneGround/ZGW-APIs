@@ -168,6 +168,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" },
+                LegacyAuditTrail = result.Result.LegacyAuditTrail,
             }
         );
 
@@ -691,6 +692,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakbesluit" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 
@@ -854,6 +856,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakeigenschap" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

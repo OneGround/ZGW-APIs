@@ -13,6 +13,11 @@ public class AuditTrailFactory : IAuditTrailFactory
         _serviceProvider = serviceProvider;
     }
 
+    public IAuditTrailService Create(bool legacy = true)
+    {
+        return Create(new AuditTrailOptions(), legacy);
+    }
+
     public IAuditTrailService Create(AuditTrailOptions options, bool legacy = true)
     {
         var requestService = _serviceProvider

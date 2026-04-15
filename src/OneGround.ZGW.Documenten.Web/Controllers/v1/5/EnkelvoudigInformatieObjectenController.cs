@@ -197,6 +197,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
+                LegacyAuditTrail = result.Result.LegacyAuditTrail,
             },
             cancellationToken
         );
@@ -569,6 +570,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 SubEntity = enkelvoudigInformatieObjectVersie,
                 OverruleActieWeergave = "Object gedownload",
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
+                LegacyAuditTrail = resultGet.Result.LegacyAuditTrail,
             },
             cancellationToken
         );

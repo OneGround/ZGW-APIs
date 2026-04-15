@@ -61,7 +61,7 @@ class DeleteZaakBesluitCommandHandler : ZakenBaseHandler<DeleteZaakBesluitComman
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, besluit.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakBesluit {Id}....", besluit.Id);
 

@@ -77,6 +77,7 @@ public class GebruiksRechtenController : ZGWControllerBase
                 BaseEntity = result.Result.InformatieObject,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "gebruiksrecht" },
+                LegacyAuditTrail = result.Result.InformatieObject.LegacyAuditTrail,
             },
             cancellationToken
         );

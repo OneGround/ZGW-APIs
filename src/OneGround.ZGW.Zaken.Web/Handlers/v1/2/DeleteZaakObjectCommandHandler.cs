@@ -63,7 +63,7 @@ class DeleteZaakObjectCommandHandler : ZakenBaseHandler<DeleteZaakObjectCommandH
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakObject.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakObject {zaakObjectId}....", zaakObject.Id);
 

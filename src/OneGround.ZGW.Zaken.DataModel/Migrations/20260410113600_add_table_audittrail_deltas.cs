@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace OneGround.ZGW.Documenten.DataModel.Migrations
+namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     /// <inheritdoc />
     public partial class add_table_audittrail_deltas : Migration
@@ -11,13 +11,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "legacy_audittrail",
-                table: "enkelvoudiginformatieobjecten",
-                type: "boolean",
-                nullable: false,
-                defaultValue: true
-            );
+            migrationBuilder.AddColumn<bool>(name: "legacy_audittrail", table: "zaken", type: "boolean", nullable: false, defaultValue: true);
 
             migrationBuilder.CreateTable(
                 name: "audittrail_deltas",
@@ -58,7 +52,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                 table: "audittrail_deltas",
                 columns: new[] { "hoofdobject_id", "resource_id", "versie" },
                 descending: new[] { false, false, true }
-            );
+             );
         }
 
         /// <inheritdoc />
@@ -66,7 +60,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         {
             migrationBuilder.DropTable(name: "audittrail_deltas");
 
-            migrationBuilder.DropColumn(name: "legacy_audittrail", table: "enkelvoudiginformatieobjecten");
+            migrationBuilder.DropColumn(name: "legacy_audittrail", table: "zaken");
         }
     }
 }

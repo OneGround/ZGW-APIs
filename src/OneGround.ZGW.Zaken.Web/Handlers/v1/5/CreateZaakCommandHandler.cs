@@ -135,7 +135,7 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
 
         Geometry savedZaakgeometrie = null;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<ZaakResponseDto>(zaak);
 

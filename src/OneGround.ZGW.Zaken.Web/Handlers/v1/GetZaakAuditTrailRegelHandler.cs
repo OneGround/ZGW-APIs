@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.DataModel;
@@ -20,6 +21,7 @@ class GetZaakAuditTrailRegelHandler
         IRequestHandler<GetZaakAuditTrailRegel, QueryResult<AuditTrailRegel>>
 {
     private readonly ZrcDbContext _context;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetZaakAuditTrailRegelHandler(
         ILogger<GetZaakAuditTrailRegelHandler> logger,
@@ -27,16 +29,18 @@ class GetZaakAuditTrailRegelHandler
         ZrcDbContext context,
         IEntityUriService uriService,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IZaakKenmerkenResolver zaakKenmerkenResolver
+        IZaakKenmerkenResolver zaakKenmerkenResolver,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<AuditTrailRegel>> Handle(GetZaakAuditTrailRegel request, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Get all audittrailregels zaak....");
+        _logger.LogDebug("Get audittrailregel zaak....");
 
         var rsinFilter = GetRsinFilterPredicate<Zaak>();
 
@@ -52,12 +56,9 @@ class GetZaakAuditTrailRegelHandler
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.Forbidden);
         }
 
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.Id == request.AuditTrailRegelId)
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == zaak.Id)
-            .SingleOrDefaultAsync(cancellationToken);
+        using var audittrail = _auditTrailFactory.Create(zaak.LegacyAuditTrail);
 
+        var result = await audittrail.GetAuditTrailEntryByIdAsync(request.ZaakId, request.AuditTrailRegelId, cancellationToken);
         if (result == null)
         {
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.NotFound);
