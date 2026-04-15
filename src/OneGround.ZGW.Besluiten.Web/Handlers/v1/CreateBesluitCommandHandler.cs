@@ -112,7 +112,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         besluit.Owner = _rsin;
         besluit.CatalogusId = catalogusId;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<BesluitResponseDto>(besluit);
 

@@ -52,7 +52,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                 table: "audittrail_deltas",
                 columns: new[] { "hoofdobject_id", "resource_id", "versie" },
                 descending: new[] { false, false, true }
-             );
+            );
         }
 
         /// <inheritdoc />

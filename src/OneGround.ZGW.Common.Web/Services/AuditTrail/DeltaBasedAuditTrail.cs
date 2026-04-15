@@ -652,19 +652,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return true;
     }
 
-    /* TODO: Add following index:
-
-        CREATE INDEX "IX_AuditTrailDeltas_Hoofd_Resource_Versie" ON "AuditTrailDeltas" ("HoofdObjectId", "ResourceId", "Versie" DESC);
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<AuditTrailDelta>()
-                .HasIndex(a => new { a.HoofdObjectId, a.ResourceId, a.Versie })
-                // Optional: specifically mark Versie as descending (Supported in EF Core 7.0+)
-                .IsDescending(false, false, true);
-        }
-    */
-
     protected async Task<int> GetNextVersionAsync(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
     {
         var last =

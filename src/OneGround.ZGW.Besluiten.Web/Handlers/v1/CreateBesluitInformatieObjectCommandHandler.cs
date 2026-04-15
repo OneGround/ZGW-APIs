@@ -86,7 +86,7 @@ class CreateBesluitInformatieObjectCommandHandler
             return new CommandResult<BesluitInformatieObject>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, besluit.LegacyAuditTrail))
         {
             besluitInformatieObject.BesluitId = besluit.Id;
             besluitInformatieObject.Besluit = besluit;

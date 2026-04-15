@@ -151,14 +151,14 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
 
         modelBuilder
-           .Entity<AuditTrailDelta>()
-           .HasIndex(a => new
-           {
-               a.HoofdObjectId,
-               a.ResourceId,
-               a.Versie,
-           })
-           .IsDescending(false, false, true);
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
 
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 

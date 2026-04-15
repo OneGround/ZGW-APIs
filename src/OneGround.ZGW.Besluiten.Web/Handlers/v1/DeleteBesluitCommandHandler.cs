@@ -65,7 +65,7 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, besluit.LegacyAuditTrail))
         {
             RemoveBesluitInformatieObject(besluit);
 
@@ -73,8 +73,11 @@ class DeleteBesluitCommandHandler : BesluitenBaseHandler<DeleteBesluitCommandHan
 
             // Remove the audittrail for this besluit first (this contains BesluitInformatieObjecten also)
             var audittrailregels = _context.AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == besluit.Id);
-
             _context.AuditTrailRegels.RemoveRange(audittrailregels);
+
+            // Idem for deltas
+            var audittraildeltas = _context.AuditTrailDeltas.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == besluit.Id);
+            _context.AuditTrailDeltas.RemoveRange(audittraildeltas);
 
             _context.Besluiten.Remove(besluit);
 
