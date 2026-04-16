@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using Xunit;
@@ -1461,62 +1462,129 @@ public class AuditDeltaGeneratorTests
 
     #endregion
 
-    #region Complex type geometrie
+    #region PropertiesUsingCurrentValue Tests (with Complex type geometrie)
 
     [Fact]
-    public void GenerateDelta_GeometrieUpdateTypeScenario_TracksCorrectly()
+    public void GenerateDelta_WithPropertiesUsingCurrentValue_UsesReplaceMarker()
     {
-        // Arrange
-        object original = new
+        // Arrange - Simulating zaakgeometrie change from GeometryCollection to Point
+        var original = new
         {
-            omschrijving = "Geometrie type changes",
-            geometrie = new
+            toelichting = "Testzaak",
+            omschrijving = "Zaak with geometrie type 'GeometryCollection'",
+            zaakgeometrie = new
             {
                 type = "GeometryCollection",
-                geometries = new object[]
+                geometries = new[]
                 {
-                    new { type = "Point", coordinates = new[] { 1.0, 2.0 } },
-                    new { type = "LineString", coordinates = new[] { new[] { 1.0, 2.0 }, new[] { 3.0, 4.0 } } },
+                    new
+                    {
+                        type = "Polygon",
+                        coordinates = new[]
+                        {
+                            new[] { new[] { 196600.675, 543516.651 }, new[] { 196601.447, 543516.117 }, new[] { 196600.675, 543516.651 } },
+                        },
+                    },
+                    new
+                    {
+                        type = "Polygon",
+                        coordinates = new[]
+                        {
+                            new[] { new[] { 999999.033, 543517.076 }, new[] { 888888.033, 543517.074 }, new[] { 777777.033, 543517.076 } },
+                        },
+                    },
                 },
             },
+            bronorganisatie = "805307631",
         };
-        object current = new { omschrijving = "Geometrie type changes", geometrie = new { type = "Point", coordinates = new[] { 5.0, 6.0 } } };
+
+        var current = new
+        {
+            toelichting = "Testzaak",
+            omschrijving = "Zaak with modified geometrie type 'Point'",
+            zaakgeometrie = new { type = "Point", coordinates = new[] { 68436.707, 421115.413 } },
+            bronorganisatie = "805307631",
+        };
+
+        var propertiesUsingCurrentValue = new List<string> { "zaakgeometrie" };
 
         // Act
-        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
+        var delta = AuditDeltaGenerator.GenerateDelta<object>(original, current, propertiesUsingCurrentValue);
 
-        // Geneated delta should be:
-        // {
-        //    "geometrie": {
-        //        "type": "Point",
-        //        "coordinates": [
-        //            5,
-        //            6
-        //        ],
-        //        "geometries": {
-        //            "__removed": true
-        //        }
-        //    }
-        // }
+        // Assert
+        Assert.Equal(2, delta.Count); // omschrijving and zaakgeometrie
+        Assert.Equal("Zaak with modified geometrie type 'Point'", delta["omschrijving"]?.GetValue<string>());
+
+        // Verify zaakgeometrie has __replace marker
+        var zaakgeometrieDelta = delta["zaakgeometrie"]?.AsObject();
+        Assert.NotNull(zaakgeometrieDelta);
+        Assert.True(zaakgeometrieDelta.ContainsKey("__replace"));
+
+        // Verify the replacement value contains the new structure
+        var replacementValue = zaakgeometrieDelta["__replace"]?.AsObject();
+        Assert.NotNull(replacementValue);
+        Assert.Equal("Point", replacementValue["type"]?.GetValue<string>());
+
+        var coordinates = replacementValue["coordinates"]?.AsArray();
+        Assert.NotNull(coordinates);
+        Assert.Equal(2, coordinates.Count);
+        Assert.Equal(68436.707, coordinates[0]?.GetValue<double>());
+        Assert.Equal(421115.413, coordinates[1]?.GetValue<double>());
+
+        // Verify old 'geometries' property is NOT in the replacement value
+        Assert.False(replacementValue.ContainsKey("geometries"));
+    }
+
+    [Fact]
+    public void GenerateDelta_WithPropertiesUsingCurrentValue_HandlesNull()
+    {
+        // Arrange
+        var original = new { name = "Test", geometry = new { type = "Point", coordinates = new[] { 1.0, 2.0 } } };
+
+        var current = new { name = "Test", geometry = (object?)null };
+
+        var propertiesUsingCurrentValue = new List<string> { "geometry" };
+
+        // Act
+        var delta = AuditDeltaGenerator.GenerateDelta<object>(original, current, propertiesUsingCurrentValue);
 
         // Assert
         Assert.Single(delta);
-        var geometrieDelta = delta["geometrie"]?.AsObject();
-        Assert.NotNull(geometrieDelta);
-        Assert.Equal(3, geometrieDelta.Count); // type, geometries (removed), and coordinates (added)
-        Assert.Equal("Point", geometrieDelta["type"]?.GetValue<string>());
+        Assert.True(delta.ContainsKey("geometry"));
+        Assert.Null(delta["geometry"]);
+    }
 
-        // geometries property was removed
-        var removedMarker = geometrieDelta["geometries"]?.AsObject();
-        Assert.NotNull(removedMarker);
-        Assert.True(removedMarker["__removed"]?.GetValue<bool>());
+    [Fact]
+    public void GenerateDelta_WithPropertiesUsingCurrentValue_OnlyAffectsSpecifiedProperties()
+    {
+        // Arrange
+        var original = new { normalProp = new { nested = "old" }, replaceProp = new { nested = "old" } };
 
-        // coordinates property was added
-        var coordinatesArray = geometrieDelta["coordinates"]?.AsArray();
-        Assert.NotNull(coordinatesArray);
-        Assert.Equal(2, coordinatesArray.Count);
-        Assert.Equal(5.0, coordinatesArray[0]?.GetValue<double>());
-        Assert.Equal(6.0, coordinatesArray[1]?.GetValue<double>());
+        var current = new { normalProp = new { nested = "new" }, replaceProp = new { nested = "new", extra = "added" } };
+
+        var propertiesUsingCurrentValue = new List<string> { "replaceProp" };
+
+        // Act
+        var delta = AuditDeltaGenerator.GenerateDelta<object>(original, current, propertiesUsingCurrentValue);
+
+        // Assert
+        Assert.Equal(2, delta.Count);
+
+        // normalProp should use standard delta (only nested property)
+        var normalDelta = delta["normalProp"]?.AsObject();
+        Assert.NotNull(normalDelta);
+        Assert.False(normalDelta.ContainsKey("__replace"));
+        Assert.Equal("new", normalDelta["nested"]?.GetValue<string>());
+
+        // replaceProp should use __replace marker (entire object)
+        var replaceDelta = delta["replaceProp"]?.AsObject();
+        Assert.NotNull(replaceDelta);
+        Assert.True(replaceDelta.ContainsKey("__replace"));
+
+        var replaceValue = replaceDelta["__replace"]?.AsObject();
+        Assert.NotNull(replaceValue);
+        Assert.Equal("new", replaceValue["nested"]?.GetValue<string>());
+        Assert.Equal("added", replaceValue["extra"]?.GetValue<string>());
     }
 
     #endregion

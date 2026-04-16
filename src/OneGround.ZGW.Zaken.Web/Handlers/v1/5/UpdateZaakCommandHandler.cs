@@ -158,7 +158,23 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
         return new CommandResult<Zaak>(request.OriginalZaak, CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "zaak",
+            Properties = new Dictionary<string, object>
+            {
+                {
+                    "PropertiesUsingCurrentValue",
+                    new List<string> { "zaakgeometrie" }
+                },
+                // TODO: Test this scenario where we specify the inner property (coordinates) instead of the outer property (zaakgeometrie) to see if this also works and if this also prevents leftover properties remaining in the delta when the structure changes completely.
+                //{
+                //    "PropertiesUsingCurrentValue", new List<string> { "coordinates" }
+                //},
+            },
+        };
 }
 
 class UpdateZaakCommand : IRequest<CommandResult<Zaak>>

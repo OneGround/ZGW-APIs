@@ -31,6 +31,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
             .ForMember(dest => dest.CatalogusId, opt => opt.Ignore())
+            .ForMember(dest => dest.LegacyAuditTrail, opt => opt.Ignore())
             .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
@@ -93,6 +94,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersieId, opt => opt.Ignore())
             .ForMember(dest => dest.LatestEnkelvoudigInformatieObjectVersie, opt => opt.Ignore())
             .ForMember(dest => dest.CatalogusId, opt => opt.Ignore())
+            .ForMember(dest => dest.LegacyAuditTrail, opt => opt.Ignore())
             .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
         CreateMap<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()

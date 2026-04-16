@@ -158,7 +158,19 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
         return new CommandResult<Zaak>(request.OriginalZaak, CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "zaak",
+            Properties = new Dictionary<string, object>
+            {
+                {
+                    "PropertiesUsingCurrentValue",
+                    new List<string> { "zaakgeometrie" }
+                },
+            },
+        };
 }
 
 class UpdateZaakCommand : IRequest<CommandResult<Zaak>>

@@ -110,7 +110,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler> : IClass
         // 6. Audit Trail Factory
         var mockedAuditTrailservice = new Mock<IAuditTrailService>();
         _mockedAuditTrailFactory = new Mock<IAuditTrailFactory>();
-        _mockedAuditTrailFactory.Setup(m => m.Create(It.IsAny<AuditTrailOptions>(), true)).Returns(mockedAuditTrailservice.Object);
+        _mockedAuditTrailFactory.Setup(m => m.Create(It.IsAny<AuditTrailOptions>(), It.IsAny<bool>())).Returns(mockedAuditTrailservice.Object);
 
         // 7. Nummer Generator
         _mockNummerGenerator = new Mock<INummerGenerator>();

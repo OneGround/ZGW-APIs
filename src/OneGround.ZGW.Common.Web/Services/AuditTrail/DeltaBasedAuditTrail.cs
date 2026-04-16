@@ -624,7 +624,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 var current = JsonSerializer.Deserialize<JsonObject>(nieuw);
 
                 // Genereer delta
-                var _delta = AuditDeltaGenerator.GenerateDelta(original, current);
+                var _delta = AuditDeltaGenerator.GenerateDelta(original, current, GetPropertiesUsingCurrentValues());
 
                 // No changes → Do not log
                 if (_delta == null || _delta.Count == 0)
@@ -652,6 +652,17 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return true;
     }
 
+    private List<string> GetPropertiesUsingCurrentValues()
+    {
+        List<string> propertiesUsingCurrentValue = new();
+        if (_options.Properties != null && _options.Properties.TryGetValue("PropertiesUsingCurrentValue", out var properties))
+        {
+            propertiesUsingCurrentValue = properties as List<string> ?? new List<string>();
+        }
+
+        return propertiesUsingCurrentValue;
+    }
+
     protected async Task<int> GetNextVersionAsync(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
     {
         var last =
@@ -663,6 +674,12 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return last + 1;
     }
 
+    /// <summary>
+    /// Applies a delta object to a target object, handling three special marker types:
+    /// 1. "__removed": Property should be deleted from target (property was removed)
+    /// 2. "__replace": Entire value should replace target value (prevents merging, used for PropertiesUsingCurrentValue)
+    /// 3. Array delta markers (added/removed/updated): Array-specific delta operations
+    /// </summary>
     private void ApplyDelta(JsonObject target, JsonObject delta)
     {
         foreach (var kv in delta)
@@ -670,11 +687,21 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             var key = kv.Key;
             var value = kv.Value;
 
-            // Check for special removal marker
-            // => Edge case: find in patching Geometry complex type to a different type, eg. "GeometryCollection" to "Point"
+            // Handle special marker: __removed
+            // Purpose: Property no longer exists in the object
+            // Action: Remove the property from target
             if (value is JsonObject obj && obj.ContainsKey("__removed"))
             {
                 target.Remove(key);
+            }
+            // Handle special marker: __replace
+            // Purpose: Property value should completely replace existing value (no merging)
+            // Action: Replace entire property value with the wrapped value
+            // Used by: PropertiesUsingCurrentValue feature
+            else if (value is JsonObject obj3 && obj3.ContainsKey("__replace"))
+            {
+                var replacementValue = obj3["__replace"];
+                target[key] = replacementValue?.DeepClone();
             }
             else if (value is JsonObject obj2)
             {

@@ -1,21 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
+/// <summary>
+/// Generates delta objects that capture only the differences between two objects.
+/// Uses two special markers for edge cases:
+/// - "__removed": Indicates a property was completely removed (distinguishes from "set to null")
+/// - "__replace": Indicates the entire value should replace existing value (prevents merging)
+/// </summary>
 public static class AuditDeltaGenerator
 {
-    public static JsonObject GenerateDelta<T>(T original, T current)
+    public static JsonObject GenerateDelta<T>(T original, T current, List<string> propertiesUsingCurrentValue = null)
     {
         var originalNode = JsonNode.Parse(JsonSerializer.Serialize(original))!.AsObject();
         var currentNode = JsonNode.Parse(JsonSerializer.Serialize(current))!.AsObject();
 
-        return CompareObjects(originalNode, currentNode);
+        return CompareObjects(originalNode, currentNode, propertiesUsingCurrentValue ?? new List<string>());
     }
 
-    private static JsonObject CompareObjects(JsonObject original, JsonObject current)
+    private static JsonObject CompareObjects(JsonObject original, JsonObject current, List<string> propertiesUsingCurrentValue)
     {
         var delta = new JsonObject();
 
@@ -25,13 +32,25 @@ public static class AuditDeltaGenerator
 
             if (kv.Value is JsonObject newObj && oldValue is JsonObject oldObj)
             {
-                var child = CompareObjects(oldObj, newObj);
+                var child = CompareObjects(oldObj, newObj, propertiesUsingCurrentValue);
                 if (child.Count > 0)
+                {
+                    // If this property should use current value instead of delta, always include it
+                    // Wrap it in a special marker to indicate it should replace the entire value
+                    if (propertiesUsingCurrentValue.Contains(kv.Key))
+                    {
+                        if (kv.Value != null)
+                        {
+                            delta[kv.Key] = new JsonObject { ["__replace"] = kv.Value.DeepClone() };
+                            continue;
+                        }
+                    }
                     delta[kv.Key] = child;
+                }
             }
             else if (kv.Value is JsonArray newArr && oldValue is JsonArray oldArr)
             {
-                var arrDelta = CompareArrays(oldArr, newArr);
+                var arrDelta = CompareArrays(oldArr, newArr, propertiesUsingCurrentValue);
                 if (arrDelta.Count > 0)
                     delta[kv.Key] = arrDelta;
             }
@@ -60,7 +79,7 @@ public static class AuditDeltaGenerator
         return delta;
     }
 
-    private static JsonObject CompareArrays(JsonArray original, JsonArray current)
+    private static JsonObject CompareArrays(JsonArray original, JsonArray current, List<string> propertiesUsingCurrentValue)
     {
         var result = new JsonObject();
 
@@ -93,7 +112,7 @@ public static class AuditDeltaGenerator
                 if (!currentDict.ContainsKey(key))
                     continue;
 
-                var delta = CompareObjects(originalDict[key], currentDict[key]);
+                var delta = CompareObjects(originalDict[key], currentDict[key], propertiesUsingCurrentValue);
 
                 if (delta.Count > 0)
                 {
