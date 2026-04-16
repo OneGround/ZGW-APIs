@@ -267,7 +267,8 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Registratiedatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.Registratiedatum, true)));
 
         CreateMap<NatuurlijkPersoonZaakRol, NatuurlijkPersoonZaakRolDto>()
-            .ForMember(dest => dest.Geboortedatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.Geboortedatum, true)));
+            .ForMember(dest => dest.Geboortedatum, opt => opt.MapFrom(src => ProfileHelper.StringDateFromDateTime(src.Geboortedatum, true)))
+            .ForMember(dest => dest.InpBsn, opt => opt.MapFrom(src => src.InpBsnEncrypted));
         CreateMap<NietNatuurlijkPersoonZaakRol, NietNatuurlijkPersoonZaakRolDto>();
         CreateMap<VestigingZaakRol, VestigingZaakRolDto>();
         CreateMap<OrganisatorischeEenheidZaakRol, OrganisatorischeEenheidZaakRolDto>();
