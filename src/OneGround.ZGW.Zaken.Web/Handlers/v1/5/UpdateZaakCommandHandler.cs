@@ -166,13 +166,10 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
             Properties = new Dictionary<string, object>
             {
                 {
-                    "PropertiesUsingCurrentValue",
+                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue,
                     new List<string> { "zaakgeometrie" }
                 },
-                // TODO: Test this scenario where we specify the inner property (coordinates) instead of the outer property (zaakgeometrie) to see if this also works and if this also prevents leftover properties remaining in the delta when the structure changes completely.
-                //{
-                //    "PropertiesUsingCurrentValue", new List<string> { "coordinates" }
-                //},
+                { DeltaBasedAuditTrail.ForceUseSnapshotWhenResourceChanged, true },
             },
         };
 }

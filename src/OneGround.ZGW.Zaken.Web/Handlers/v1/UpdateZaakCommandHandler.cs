@@ -166,9 +166,10 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
             Properties = new Dictionary<string, object>
             {
                 {
-                    "PropertiesUsingCurrentValue",
+                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue,
                     new List<string> { "zaakgeometrie" }
                 },
+                { DeltaBasedAuditTrail.ForceUseSnapshotWhenResourceChanged, true },
             },
         };
 }

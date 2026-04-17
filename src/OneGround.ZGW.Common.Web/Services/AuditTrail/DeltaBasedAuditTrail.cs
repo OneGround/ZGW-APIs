@@ -18,6 +18,10 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class DeltaBasedAuditTrail : IAuditTrailService
 {
+    public const string PropertiesUsingCurrentValue = "PropertiesUsingCurrentValue";
+    public const string ForceUseSnapshotWhenResourceChanged = "ForceUseSnapshotWhenResourceChanged"; // TODO: Not implement yet
+    public const string SnapshotInterval = "SnapshotInterval"; // TODO: Not implement yet
+
     protected const int _snapshotInterval = 25;
 
     protected readonly IDbContextWithAuditTrail _context;
@@ -632,8 +636,14 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
                 var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
 
-                // Check if this is a snapshot version
-                bool isSnapshotVersion = versie % _snapshotInterval == 0;
+                bool forcingSnapshot = false;
+                if (GetForceUseSnapshotWhenResourceChanged())
+                {
+                    forcingSnapshot = await ShouldForceSnapshot(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                }
+
+                /// Check if this is a snapshot version
+                bool isSnapshotVersion = versie % _snapshotInterval == 0 || forcingSnapshot; // Or if forcingSnapshot is set
 
                 delta.DeltaJson = isSnapshotVersion ? null : _delta.ToJsonString();
                 delta.SnapshotJson = isSnapshotVersion ? nieuw : null;
@@ -655,12 +665,27 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     private List<string> GetPropertiesUsingCurrentValues()
     {
         List<string> propertiesUsingCurrentValue = new();
-        if (_options.Properties != null && _options.Properties.TryGetValue("PropertiesUsingCurrentValue", out var properties))
+        if (_options.Properties != null && _options.Properties.TryGetValue(PropertiesUsingCurrentValue, out var properties))
         {
             propertiesUsingCurrentValue = properties as List<string> ?? new List<string>();
         }
 
         return propertiesUsingCurrentValue;
+    }
+
+    private bool GetForceUseSnapshotWhenResourceChanged()
+    {
+        if (
+            _options.Properties != null
+            && _options.Properties.TryGetValue(ForceUseSnapshotWhenResourceChanged, out var value)
+            && bool.TryParse($"{value}", out var forceUseSnapshotWhenResourceChanged)
+            && forceUseSnapshotWhenResourceChanged
+        )
+        {
+            return true;
+        }
+
+        return false;
     }
 
     protected async Task<int> GetNextVersionAsync(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
@@ -672,6 +697,41 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             ?? 0;
 
         return last + 1;
+    }
+
+    private async Task<bool> ShouldForceSnapshot(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
+    {
+        if (hoofdObjectId != resourceId)
+            return false;
+
+        var allResources = await GetAllResourcesByHoofdObjectIdAsync(hoofdObjectId, cancellationToken);
+        // Note: top are the latest versions, bottom are the oldest versions
+
+        var previous = allResources.FirstOrDefault();
+
+        return previous?.ResourceId != resourceId;
+
+        //AuditTrailDelta previous = null;
+        //foreach (var resource in allResources)
+        //{
+        //    if (resource.HoofdObjectId == resourceId)
+        //        break;
+
+        //    previous = resource;
+        //}
+        //return previous == null;
+    }
+
+    // TODO:
+    private async Task<IList<AuditTrailDelta>> GetAllResourcesByHoofdObjectIdAsync(Guid hoofdObjectId, CancellationToken cancellationToken)
+    {
+        var resources = await _context
+            .AuditTrailDeltas.Where(a => a.HoofdObjectId == hoofdObjectId)
+            .AsNoTracking()
+            .OrderByDescending(a => a.AanmaakDatum)
+            .ToListAsync(cancellationToken);
+
+        return resources;
     }
 
     /// <summary>
