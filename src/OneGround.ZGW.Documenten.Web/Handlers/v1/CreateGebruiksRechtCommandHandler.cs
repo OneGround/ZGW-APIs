@@ -82,8 +82,6 @@ class CreateGebruiksRechtCommandHandler
 
         informatieObject.IndicatieGebruiksrecht = true; // Note: Gebruiksrechten op informatieobjecten (drc-006)
 
-        // using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             audittrail.SetNew<GebruiksRechtResponseDto>(gebruiksRecht);
@@ -94,8 +92,6 @@ class CreateGebruiksRechtCommandHandler
 
             _logger.LogDebug("GebruiksRecht {Id} successfully created.", gebruiksRecht.Id);
         }
-
-        //await trans.CommitAsync(cancellationToken);
 
         await SendNotificationAsync(Actie.create, gebruiksRecht, cancellationToken);
 
