@@ -41,7 +41,7 @@ class DeleteObjectInformatieObjectCommandHandler
 
     public async Task<CommandResult> Handle(DeleteObjectInformatieObjectCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Get ObjectInformatieObject {Id}....", request.Id);
+        _logger.LogDebug("Delete ObjectInformatieObject {Id}....", request.Id);
 
         var rsinFilter = GetRsinFilterPredicate<ObjectInformatieObject>(o => o.InformatieObject.Owner == _rsin);
 
@@ -67,6 +67,8 @@ class DeleteObjectInformatieObjectCommandHandler
             return new CommandResult(CommandStatus.Forbidden);
         }
 
+        using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
@@ -81,6 +83,8 @@ class DeleteObjectInformatieObjectCommandHandler
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
+
+        await tx.CommitAsync(cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }
