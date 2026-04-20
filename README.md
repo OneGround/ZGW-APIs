@@ -16,7 +16,7 @@ Case Management (Zaakgericht Werken) is a process-oriented work method used by D
 
 - UI (not in this project)
 - process logic (not in this project)
-- middle ware (not in this project)
+- middleware (not in this project)
 - APIs including business rules (in this project)
 - storage (in this project)
 
@@ -103,7 +103,7 @@ For more information, visit our [documentation portal](https://dev.oneground.nl)
 ## Project Structure
 
 - src: source code
-- localdev: everything needed to set up your own development environment inclusing Ceph and Databases
+- localdev: everything needed to set up your own development environment including Ceph and Databases
 
 ## Documentation
 
@@ -115,6 +115,7 @@ Complete documentation is available at:
 - **[General Documentation](./docs/README.md)** - Additional documentation resources
 - **[Authentication Guide](./docs/AUTHENTICATION.md)** - Complete guide for authenticating against the ZGW APIs
 - **[Logging Configuration](./docs/LOGS.md)** - Detailed logging strategy using Serilog
+- **[HMAC + DataProtection encryption guide](./docs/DATAPROTECTION.md)** - Explains encryption strategy (HMAC for search + DataProtection for at-rest), with key generation scripts
 
 ## Contributing
 

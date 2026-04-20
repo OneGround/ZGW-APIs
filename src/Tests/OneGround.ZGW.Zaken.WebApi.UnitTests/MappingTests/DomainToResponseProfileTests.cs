@@ -269,7 +269,7 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.Geslachtsaanduiding.ToString(), result.Geslachtsaanduiding);
         Assert.Equal(value.Geslachtsnaam, result.Geslachtsnaam);
         Assert.Equal(value.InpANummer, result.InpANummer);
-        Assert.Equal(value.InpBsn, result.InpBsn);
+        Assert.Equal(value.InpBsnEncrypted, result.InpBsn);
         Assert.Equal(value.Voorletters, result.Voorletters);
         Assert.Equal(value.Voornamen, result.Voornamen);
         Assert.Equal(value.VoorvoegselGeslachtsnaam, result.VoorvoegselGeslachtsnaam);

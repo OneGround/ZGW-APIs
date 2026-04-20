@@ -14,7 +14,10 @@
       - [Step 5.1: Get the Client Secret from Keycloak](#step-51-get-the-client-secret-from-keycloak)
       - [Step 5.2: Update Environment File and Restart Services](#step-52-update-environment-file-and-restart-services)
       - [Step 5.3: Request an Access Token](#step-53-request-an-access-token)
-    - [6. Stopping the Services](#6-stopping-the-services)
+    - [6. Configure Data Protection \& Encryption](#6-configure-data-protection--encryption)
+      - [Step 6.1: Generate Encryption Keys and Certificates](#step-61-generate-encryption-keys-and-certificates)
+      - [Step 6.2: Update Environment File and Restart Services](#step-62-update-environment-file-and-restart-services)
+    - [7. Stopping the Services](#7-stopping-the-services)
   - [Service Endpoints and Tools](#service-endpoints-and-tools)
     - [ZGW API Services/listeners](#zgw-api-serviceslisteners)
     - [Hosted Tools](#hosted-tools)
@@ -106,7 +109,7 @@ Follow the steps for your operating system.
     .\install-oneground-certificate.ps1 -RelativeCertPath "..\..\localdev\oneground-certificates\oneground.local.pem"
     ```
 
-  The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
+    The script will import the certificate into the Windows "Trusted Root Certification Authorities" store.
 
 #### For macOS and Linux (using Bash)
 
@@ -129,7 +132,7 @@ Follow the steps for your operating system.
     ./install-oneground-certificate.sh ../../oneground-certificates/oneground.local.pem
     ```
 
-  This script installs the certificate into your system's keychain or trust store.
+    This script installs the certificate into your system's keychain or trust store.
 
 > **Note:** After installing the certificate, we recommend restarting your web browser to ensure the changes take effect.
 
@@ -158,7 +161,6 @@ To ensure all services can communicate with each other and are accessible in you
     127.0.0.1 haproxy-tool.oneground.local
     127.0.0.1 keycloak-tool.oneground.local
     127.0.0.1 rabbitmq-tool.oneground.local
-
     ```
 
 ### 5. Configure API Authentication
@@ -195,7 +197,39 @@ See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
 See [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
 
-### 6. Stopping the Services
+### 6. Configure Data Protection & Encryption
+
+To securely store sensitive personal data in your services, you must configure HMAC hashing and DataProtection encryption.
+
+#### Step 6.1: Generate Encryption Keys and Certificates
+
+See [DATAPROTECTION.md](../docs/DATAPROTECTION.md).
+
+#### Step 6.2: Update Environment File and Restart Services
+
+1. Return to the `ZGW_APIs/localdev` directory in your terminal:
+
+    ```bash
+    cd ZGW_APIs/localdev
+    ```
+
+2. Open the [ZGW_APIs/localdev/default.env](./default.env) file in a text editor.
+3. Add the generated HMAC key and DataProtection certificate values as described in the Data Protection guide.
+
+    ```text
+    HmacHasher__HmacKey=<base64-encoded-key-minimum-32-bytes>
+    DataProtection__Certificate=<base64-encoded-pfx>
+    DataProtection__CertificatePassword=<pfx-password>
+    ```
+
+4. Save the `default.env` file.
+5. Restart the Docker containers to apply the new configuration:
+
+    ```bash
+    docker compose --env-file ./.env up -d
+    ```
+
+### 7. Stopping the Services
 
 To stop all running Docker containers, run the following command from the `localdev` directory:
 

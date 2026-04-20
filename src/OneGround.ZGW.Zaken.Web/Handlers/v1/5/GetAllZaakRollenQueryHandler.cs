@@ -88,7 +88,7 @@ class GetAllZaakRollenQueryHandler
             (filter.Zaak == null || z.Zaak.Id == _uriService.GetId(filter.Zaak))
             && (filter.Betrokkene == null || z.Betrokkene == filter.Betrokkene)
             && (!filter.BetrokkeneType.HasValue || z.BetrokkeneType == filter.BetrokkeneType.Value)
-            && (filter.NatuurlijkPersoonInpBsn == null || z.NatuurlijkPersoon.InpBsn == filter.NatuurlijkPersoonInpBsn)
+            && (filter.NatuurlijkPersoonInpBsn == null || z.NatuurlijkPersoon.InpBsnHash == filter.NatuurlijkPersoonInpBsn)
             && (filter.NatuurlijkPersoonAnpIdentificatie == null || z.NatuurlijkPersoon.AnpIdentificatie == filter.NatuurlijkPersoonAnpIdentificatie)
             && (filter.NatuurlijkPersoonInpANummer == null || z.NatuurlijkPersoon.InpANummer == filter.NatuurlijkPersoonInpANummer)
             && (filter.NietNatuurlijkPersoonInnNnpId == null || z.NietNatuurlijkPersoon.InnNnpId == filter.NietNatuurlijkPersoonInnNnpId)

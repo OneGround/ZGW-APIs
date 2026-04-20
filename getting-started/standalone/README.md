@@ -86,6 +86,7 @@ This section contains the unique prerequisites, environment variables, and defau
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/autorisaties-api)
 - **Prerequisites:**
   - Core Prerequisites
+
 - **Default Port:** `5009`
 
 #### Required Autorisaties API (AC) Environment Variables (`.env`)
@@ -119,6 +120,7 @@ NotificatieService__Type="Http"
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5013`
 
 #### Required Besluiten API (BRC) Environment Variables (`.env`)
@@ -161,6 +163,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5011`
 
 #### Required Catalogi API (ZTC) Environment Variables (`.env`)
@@ -206,6 +209,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
   - A running **Catalogi API (ZTC)** instance
   - A running **Notificaties API (NRC)** instance
   - A running **Zaken API (ZRC)** instance
+
 - **Default Port:** `5007`
 
 #### Required Documenten API (DRC) Environment Variables (`.env`)
@@ -251,6 +255,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Additional Prerequisites:**
   - A running **Autorisaties API (AC)** instance
   - A running **RabbitMQ** instance
+
 - **Default Port:** `5015`
 
 #### Required Notificaties API (NRC) Environment Variables (`.env`)
@@ -294,6 +299,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
 - **Image Versions:** [GitHub Packages](https://github.com/OneGround/ZGW-APIs/pkgs/container/referentielijsten-api)
 - **Prerequisites:**
   - Docker and Docker Compose only.
+
 - **Default Port:** `5018`
 - **Environment Variables:** None required for basic setup. An optional `.env` file can be used for advanced configuration.
 
@@ -308,6 +314,7 @@ ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET
   - A running **Catalogi API (ZTC)** instance
   - A running **Documenten API (DRC)** instance
   - A running **Notificaties API (NRC)** instance
+
 - **Default Port:** `5005`
 
 #### Required Zaken API (ZRC) Environment Variables (`.env`)
@@ -320,6 +327,7 @@ Copy the snippet below, paste it into your new `.env` file, and adjust the value
 # --- Database Connection Strings ---
 ConnectionStrings__UserConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_user;Password=oneground_user"
 ConnectionStrings__AdminConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_admin;Password=oneground_admin"
+ConnectionStrings__DataProtectionConnectionString="Host=postgres_docker_db;Port=5432;Database=zrc_db;Username=oneground_admin;Password=oneground_admin"
 
 # --- Redis Cache Connection ---
 Redis__ConnectionString="redis:6379"
@@ -343,6 +351,13 @@ Services__ZTC__Api="https://catalogi.oneground.local/api/v1/"
 ZgwServiceAccounts__Credentials__0__Rsin="000000000"
 ZgwServiceAccounts__Credentials__0__ClientId="oneground-000000000"
 ZgwServiceAccounts__Credentials__0__ClientSecret="<SERVICE_ACCOUNT_CLIENT_SECRET>"
+
+# --- HMAC Hashing ---
+HmacHasher__HmacKey="<base64-encoded-key-minimum-32-bytes>"
+
+# --- DataProtection Encryption ---
+DataProtection__Certificate="<base64-encoded-pfx>"
+DataProtection__CertificatePassword="<pfx-password>"
 ```
 
 ---

@@ -19,6 +19,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataProtection.DataModel\ZGW.Common.DataProtection.DataModel.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Zaken.Web\ZGW.Zaken.Web.csproj" />
   </ItemGroup>
 </Project>
