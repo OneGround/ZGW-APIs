@@ -124,6 +124,8 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
+
         modelBuilder.Entity<Verzending>().HasIndex(e => e.AardRelatie);
 
         modelBuilder.Entity<Verzending>().HasIndex(e => e.Betrokkene);
