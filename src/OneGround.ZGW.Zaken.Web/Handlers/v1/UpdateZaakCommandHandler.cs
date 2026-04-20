@@ -167,7 +167,7 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
             Properties = new Dictionary<string, object>
             {
                 {
-                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue, // Note: Due the complexity of a changed geometrie object we shoud replace the whole content instead of a part of the geometrie
+                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue, // Note: Due the complexity of a changed geometrie object we should replace the whole content instead of a part of the geometrie
                     new List<string> { "zaakgeometrie" }
                 },
                 { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZRC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
