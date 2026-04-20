@@ -40,10 +40,10 @@ public class DeltaBasedAuditTrailWithImporter : DeltaBasedAuditTrail, IDeltaBase
             ResourceWeergave = audit.ResourceWeergave,
             RequestId = audit.RequestId,
             Resultaat = audit.Resultaat,
-            Toelichting = "Migrator. " + audit.Toelichting, // Pre-fix Toeliching to indicate this is a migrated entry  
+            Toelichting = "Migrator. " + audit.Toelichting, // Pre-fix Toeliching to indicate this is a migrated entry
             // Resolved at the next step, but for now we need to set these to null to prevent issues with the delta generation logic
             DeltaJson = null,
-            SnapshotJson = null,    
+            SnapshotJson = null,
             Versie = 0,
             ResourceId = _uriService.GetId(audit.ResourceUrl),
         };
