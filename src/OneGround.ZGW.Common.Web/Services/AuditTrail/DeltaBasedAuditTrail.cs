@@ -411,19 +411,23 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
             if (audit.Actie == $"{AuditActie.create}")
             {
-                current = JsonNode.Parse(audit.SnapshotJson!);
+                current = JsonNode.Parse(audit.SnapshotJson);
             }
             else if (audit.Actie == $"{AuditActie.update}" || audit.Actie == $"{AuditActie.partial_update}")
             {
-                // Handle periodic snapshots
+                // Handle periodic (or forced) snapshots
                 if (!string.IsNullOrEmpty(audit.SnapshotJson))
                 {
                     current = JsonNode.Parse(audit.SnapshotJson);
                 }
-                else
+                else if (!string.IsNullOrEmpty(audit.DeltaJson))
                 {
                     var delta = JsonNode.Parse(audit.DeltaJson).AsObject();
                     ApplyDelta(current.AsObject(), delta);
+                }
+                else
+                {
+                    continue;
                 }
             }
             else if (audit.Actie == $"{AuditActie.destroy}")

@@ -67,8 +67,6 @@ class DeleteObjectInformatieObjectCommandHandler
             return new CommandResult(CommandStatus.Forbidden);
         }
 
-        //await using var trans = await _context.Database.BeginTransactionAsync(cancellationToken);
-
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ObjectInformatieObject {Id}....", objectInformatieObject.Id);
@@ -83,8 +81,6 @@ class DeleteObjectInformatieObjectCommandHandler
 
             _logger.LogDebug("ObjectInformatieObject {Id} successfully deleted.", objectInformatieObject.Id);
         }
-
-        //await trans.CommitAsync(cancellationToken);
 
         return new CommandResult(CommandStatus.OK);
     }

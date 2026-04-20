@@ -22,11 +22,11 @@ public class AuditTrailFactory : IAuditTrailFactory
     {
         var requestService = _serviceProvider
             .GetServices<IAuditTrailService>()
-            .SingleOrDefault(s => legacy && s.Name == "Legacy" || !legacy && s.Name == "Deltas");
+            .SingleOrDefault(s => (legacy && s.Name == "Legacy") || (!legacy && s.Name == "Deltas"));
 
         if (requestService == null)
         {
-            throw new InvalidOperationException($"No audit trailservice found for useDeltas={legacy}");
+            throw new InvalidOperationException($"No audit trail service found for legacy={legacy}");
         }
 
         requestService.SetOptions(options ?? new AuditTrailOptions());
@@ -40,7 +40,7 @@ public class AuditTrailFactory : IAuditTrailFactory
 
         if (requestService == null)
         {
-            throw new InvalidOperationException($"No audit trailservice found for name={name}");
+            throw new InvalidOperationException($"No audit trail service found for name={name}");
         }
 
         requestService.SetOptions(options ?? new AuditTrailOptions());

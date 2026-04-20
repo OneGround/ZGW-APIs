@@ -25,13 +25,32 @@ public class AuditTrailMigrator : IAuditTrailMigrator
     {
         var legacyAuditTrail = _auditTrailFactory.Create(new AuditTrailOptions(), legacy: true);
 
-        foreach (var entities in await legacyAuditTrail.GetAuditTrailEntriesAsync(hoofdobjectId: hoofdObjectId))
+        foreach (var entries in await legacyAuditTrail.GetAuditTrailEntriesAsync(hoofdobjectId: hoofdObjectId))
         {
             using var scope = _serviceProvider.CreateScope();
 
             using var importer = scope.ServiceProvider.GetRequiredService<IDeltaBasedAuditTrailWithImporter>();
 
-            await importer.ImportAsync(entities, cancellationToken: cancellationToken);
+            await importer.ImportAsync(entries, cancellationToken: cancellationToken);
         }
     }
 }
+
+/*
+   USAGE: (Later stadium probably ZTC due 3-level hierarchy (eg. catalogus + zaaktype + statustype) instead of 2 of ZRC, DRC, BRC)
+
+    // Note: Run AuditTrailMigrator....
+
+    var hoofdobjectId = new Guid("f767ccce-43a0-4ff4-84b8-13b7b502af63");
+
+    await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
+
+    //
+    // Note: Run optional AuditTrailExporter (two exports: one legacy and one of migrated one)....
+
+    await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
+
+    await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
+
+    // Make a comparison between two generated export files
+*/

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,10 +32,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
     : MutatieEnkelvoudigInformatieObjectCommandHandler<CreateEnkelvoudigInformatieObjectCommandHandler>,
         IRequestHandler<CreateEnkelvoudigInformatieObjectCommand, CommandResult<EnkelvoudigInformatieObjectVersie>>
 {
-    // TODO: MIGRATOR AND EXPORTER TESTING.....
-    private readonly IAuditTrailMigrator _auditTrailMigrator;
-    private readonly IAuditTrailExporter _auditTrailExporter;
-
     public CreateEnkelvoudigInformatieObjectCommandHandler(
         ILogger<CreateEnkelvoudigInformatieObjectCommandHandler> logger,
         IConfiguration configuration,
@@ -51,11 +46,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
         ILockGenerator lockGenerator,
         IOptions<FormOptions> formOptions,
         INotificatieService notificatieService,
-        IDocumentKenmerkenResolver documentKenmerkenResolver,
-        // TODO: MIGRATOR AND EXPORTER TESTING.....
-        IAuditTrailMigrator auditTrailMigrator,
-        IAuditTrailExporter auditTrailExporter
-    // ----
+        IDocumentKenmerkenResolver documentKenmerkenResolver
     )
         : base(
             logger,
@@ -72,13 +63,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             formOptions,
             notificatieService,
             documentKenmerkenResolver
-        )
-    {
-        // TODO: MIGRATOR AND EXPORTER TESTINGG.....
-        _auditTrailMigrator = auditTrailMigrator;
-        _auditTrailExporter = auditTrailExporter;
-        // ----
-    }
+        ) { }
 
     public async Task<CommandResult<EnkelvoudigInformatieObjectVersie>> Handle(
         CreateEnkelvoudigInformatieObjectCommand request,
@@ -86,28 +71,6 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
     )
     {
         _logger.LogDebug("Creating EnkelvoudigInformatieObject....");
-
-        /*
-        // TODO: MIGRATOR AND EXPORTER TESTING.....
-        //
-        // Note: Test AuditTrailMigrator
-
-        var hoofdobjectId = new Guid("f767ccce-43a0-4ff4-84b8-13b7b502af63");
-
-        await _auditTrailMigrator.MigrateAsync(hoofdobjectId, cancellationToken);
-
-        //
-        // Note: Test AuditTrailMigrator
-
-        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: true, cancellationToken);
-
-        await Task.Delay(1100);
-
-        await _auditTrailExporter.ExportAsync(hoofdobjectId, legacy: false, cancellationToken);
-
-        return new CommandResult<EnkelvoudigInformatieObjectVersie>(null, CommandStatus.NotFound);
-        // ----
-        */
 
         var versie = request.EnkelvoudigInformatieObjectVersie;
 

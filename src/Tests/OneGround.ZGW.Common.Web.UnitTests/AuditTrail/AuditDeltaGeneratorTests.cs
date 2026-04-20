@@ -48,13 +48,13 @@ public class AuditDeltaGeneratorTests
         {
             Name = "John",
             Age = 30,
-            City = "NYC",
+            City = "Utrecht",
         };
         var current = new
         {
             Name = "Jane",
             Age = 35,
-            City = "NYC",
+            City = "Utrecht",
         };
 
         // Act
@@ -123,8 +123,8 @@ public class AuditDeltaGeneratorTests
     public void GenerateDelta_WhenNestedObjectPropertyChanged_ReturnsNestedDelta()
     {
         // Arrange
-        var original = new { Name = "John", Address = new { Street = "123 Main St", City = "NYC" } };
-        var current = new { Name = "John", Address = new { Street = "456 Oak Ave", City = "NYC" } };
+        var original = new { Name = "John", Address = new { Street = "Stationstraat 124", City = "Utrecht" } };
+        var current = new { Name = "John", Address = new { Street = "Plein 10", City = "Utrecht" } };
 
         // Act
         var delta = AuditDeltaGenerator.GenerateDelta(original, current);
@@ -134,7 +134,7 @@ public class AuditDeltaGeneratorTests
         Assert.True(delta.ContainsKey("Address"));
         var addressDelta = delta["Address"]?.AsObject();
         Assert.NotNull(addressDelta);
-        Assert.Equal("456 Oak Ave", addressDelta["Street"]?.GetValue<string>());
+        Assert.Equal("Plein 10", addressDelta["Street"]?.GetValue<string>());
         Assert.False(addressDelta.ContainsKey("City"));
     }
 
@@ -142,8 +142,8 @@ public class AuditDeltaGeneratorTests
     public void GenerateDelta_WhenNestedObjectUnchanged_DoesNotIncludeNestedObject()
     {
         // Arrange
-        var original = new { Name = "John", Address = new { Street = "123 Main St", City = "NYC" } };
-        var current = new { Name = "Jane", Address = new { Street = "123 Main St", City = "NYC" } };
+        var original = new { Name = "John", Address = new { Street = "Stationstraat 124", City = "Utrecht" } };
+        var current = new { Name = "Jane", Address = new { Street = "Stationstraat 124", City = "Utrecht" } };
 
         // Act
         var delta = AuditDeltaGenerator.GenerateDelta(original, current);
@@ -363,14 +363,14 @@ public class AuditDeltaGeneratorTests
         {
             Name = "John",
             Age = 30,
-            Address = new { Street = "123 Main St", City = "NYC" },
+            Address = new { Street = "Stationstraat 124", City = "Utrecht" },
             Hobbies = new[] { "Reading", "Gaming" },
         };
         var current = new
         {
             Name = "John",
             Age = 31,
-            Address = new { Street = "456 Oak Ave", City = "NYC" },
+            Address = new { Street = "Plein 10", City = "Utrecht" },
             Hobbies = new[] { "Reading", "Cooking" },
         };
 
@@ -383,7 +383,7 @@ public class AuditDeltaGeneratorTests
 
         var addressDelta = delta["Address"]?.AsObject();
         Assert.NotNull(addressDelta);
-        Assert.Equal("456 Oak Ave", addressDelta["Street"]?.GetValue<string>());
+        Assert.Equal("Plein 10", addressDelta["Street"]?.GetValue<string>());
 
         var hobbiesDelta = delta["Hobbies"]?.AsObject();
         Assert.NotNull(hobbiesDelta);
@@ -556,7 +556,7 @@ public class AuditDeltaGeneratorTests
     public void GenerateDelta_WhenNestedObjectChangedToNull_ReturnsNull()
     {
         // Arrange
-        object original = new { Address = new { Street = "Main St" } };
+        object original = new { Address = new { Street = "Lange Voorhout" } };
         object current = new { Address = (object?)null };
 
         // Act
@@ -1168,7 +1168,7 @@ public class AuditDeltaGeneratorTests
         {
             Name = "John",
             Age = 30,
-            City = "NYC",
+            City = "Utrecht",
         };
         object current = new { Name = "John" };
 
@@ -1359,8 +1359,8 @@ public class AuditDeltaGeneratorTests
                 Phone = "555-1234",
                 Address = new
                 {
-                    Street = "123 Main St",
-                    City = "NYC",
+                    Street = "Stationstraat 124",
+                    City = "Utrecht",
                     ZipCode = "10001",
                 },
             },
@@ -1377,8 +1377,8 @@ public class AuditDeltaGeneratorTests
                 Phone = "555-1234",
                 Address = new
                 {
-                    Street = "456 Oak Ave",
-                    City = "NYC",
+                    Street = "Plein 10",
+                    City = "Utrecht",
                     ZipCode = "10001",
                 },
             },

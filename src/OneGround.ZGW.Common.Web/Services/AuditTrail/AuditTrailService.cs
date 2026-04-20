@@ -217,13 +217,6 @@ public class AuditTrailService : IAuditTrailService
         return result;
     }
 
-    public async Task ImportAsync(AuditTrailRegel audit, CancellationToken cancellationToken = default)
-    {
-        await _context.AuditTrailRegels.AddAsync(audit, cancellationToken);
-
-        Reset();
-    }
-
     private async Task WriteAsync(
         AuditActie auditActie,
         string actieWeergave,
