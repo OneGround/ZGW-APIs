@@ -144,6 +144,9 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                     b.HasIndex("HoofdObjectId", "ResourceId", "Versie")
                         .IsDescending(false, false, true);
 
+                    b.HasIndex("HoofdObjectId", "AanmaakDatum")
+                        .IsDescending(false, true);
+
                     b.ToTable("audittrail_deltas");
                 });
 

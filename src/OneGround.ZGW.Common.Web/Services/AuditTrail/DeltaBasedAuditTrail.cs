@@ -662,46 +662,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return true;
     }
 
-    private List<string> GetPropertiesUsingCurrentValues()
-    {
-        List<string> propertiesUsingCurrentValue = new();
-        if (_options.Properties != null && _options.Properties.TryGetValue(PropertiesUsingCurrentValue, out var properties))
-        {
-            propertiesUsingCurrentValue = properties as List<string> ?? new List<string>();
-        }
-
-        return propertiesUsingCurrentValue;
-    }
-
-    private bool GetForceSnapshotVersionWhenResourceChanged()
-    {
-        if (
-            _options.Properties != null
-            && _options.Properties.TryGetValue(ForceSnapshotVersionWhenResourceChanged, out var value)
-            && bool.TryParse($"{value}", out var forceSnapshotVersionWhenResourceChanged)
-            && forceSnapshotVersionWhenResourceChanged
-        )
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private int GetSnapshotInterval()
-    {
-        if (
-            _options.Properties != null
-            && _options.Properties.TryGetValue(SnapshotInterval, out var value)
-            && int.TryParse($"{value}", out var snapshotInterval)
-        )
-        {
-            return snapshotInterval;
-        }
-
-        return DefaultSnapshotInterval;
-    }
-
     protected async Task<int> GetNextVersionAsync(Guid hoofdObjectId, Guid resourceId, CancellationToken cancellationToken)
     {
         var last =
@@ -874,5 +834,42 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     {
         // Note: We should use the custom ZGWJsonSerializerSettings, handling specific types (eg. Geometry)
         return obj != null ? Newtonsoft.Json.JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
+    }
+
+    private List<string> GetPropertiesUsingCurrentValues()
+    {
+        List<string> propertiesUsingCurrentValue = new();
+        if (_options.Properties != null && _options.Properties.TryGetValue(PropertiesUsingCurrentValue, out var properties))
+        {
+            propertiesUsingCurrentValue = properties as List<string> ?? new List<string>();
+        }
+        return propertiesUsingCurrentValue;
+    }
+
+    private bool GetForceSnapshotVersionWhenResourceChanged()
+    {
+        if (
+            _options.Properties != null
+            && _options.Properties.TryGetValue(ForceSnapshotVersionWhenResourceChanged, out var value)
+            && bool.TryParse($"{value}", out var forceSnapshotVersionWhenResourceChanged)
+            && forceSnapshotVersionWhenResourceChanged
+        )
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private int GetSnapshotInterval()
+    {
+        if (
+            _options.Properties != null
+            && _options.Properties.TryGetValue(SnapshotInterval, out var value)
+            && int.TryParse($"{value}", out var snapshotInterval)
+        )
+        {
+            return snapshotInterval;
+        }
+        return DefaultSnapshotInterval;
     }
 }

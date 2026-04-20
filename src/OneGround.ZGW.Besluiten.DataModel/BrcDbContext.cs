@@ -61,6 +61,8 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
+
         // Source: https://www.npgsql.org/efcore/misc/collations-and-case-sensitivity.html?tabs=data-annotations
         // And:    https://dba.stackexchange.com/questions/255780/case-insensitive-collation-still-comparing-case-sensitive
         // And:    https://stackoverflow.com/questions/70739480/change-postgres-to-case-insensitive

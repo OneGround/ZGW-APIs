@@ -53,6 +53,13 @@ namespace OneGround.ZGW.Besluiten.DataModel.Migrations
                 columns: new[] { "hoofdobject_id", "resource_id", "versie" },
                 descending: new[] { false, false, true }
             );
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audittrail_deltas_hoofdobject_id_aanmaakdatum",
+                table: "audittrail_deltas",
+                columns: new[] { "hoofdobject_id", "aanmaakdatum" },
+                descending: new[] { false, true }
+            );
         }
 
         /// <inheritdoc />
