@@ -163,13 +163,14 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
         {
             Bron = ServiceRoleName.ZRC,
             Resource = "zaak",
+            // Note: Following settings are ignored when Legacy audittrail is used
             Properties = new Dictionary<string, object>
             {
                 {
-                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue,
+                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue, // Note: Due the complexity of a changed geometrie object we shoud replace the whole content instead of a part of the geometrie
                     new List<string> { "zaakgeometrie" }
                 },
-                { DeltaBasedAuditTrail.ForceUseSnapshotWhenResourceChanged, true },
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZRC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
             },
         };
 }
