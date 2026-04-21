@@ -642,9 +642,9 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
                     var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
 
-                    if (versie == 1) // Note: Versie 1 means there is no audittrail entry for this hoofdobject
+                    if (versie == 1)
                     {
-                        // Looks like that there is no audittrail entry marked with 'create' so instead of storing the delta we store the complete snapshot
+                        // Versie 1 while updating? Looks like that there is no audittrail entry marked with 'create' so instead of storing the delta we store the complete snapshot
                         forcingSnapshotVersion = true;
                     }
                     else if (GetForceSnapshotVersionWhenResourceChanged())
