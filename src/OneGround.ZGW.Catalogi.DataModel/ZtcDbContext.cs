@@ -63,6 +63,8 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
 
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
+
         modelBuilder
             .Entity<InformatieObjectType>()
             .HasIndex(b => new
