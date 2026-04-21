@@ -612,62 +612,62 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         switch (actie)
         {
             case AuditActie.create:
-                {
-                    delta.Versie = 1;
-                    delta.SnapshotJson = nieuw;
-                    break;
-                }
+            {
+                delta.Versie = 1;
+                delta.SnapshotJson = nieuw;
+                break;
+            }
 
             case AuditActie.destroy:
-                {
-                    delta.Versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
-                    delta.DeltaJson = oud;
-                    break;
-                }
+            {
+                delta.Versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                delta.DeltaJson = oud;
+                break;
+            }
 
             case AuditActie.update:
             case AuditActie.partial_update:
+            {
+                var original = JsonSerializer.Deserialize<JsonObject>(oud);
+                var current = JsonSerializer.Deserialize<JsonObject>(nieuw);
+
+                // Genereer delta
+                var _delta = AuditDeltaGenerator.GenerateDelta(original, current, GetPropertiesUsingCurrentValues());
+
+                // No changes → Do not log
+                if (_delta == null || _delta.Count == 0)
+                    return false;
+
+                bool forcingSnapshotVersion = false;
+
+                var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+
+                if (versie == 1)
                 {
-                    var original = JsonSerializer.Deserialize<JsonObject>(oud);
-                    var current = JsonSerializer.Deserialize<JsonObject>(nieuw);
-
-                    // Genereer delta
-                    var _delta = AuditDeltaGenerator.GenerateDelta(original, current, GetPropertiesUsingCurrentValues());
-
-                    // No changes → Do not log
-                    if (_delta == null || _delta.Count == 0)
-                        return false;
-
-                    bool forcingSnapshotVersion = false;
-
-                    var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
-
-                    if (versie == 1)
-                    {
-                        // Versie 1 while updating? Looks like that there is no audittrail entry marked with 'create' so instead of storing the delta we store the complete snapshot
-                        forcingSnapshotVersion = true;
-                    }
-                    else if (GetForceSnapshotVersionWhenResourceChanged())
-                    {
-                        forcingSnapshotVersion = await ShouldForceSnapshotVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
-                    }
-
-                    // Check if this is a snapshot or forced Snapshot version
-                    bool isSnapshotVersion = versie % GetSnapshotInterval() == 0 || forcingSnapshotVersion;
-
-                    delta.DeltaJson = isSnapshotVersion ? null : _delta.ToJsonString();
-                    delta.SnapshotJson = isSnapshotVersion ? nieuw : null;
-                    delta.Versie = versie;
-                    break;
+                    // Versie 1 while updating? Looks like that there is no audittrail entry marked with 'create' so instead of storing the delta we store the complete snapshot
+                    forcingSnapshotVersion = true;
                 }
+                else if (GetForceSnapshotVersionWhenResourceChanged())
+                {
+                    forcingSnapshotVersion = await ShouldForceSnapshotVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                }
+
+                // Check if this is a snapshot or forced Snapshot version
+                bool isSnapshotVersion = versie % GetSnapshotInterval() == 0 || forcingSnapshotVersion;
+
+                delta.DeltaJson = isSnapshotVersion ? null : _delta.ToJsonString();
+                delta.SnapshotJson = isSnapshotVersion ? nieuw : null;
+                delta.Versie = versie;
+                break;
+            }
 
             case AuditActie.retrieve:
-                {
-                    // No delta for reads, only snapshot
-                    delta.SnapshotJson = nieuw;
-                    delta.Versie = 0;
-                    break;
-                }
+            {
+                // No delta for reads, only snapshot
+                delta.SnapshotJson = nieuw;
+                delta.Versie = 0;
+                break;
+            }
         }
         return true;
     }
