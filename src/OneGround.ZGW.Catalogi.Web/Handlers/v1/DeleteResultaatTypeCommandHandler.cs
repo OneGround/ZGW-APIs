@@ -74,7 +74,7 @@ class DeleteResultaatTypeCommandHandler
 
         _logger.LogDebug("Deleting ResultType {Id}....", resultType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ResultaatTypeResponseDto>(resultType);
 

@@ -98,7 +98,7 @@ public class UpdateRolTypeCommandHandler
 
         _logger.LogDebug("Updating RolType {Id}....", rolType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<RolTypeResponseDto>(rolType);
 

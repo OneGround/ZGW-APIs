@@ -138,7 +138,7 @@ class UpdateZaakObjectTypeCommandHandler
 
         _logger.LogDebug("Updating ZaakObjectType {Id}....", zaakObjectType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakObjectTypeResponseDto>(zaakObjectType);
 

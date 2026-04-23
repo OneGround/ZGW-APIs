@@ -66,7 +66,7 @@ class DeleteEigenschapCommandHandler : CatalogiBaseHandler<DeleteEigenschapComma
 
         _logger.LogDebug("Deleting Eigenschap {Id}....", eigenschap.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<EigenschapResponseDto>(eigenschap);
 

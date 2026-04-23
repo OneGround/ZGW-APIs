@@ -93,11 +93,11 @@ class CreateBesluitTypeCommandHandler
         // await AddZaakTypen(request, besluitType, cancellationToken);
         await AddInformatieObjectTypen(request, besluitType, cancellationToken);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<BesluitTypeResponseDto>(besluitType);
 
-            await audittrail.CreatedAsync(besluitType.Catalogus, besluitType, cancellationToken);
+            await audittrail.CreatedAsync(besluitType, besluitType, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
         }
