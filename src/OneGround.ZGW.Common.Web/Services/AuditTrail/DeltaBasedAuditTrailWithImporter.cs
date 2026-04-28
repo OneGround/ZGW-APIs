@@ -18,8 +18,6 @@ public class DeltaBasedAuditTrailWithImporter : DeltaBasedAuditTrail, IDeltaBase
     )
         : base(context, mapper, httpContextAccessor, uriService) { }
 
-    public override string Name => "Deltas_Importer";
-
     public async Task ImportAsync(AuditTrailRegel audit, CancellationToken cancellationToken = default)
     {
         var delta = new AuditTrailDelta

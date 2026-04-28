@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
@@ -9,12 +10,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
+using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject;
@@ -96,6 +100,17 @@ public class ZaakObjectenController : ZGWControllerBase
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakObjectResponse, result.Result.Count);
 
+        await _mediator.Send(
+            new LogAuditTrailGetObjectListCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.All,
+                Page = pagination.Page,
+                Count = paginationResponse.Results.Count(),
+                TotalCount = paginationResponse.Count,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakobject" },
+            }
+        );
+
         return Ok(paginationResponse);
     }
 
@@ -131,6 +146,17 @@ public class ZaakObjectenController : ZGWControllerBase
             opt =>
             {
                 opt.AfterMap((_, dest) => dest.Version = "1.2"); // Maps with additional (1.2) data
+            }
+        );
+
+        await _mediator.Send(
+            new LogAuditTrailGetObjectCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.All,
+                BaseEntity = result.Result.Zaak,
+                SubEntity = result.Result,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakobject" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

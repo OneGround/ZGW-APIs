@@ -9,9 +9,6 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public interface IAuditTrailService : IDisposable
 {
-    // Meta data properties
-    string Name { get; }
-
     // Operations to log audit trail entries
     void SetOptions(AuditTrailOptions options);
 

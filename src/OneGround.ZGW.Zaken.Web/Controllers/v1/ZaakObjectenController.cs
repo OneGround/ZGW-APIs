@@ -98,6 +98,17 @@ public class ZaakObjectenController : ZGWControllerBase
             }
         );
 
+        await _mediator.Send(
+            new LogAuditTrailGetObjectListCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.All,
+                Page = pagination.Page,
+                Count = paginationResponse.Results.Count(),
+                TotalCount = paginationResponse.Count,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakobject" },
+            }
+        );
+
         return Ok(paginationResponse);
     }
 

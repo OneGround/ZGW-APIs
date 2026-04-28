@@ -848,7 +848,6 @@ public class ZakenController : ZGWControllerBase
 
         var response = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
 
-        // Note: Should this action to be recorded in audittrail?
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
             {

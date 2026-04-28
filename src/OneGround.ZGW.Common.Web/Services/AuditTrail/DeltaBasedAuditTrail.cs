@@ -47,8 +47,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         _uriService = uriService;
     }
 
-    public virtual string Name => "Deltas";
-
     public void SetOptions(AuditTrailOptions options)
     {
         _options = options;

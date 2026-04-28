@@ -35,8 +35,6 @@ public class AuditTrailService : IAuditTrailService
         _uriService = uriService;
     }
 
-    public string Name => "Legacy";
-
     public void SetOptions(AuditTrailOptions options)
     {
         _options = options;
