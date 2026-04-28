@@ -227,7 +227,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             foreach (var audit in auditsForResource)
             {
                 JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
-                var oldVersionJson = ToJson(oldVersion);
 
                 if (audit.Actie == $"{AuditActie.create}")
                 {
@@ -249,7 +248,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 else if (audit.Actie == $"{AuditActie.destroy}")
                 {
                     var deletedVersion = current!.Deserialize<JsonDocument>();
-                    var deletedVersionJson = ToJson(deletedVersion);
 
                     result.Add(
                         new AuditTrailRegel
@@ -310,7 +308,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 }
 
                 JsonDocument newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
-                var newVersionJson = ToJson(newVersion);
 
                 if (oldVersion != null || newVersion != null)
                 {
@@ -407,7 +404,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         foreach (var audit in audits.Where(a => a.Actie != $"{AuditActie.retrieve}"))
         {
             JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
-            var oldVersionJson = ToJson(oldVersion);
 
             if (audit.Actie == $"{AuditActie.create}")
             {
@@ -433,7 +429,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             else if (audit.Actie == $"{AuditActie.destroy}")
             {
                 var deletedVersion = current!.Deserialize<JsonDocument>();
-                var deletedVersionJson = ToJson(deletedVersion);
 
                 auditTrailRegel = new AuditTrailRegel
                 {
@@ -469,7 +464,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
             }
 
             JsonDocument newVersion = current != null ? current.Deserialize<JsonDocument>() : default;
-            var newVersionJson = ToJson(newVersion);
 
             if (oldVersion != null || newVersion != null)
             {

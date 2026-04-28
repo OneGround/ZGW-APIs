@@ -10,8 +10,8 @@ public static class ZGWAuditTrailServiceCollectionExtensions
     public static void AddZGWAuditTrail<TDbContext>(this IServiceCollection services)
         where TDbContext : DbContext, IDbContextWithAuditTrail
     {
-        services.AddTransient<IAuditTrailService, AuditTrailService>();
-        services.AddTransient<IAuditTrailService, DeltaBasedAuditTrail>();
+        services.AddTransient<AuditTrailService>();
+        services.AddTransient<DeltaBasedAuditTrail>();
         services.AddTransient<IDeltaBasedAuditTrailWithImporter, DeltaBasedAuditTrailWithImporter>();
         services.AddScoped<IAuditTrailFactory, AuditTrailFactory>();
 

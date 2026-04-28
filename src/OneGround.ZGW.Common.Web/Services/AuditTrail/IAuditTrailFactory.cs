@@ -4,5 +4,4 @@ public interface IAuditTrailFactory
 {
     IAuditTrailService Create(bool legacy = true);
     IAuditTrailService Create(AuditTrailOptions options, bool legacy = true);
-    IAuditTrailService Create(AuditTrailOptions options, string name);
 }
