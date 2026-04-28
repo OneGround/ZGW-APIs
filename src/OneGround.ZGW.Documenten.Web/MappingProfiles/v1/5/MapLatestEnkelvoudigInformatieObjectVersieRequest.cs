@@ -34,6 +34,7 @@ public class MapLatestEnkelvoudigInformatieObjectVersieRequest
         dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
         dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
 
+        dest.Verschijningsvorm = latestVersion.Verschijningsvorm;
         dest.Trefwoorden = latestVersion.Trefwoorden;
         dest.InhoudIsVervallen = latestVersion.InhoudIsVervallen;
 

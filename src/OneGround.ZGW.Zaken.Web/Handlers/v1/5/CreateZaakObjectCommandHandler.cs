@@ -104,7 +104,7 @@ class CreateZaakObjectCommandHandler
             return new CommandResult<ZaakObject>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             await _context.ZaakObjecten.AddAsync(zaakObject, cancellationToken);
 

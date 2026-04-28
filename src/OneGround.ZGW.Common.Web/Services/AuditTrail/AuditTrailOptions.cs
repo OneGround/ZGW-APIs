@@ -1,7 +1,11 @@
-﻿namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
+using System.Collections.Generic;
+
+namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class AuditTrailOptions
 {
-    public string Bron { get; set; }
-    public string Resource { get; set; }
+    public string Bron { get; set; } = "n/a";
+    public string Resource { get; set; } = "n/a";
+
+    public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
 }

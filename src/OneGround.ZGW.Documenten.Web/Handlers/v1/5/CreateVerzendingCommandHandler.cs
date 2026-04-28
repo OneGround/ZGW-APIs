@@ -96,7 +96,7 @@ class CreateVerzendingCommandHandler
         verzending.InformatieObjectId = informatieObject.Id;
         verzending.InformatieObject = informatieObject;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             audittrail.SetNew<VerzendingResponseDto>(verzending);
 

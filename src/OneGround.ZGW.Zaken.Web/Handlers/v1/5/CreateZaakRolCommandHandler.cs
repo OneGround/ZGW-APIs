@@ -110,7 +110,7 @@ class CreateZaakRolCommandHandler : ZakenBaseHandler<CreateZaakRolCommandHandler
             return new CommandResult<ZaakRol>(null, CommandStatus.ValidationError, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             await _context.ZaakRollen.AddAsync(zaakrol, cancellationToken);
 

@@ -61,7 +61,7 @@ class DeleteBesluitInformatieObjectCommandHandler
         // keep the reference for later, because saving context removed relation from besluitInformatieObject.Besluit
         var besluit = besluitInformatieObject.Besluit;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, besluit.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting BesluitInformatieObject {Id}....", besluitInformatieObject.Id);
 

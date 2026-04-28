@@ -76,7 +76,7 @@ class DeleteZaakRolCommandHandler : ZakenBaseHandler<DeleteZaakRolCommandHandler
             return new CommandResult<KlantContact>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakRol.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakRol {Id}....", zaakRol.Id);
 

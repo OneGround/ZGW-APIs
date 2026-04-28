@@ -37,7 +37,7 @@ public class LogAuditTrailGetObjectListCommandHandler : LogAuditTrailGetBaseHand
             )
         )
         {
-            using var audittrail = _auditTrailFactory.Create(request.AuditTrailOptions);
+            using var audittrail = _auditTrailFactory.Create(request.AuditTrailOptions, legacy: false); // Note: We can have a mix of legacy- and delta-based stored zaken. So record in the deltas all the time
             if (request.Page.HasValue && request.Count.HasValue)
             {
                 await audittrail.GetListAsync(request.Count.Value, request.TotalCount, request.Page.Value, cancellationToken);

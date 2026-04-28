@@ -75,7 +75,7 @@ class UpdateBesluitCommandHandler : BesluitenBaseHandler<UpdateBesluitCommandHan
             return new CommandResult<Besluit>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, besluit.LegacyAuditTrail))
         {
             audittrail.SetOld<BesluitResponseDto>(besluit);
 

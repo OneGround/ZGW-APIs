@@ -198,6 +198,7 @@ public class VerzendingenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "verzending" },
+                LegacyAuditTrail = result.Result.InformatieObject.LegacyAuditTrail,
             },
             cancellationToken
         );

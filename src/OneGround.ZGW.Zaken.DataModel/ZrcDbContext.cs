@@ -36,6 +36,7 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
     public DbSet<Zaak> Zaken { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
     public DbSet<ZaakObject.ZaakObject> ZaakObjecten { get; set; }
     public DbSet<RelevanteAndereZaak> RelevanteAndereZaken { get; set; }
     public DbSet<ZaakKenmerk> ZaakKenmerken { get; set; }
@@ -175,6 +176,20 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakResultaat>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+
+        modelBuilder
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
 
         modelBuilder.Entity<ZaakContactmoment>().HasIndex(p => p.Contactmoment);
 

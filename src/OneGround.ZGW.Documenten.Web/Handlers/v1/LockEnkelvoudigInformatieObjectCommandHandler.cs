@@ -111,7 +111,7 @@ class LockEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<string>(null, CommandStatus.Conflict, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, enkelvoudigInformatieObject.LegacyAuditTrail))
         {
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObject);
 

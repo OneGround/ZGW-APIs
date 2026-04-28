@@ -7,6 +7,7 @@ namespace OneGround.ZGW.DataAccess.AuditTrail;
 public interface IDbContextWithAuditTrail
 {
     DbSet<AuditTrailRegel> AuditTrailRegels { get; }
+    DbSet<AuditTrailDelta> AuditTrailDeltas { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

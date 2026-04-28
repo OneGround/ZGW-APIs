@@ -74,7 +74,7 @@ class DeleteZaakVerzoekCommandHandler : ZakenBaseHandler<DeleteZaakVerzoekComman
             return new CommandResult<KlantContact>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakVerzoek.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakVerzoek {Id}....", zaakVerzoek.Id);
 

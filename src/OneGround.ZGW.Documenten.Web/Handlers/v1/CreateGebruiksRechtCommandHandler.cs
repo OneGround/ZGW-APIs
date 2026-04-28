@@ -82,7 +82,7 @@ class CreateGebruiksRechtCommandHandler
 
         informatieObject.IndicatieGebruiksrecht = true; // Note: Gebruiksrechten op informatieobjecten (drc-006)
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))
         {
             audittrail.SetNew<GebruiksRechtResponseDto>(gebruiksRecht);
 

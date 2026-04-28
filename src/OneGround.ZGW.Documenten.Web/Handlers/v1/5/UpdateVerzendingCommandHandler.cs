@@ -77,6 +77,8 @@ class UpdateVerzendingCommandHandler
             return new CommandResult<Verzending>(null, CommandStatus.NotFound);
         }
 
+        bool legacyAuditTrail = existingVerzending.InformatieObject.LegacyAuditTrail;
+
         Verzending verzending;
         if (isPartialUpdate)
         {
@@ -129,7 +131,7 @@ class UpdateVerzendingCommandHandler
 
         _logger.LogDebug("Updating Verzending {verzendingId}....", existingVerzending.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacyAuditTrail))
         {
             audittrail.SetOld<VerzendingResponseDto>(existingVerzending);
 

@@ -164,4 +164,7 @@ public class Zaak : OwnedEntity, IAuditableEntity, IUrlEntity
 
     [Column("catalogus_id")]
     public Guid CatalogusId { get; set; }
+
+    [Column("legacy_audittrail")]
+    public bool LegacyAuditTrail { get; set; }
 }

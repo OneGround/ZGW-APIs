@@ -11,6 +11,8 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         : base(options, dbUserContext) { }
 
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
+
     public DbSet<FinishedDataMigration> FinishedDataMigrations { get; set; }
 
     public DbSet<ZaakType> ZaakTypen { get; set; }
@@ -48,6 +50,20 @@ public class ZtcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<InformatieObjectType>().HasIndex(b => b.Omschrijving);
 
         modelBuilder.Entity<InformatieObjectType>().HasIndex(b => b.CreationTime);
+
+        modelBuilder
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
 
         modelBuilder
             .Entity<InformatieObjectType>()

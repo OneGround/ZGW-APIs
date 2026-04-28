@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -17,6 +16,7 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
     public DbSet<EnkelvoudigInformatieObject> EnkelvoudigInformatieObjecten { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
     public DbSet<EnkelvoudigInformatieObjectVersie> EnkelvoudigInformatieObjectVersies { get; set; }
     public DbSet<BestandsDeel> BestandsDelen { get; set; }
     public DbSet<ObjectInformatieObject> ObjectInformatieObjecten { get; set; }
@@ -111,6 +111,20 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex("Object", "InformatieObjectId", "ObjectType").IsUnique();
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+
+        modelBuilder
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
 
         modelBuilder.Entity<Verzending>().HasIndex(e => e.AardRelatie);
 

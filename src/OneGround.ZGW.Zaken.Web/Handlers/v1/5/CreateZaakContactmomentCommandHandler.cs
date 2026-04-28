@@ -80,7 +80,7 @@ class CreateZaakContactmomentCommandHandler
             return new CommandResult<ZaakContactmoment>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             zaakContactmoment.ZaakId = zaak.Id;
             zaakContactmoment.Zaak = zaak;

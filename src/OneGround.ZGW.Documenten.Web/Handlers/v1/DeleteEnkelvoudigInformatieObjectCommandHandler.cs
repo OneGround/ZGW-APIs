@@ -161,7 +161,7 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             .ToList();
 
         // 1. Delete the metadata
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, enkelvoudigInformatieObject.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting EnkelvoudigInformatieObject {Id}....", enkelvoudigInformatieObject.Id);
 
@@ -172,6 +172,9 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
             // Remove the audittrail for this EnkelvoudigInformatieObjecten first
             await _context
                 .AuditTrailRegels.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
+                .ExecuteDeleteAsync(cancellationToken);
+            await _context
+                .AuditTrailDeltas.Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == enkelvoudigInformatieObject.Id)
                 .ExecuteDeleteAsync(cancellationToken);
 
             await _context.EnkelvoudigInformatieObjecten.Where(x => x.Id == enkelvoudigInformatieObject.Id).ExecuteDeleteAsync(cancellationToken);
@@ -185,6 +188,8 @@ class DeleteEnkelvoudigInformatieObjectCommandHandler
                 toelichting: $"Betreft enkelvoudiginformatieobject met identificatie {latestEnkelvoudigInformatieObjectVersieIdentificatie}",
                 cancellationToken
             );
+
+            await _context.SaveChangesAsync(cancellationToken);
 
             await tx.CommitAsync(cancellationToken);
 

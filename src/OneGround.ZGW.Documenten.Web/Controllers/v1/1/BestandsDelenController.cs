@@ -17,7 +17,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Contracts.v1._1;
-using OneGround.ZGW.Documenten.Web.Handlers.v1._1;
+using OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;

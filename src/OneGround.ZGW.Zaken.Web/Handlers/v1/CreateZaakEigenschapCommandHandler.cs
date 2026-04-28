@@ -132,7 +132,7 @@ class CreateZaakEigenschapCommandHandler
             return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, error2);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             await _context.ZaakEigenschappen.AddAsync(zaakEigenschap, cancellationToken); // Note: Sequential Guid for Id is generated here by EF
 

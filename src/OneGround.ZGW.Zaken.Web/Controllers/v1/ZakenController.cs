@@ -168,6 +168,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" },
+                LegacyAuditTrail = result.Result.LegacyAuditTrail,
             }
         );
 
@@ -691,6 +692,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakbesluit" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 
@@ -846,7 +848,6 @@ public class ZakenController : ZGWControllerBase
 
         var response = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
 
-        // Note: Should this action to be recorded in audittrail?
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
             {
@@ -854,6 +855,7 @@ public class ZakenController : ZGWControllerBase
                 BaseEntity = result.Result.Zaak,
                 SubEntity = result.Result,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakeigenschap" },
+                LegacyAuditTrail = result.Result.Zaak.LegacyAuditTrail,
             }
         );
 

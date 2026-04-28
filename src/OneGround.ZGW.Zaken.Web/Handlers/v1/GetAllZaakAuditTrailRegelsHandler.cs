@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.DataModel;
@@ -21,6 +22,7 @@ class GetAllZaakAuditTrailRegelsHandler
         IRequestHandler<GetAllZaakAuditTrailRegels, QueryResult<IEnumerable<AuditTrailRegel>>>
 {
     private readonly ZrcDbContext _context;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetAllZaakAuditTrailRegelsHandler(
         ILogger<GetAllZaakAuditTrailRegelsHandler> logger,
@@ -28,11 +30,13 @@ class GetAllZaakAuditTrailRegelsHandler
         ZrcDbContext context,
         IEntityUriService uriService,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IZaakKenmerkenResolver zaakKenmerkenResolver
+        IZaakKenmerkenResolver zaakKenmerkenResolver,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<IEnumerable<AuditTrailRegel>>> Handle(GetAllZaakAuditTrailRegels request, CancellationToken cancellationToken)
@@ -53,11 +57,9 @@ class GetAllZaakAuditTrailRegelsHandler
             return new QueryResult<IEnumerable<AuditTrailRegel>>(null, QueryStatus.Forbidden);
         }
 
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == zaak.Id)
-            .OrderBy(a => a.AanmaakDatum)
-            .ToListAsync(cancellationToken);
+        using var audittrail = _auditTrailFactory.Create(zaak.LegacyAuditTrail);
+
+        var result = await audittrail.GetAuditTrailEntriesAsync(zaak.Id, cancellationToken);
 
         return new QueryResult<IEnumerable<AuditTrailRegel>>(result, QueryStatus.OK);
     }

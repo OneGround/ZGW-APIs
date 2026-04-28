@@ -37,7 +37,8 @@ public class LogAuditTrailGetObjectCommandHandler : LogAuditTrailGetBaseHandler,
             )
         )
         {
-            using var audittrail = _auditTrailFactory.Create(request.AuditTrailOptions);
+            using var audittrail = _auditTrailFactory.Create(request.AuditTrailOptions, legacy: request.LegacyAuditTrail);
+
             await audittrail.GetAsync(request.BaseEntity, request.SubEntity, overruleActieWeergave: request.OverruleActieWeergave, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -53,4 +54,5 @@ public class LogAuditTrailGetObjectCommand : IRequest<CommandResult>
     public IUrlEntity SubEntity { get; set; }
     public string OverruleActieWeergave { get; set; }
     public AuditTrailOptions AuditTrailOptions { get; set; }
+    public bool LegacyAuditTrail { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace OneGround.ZGW.Common.Web.Helpers;
@@ -17,11 +17,17 @@ public static class UriHelper
             return Guid.Empty;
         }
 
-        if (!Guid.TryParse(new Uri(uri).Segments.Last(), out var guid))
+        var segments = new Uri(uri).Segments;
+
+        for (int i = segments.Length - 1; i >= 0; i--)
         {
-            return Guid.Empty;
+            var segment = segments[i].TrimEnd('/');
+            if (Guid.TryParse(segment, out var guid))
+            {
+                return guid;
+            }
         }
 
-        return guid;
+        return Guid.Empty;
     }
 }

@@ -80,7 +80,7 @@ class CreateZaakVerzoekCommandHandler
             return new CommandResult<ZaakVerzoek>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             zaakVerzoek.ZaakId = zaak.Id;
             zaakVerzoek.Zaak = zaak;

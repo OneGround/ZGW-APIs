@@ -213,7 +213,7 @@ class CreateZaakStatusCommandHandler
             return new CommandResult<ZaakStatus>(null, CommandStatus.ValidationError, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             // Reset (all) previous zaakstatus IndicatieLaatstGezetteStatus
             oldstatussen.ToList().ForEach(s => s.IndicatieLaatstGezetteStatus = false);

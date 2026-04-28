@@ -100,6 +100,7 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.StartdatumBewaartermijn, opt => opt.Ignore())
             .ForMember(dest => dest.Processobject, opt => opt.Ignore())
             .ForMember(dest => dest.CatalogusId, opt => opt.Ignore())
+            .ForMember(dest => dest.LegacyAuditTrail, opt => opt.Ignore())
             .ForMember(dest => dest.Zaaktype, opt => opt.MapFrom(src => src.Zaaktype.TrimEnd('/')));
 
         CreateMap<RelevanteAndereZaakDto, RelevanteAndereZaak>()

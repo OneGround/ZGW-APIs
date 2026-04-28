@@ -76,7 +76,7 @@ class DeleteZaakContactmomentCommandHandler
             return new CommandResult<KlantContact>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakContactmoment.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Deleting ZaakContactmoment {Id}....", zaakContactmoment.Id);
 

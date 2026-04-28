@@ -106,7 +106,7 @@ class UpdateZaakEigenschapCommandHandler
             return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, error2);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakEigenschap.Zaak.LegacyAuditTrail))
         {
             _logger.LogDebug("Updating ZaakEigenschap {Id}....", zaakEigenschap.Id);
 

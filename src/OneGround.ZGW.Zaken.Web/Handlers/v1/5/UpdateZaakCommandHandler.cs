@@ -69,7 +69,7 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
 
         Geometry savedZaakgeometrie = null;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, request.OriginalZaak.LegacyAuditTrail))
         {
             audittrail.SetOld<ZaakResponseDto>(request.OriginalZaak);
 
@@ -158,7 +158,21 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
         return new CommandResult<Zaak>(request.OriginalZaak, CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "zaak",
+            // Note: Following settings are ignored when Legacy audittrail is used
+            Properties = new Dictionary<string, object>
+            {
+                {
+                    DeltaBasedAuditTrail.PropertiesUsingCurrentValue, // Note: Due the complexity of a changed geometrie object we should replace the whole content instead of a part of the geometrie
+                    new List<string> { "zaakgeometrie" }
+                },
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZRC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
+            },
+        };
 }
 
 class UpdateZaakCommand : IRequest<CommandResult<Zaak>>

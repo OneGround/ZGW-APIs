@@ -16,6 +16,7 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
     public DbSet<Besluit> Besluiten { get; set; }
     public DbSet<BesluitInformatieObject> BesluitInformatieObjecten { get; set; }
     public DbSet<AuditTrailRegel> AuditTrailRegels { get; set; }
+    public DbSet<AuditTrailDelta> AuditTrailDeltas { get; set; }
     public DbSet<OrganisatieNummer> OrganisatieNummers { get; set; }
     public DbSet<TempBesluitAuthorization> TempBesluitAuthorization { get; set; }
 
@@ -47,6 +48,20 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
         modelBuilder.Entity<BesluitInformatieObject>().HasIndex(p => p.InformatieObject);
 
         modelBuilder.Entity<AuditTrailRegel>().HasIndex(p => p.HoofdObjectId);
+
+        modelBuilder
+            .Entity<AuditTrailDelta>()
+            .HasIndex(a => new
+            {
+                a.HoofdObjectId,
+                a.ResourceId,
+                a.Versie,
+            })
+            .IsDescending(false, false, true);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(p => p.AanmaakDatum);
+
+        modelBuilder.Entity<AuditTrailDelta>().HasIndex(a => new { a.HoofdObjectId, a.AanmaakDatum }).IsDescending(false, true);
 
         // Source: https://www.npgsql.org/efcore/misc/collations-and-case-sensitivity.html?tabs=data-annotations
         // And:    https://dba.stackexchange.com/questions/255780/case-insensitive-collation-still-comparing-case-sensitive

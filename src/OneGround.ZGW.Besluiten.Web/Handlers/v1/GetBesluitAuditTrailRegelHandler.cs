@@ -10,6 +10,7 @@ using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 
@@ -20,6 +21,7 @@ class GetBesluitAuditTrailRegelHandler
         IRequestHandler<GetBesluitAuditTrailRegel, QueryResult<AuditTrailRegel>>
 {
     private readonly BrcDbContext _context;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetBesluitAuditTrailRegelHandler(
         ILogger<GetBesluitAuditTrailRegelHandler> logger,
@@ -27,11 +29,13 @@ class GetBesluitAuditTrailRegelHandler
         IEntityUriService uriService,
         BrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBesluitKenmerkenResolver besluitKenmerkenResolver
+        IBesluitKenmerkenResolver besluitKenmerkenResolver,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, besluitKenmerkenResolver)
     {
         _context = context;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<AuditTrailRegel>> Handle(GetBesluitAuditTrailRegel request, CancellationToken cancellationToken)
@@ -55,20 +59,15 @@ class GetBesluitAuditTrailRegelHandler
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.Forbidden);
         }
 
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.Id == request.AuditTrailRegelId)
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == besluit.Id)
-            .SingleOrDefaultAsync(cancellationToken);
+        using var audittrail = _auditTrailFactory.Create(besluit.LegacyAuditTrail);
 
+        var result = await audittrail.GetAuditTrailEntryByIdAsync(request.BesluitId, request.AuditTrailRegelId, cancellationToken);
         if (result == null)
         {
             return new QueryResult<AuditTrailRegel>(null, QueryStatus.NotFound);
         }
 
-        var queryResult = new QueryResult<AuditTrailRegel>(result, QueryStatus.OK);
-
-        return queryResult;
+        return new QueryResult<AuditTrailRegel>(result, QueryStatus.OK);
     }
 }
 

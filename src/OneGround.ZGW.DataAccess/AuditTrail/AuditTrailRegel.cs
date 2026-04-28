@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace OneGround.ZGW.DataAccess.AuditTrail;
 
 [Table("audittrail")]
-public class AuditTrailRegel : IBaseEntity
+public class AuditTrailRegel : IZgwAuditTrailRegel
 {
     [NotMapped]
     public string Url => HoofdObject;

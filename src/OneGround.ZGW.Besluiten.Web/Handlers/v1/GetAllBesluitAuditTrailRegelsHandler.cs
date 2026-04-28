@@ -11,6 +11,7 @@ using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 
@@ -21,6 +22,7 @@ class GetAllBesluitAuditTrailRegelsHandler
         IRequestHandler<GetAllBesluitAuditTrailRegels, QueryResult<IEnumerable<AuditTrailRegel>>>
 {
     private readonly BrcDbContext _context;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetAllBesluitAuditTrailRegelsHandler(
         ILogger<GetAllBesluitAuditTrailRegelsHandler> logger,
@@ -28,11 +30,13 @@ class GetAllBesluitAuditTrailRegelsHandler
         IEntityUriService uriService,
         BrcDbContext context,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IBesluitKenmerkenResolver besluitKenmerkenResolver
+        IBesluitKenmerkenResolver besluitKenmerkenResolver,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, uriService, authorizationContextAccessor, besluitKenmerkenResolver)
     {
         _context = context;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<IEnumerable<AuditTrailRegel>>> Handle(GetAllBesluitAuditTrailRegels request, CancellationToken cancellationToken)
@@ -56,11 +60,9 @@ class GetAllBesluitAuditTrailRegelsHandler
             return new QueryResult<IEnumerable<AuditTrailRegel>>(null, QueryStatus.Forbidden);
         }
 
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId == besluit.Id)
-            .OrderBy(a => a.AanmaakDatum)
-            .ToListAsync(cancellationToken);
+        using var audittrail = _auditTrailFactory.Create(besluit.LegacyAuditTrail);
+
+        var result = await audittrail.GetAuditTrailEntriesAsync(besluit.Id, cancellationToken);
 
         return new QueryResult<IEnumerable<AuditTrailRegel>>(result, QueryStatus.OK);
     }
