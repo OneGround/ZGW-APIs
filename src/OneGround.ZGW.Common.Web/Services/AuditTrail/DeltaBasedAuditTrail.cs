@@ -418,6 +418,11 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 }
                 else if (!string.IsNullOrEmpty(audit.DeltaJson))
                 {
+                    if (current == null)
+                    {
+                        continue;
+                    }
+
                     var delta = JsonNode.Parse(audit.DeltaJson).AsObject();
                     ApplyDelta(current.AsObject(), delta);
                 }
