@@ -603,6 +603,11 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         CancellationToken cancellationToken
     )
     {
+        if (!delta.ResourceId.HasValue)
+            return false;
+
+        var resourceId = delta.ResourceId.Value;
+
         switch (actie)
         {
             case AuditActie.create:
@@ -614,7 +619,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
             case AuditActie.destroy:
             {
-                delta.Versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                delta.Versie = await GetNextVersionAsync(hoofdObjectId, resourceId, cancellationToken);
                 delta.DeltaJson = oud;
                 break;
             }
@@ -634,7 +639,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
 
                 bool forcingSnapshotVersion = false;
 
-                var versie = await GetNextVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                var versie = await GetNextVersionAsync(hoofdObjectId, resourceId, cancellationToken);
 
                 if (versie == 1)
                 {
@@ -643,7 +648,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
                 }
                 else if (GetForceSnapshotVersionWhenResourceChanged())
                 {
-                    forcingSnapshotVersion = await ShouldForceSnapshotVersionAsync(hoofdObjectId, delta.ResourceId.Value, cancellationToken);
+                    forcingSnapshotVersion = await ShouldForceSnapshotVersionAsync(hoofdObjectId, resourceId, cancellationToken);
                 }
 
                 // Check if this is a snapshot or forced Snapshot version
