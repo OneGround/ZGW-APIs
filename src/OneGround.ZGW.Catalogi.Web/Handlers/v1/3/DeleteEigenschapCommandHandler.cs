@@ -48,7 +48,8 @@ class DeleteEigenschapCommandHandler : CatalogiBaseHandler<DeleteEigenschapComma
         var rsinFilter = GetRsinFilterPredicate<Eigenschap>(b => b.ZaakType.Catalogus.Owner == _rsin);
 
         var eigenschap = await _context
-            .Eigenschappen.Include(z => z.ZaakType)
+            .Eigenschappen.Include(z => z.ZaakType.Catalogus)
+            .Include(z => z.Specificatie)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
@@ -61,7 +62,7 @@ class DeleteEigenschapCommandHandler : CatalogiBaseHandler<DeleteEigenschapComma
 
         if (!_conceptBusinessRule.ValidateConceptZaakType(eigenschap.ZaakType, errors))
         {
-            return new CommandResult<ResultaatType>(null, CommandStatus.ValidationError, errors.ToArray());
+            return new CommandResult(CommandStatus.ValidationError, errors.ToArray());
         }
 
         _logger.LogDebug("Deleting Eigenschap {Id}....", eigenschap.Id);
