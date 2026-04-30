@@ -18,18 +18,18 @@ namespace OneGround.ZGW.Zaken.DataModel;
 public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrationsDbContext, IDbContextWithNummerGenerator
 {
     private readonly IDatabaseProtector<ZrcDbContext> _databaseProtector;
-    private readonly IHmacHasher _hmacHasher;
+    private readonly IVersionedHmacHasher _versionedHasher;
 
     public ZrcDbContext(
         DbContextOptions<ZrcDbContext> options,
         IDatabaseProtector<ZrcDbContext> databaseProtector,
-        IHmacHasher hmacHasher,
+        IVersionedHmacHasher versionedHasher,
         IDbUserContext dbUserContext = null
     )
         : base(options, dbUserContext)
     {
         _databaseProtector = databaseProtector;
-        _hmacHasher = hmacHasher;
+        _versionedHasher = versionedHasher;
     }
 
     public DbSet<FinishedDataMigration> FinishedDataMigrations { get; set; }
@@ -91,14 +91,14 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
 
-        // Capture for use in lambda
-        var hmacHasher = _hmacHasher;
-
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>(entity =>
         {
             entity.Property(p => p.InpBsnEncrypted).HasColumnName("inpbsn_encrypted");
 
-            entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64).HasConversion(v => hmacHasher.ComputeHash(v), v => v);
+            entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64);
+            // No HasConversion — hashing done automatically in SaveChangesAsync via IVersionedHmacHasher
+
+            entity.Property(p => p.InpBsnHashKeyVersion).HasColumnName("inpbsn_hash_key_version").HasMaxLength(10).HasDefaultValue(null);
 
             entity.HasIndex(p => p.InpBsnHash);
         });
@@ -225,6 +225,41 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakStatus>().Property(c => c.StatusType).UseCollation("ci_collation");
 
         modelBuilder.Entity<ZaakVerzoek>().Property(c => c.Verzoek).UseCollation("ci_collation");
+    }
+
+    // IMPORTANT: SaveChangesAsync MUST run before base.SaveChangesAsync() because
+    // the DataProtection ValueConverter encrypts InpBsnEncrypted during SaveChanges.
+    // At this point, InpBsnEncrypted still contains plaintext BSN.
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        HashPendingBsnEntries();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        HashPendingBsnEntries();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    private void HashPendingBsnEntries()
+    {
+        var entriesToHash = ChangeTracker
+            .Entries<NatuurlijkPersoonZaakRol>()
+            .Where(e =>
+                e.Entity.InpBsnEncrypted is not null
+                && (
+                    e.State == EntityState.Added
+                    || (e.State == EntityState.Modified && e.Property(nameof(NatuurlijkPersoonZaakRol.InpBsnEncrypted)).IsModified)
+                )
+            )
+            .ToList();
+
+        foreach (var entry in entriesToHash)
+        {
+            entry.Entity.InpBsnHash = _versionedHasher.ComputeHash(entry.Entity.InpBsnEncrypted);
+            entry.Entity.InpBsnHashKeyVersion = _versionedHasher.Latest;
+        }
     }
 
     // Note: To get ST_Transform working to do a tranfomation from one Geometry to another Geometry (without using real tables)

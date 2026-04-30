@@ -70,6 +70,10 @@ public class NatuurlijkPersoonZaakRol : IBaseEntity
     [Column("inpbsn_hash")]
     public string InpBsnHash { get; set; }
 
+    [Column("inpbsn_hash_key_version")]
+    [MaxLength(10)]
+    public string? InpBsnHashKeyVersion { get; set; }
+
     [ProtectedData]
     [Column("inpbsn_encrypted")]
     public string InpBsnEncrypted { get; set; }

@@ -14,7 +14,8 @@ public static class ZakenDataProtectionExtensions
     public static IServiceCollection AddZakenDataProtection(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<HmacHasherConfiguration>(configuration.GetSection("HmacHasher"));
-        services.AddSingleton<IHmacHasher, HmacSha256Hasher>();
+        services.AddSingleton<IVersionedHmacHasher, VersionedHmacSha256Hasher>();
+        services.AddSingleton<IHashRotationService, HashRotationService>();
         services.AddSingleton<IDatabaseProtector<ZrcDbContext>>(sp => new DatabaseProtector<ZrcDbContext>(
             sp.GetRequiredService<IDataProtectionProvider>(),
             "ZakenDatabaseProtection"
