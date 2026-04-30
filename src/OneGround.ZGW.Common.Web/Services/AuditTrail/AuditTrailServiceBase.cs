@@ -299,9 +299,14 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
 
         foreach (var propertyInfo in type.GetProperties())
         {
+            if (propertyInfo.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
             if (maskFields.Contains(propertyInfo.Name, StringComparer.OrdinalIgnoreCase))
             {
-                if (propertyInfo.CanRead && propertyInfo.CanWrite)
+                if (propertyInfo.CanRead && propertyInfo.CanWrite && propertyInfo.PropertyType == typeof(string))
                 {
                     propertyInfo.SetValue(obj, "******");
                 }
