@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 using NodaTime;
 using NodaTime.Text;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.Zaken.DataModel;

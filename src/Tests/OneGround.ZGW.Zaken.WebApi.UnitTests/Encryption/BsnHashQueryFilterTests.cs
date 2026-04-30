@@ -6,10 +6,10 @@ using Xunit;
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.Encryption;
 
 /// <summary>
-/// Tests that validate the BSN hash query filter behavior used by query handlers.
-/// The handlers pre-compute all possible BSN hashes via IHashRotationService
-/// and use List&lt;string&gt;.Contains() to match against InpBsnHash in the database.
-/// This produces SQL: WHERE inpbsn_hash IN ('hash_v1', 'hash_v2').
+/// Validates the BSN hash query filter pattern: query handlers call
+/// <see cref="IHashRotationService.GetAllPossibleHashes"/> to compute hashes for all
+/// configured key versions, then filter with <c>possibleHashes.Contains(entity.InpBsnHash)</c>
+/// which EF Core translates to <c>WHERE inpbsn_hash IN (...)</c>.
 /// </summary>
 public class BsnHashQueryFilterTests
 {
