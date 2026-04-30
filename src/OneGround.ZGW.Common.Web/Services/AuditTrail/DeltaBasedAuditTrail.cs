@@ -16,23 +16,14 @@ using OneGround.ZGW.DataAccess.AuditTrail;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
-public class DeltaBasedAuditTrail : IAuditTrailService
+public class DeltaBasedAuditTrail : AuditTrailServiceBase
 {
+    // Implementation specific settings
     public const string PropertiesUsingCurrentValue = "PropertiesUsingCurrentValue";
     public const string ForceSnapshotVersionWhenResourceChanged = "ForceSnapshotVersionWhenResourceChanged";
     public const string SnapshotInterval = "SnapshotInterval";
 
     protected const int DefaultSnapshotInterval = 25;
-
-    protected readonly IDbContextWithAuditTrail _context;
-    protected readonly IMapper _mapper;
-    protected readonly IHttpContextAccessor _httpContextAccessor;
-    protected readonly IEntityUriService _uriService;
-
-    private string _oldJson;
-    private string _newJson;
-
-    protected AuditTrailOptions _options = new AuditTrailOptions();
 
     public DeltaBasedAuditTrail(
         IDbContextWithAuditTrail context,
@@ -40,170 +31,107 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         IHttpContextAccessor httpContextAccessor,
         IEntityUriService uriService
     )
+        : base(context, mapper, httpContextAccessor, uriService) { }
+
+    protected override async Task WriteAsync(
+        AuditActie auditActie,
+        string actieWeergave,
+        string hoofdobject,
+        string resourceUrl,
+        HttpStatusCode resultaat,
+        string resourceWeergave = "",
+        string toelichting = "",
+        CancellationToken cancellationToken = default
+    )
     {
-        _context = context;
-        _mapper = mapper;
-        _httpContextAccessor = httpContextAccessor;
-        _uriService = uriService;
+        var httpContext = _httpContextAccessor.HttpContext;
+
+        var audittrail = new AuditTrailDelta
+        {
+            AanmaakDatum = DateTime.UtcNow,
+            DeltaJson = null,
+            SnapshotJson = null,
+            HoofdObject = hoofdobject,
+            ApplicatieId = httpContext.GetClientId(),
+            ApplicatieWeergave = httpContext.GetApplicationLabel(),
+            GebruikersId = httpContext.GetUserId(),
+            GebruikersWeergave = httpContext.GetUserRepresentation(),
+            Bron = _options.Bron,
+            RequestId = httpContext.GetRequestId(),
+            Actie = $"{auditActie}",
+            ActieWeergave = actieWeergave,
+            Resource = _options.Resource,
+            ResourceUrl = resourceUrl,
+            ResourceWeergave = resourceWeergave,
+            Resultaat = (int)resultaat,
+            Toelichting = toelichting,
+        };
+
+        await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
+
+        Reset();
     }
 
-    public void SetOptions(AuditTrailOptions options)
+    protected override async Task WriteAsync(
+        AuditActie actie,
+        string actieWeergave,
+        IBaseEntity hoofdobject,
+        string resourceUrl,
+        HttpStatusCode resultaat,
+        string resourceWeergave = "",
+        string toelichting = "",
+        bool dontWriteEntity = false,
+        CancellationToken cancellationToken = default
+    )
     {
-        _options = options;
+        if (hoofdobject is not IUrlEntity hoofdobjectUrl)
+            throw new InvalidOperationException($"Entity {hoofdobject} expected to be an {nameof(IUrlEntity)}.");
+
+        var entityUrl = _uriService.GetUri(hoofdobjectUrl);
+
+        var resourceId = _uriService.GetId(resourceUrl);
+
+        var httpContext = _httpContextAccessor.HttpContext;
+
+        var audittrail = new AuditTrailDelta
+        {
+            AanmaakDatum = DateTime.UtcNow,
+            DeltaJson = null,
+            SnapshotJson = null,
+            HoofdObject = entityUrl,
+            ApplicatieId = httpContext.GetClientId(),
+            ApplicatieWeergave = httpContext.GetApplicationLabel(),
+            GebruikersId = httpContext.GetUserId(),
+            GebruikersWeergave = httpContext.GetUserRepresentation(),
+            Bron = _options.Bron,
+            RequestId = httpContext.GetRequestId(),
+            Actie = $"{actie}",
+            ActieWeergave = actieWeergave,
+            Resource = _options.Resource,
+            ResourceUrl = resourceUrl,
+            ResourceWeergave = resourceWeergave,
+            Resultaat = (int)resultaat,
+            Toelichting = toelichting,
+            HoofdObjectId = hoofdobject.Id,
+            ResourceId = resourceId,
+        };
+
+        if (!dontWriteEntity)
+        {
+            bool result = await ResolveSnapshotOrDeltaAsync(hoofdobject.Id, actie, _newJson, _oldJson, audittrail, cancellationToken);
+            if (!result)
+            {
+                // No changes → Do not log
+                return;
+            }
+        }
+
+        await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
+
+        Reset();
     }
 
-    public void SetOld<TDto>(IBaseEntity entity)
-    {
-        var oldDto = _mapper.Map<TDto>(entity);
-
-        _oldJson = ToJson(oldDto);
-    }
-
-    public void SetNew<TDto>(IBaseEntity entity)
-    {
-        var newDto = _mapper.Map<TDto>(entity);
-
-        _newJson = ToJson(newDto);
-    }
-
-    public Task CreatedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.create,
-            "Object aangemaakt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.Created,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task GetAsync(IBaseEntity entity, IUrlEntity subEntity, string overruleActieWeergave = null, CancellationToken cancellationToken = default)
-    {
-        var actieWeergave = string.IsNullOrEmpty(overruleActieWeergave) ? "Object gelezen" : overruleActieWeergave;
-
-        return WriteAsync(
-            AuditActie.retrieve,
-            actieWeergave,
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            dontWriteEntity: false,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken = default)
-    {
-        return totalCount == 0
-            ? WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: "Lijst bevat geen objecten",
-                cancellationToken: cancellationToken
-            )
-            : WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: $"Lijst van {count} van {totalCount} objecten gelezen (pagina {page})",
-                cancellationToken: cancellationToken
-            );
-    }
-
-    public Task GetListAsync(int totalCount, CancellationToken cancellationToken = default)
-    {
-        return totalCount == 0
-            ? WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: "Lijst bevat geen objecten",
-                cancellationToken: cancellationToken
-            )
-            : WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: $"Lijst van {totalCount} objecten gelezen",
-                cancellationToken: cancellationToken
-            );
-    }
-
-    public Task DestroyedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.destroy,
-            "Object verwijderd",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.NoContent,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task DestroyedAsync(IUrlEntity entity, string toelichting, CancellationToken cancellationToken = default)
-    {
-        var hoofdobject = _uriService.GetUri(entity);
-
-        return WriteAsync(
-            AuditActie.destroy,
-            "Object verwijderd",
-            hoofdobject,
-            hoofdobject,
-            HttpStatusCode.NoContent,
-            cancellationToken: cancellationToken,
-            toelichting: toelichting
-        );
-    }
-
-    public Task UpdatedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task PatchedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.partial_update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task PatchedAsync(IBaseEntity entity, IUrlEntity subEntity, string toelichting, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.partial_update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            toelichting: toelichting ?? "",
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public async Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default)
+    protected override async Task<IEnumerable<AuditTrailRegel>> ReadAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default)
     {
         var auditsWithAllResources = await _context
             .AuditTrailDeltas.AsNoTracking()
@@ -341,11 +269,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return result.OrderBy(a => a.AanmaakDatum);
     }
 
-    public async Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(
-        Guid hoofdobjectId,
-        Guid audittrailId,
-        CancellationToken cancellationToken = default
-    )
+    protected override async Task<AuditTrailRegel> ReadAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default)
     {
         // Use a subquery to resolve ResourceId and Versie, combining both queries into a single database round-trip
         var requestedAuditSubquery = _context
@@ -499,104 +423,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return auditTrailRegel;
     }
 
-    private async Task WriteAsync(
-        AuditActie auditActie,
-        string actieWeergave,
-        string hoofdobject,
-        string resourceUrl,
-        HttpStatusCode resultaat,
-        string resourceWeergave = "",
-        string toelichting = "",
-        CancellationToken cancellationToken = default
-    )
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-
-        var audittrail = new AuditTrailDelta
-        {
-            AanmaakDatum = DateTime.UtcNow,
-            DeltaJson = null,
-            SnapshotJson = null,
-            HoofdObject = hoofdobject,
-            ApplicatieId = httpContext.GetClientId(),
-            ApplicatieWeergave = httpContext.GetApplicationLabel(),
-            GebruikersId = httpContext.GetUserId(),
-            GebruikersWeergave = httpContext.GetUserRepresentation(),
-            Bron = _options.Bron,
-            RequestId = httpContext.GetRequestId(),
-            Actie = $"{auditActie}",
-            ActieWeergave = actieWeergave,
-            Resource = _options.Resource,
-            ResourceUrl = resourceUrl,
-            ResourceWeergave = resourceWeergave,
-            Resultaat = (int)resultaat,
-            Toelichting = toelichting,
-        };
-
-        await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
-
-        Reset();
-    }
-
-    private async Task WriteAsync(
-        AuditActie actie,
-        string actieWeergave,
-        IBaseEntity hoofdobject,
-        string resourceUrl,
-        HttpStatusCode resultaat,
-        string resourceWeergave = "",
-        string toelichting = "",
-        bool dontWriteEntity = false,
-        CancellationToken cancellationToken = default
-    )
-    {
-        if (hoofdobject is not IUrlEntity hoofdobjectUrl)
-            throw new InvalidOperationException($"Entity {hoofdobject} expected to be an {nameof(IUrlEntity)}.");
-
-        var entityUrl = _uriService.GetUri(hoofdobjectUrl);
-
-        var resourceId = _uriService.GetId(resourceUrl);
-
-        var httpContext = _httpContextAccessor.HttpContext;
-
-        var audittrail = new AuditTrailDelta
-        {
-            AanmaakDatum = DateTime.UtcNow,
-            DeltaJson = null,
-            SnapshotJson = null,
-            HoofdObject = entityUrl,
-            ApplicatieId = httpContext.GetClientId(),
-            ApplicatieWeergave = httpContext.GetApplicationLabel(),
-            GebruikersId = httpContext.GetUserId(),
-            GebruikersWeergave = httpContext.GetUserRepresentation(),
-            Bron = _options.Bron,
-            RequestId = httpContext.GetRequestId(),
-            Actie = $"{actie}",
-            ActieWeergave = actieWeergave,
-            Resource = _options.Resource,
-            ResourceUrl = resourceUrl,
-            ResourceWeergave = resourceWeergave,
-            Resultaat = (int)resultaat,
-            Toelichting = toelichting,
-            HoofdObjectId = hoofdobject.Id,
-            ResourceId = resourceId,
-        };
-
-        if (!dontWriteEntity)
-        {
-            bool result = await ResolveSnapshotOrDeltaAsync(hoofdobject.Id, actie, _newJson, _oldJson, audittrail, cancellationToken);
-            if (!result)
-            {
-                // No changes → Do not log
-                return;
-            }
-        }
-
-        await _context.AuditTrailDeltas.AddAsync(audittrail, cancellationToken);
-
-        Reset();
-    }
-
     protected async Task<bool> ResolveSnapshotOrDeltaAsync(
         Guid hoofdObjectId,
         AuditActie actie,
@@ -706,7 +532,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
     /// 2. "__replace": Entire value should replace target value (prevents merging, used for PropertiesUsingCurrentValue)
     /// 3. Array delta markers (added/removed/updated): Array-specific delta operations
     /// </summary>
-    private void ApplyDelta(JsonObject target, JsonObject delta)
+    private static void ApplyDelta(JsonObject target, JsonObject delta)
     {
         foreach (var kv in delta)
         {
@@ -752,7 +578,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         }
     }
 
-    private void ApplyArrayDelta(JsonArray target, JsonObject delta)
+    private static void ApplyArrayDelta(JsonArray target, JsonObject delta)
     {
         if (delta.TryGetPropertyValue("removed", out var removedNode))
         {
@@ -794,7 +620,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         }
     }
 
-    private int FindMatchIndex(JsonArray array, JsonObject candidate)
+    private static int FindMatchIndex(JsonArray array, JsonObject candidate)
     {
         if (candidate.TryGetPropertyValue("Id", out var idNode))
         {
@@ -818,7 +644,7 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         return -1;
     }
 
-    private int FindPrimitiveIndex(JsonArray array, JsonNode value)
+    private static int FindPrimitiveIndex(JsonArray array, JsonNode value)
     {
         var json = value?.ToJsonString();
 
@@ -829,23 +655,6 @@ public class DeltaBasedAuditTrail : IAuditTrailService
         }
 
         return -1;
-    }
-
-    protected void Reset()
-    {
-        _oldJson = "";
-        _newJson = "";
-    }
-
-    public void Dispose()
-    {
-        Reset();
-    }
-
-    private static string ToJson(object obj)
-    {
-        // Note: We should use the custom ZGWJsonSerializerSettings, handling specific types (eg. Geometry)
-        return obj != null ? Newtonsoft.Json.JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
     }
 
     private List<string> GetPropertiesUsingCurrentValues()

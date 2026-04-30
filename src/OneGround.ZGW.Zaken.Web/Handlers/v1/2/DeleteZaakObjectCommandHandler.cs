@@ -49,8 +49,17 @@ class DeleteZaakObjectCommandHandler : ZakenBaseHandler<DeleteZaakObjectCommandH
 
         var zaakObject = await _context
             .ZaakObjecten.Where(rsinFilter)
-            .Include(b => b.Zaak)
-            //.ThenInclude(r => r.Kenmerken)
+            .AsSplitQuery()
+            .Include(b => b.Zaak.Kenmerken)
+            .Include(b => b.ObjectTypeOverigeDefinitie)
+            .Include(b => b.Adres)
+            .Include(b => b.Buurt)
+            .Include(b => b.Pand)
+            .Include(b => b.KadastraleOnroerendeZaak)
+            .Include(b => b.Gemeente)
+            .Include(b => b.TerreinGebouwdObject)
+            .Include(b => b.Overige)
+            .Include(b => b.WozWaardeObject.IsVoor.AanduidingWozObject)
             .SingleOrDefaultAsync(z => z.Id == request.ZaakObjectId, cancellationToken);
 
         if (zaakObject == null)

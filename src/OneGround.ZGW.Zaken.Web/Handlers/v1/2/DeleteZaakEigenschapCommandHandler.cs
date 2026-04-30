@@ -57,6 +57,7 @@ class DeleteZaakEigenschapCommandHandler
         var zaakEigenschap = await _context
             .ZaakEigenschappen.Where(rsinFilter)
             .Include(b => b.Zaak)
+                .ThenInclude(r => r.Kenmerken)
             .SingleOrDefaultAsync(z => z.ZaakId == request.ZaakId && z.Id == request.Id, cancellationToken);
 
         if (zaakEigenschap == null)
@@ -66,14 +67,14 @@ class DeleteZaakEigenschapCommandHandler
 
         if (!_authorizationContext.IsAuthorized(zaakEigenschap.Zaak))
         {
-            return new CommandResult<ZaakEigenschap>(null, CommandStatus.Forbidden);
+            return new CommandResult(CommandStatus.Forbidden);
         }
 
         var errors = new List<ValidationError>();
 
         if (!_closedZaakModificationBusinessRule.ValidateClosedZaakModificationRule(zaakEigenschap.Zaak, errors))
         {
-            return new CommandResult<KlantContact>(null, CommandStatus.Forbidden, errors.ToArray());
+            return new CommandResult(CommandStatus.Forbidden, errors.ToArray());
         }
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakEigenschap.Zaak.LegacyAuditTrail))

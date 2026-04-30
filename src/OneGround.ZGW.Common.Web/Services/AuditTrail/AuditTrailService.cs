@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -15,207 +14,12 @@ using OneGround.ZGW.DataAccess.AuditTrail;
 
 namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
-public class AuditTrailService : IAuditTrailService
+public class AuditTrailService : AuditTrailServiceBase
 {
-    private readonly IDbContextWithAuditTrail _context;
-    private readonly IMapper _mapper;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IEntityUriService _uriService;
-
-    private AuditTrailOptions _options = new AuditTrailOptions();
-
-    private string _oldJson;
-    private string _newJson;
-
     public AuditTrailService(IDbContextWithAuditTrail context, IMapper mapper, IHttpContextAccessor httpContextAccessor, IEntityUriService uriService)
-    {
-        _context = context;
-        _mapper = mapper;
-        _httpContextAccessor = httpContextAccessor;
-        _uriService = uriService;
-    }
+        : base(context, mapper, httpContextAccessor, uriService) { }
 
-    public void SetOptions(AuditTrailOptions options)
-    {
-        _options = options;
-    }
-
-    public void SetOld<TDto>(IBaseEntity entity)
-    {
-        var oldDto = _mapper.Map<TDto>(entity);
-
-        _oldJson = ToJson(oldDto);
-    }
-
-    public void SetNew<TDto>(IBaseEntity entity)
-    {
-        var newDto = _mapper.Map<TDto>(entity);
-
-        _newJson = ToJson(newDto);
-    }
-
-    public Task CreatedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.create,
-            "Object aangemaakt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.Created,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task GetAsync(IBaseEntity entity, IUrlEntity subEntity, string overruleActieWeergave = null, CancellationToken cancellationToken = default)
-    {
-        var actieWeergave = string.IsNullOrEmpty(overruleActieWeergave) ? "Object gelezen" : overruleActieWeergave;
-
-        return WriteAsync(
-            AuditActie.retrieve,
-            actieWeergave,
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            dontWriteEntity: false,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken = default)
-    {
-        return totalCount == 0
-            ? WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: "Lijst bevat geen objecten",
-                cancellationToken: cancellationToken
-            )
-            : WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: $"Lijst van {count} van {totalCount} objecten gelezen (pagina {page})",
-                cancellationToken: cancellationToken
-            );
-    }
-
-    public Task GetListAsync(int totalCount, CancellationToken cancellationToken = default)
-    {
-        return totalCount == 0
-            ? WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: "Lijst bevat geen objecten",
-                cancellationToken: cancellationToken
-            )
-            : WriteAsync(
-                AuditActie.retrieve,
-                "Lijst van objecten gelezen",
-                "(lijst van)",
-                "(lijst van)",
-                HttpStatusCode.OK,
-                toelichting: $"Lijst van {totalCount} objecten gelezen",
-                cancellationToken: cancellationToken
-            );
-    }
-
-    public Task DestroyedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.destroy,
-            "Object verwijderd",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.NoContent,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task DestroyedAsync(IUrlEntity entity, string toelichting, CancellationToken cancellationToken = default)
-    {
-        var hoofdobject = _uriService.GetUri(entity);
-
-        return WriteAsync(
-            AuditActie.destroy,
-            "Object verwijderd",
-            hoofdobject,
-            hoofdobject,
-            HttpStatusCode.NoContent,
-            cancellationToken: cancellationToken,
-            toelichting: toelichting
-        );
-    }
-
-    public Task UpdatedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task PatchedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.partial_update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public Task PatchedAsync(IBaseEntity entity, IUrlEntity subEntity, string toelichting, CancellationToken cancellationToken = default)
-    {
-        return WriteAsync(
-            AuditActie.partial_update,
-            "Object bijgewerkt",
-            entity,
-            _uriService.GetUri(subEntity),
-            HttpStatusCode.OK,
-            toelichting: toelichting ?? "",
-            cancellationToken: cancellationToken
-        );
-    }
-
-    public async Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default)
-    {
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId.Value == hoofdobjectId)
-            .OrderBy(a => a.AanmaakDatum)
-            .ToListAsync(cancellationToken);
-
-        return result;
-    }
-
-    public async Task<AuditTrailRegel> GetAuditTrailEntryByIdAsync(
-        Guid hoofdobjectId,
-        Guid audittrailId,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var result = await _context
-            .AuditTrailRegels.AsNoTracking()
-            .SingleOrDefaultAsync(a => a.Id == audittrailId && a.HoofdObjectId == hoofdobjectId, cancellationToken);
-
-        return result;
-    }
-
-    private async Task WriteAsync(
+    protected override async Task WriteAsync(
         AuditActie auditActie,
         string actieWeergave,
         string hoofdobject,
@@ -255,7 +59,7 @@ public class AuditTrailService : IAuditTrailService
         Reset();
     }
 
-    private async Task WriteAsync(
+    protected override async Task WriteAsync(
         AuditActie auditActie,
         string actieWeergave,
         IBaseEntity hoofdobject,
@@ -301,19 +105,23 @@ public class AuditTrailService : IAuditTrailService
         Reset();
     }
 
-    private void Reset()
+    protected override async Task<IEnumerable<AuditTrailRegel>> ReadAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default)
     {
-        _oldJson = "";
-        _newJson = "";
+        var result = await _context
+            .AuditTrailRegels.AsNoTracking()
+            .Where(a => a.HoofdObjectId.HasValue && a.HoofdObjectId.Value == hoofdobjectId)
+            .OrderBy(a => a.AanmaakDatum)
+            .ToListAsync(cancellationToken);
+
+        return result;
     }
 
-    public void Dispose()
+    protected override async Task<AuditTrailRegel> ReadAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default)
     {
-        Reset();
-    }
+        var result = await _context
+            .AuditTrailRegels.AsNoTracking()
+            .SingleOrDefaultAsync(a => a.Id == audittrailId && a.HoofdObjectId == hoofdobjectId, cancellationToken);
 
-    private static string ToJson(object obj)
-    {
-        return obj != null ? JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
+        return result;
     }
 }
