@@ -247,16 +247,19 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         var entriesToHash = ChangeTracker
             .Entries<NatuurlijkPersoonZaakRol>()
             .Where(e =>
-                e.Entity.InpBsnEncrypted is not null
-                && (
-                    e.State == EntityState.Added
-                    || (e.State == EntityState.Modified && e.Property(nameof(NatuurlijkPersoonZaakRol.InpBsnEncrypted)).IsModified)
-                )
+                e.State == EntityState.Added
+                || (e.State == EntityState.Modified && e.Property(nameof(NatuurlijkPersoonZaakRol.InpBsnEncrypted)).IsModified)
             )
             .ToList();
 
         foreach (var entry in entriesToHash)
         {
+            if (entry.Entity.InpBsnEncrypted is null)
+            {
+                entry.Entity.InpBsnHash = null;
+                entry.Entity.InpBsnHashKeyVersion = null;
+                continue;
+            }
             entry.Entity.InpBsnHash = _versionedHasher.ComputeHash(entry.Entity.InpBsnEncrypted);
             entry.Entity.InpBsnHashKeyVersion = _versionedHasher.Latest;
         }

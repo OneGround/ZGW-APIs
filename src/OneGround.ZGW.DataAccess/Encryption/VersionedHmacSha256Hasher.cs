@@ -34,7 +34,7 @@ public class VersionedHmacSha256Hasher : IVersionedHmacHasher
         if (_keys.Count == 0)
         {
             throw new InvalidOperationException(
-                "No HMAC keys configured. Provide HmacKey_v1/HmacKey_v2/etc. or a legacy HmacKey in the configuration section."
+                "No HMAC keys configured. Provide HmacKeys (for example, HmacKeys:{\"v1\":\"...\"}) or a legacy HmacKey in the configuration section."
             );
         }
 

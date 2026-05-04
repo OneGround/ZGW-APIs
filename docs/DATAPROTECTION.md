@@ -66,15 +66,15 @@ Run the following commands from the repository root (or adjust the path accordin
 **Linux/macOS:**
 
 ```bash
-chmod +x ../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
-../tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
+chmod +x ./tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
+./tools/oneground-certificates-generator/generate-dataprotection-certificate.sh
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-..\tools\oneground-certificates-generator\generate-dataprotection-certificate.ps1
+.\tools\oneground-certificates-generator\generate-dataprotection-certificate.ps1
 ```
 
 The script outputs the `DataProtection__Certificate` and `DataProtection__CertificatePassword` values ready to paste into your `.env` file.

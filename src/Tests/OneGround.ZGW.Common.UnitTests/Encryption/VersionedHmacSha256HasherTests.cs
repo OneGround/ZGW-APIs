@@ -208,11 +208,11 @@ public class VersionedHmacSha256HasherTests
 
         // Assert
         Assert.Equal(2, allHashes.Count);
-        Assert.True(allHashes.ContainsKey("v1"));
-        Assert.True(allHashes.ContainsKey("v2"));
-        Assert.NotEmpty(allHashes["v1"]);
-        Assert.NotEmpty(allHashes["v2"]);
-        Assert.NotEqual(allHashes["v1"], allHashes["v2"]);
+        Assert.True(allHashes.TryGetValue("v1", out var v1Hash));
+        Assert.True(allHashes.TryGetValue("v2", out var v2Hash));
+        Assert.NotEmpty(v1Hash);
+        Assert.NotEmpty(v2Hash);
+        Assert.NotEqual(v1Hash, v2Hash);
     }
 
     [Fact]

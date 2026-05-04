@@ -15,8 +15,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                 table: "zaakrollen_natuurlijk_personen",
                 type: "character varying(10)",
                 maxLength: 10,
-                nullable: true,
-                defaultValue: "v1"
+                nullable: true
             );
         }
 
