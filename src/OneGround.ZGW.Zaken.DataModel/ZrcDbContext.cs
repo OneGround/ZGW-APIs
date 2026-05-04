@@ -98,7 +98,7 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
             entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64);
             // No HasConversion — hashing done automatically in SaveChangesAsync via IVersionedHmacHasher
 
-            entity.Property(p => p.InpBsnHashKeyVersion).HasColumnName("inpbsn_hash_key_version").HasMaxLength(10).HasDefaultValue(null);
+            entity.Property(p => p.InpBsnHashKeyVersion).HasColumnName("inpbsn_hash_key_version").HasMaxLength(10);
 
             entity.HasIndex(p => p.InpBsnHash);
         });

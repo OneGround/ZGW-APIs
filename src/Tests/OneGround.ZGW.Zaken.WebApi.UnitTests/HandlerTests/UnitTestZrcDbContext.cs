@@ -49,7 +49,7 @@ internal class UnitTestZrcDbContext : ZrcDbContext
         {
             entity.Property(p => p.InpBsnEncrypted).HasColumnName("inpbsn_encrypted");
             entity.Property(p => p.InpBsnHash).HasColumnName("inpbsn_hash").HasMaxLength(64);
-            entity.Property(p => p.InpBsnHashKeyVersion).HasColumnName("inpbsn_hash_key_version").HasMaxLength(10).HasDefaultValue(null);
+            entity.Property(p => p.InpBsnHashKeyVersion).HasColumnName("inpbsn_hash_key_version").HasMaxLength(10);
             entity.HasIndex(p => p.InpBsnHash);
         });
 
