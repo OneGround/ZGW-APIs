@@ -419,8 +419,8 @@ public class RequestToDomainProfileTests
         var result = _mapper.Map<NatuurlijkPersoonZaakRol>(value);
 
         Assert.Equal(value.InpBsn, result.InpBsn);
-        Assert.Null(result.InpBsnHash); // InpBsnHash is set explicitly by the command handler, not by AutoMapper
-        Assert.Null(result.InpBsnHashKeyVersion); // InpBsnHashKeyVersion is set explicitly by the command handler
+        Assert.Null(result.InpBsnHash);
+        Assert.Null(result.InpBsnHashKeyVersion);
         Assert.Equal(value.InpBsn, result.InpBsnEncrypted);
         Assert.Equal(value.AnpIdentificatie, result.AnpIdentificatie);
         Assert.Equal(value.InpANummer, result.InpANummer);
