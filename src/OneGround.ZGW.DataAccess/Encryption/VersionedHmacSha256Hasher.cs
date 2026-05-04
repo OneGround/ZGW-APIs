@@ -1,5 +1,3 @@
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -18,7 +16,7 @@ public class VersionedHmacSha256Hasher : IVersionedHmacHasher
         var config = options.Value;
         _keys = new Dictionary<string, byte[]>();
 
-        string? legacyLatest = null;
+        string legacyLatest = null;
 
         if (config.HmacKeys != null && config.HmacKeys.Count > 0)
         {
