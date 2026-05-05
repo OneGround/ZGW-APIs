@@ -93,7 +93,7 @@ class DeleteZaakTypeCommandHandler : CatalogiBaseHandler<DeleteZaakTypeCommandHa
 
         _logger.LogDebug("Deleting ZaakType {Id}....", zaakType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakTypeResponseDto>(zaakType);
 
@@ -108,7 +108,7 @@ class DeleteZaakTypeCommandHandler : CatalogiBaseHandler<DeleteZaakTypeCommandHa
             await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeBesluitTypen.Select(t => t.BesluitType), zaakType.Catalogus.Owner);
             await _cacheInvalidator.InvalidateAsync(zaakType);
 
-            await audittrail.DestroyedAsync(zaakType.Catalogus, zaakType, cancellationToken);
+            await audittrail.DestroyedAsync(zaakType, zaakType, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

@@ -91,7 +91,7 @@ class DeleteZaakTypeInformatieObjectTypeHandler
 
         _logger.LogDebug("Deleting ZaakTypeInformatieObjectType {Id}....", zaakTypeInformatieObjectType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakTypeInformatieObjectTypeResponseDto>(zaakTypeInformatieObjectType);
 

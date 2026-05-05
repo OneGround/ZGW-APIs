@@ -127,7 +127,7 @@ class CreateZaakTypeInformatieObjectTypenCommandHandler
         zaakTypeInformatieObjectType.ZaakType = zaakType;
         zaakTypeInformatieObjectType.Owner = zaakTypeInformatieObjectType.ZaakType.Owner;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<ZaakTypeInformatieObjectTypeResponseDto>(zaakTypeInformatieObjectType);
 

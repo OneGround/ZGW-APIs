@@ -96,7 +96,7 @@ class UpdateInformatieObjectTypeCommandHandler
             }
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<InformatieObjectTypeResponseDto>(updatingInformatieObjectType);
 
@@ -174,11 +174,11 @@ class UpdateInformatieObjectTypeCommandHandler
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(updatingInformatieObjectType.Catalogus, updatingInformatieObjectType, cancellationToken);
+                await audittrail.PatchedAsync(updatingInformatieObjectType, updatingInformatieObjectType, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(updatingInformatieObjectType.Catalogus, updatingInformatieObjectType, cancellationToken);
+                await audittrail.UpdatedAsync(updatingInformatieObjectType, updatingInformatieObjectType, cancellationToken);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -190,7 +190,17 @@ class UpdateInformatieObjectTypeCommandHandler
         return new CommandResult<InformatieObjectType>(updatingInformatieObjectType, CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZTC, Resource = "informatieobjecttype" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZTC,
+            Resource = "informatieobjecttype",
+            // Note: Following settings are ignored when Legacy audittrail is used
+            Properties = new Dictionary<string, object>
+            {
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZTC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
+            },
+        };
 }
 
 class UpdateInformatieObjectTypeCommand : IRequest<CommandResult<InformatieObjectType>>

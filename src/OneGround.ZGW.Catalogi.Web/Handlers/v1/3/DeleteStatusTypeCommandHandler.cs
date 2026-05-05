@@ -87,7 +87,7 @@ class DeleteStatusTypeCommandHandler : CatalogiBaseHandler<DeleteStatusTypeComma
 
         _logger.LogDebug("Deleting StatusType {Id}....", statusType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<StatusTypeResponseDto>(statusType);
 

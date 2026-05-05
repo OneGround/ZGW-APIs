@@ -77,7 +77,7 @@ class PublishBesluitTypeCommandHandler
             return new CommandResult<BesluitType>(null, CommandStatus.ValidationError, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<BesluitTypeResponseDto>(besluitType);
 
@@ -104,7 +104,7 @@ class PublishBesluitTypeCommandHandler
 
             audittrail.SetNew<BesluitTypeResponseDto>(besluitType);
 
-            await audittrail.PatchedAsync(besluitType.Catalogus, besluitType, "Besluittype gepubliceerd", cancellationToken);
+            await audittrail.PatchedAsync(besluitType, besluitType, "Besluittype gepubliceerd", cancellationToken);
 
             await _cacheInvalidator.InvalidateAsync(besluitType);
 
