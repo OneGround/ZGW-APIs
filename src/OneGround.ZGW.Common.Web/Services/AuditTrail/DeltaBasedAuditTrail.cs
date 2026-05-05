@@ -271,29 +271,19 @@ public class DeltaBasedAuditTrail : AuditTrailServiceBase
 
     protected override async Task<AuditTrailRegel> ReadAsync(Guid hoofdobjectId, Guid audittrailId, CancellationToken cancellationToken = default)
     {
-        // Use a subquery to resolve ResourceId and Versie, combining both queries into a single database round-trip
-        var requestedAuditSubquery = _context
-            .AuditTrailDeltas.AsNoTracking()
-            .Where(a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId);
-
-        var audits = await _context
-            .AuditTrailDeltas.AsNoTracking()
-            .Where(a =>
-                a.HoofdObjectId.HasValue
-                && a.HoofdObjectId == hoofdobjectId
-                && a.ResourceId.HasValue
-                && requestedAuditSubquery.Any(r => r.ResourceId == a.ResourceId && a.Versie <= r.Versie)
-            )
-            .OrderBy(a => a.Versie)
-            .ToListAsync(cancellationToken);
-
-        AuditTrailRegel auditTrailRegel = null;
+        var auditActieRetrieve = $"{AuditActie.retrieve}";
 
         // First try to find the requested audittrail regel as 'retrieve' operation, if found return immediately (without rebuilding the object state)
-        var retrieveAudit = audits.SingleOrDefault(a => a.Id == audittrailId && a.Actie == $"{AuditActie.retrieve}");
+        var retrieveAudit = await _context
+            .AuditTrailDeltas.AsNoTracking()
+            .SingleOrDefaultAsync(
+                a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId && a.Actie == auditActieRetrieve,
+                cancellationToken
+            );
+
         if (retrieveAudit != null)
         {
-            auditTrailRegel = new AuditTrailRegel
+            return new AuditTrailRegel
             {
                 Id = retrieveAudit.Id,
                 AanmaakDatum = retrieveAudit.AanmaakDatum,
@@ -316,14 +306,34 @@ public class DeltaBasedAuditTrail : AuditTrailServiceBase
                 Nieuw = default,
                 Oud = default,
             };
-            return auditTrailRegel;
         }
 
+        // It is a non-retrieve operation, we need to rebuild the object state starting from the snapshot and applying deltas including the 'Old' state.
+
+        // Use a subquery to resolve ResourceId and Versie, combining both queries into a single database round-trip
+        var requestedAuditSubquery = _context
+            .AuditTrailDeltas.AsNoTracking()
+            .Where(a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId && a.Actie != auditActieRetrieve);
+
+        var audits = await _context
+            .AuditTrailDeltas.AsNoTracking()
+            .Where(a =>
+                a.HoofdObjectId.HasValue
+                && a.HoofdObjectId == hoofdobjectId
+                && a.ResourceId.HasValue
+                && a.Actie != auditActieRetrieve
+                && requestedAuditSubquery.Any(r => r.ResourceId == a.ResourceId && a.Versie <= r.Versie)
+            )
+            .OrderBy(a => a.Versie)
+            .ToListAsync(cancellationToken);
+
+        AuditTrailRegel auditTrailRegel = null;
+
         //
-        // Rebuild the requested audittrail regel starting with snapshot and applying deltas....
+        // Rebuild the requested audittrail regel starting with snapshot and applying deltas including the 'Old' state.....
 
         JsonNode current = null;
-        foreach (var audit in audits.Where(a => a.Actie != $"{AuditActie.retrieve}"))
+        foreach (var audit in audits)
         {
             JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
 
