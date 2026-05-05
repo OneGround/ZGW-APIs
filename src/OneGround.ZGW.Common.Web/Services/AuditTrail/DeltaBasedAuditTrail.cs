@@ -273,66 +273,84 @@ public class DeltaBasedAuditTrail : AuditTrailServiceBase
     {
         var auditActieRetrieve = $"{AuditActie.retrieve}";
 
-        // First try to find the requested audittrail regel as 'retrieve' operation, if found return immediately (without rebuilding the object state)
-        var retrieveAudit = await _context
-            .AuditTrailDeltas.AsNoTracking()
-            .SingleOrDefaultAsync(
-                a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId && a.Actie == auditActieRetrieve,
-                cancellationToken
-            );
+        // All IQueryable subqueries below are NOT executed separately — EF Core composes them into a single SQL query.
 
-        if (retrieveAudit != null)
+        // Subquery: resolve the requested audit's ResourceId and Versie
+        var requestedAuditSubquery = _context
+            .AuditTrailDeltas.AsNoTracking()
+            .Where(a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId);
+
+        // Check if the requested audit is a retrieve operation — return immediately without rebuilding object state
+        var requestedAudit = await requestedAuditSubquery.SingleOrDefaultAsync(cancellationToken);
+
+        if (requestedAudit == null)
+            return null;
+
+        if (requestedAudit.Actie == auditActieRetrieve)
         {
             return new AuditTrailRegel
             {
-                Id = retrieveAudit.Id,
-                AanmaakDatum = retrieveAudit.AanmaakDatum,
-                Actie = retrieveAudit.Actie,
-                ActieWeergave = retrieveAudit.ActieWeergave,
-                ApplicatieId = retrieveAudit.ApplicatieId,
-                ApplicatieWeergave = retrieveAudit.ApplicatieWeergave,
-                Bron = retrieveAudit.Bron,
-                GebruikersId = retrieveAudit.GebruikersId,
-                GebruikersWeergave = retrieveAudit.GebruikersWeergave,
-                HoofdObject = retrieveAudit.HoofdObject,
-                HoofdObjectId = retrieveAudit.HoofdObjectId,
-                Resource = retrieveAudit.Resource,
-                ResourceUrl = retrieveAudit.ResourceUrl,
-                ResourceWeergave = retrieveAudit.ResourceWeergave,
-                RequestId = retrieveAudit.RequestId,
-                Resultaat = retrieveAudit.Resultaat,
-                Toelichting = retrieveAudit.Toelichting,
-                // Log retrieve operation only
+                Id = requestedAudit.Id,
+                AanmaakDatum = requestedAudit.AanmaakDatum,
+                Actie = requestedAudit.Actie,
+                ActieWeergave = requestedAudit.ActieWeergave,
+                ApplicatieId = requestedAudit.ApplicatieId,
+                ApplicatieWeergave = requestedAudit.ApplicatieWeergave,
+                Bron = requestedAudit.Bron,
+                GebruikersId = requestedAudit.GebruikersId,
+                GebruikersWeergave = requestedAudit.GebruikersWeergave,
+                HoofdObject = requestedAudit.HoofdObject,
+                HoofdObjectId = requestedAudit.HoofdObjectId,
+                Resource = requestedAudit.Resource,
+                ResourceUrl = requestedAudit.ResourceUrl,
+                ResourceWeergave = requestedAudit.ResourceWeergave,
+                RequestId = requestedAudit.RequestId,
+                Resultaat = requestedAudit.Resultaat,
+                Toelichting = requestedAudit.Toelichting,
                 Nieuw = default,
                 Oud = default,
             };
         }
 
-        // It is a non-retrieve operation, we need to rebuild the object state starting from the snapshot and applying deltas including the 'Old' state.
-
-        // Use a subquery to resolve ResourceId and Versie, combining both queries into a single database round-trip
-        var requestedAuditSubquery = _context
+        // Find the latest snapshot version STRICTLY BEFORE the requested version for the same resource.
+        // We need the snapshot before the requested version so we can rebuild the state leading INTO
+        // the requested version — this gives us the "Old" value for the requested audit entry.
+        // If the requested version itself is a snapshot, we still need the previous snapshot to know what came before it.
+        var previousSnapshotVersion = await _context
             .AuditTrailDeltas.AsNoTracking()
-            .Where(a => a.Id == audittrailId && a.HoofdObjectId.HasValue && a.HoofdObjectId == hoofdobjectId && a.Actie != auditActieRetrieve);
+            .Where(a =>
+                a.HoofdObjectId == hoofdobjectId
+                && a.ResourceId == requestedAudit.ResourceId
+                && a.Actie != auditActieRetrieve
+                && a.SnapshotJson != null
+                && a.Versie < requestedAudit.Versie
+            )
+            .OrderByDescending(a => a.Versie)
+            .Select(a => (int?)a.Versie)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Start from the previous snapshot (so we can rebuild the Old state), or from version 1 if none exists
+        var startVersion = previousSnapshotVersion ?? 1;
 
         var audits = await _context
             .AuditTrailDeltas.AsNoTracking()
             .Where(a =>
-                a.HoofdObjectId.HasValue
-                && a.HoofdObjectId == hoofdobjectId
-                && a.ResourceId.HasValue
+                a.HoofdObjectId == hoofdobjectId
+                && a.ResourceId == requestedAudit.ResourceId
                 && a.Actie != auditActieRetrieve
-                && requestedAuditSubquery.Any(r => r.ResourceId == a.ResourceId && a.Versie <= r.Versie)
+                && a.Versie >= startVersion
+                && a.Versie <= requestedAudit.Versie
             )
             .OrderBy(a => a.Versie)
             .ToListAsync(cancellationToken);
 
+        if (audits.Count == 0)
+            return null;
+
+        // Rebuild the object state starting from the latest snapshot and applying deltas
         AuditTrailRegel auditTrailRegel = null;
-
-        //
-        // Rebuild the requested audittrail regel starting with snapshot and applying deltas including the 'Old' state.....
-
         JsonNode current = null;
+
         foreach (var audit in audits)
         {
             JsonDocument oldVersion = current != null ? current.Deserialize<JsonDocument>() : default;
@@ -396,7 +414,6 @@ public class DeltaBasedAuditTrail : AuditTrailServiceBase
             }
             else
             {
-                // Note: In case of 'retrieve' operations we do not want to reconstruct the object state. Is is handle separately at the beginning of this method.
                 continue;
             }
 
