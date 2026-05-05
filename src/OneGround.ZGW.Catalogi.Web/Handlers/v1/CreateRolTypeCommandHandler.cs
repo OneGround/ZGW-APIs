@@ -79,7 +79,7 @@ class CreateRolTypeCommandHandler : CatalogiBaseHandler<CreateRolTypeCommandHand
 
         await _cacheInvalidator.InvalidateAsync(rolType.ZaakType);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<RolTypeResponseDto>(rolType);
 

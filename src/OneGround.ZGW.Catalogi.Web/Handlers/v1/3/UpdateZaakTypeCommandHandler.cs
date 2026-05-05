@@ -76,7 +76,7 @@ class UpdateZaakTypeCommandHandler
             return new CommandResult<ZaakType>(null, CommandStatus.NotFound);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakTypeResponseDto>(zaakType);
 
@@ -191,11 +191,11 @@ class UpdateZaakTypeCommandHandler
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(zaakType.Catalogus, zaakType, cancellationToken);
+                await audittrail.PatchedAsync(zaakType, zaakType, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(zaakType.Catalogus, zaakType, cancellationToken);
+                await audittrail.UpdatedAsync(zaakType, zaakType, cancellationToken);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -518,7 +518,17 @@ class UpdateZaakTypeCommandHandler
         _context.ZaakTypeBesluitTypen.AddRange(besluitTypen);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZTC, Resource = "zaaktype" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZTC,
+            Resource = "zaaktype",
+            // Note: Following settings are ignored when Legacy audittrail is used
+            Properties = new Dictionary<string, object>
+            {
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZTC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
+            },
+        };
 }
 
 class UpdateZaakTypeCommand : IRequest<CommandResult<ZaakType>>

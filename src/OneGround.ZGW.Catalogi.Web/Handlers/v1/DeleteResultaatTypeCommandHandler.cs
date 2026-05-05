@@ -57,6 +57,8 @@ class DeleteResultaatTypeCommandHandler
         var resultType = await _context
             .ResultaatTypen.Include(z => z.ZaakType)
                 .ThenInclude(z => z.Catalogus)
+            .Include(z => z.BronDatumArchiefProcedure)
+            .Include(z => z.ResultaatTypeBesluitTypen)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
@@ -74,7 +76,7 @@ class DeleteResultaatTypeCommandHandler
 
         _logger.LogDebug("Deleting ResultType {Id}....", resultType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ResultaatTypeResponseDto>(resultType);
 
