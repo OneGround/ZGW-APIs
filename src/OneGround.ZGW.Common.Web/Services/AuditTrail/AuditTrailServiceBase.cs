@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -16,9 +17,6 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public abstract class AuditTrailServiceBase : IAuditTrailService
 {
-    // General settings
-    public const string MaskFields = "MaskFields";
-
     protected readonly IDbContextWithAuditTrail _context;
     protected readonly IMapper _mapper;
     protected readonly IHttpContextAccessor _httpContextAccessor;
@@ -51,12 +49,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var oldDto = _mapper.Map<TDto>(entity);
 
-        var maskFields = GetMaskFields();
-
-        if (maskFields.Count > 0)
-        {
-            oldDto = ApplyMaskingFields(oldDto, maskFields);
-        }
+        oldDto = ApplyMaskingFields(oldDto);
 
         _oldJson = ToJson(oldDto);
     }
@@ -65,12 +58,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var newDto = _mapper.Map<TDto>(entity);
 
-        var maskFields = GetMaskFields();
-
-        if (maskFields.Count > 0)
-        {
-            newDto = ApplyMaskingFields(newDto, maskFields);
-        }
+        newDto = ApplyMaskingFields(newDto);
 
         _newJson = ToJson(newDto);
     }
@@ -273,28 +261,18 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
         Reset();
     }
 
-    private List<string> GetMaskFields()
-    {
-        List<string> maskFields = new();
-        if (_options.Properties != null && _options.Properties.TryGetValue(MaskFields, out var properties))
-        {
-            maskFields = properties as List<string> ?? new List<string>();
-        }
-        return maskFields;
-    }
-
-    private static TDto ApplyMaskingFields<TDto>(TDto dto, List<string> maskFields)
+    private static TDto ApplyMaskingFields<TDto>(TDto dto)
     {
         if (dto == null)
             return dto;
 
-        ApplyMaskingFieldsRecursive(dto, dto.GetType(), maskFields);
+        ApplyMaskingFieldsRecursive(dto, dto.GetType(), new HashSet<object>());
         return dto;
     }
 
-    private static void ApplyMaskingFieldsRecursive(object obj, Type type, List<string> maskFields)
+    private static void ApplyMaskingFieldsRecursive(object obj, Type type, HashSet<object> visited)
     {
-        if (obj == null)
+        if (obj == null || !visited.Add(obj)) // Note: 'visited' prevents infinite recursion for circular references!
             return;
 
         foreach (var propertyInfo in type.GetProperties())
@@ -304,7 +282,13 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
                 continue;
             }
 
-            if (maskFields.Contains(propertyInfo.Name, StringComparer.OrdinalIgnoreCase))
+            // Ignore complex (external) datatypes. For now ignore complex type Geometry only
+            if (propertyInfo.PropertyType == typeof(Geometry))
+            {
+                continue;
+            }
+
+            if (propertyInfo.GetCustomAttribute<AuditMaskFieldAttribute>() != null)
             {
                 if (propertyInfo.CanRead && propertyInfo.CanWrite && propertyInfo.PropertyType == typeof(string))
                 {
@@ -321,7 +305,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
                 var childObj = propertyInfo.GetValue(obj);
                 if (childObj != null)
                 {
-                    ApplyMaskingFieldsRecursive(childObj, propertyInfo.PropertyType, maskFields);
+                    ApplyMaskingFieldsRecursive(childObj, propertyInfo.PropertyType, visited);
                 }
             }
             else if (
@@ -337,7 +321,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
                     {
                         if (item != null && item.GetType().IsClass && item is not string)
                         {
-                            ApplyMaskingFieldsRecursive(item, item.GetType(), maskFields);
+                            ApplyMaskingFieldsRecursive(item, item.GetType(), visited);
                         }
                     }
                 }

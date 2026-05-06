@@ -164,20 +164,7 @@ class CreateZaakRolCommandHandler : ZakenBaseHandler<CreateZaakRolCommandHandler
         return result.Response;
     }
 
-    private static AuditTrailOptions AuditTrailOptions =>
-        new AuditTrailOptions
-        {
-            Bron = ServiceRoleName.ZRC,
-            Resource = "rol",
-            // Note: Following setting is used both in Legacy and Delta-based audittrail
-            Properties = new Dictionary<string, object>
-            {
-                {
-                    AuditTrailServiceBase.MaskFields,
-                    new List<string> { "inpBsn" }
-                },
-            },
-        };
+    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "rol" };
 }
 
 class CreateZaakRolCommand : IRequest<CommandResult<ZaakRol>>
