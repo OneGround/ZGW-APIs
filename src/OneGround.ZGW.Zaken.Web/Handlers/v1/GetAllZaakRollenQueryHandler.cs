@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -11,6 +12,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess.Encryption;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 using OneGround.ZGW.Zaken.Web.Models.v1;
@@ -24,6 +26,7 @@ class GetAllZaakRollenQueryHandler
 {
     private readonly ZrcDbContext _context;
     private readonly IZaakAuthorizationTempTableService _zaakAuthorizationTempTableService;
+    private readonly IHashRotationService _hashRotationService;
 
     public GetAllZaakRollenQueryHandler(
         ILogger<GetAllZaakRollenQueryHandler> logger,
@@ -32,19 +35,25 @@ class GetAllZaakRollenQueryHandler
         IEntityUriService uriService,
         IAuthorizationContextAccessor authorizationContextAccessor,
         IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
-        IZaakKenmerkenResolver zaakKenmerkenResolver
+        IZaakKenmerkenResolver zaakKenmerkenResolver,
+        IHashRotationService hashRotationService
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
         _context = context;
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;
+        _hashRotationService = hashRotationService;
     }
 
     public async Task<QueryResult<PagedResult<ZaakRol>>> Handle(GetAllZaakRolQuery request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Get all ZaakRollen....");
 
-        var filter = GetZaakRolFilterPredicate(request.GetAllZaakRolFilter);
+        var bsnHashes = !string.IsNullOrEmpty(request.GetAllZaakRolFilter.NatuurlijkPersoonInpBsn)
+            ? _hashRotationService.GetAllPossibleHashes(request.GetAllZaakRolFilter.NatuurlijkPersoonInpBsn)
+            : null;
+
+        var filter = GetZaakRolFilterPredicate(request.GetAllZaakRolFilter, bsnHashes);
 
         var rsinFilter = GetRsinFilterPredicate<ZaakRol>();
 
@@ -81,13 +90,13 @@ class GetAllZaakRollenQueryHandler
         return new QueryResult<PagedResult<ZaakRol>>(result, QueryStatus.OK);
     }
 
-    private Expression<Func<ZaakRol, bool>> GetZaakRolFilterPredicate(GetAllZaakRollenFilter filter)
+    private Expression<Func<ZaakRol, bool>> GetZaakRolFilterPredicate(GetAllZaakRollenFilter filter, List<string> bsnHashes)
     {
         return z =>
             (filter.Zaak == null || z.Zaak.Id == _uriService.GetId(filter.Zaak))
             && (filter.Betrokkene == null || z.Betrokkene == filter.Betrokkene)
             && (!filter.BetrokkeneType.HasValue || z.BetrokkeneType == filter.BetrokkeneType.Value)
-            && (filter.NatuurlijkPersoonInpBsn == null || z.NatuurlijkPersoon.InpBsnHash == filter.NatuurlijkPersoonInpBsn)
+            && (bsnHashes == null || bsnHashes.Contains(z.NatuurlijkPersoon.InpBsnHash))
             && (filter.NatuurlijkPersoonAnpIdentificatie == null || z.NatuurlijkPersoon.AnpIdentificatie == filter.NatuurlijkPersoonAnpIdentificatie)
             && (filter.NatuurlijkPersoonInpANummer == null || z.NatuurlijkPersoon.InpANummer == filter.NatuurlijkPersoonInpANummer)
             && (filter.NietNatuurlijkPersoonInnNnpId == null || z.NietNatuurlijkPersoon.InnNnpId == filter.NietNatuurlijkPersoonInnNnpId)

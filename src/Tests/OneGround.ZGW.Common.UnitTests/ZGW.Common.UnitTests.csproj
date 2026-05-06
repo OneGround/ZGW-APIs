@@ -20,5 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\..\OneGround.ZGW.DataAccess\ZGW.DataAccess.csproj" />
   </ItemGroup>
 </Project>
