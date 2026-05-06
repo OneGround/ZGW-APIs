@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using Moq;
 using OneGround.ZGW.DataAccess.Encryption;
@@ -10,10 +11,17 @@ public class InpBsnFieldTests
 {
     private const string TestBsn = "123456789";
 
-    private static HmacSha256Hasher CreateHasher()
+    private static VersionedHmacSha256Hasher CreateHasher()
     {
-        var options = Options.Create(new HmacHasherConfiguration { HmacKey = Convert.ToBase64String(new byte[32]) });
-        return new HmacSha256Hasher(options);
+        var key = Convert.ToBase64String(new byte[32]);
+        var options = Options.Create(
+            new HmacHasherConfiguration
+            {
+                Latest = "v1",
+                HmacKeys = new Dictionary<string, string> { { "v1", key } },
+            }
+        );
+        return new VersionedHmacSha256Hasher(options);
     }
 
     [Fact]
