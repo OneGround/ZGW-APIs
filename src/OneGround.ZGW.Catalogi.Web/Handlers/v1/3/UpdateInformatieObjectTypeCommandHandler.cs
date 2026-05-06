@@ -76,7 +76,7 @@ class UpdateInformatieObjectTypeCommandHandler
             return new CommandResult<InformatieObjectType>(null, CommandStatus.NotFound);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<InformatieObjectTypeResponseDto>(informatieObjectType);
 
@@ -159,11 +159,11 @@ class UpdateInformatieObjectTypeCommandHandler
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(informatieObjectType.Catalogus, informatieObjectType, cancellationToken);
+                await audittrail.PatchedAsync(informatieObjectType, informatieObjectType, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(informatieObjectType.Catalogus, informatieObjectType, cancellationToken);
+                await audittrail.UpdatedAsync(informatieObjectType, informatieObjectType, cancellationToken);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -245,7 +245,17 @@ class UpdateInformatieObjectTypeCommandHandler
         }
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZTC, Resource = "informatieobjecttype" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZTC,
+            Resource = "informatieobjecttype",
+            // Note: Following settings are ignored when Legacy audittrail is used
+            Properties = new Dictionary<string, object>
+            {
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZTC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
+            },
+        };
 }
 
 class UpdateInformatieObjectTypeCommand : IRequest<CommandResult<InformatieObjectType>>

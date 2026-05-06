@@ -106,11 +106,11 @@ class CreateZaakTypeCommandHandler
 
         await _context.ZaakTypen.AddAsync(zaakType, cancellationToken);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<ZaakTypeResponseDto>(zaakType);
 
-            await audittrail.CreatedAsync(zaakType.Catalogus, zaakType, cancellationToken);
+            await audittrail.CreatedAsync(zaakType, zaakType, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

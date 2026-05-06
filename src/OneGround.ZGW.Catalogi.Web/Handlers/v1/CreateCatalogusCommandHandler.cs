@@ -74,7 +74,7 @@ class CreateCatalogusCommandHandler
 
         catalogus.Owner = _rsin;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<CatalogusResponseDto>(catalogus);
 

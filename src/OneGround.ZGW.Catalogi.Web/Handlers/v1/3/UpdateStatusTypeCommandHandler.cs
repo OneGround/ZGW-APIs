@@ -117,7 +117,7 @@ class UpdateStatusTypeCommandHandler
 
         _logger.LogDebug("Updating StatusType {Id}....", statusType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<StatusTypeResponseDto>(statusType);
 

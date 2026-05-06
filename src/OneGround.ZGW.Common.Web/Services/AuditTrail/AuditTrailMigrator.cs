@@ -23,7 +23,7 @@ public class AuditTrailMigrator : IAuditTrailMigrator
 
     public async Task MigrateAsync(Guid hoofdObjectId, CancellationToken cancellationToken)
     {
-        var legacyAuditTrail = _auditTrailFactory.Create(new AuditTrailOptions(), legacy: true);
+        using var legacyAuditTrail = _auditTrailFactory.Create(new AuditTrailOptions(), legacy: true);
 
         foreach (var entries in await legacyAuditTrail.GetAuditTrailEntriesAsync(hoofdobjectId: hoofdObjectId))
         {

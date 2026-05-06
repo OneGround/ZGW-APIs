@@ -78,7 +78,7 @@ class DeleteRolTypeCommandHandler : CatalogiBaseHandler<DeleteRolTypeCommandHand
 
         _logger.LogDebug("Deleting RolType {Id}....", rolType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<RolTypeResponseDto>(rolType);
 

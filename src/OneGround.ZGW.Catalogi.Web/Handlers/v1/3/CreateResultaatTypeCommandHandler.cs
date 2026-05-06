@@ -141,7 +141,7 @@ class CreateResultaatTypeCommandHandler
 
         await _cacheInvalidator.InvalidateAsync(resultType.ZaakType);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<ResultaatTypeResponseDto>(resultType);
 

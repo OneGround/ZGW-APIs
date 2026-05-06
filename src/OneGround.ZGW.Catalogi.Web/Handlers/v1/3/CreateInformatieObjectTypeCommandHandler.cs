@@ -75,11 +75,11 @@ class CreateInformatieObjectTypeCommandHandler
         informatieObjectType.Owner = informatieObjectType.Catalogus.Owner;
         informatieObjectType.Concept = true;
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<InformatieObjectTypeResponseDto>(informatieObjectType);
 
-            await audittrail.CreatedAsync(informatieObjectType.Catalogus, informatieObjectType, cancellationToken);
+            await audittrail.CreatedAsync(informatieObjectType, informatieObjectType, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

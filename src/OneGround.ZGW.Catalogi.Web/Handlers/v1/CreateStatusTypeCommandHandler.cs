@@ -72,7 +72,7 @@ class CreateStatusTypeCommandHandler
 
         await _cacheInvalidator.InvalidateAsync(statusType.ZaakType);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<StatusTypeResponseDto>(statusType);
 

@@ -72,13 +72,13 @@ class DeleteBesluitTypeCommandHandler : CatalogiBaseHandler<DeleteBesluitTypeCom
 
         _logger.LogDebug("Deleting BesluitType {Id}....", besluitType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<BesluitTypeResponseDto>(besluitType);
 
             _context.BesluitTypen.Remove(besluitType);
 
-            await audittrail.DestroyedAsync(besluitType.Catalogus, besluitType, cancellationToken);
+            await audittrail.DestroyedAsync(besluitType, besluitType, cancellationToken);
 
             await _cacheInvalidator.InvalidateAsync(besluitType);
             await _cacheInvalidator.InvalidateAsync(

@@ -99,7 +99,7 @@ class DeleteZaakObjectTypeCommandHandler
 
         _logger.LogDebug("Deleting ZaakObjectType {Id}....", zaakObjectType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakObjectTypeResponseDto>(zaakObjectType);
 

@@ -145,7 +145,7 @@ public class UpdateResultaatTypeCommandHandler
 
         _logger.LogDebug("Updating ResultaatType {Id}....", resultType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ResultaatTypeResponseDto>(resultType);
 

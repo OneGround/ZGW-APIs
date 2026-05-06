@@ -76,7 +76,7 @@ class CreateZaakObjectTypeCommandHandler
 
         await _cacheInvalidator.InvalidateAsync(zaakObjectType.ZaakType);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<ZaakObjectTypeResponseDto>(zaakObjectType);
 
