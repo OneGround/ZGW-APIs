@@ -167,7 +167,7 @@ class CreateZaakRolCommandHandler : ZakenBaseHandler<CreateZaakRolCommandHandler
         {
             Bron = ServiceRoleName.ZRC,
             Resource = "rol",
-            Properties = new Dictionary<string, object> { { AuditTrailServiceBase.MaskingEnabled, true } },
+            Properties = new Dictionary<string, object> { { AuditTrailServiceBase.AuditMaskingEnabled, true } },
         };
 }
 
