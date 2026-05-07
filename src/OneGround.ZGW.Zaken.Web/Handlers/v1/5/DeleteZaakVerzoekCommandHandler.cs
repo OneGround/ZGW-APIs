@@ -55,6 +55,7 @@ class DeleteZaakVerzoekCommandHandler : ZakenBaseHandler<DeleteZaakVerzoekComman
         var zaakVerzoek = await _context
             .ZaakVerzoeken.Where(rsinFilter)
             .Include(r => r.Zaak)
+                .ThenInclude(r => r.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakVerzoek == null)

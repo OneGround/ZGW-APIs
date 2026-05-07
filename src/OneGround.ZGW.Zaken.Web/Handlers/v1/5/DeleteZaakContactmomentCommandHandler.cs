@@ -57,6 +57,7 @@ class DeleteZaakContactmomentCommandHandler
         var zaakContactmoment = await _context
             .ZaakContactmomenten.Where(rsinFilter)
             .Include(r => r.Zaak)
+                .ThenInclude(r => r.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakContactmoment == null)

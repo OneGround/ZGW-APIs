@@ -124,14 +124,18 @@ public class ZakenController : ZGWControllerBase
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zakenWithOptionalExpand, result.Result.Count);
 
+        // Note: We want to know if someone is filtering on BSN, to be able to log more information in the audit trail. This is a requirement from the AVG (GDPR) perspective.
+        var isBsnFilter = !string.IsNullOrEmpty(queryParameters.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn);
+
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
             {
-                RetrieveCatagory = RetrieveCatagory.Minimal,
+                RetrieveCatagory = isBsnFilter ? RetrieveCatagory.Always : RetrieveCatagory.Minimal,
                 Page = pagination.Page,
                 Count = paginationResponse.Results.Count(),
                 TotalCount = paginationResponse.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" },
+                Filter = isBsnFilter ? "BSN" : null,
             }
         );
 
@@ -186,14 +190,18 @@ public class ZakenController : ZGWControllerBase
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(pagination, zakenWithOptionalExpand, result.Result.Count);
 
+        // Note: We want to know if someone is filtering on BSN, to be able to log more information in the audit trail. This is a requirement from the AVG (GDPR) perspective.
+        var isBsnFilter = !string.IsNullOrEmpty(zaakSearchRequest.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn);
+
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
             {
-                RetrieveCatagory = RetrieveCatagory.Minimal,
+                RetrieveCatagory = isBsnFilter ? RetrieveCatagory.Always : RetrieveCatagory.Minimal,
                 Page = pagination.Page,
                 Count = paginationResponse.Results.Count(),
                 TotalCount = paginationResponse.Count,
                 AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" },
+                Filter = isBsnFilter ? "BSN" : null,
             }
         );
 

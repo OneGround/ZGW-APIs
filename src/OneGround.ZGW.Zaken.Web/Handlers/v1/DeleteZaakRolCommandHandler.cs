@@ -55,8 +55,16 @@ class DeleteZaakRolCommandHandler : ZakenBaseHandler<DeleteZaakRolCommandHandler
 
         var zaakRol = await _context
             .ZaakRollen.Where(rsinFilter)
-            .Include(r => r.Zaak)
-                .ThenInclude(r => r.Kenmerken)
+            .AsSplitQuery()
+            .Include(r => r.Zaak.Kenmerken)
+            .Include(r => r.ContactpersoonRol)
+            .Include(r => r.NatuurlijkPersoon.Verblijfsadres)
+            .Include(r => r.NatuurlijkPersoon.SubVerblijfBuitenland)
+            .Include(r => r.NietNatuurlijkPersoon.SubVerblijfBuitenland)
+            .Include(r => r.Vestiging.Verblijfsadres)
+            .Include(r => r.Vestiging.SubVerblijfBuitenland)
+            .Include(r => r.Medewerker)
+            .Include(r => r.OrganisatorischeEenheid)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakRol == null)
@@ -96,7 +104,13 @@ class DeleteZaakRolCommandHandler : ZakenBaseHandler<DeleteZaakRolCommandHandler
         return new CommandResult(CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "rol" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "rol",
+            Properties = new Dictionary<string, object> { { AuditTrailServiceBase.AuditMaskingEnabled, true } },
+        };
 }
 
 class DeleteZaakRolCommand : IRequest<CommandResult>

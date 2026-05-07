@@ -1,10 +1,12 @@
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 
 namespace OneGround.ZGW.Zaken.Contracts.v1;
 
 public class NatuurlijkPersoonZaakRolDto
 {
     [JsonProperty("inpBsn")]
+    [AuditMaskField]
     public string InpBsn { get; set; }
 
     [JsonProperty("anpIdentificatie")]

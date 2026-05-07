@@ -57,6 +57,7 @@ class DeleteZaakResultaatCommandHandler
         var zaakResultaat = await _context
             .ZaakResultaten.Where(rsinFilter)
             .Include(z => z.Zaak)
+                .ThenInclude(r => r.Kenmerken)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (zaakResultaat == null)

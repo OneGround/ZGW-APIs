@@ -29,22 +29,25 @@ public class LogAuditTrailGetObjectListCommandHandler : LogAuditTrailGetBaseHand
     public async Task<CommandResult> Handle(LogAuditTrailGetObjectListCommand request, CancellationToken cancellationToken)
     {
         if (
-            IsAudittrailRetrieveForRsin
-            && IsAudittrailRecordRetrieveList
-            && (
-                request.RetrieveCatagory == RetrieveCatagory.Minimal
-                || (request.RetrieveCatagory == RetrieveCatagory.All && !IsAudittrailRetrieveMinimal)
+            (
+                IsAudittrailRetrieveForRsin
+                && IsAudittrailRecordRetrieveList
+                && (
+                    request.RetrieveCatagory == RetrieveCatagory.Minimal
+                    || (request.RetrieveCatagory == RetrieveCatagory.All && !IsAudittrailRetrieveMinimal)
+                )
             )
+            || request.RetrieveCatagory == RetrieveCatagory.Always
         )
         {
             using var audittrail = _auditTrailFactory.Create(request.AuditTrailOptions, legacy: false); // Note: We can have a mix of legacy- and delta-based stored zaken. So record in the deltas all the time
             if (request.Page.HasValue && request.Count.HasValue)
             {
-                await audittrail.GetListAsync(request.Count.Value, request.TotalCount, request.Page.Value, cancellationToken);
+                await audittrail.GetListAsync(request.Count.Value, request.TotalCount, request.Page.Value, request.Filter, cancellationToken);
             }
             else
             {
-                await audittrail.GetListAsync(request.TotalCount, cancellationToken);
+                await audittrail.GetListAsync(request.TotalCount, request.Filter, cancellationToken);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -60,5 +63,6 @@ public class LogAuditTrailGetObjectListCommand : IRequest<CommandResult>
     public int TotalCount { get; set; }
     public int? Count { get; set; }
     public int? Page { get; set; }
+    public string Filter { get; set; }
     public AuditTrailOptions AuditTrailOptions { get; set; }
 }
