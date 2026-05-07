@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.Encryption;
@@ -7,20 +8,20 @@ namespace OneGround.ZGW.Zaken.DataModel;
 public class ZrcDbContextFactory : BaseDbContextFactory<ZrcDbContext>
 {
     private readonly IDatabaseProtector<ZrcDbContext> _databaseProtector;
-    private readonly IHmacHasher _hmacHasher;
+    private readonly IVersionedHmacHasher _versionedHasher;
 
-    public ZrcDbContextFactory(IConfiguration configuration, IDatabaseProtector<ZrcDbContext> databaseProtector, IHmacHasher hmacHasher)
+    public ZrcDbContextFactory(IConfiguration configuration, IDatabaseProtector<ZrcDbContext> databaseProtector, IVersionedHmacHasher versionedHasher)
         : base(configuration)
     {
         _databaseProtector = databaseProtector;
-        _hmacHasher = hmacHasher;
+        _versionedHasher = versionedHasher;
     }
 
     public ZrcDbContextFactory()
         : base()
     {
         _databaseProtector = new DesignTimeDatabaseProtector();
-        _hmacHasher = new DesignTimeHmacHasher();
+        _versionedHasher = new DesignTimeVersionedHmacHasher();
     }
 
     private sealed class DesignTimeDatabaseProtector : IDatabaseProtector<ZrcDbContext>
@@ -30,14 +31,20 @@ public class ZrcDbContextFactory : BaseDbContextFactory<ZrcDbContext>
         public string Unprotect(string ciphertext) => ciphertext;
     }
 
-    private sealed class DesignTimeHmacHasher : IHmacHasher
+    private sealed class DesignTimeVersionedHmacHasher : IVersionedHmacHasher
     {
         public string ComputeHash(string plaintext) => plaintext;
+
+        public string ComputeHash(string plaintext, string keyVersion) => plaintext;
+
+        public string Latest => "v1";
+
+        public IReadOnlyDictionary<string, string> ComputeAllHashes(string plaintext) => new Dictionary<string, string> { { "v1", plaintext } };
     }
 
     public override ZrcDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = CreateDbContextOptionsBuilder();
-        return new ZrcDbContext(optionsBuilder.Options, _databaseProtector, _hmacHasher);
+        return new ZrcDbContext(optionsBuilder.Options, _databaseProtector, _versionedHasher);
     }
 }

@@ -92,7 +92,6 @@ public class InpBsnBackfillService : BackgroundService
                 foreach (var entity in entities)
                 {
                     var bsn = bsnById[entity.Id];
-                    entity.InpBsnHash = bsn;
                     entity.InpBsnEncrypted = bsn;
                 }
 

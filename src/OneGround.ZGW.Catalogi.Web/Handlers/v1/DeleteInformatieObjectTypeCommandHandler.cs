@@ -87,13 +87,13 @@ class DeleteInformatieObjectTypeCommandHandler
 
         _logger.LogDebug("Deleting InformatieObjectType {Id}....", informatieObjectType.Id);
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<InformatieObjectTypeResponseDto>(informatieObjectType);
 
             _context.InformatieObjectTypen.Remove(informatieObjectType);
 
-            await audittrail.DestroyedAsync(informatieObjectType.Catalogus, informatieObjectType, cancellationToken);
+            await audittrail.DestroyedAsync(informatieObjectType, informatieObjectType, cancellationToken);
 
             await _cacheInvalidator.InvalidateAsync(
                 informatieObjectType.InformatieObjectTypeZaakTypen.Select(t => t.ZaakType),

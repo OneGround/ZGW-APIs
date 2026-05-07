@@ -68,7 +68,7 @@ class PublishInformatieObjectTypeCommandHandler
             return new CommandResult<InformatieObjectType>(null, CommandStatus.NotFound);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<InformatieObjectTypeResponseDto>(informatieObjectType);
 
@@ -94,12 +94,7 @@ class PublishInformatieObjectTypeCommandHandler
 
             audittrail.SetNew<InformatieObjectTypeResponseDto>(informatieObjectType);
 
-            await audittrail.PatchedAsync(
-                informatieObjectType.Catalogus,
-                informatieObjectType,
-                "Informatieobjecttype gepubliceerd",
-                cancellationToken
-            );
+            await audittrail.PatchedAsync(informatieObjectType, informatieObjectType, "Informatieobjecttype gepubliceerd", cancellationToken);
 
             await _cacheInvalidator.InvalidateAsync(informatieObjectType);
 

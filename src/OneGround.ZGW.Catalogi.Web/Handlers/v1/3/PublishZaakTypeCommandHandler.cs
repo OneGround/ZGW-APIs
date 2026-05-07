@@ -85,7 +85,7 @@ class PublishZaakTypeCommandHandler
             return new CommandResult<ZaakType>(null, CommandStatus.ValidationError, error);
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<ZaakTypeResponseDto>(zaakType);
 
@@ -112,7 +112,7 @@ class PublishZaakTypeCommandHandler
 
             audittrail.SetNew<ZaakTypeResponseDto>(zaakType);
 
-            await audittrail.PatchedAsync(zaakType.Catalogus, zaakType, "Zaaktype gepubliceerd", cancellationToken);
+            await audittrail.PatchedAsync(zaakType, zaakType, "Zaaktype gepubliceerd", cancellationToken);
 
             await _cacheInvalidator.InvalidateAsync(zaakType);
 

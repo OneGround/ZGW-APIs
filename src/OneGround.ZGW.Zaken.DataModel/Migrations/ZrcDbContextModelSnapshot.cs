@@ -1763,6 +1763,11 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("inpbsn_hash");
 
+                    b.Property<string>("InpBsnHashKeyVersion")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("inpbsn_hash_key_version");
+
                     b.Property<Guid?>("SubVerblijfBuitenlandId")
                         .HasColumnType("uuid")
                         .HasColumnName("subverblijfbuitenland_id");

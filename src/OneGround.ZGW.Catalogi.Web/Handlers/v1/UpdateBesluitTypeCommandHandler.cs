@@ -113,7 +113,7 @@ class UpdateBesluitTypeCommandHandler
             }
         }
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<BesluitTypeResponseDto>(updatingBesluitType);
 
@@ -193,11 +193,11 @@ class UpdateBesluitTypeCommandHandler
 
             if (request.IsPartialUpdate)
             {
-                await audittrail.PatchedAsync(updatingBesluitType.Catalogus, updatingBesluitType, cancellationToken);
+                await audittrail.PatchedAsync(updatingBesluitType, updatingBesluitType, cancellationToken);
             }
             else
             {
-                await audittrail.UpdatedAsync(updatingBesluitType.Catalogus, updatingBesluitType, cancellationToken);
+                await audittrail.UpdatedAsync(updatingBesluitType, updatingBesluitType, cancellationToken);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -296,7 +296,17 @@ class UpdateBesluitTypeCommandHandler
         _context.BesluitTypeInformatieObjectTypen.AddRange(informatieObjectTypen);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZTC, Resource = "besluittype" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZTC,
+            Resource = "besluittype",
+            // Note: Following settings are ignored when Legacy audittrail is used
+            Properties = new Dictionary<string, object>
+            {
+                { DeltaBasedAuditTrail.ForceSnapshotVersionWhenResourceChanged, true }, // Note: ZTC audittrail response contains sub-resources so we should force to use snapshot when resource is changed
+            },
+        };
 }
 
 public class UpdateBesluitTypeCommand : IRequest<CommandResult<BesluitType>>

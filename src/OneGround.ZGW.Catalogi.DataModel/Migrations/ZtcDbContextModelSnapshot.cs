@@ -19,7 +19,7 @@ namespace OneGround.ZGW.Catalogi.DataModel.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.16")
+                .HasAnnotation("ProductVersion", "8.0.25")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
@@ -1295,6 +1295,130 @@ namespace OneGround.ZGW.Catalogi.DataModel.Migrations
                         .IsUnique();
 
                     b.ToTable("zaaktypeinformatieobjecttypen");
+                });
+
+            modelBuilder.Entity("OneGround.ZGW.DataAccess.AuditTrail.AuditTrailDelta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AanmaakDatum")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("aanmaakdatum");
+
+                    b.Property<string>("Actie")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("actie");
+
+                    b.Property<string>("ActieWeergave")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("actieweergave");
+
+                    b.Property<string>("ApplicatieId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("applicatie_id");
+
+                    b.Property<string>("ApplicatieWeergave")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("applicatieweergave");
+
+                    b.Property<string>("Bron")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bron");
+
+                    b.Property<string>("DeltaJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("delta_json");
+
+                    b.Property<string>("GebruikersId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("gebruikers_id");
+
+                    b.Property<string>("GebruikersWeergave")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("gebruikersweergave");
+
+                    b.Property<string>("HoofdObject")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("hoofdobject");
+
+                    b.Property<Guid?>("HoofdObjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("hoofdobject_id");
+
+                    b.Property<string>("RequestId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("Resource")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("resource");
+
+                    b.Property<Guid?>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resource_id");
+
+                    b.Property<string>("ResourceUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("resourceurl");
+
+                    b.Property<string>("ResourceWeergave")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("resourceweergave");
+
+                    b.Property<int>("Resultaat")
+                        .HasColumnType("integer")
+                        .HasColumnName("resultaat");
+
+                    b.Property<string>("SnapshotJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("snapshot_json");
+
+                    b.Property<string>("Toelichting")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("toelichting");
+
+                    b.Property<int>("Versie")
+                        .HasColumnType("integer")
+                        .HasColumnName("versie");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AanmaakDatum");
+
+                    b.HasIndex("HoofdObjectId", "AanmaakDatum")
+                        .IsDescending(false, true);
+
+                    b.HasIndex("HoofdObjectId", "ResourceId", "Versie")
+                        .IsDescending(false, false, true);
+
+                    b.ToTable("audittrail_deltas");
                 });
 
             modelBuilder.Entity("OneGround.ZGW.DataAccess.AuditTrail.AuditTrailRegel", b =>

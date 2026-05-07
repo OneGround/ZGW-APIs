@@ -85,7 +85,7 @@ class CreateEigenschapCommandHandler
         eigenschap.EindeObject = zaakType.EindeObject;
         // ----
 
-        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions))
+        using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetNew<EigenschapResponseDto>(eigenschap);
 
