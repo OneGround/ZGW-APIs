@@ -52,7 +52,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var oldDto = _mapper.Map<TDto>(entity);
 
-        if (IsAuditMaskingEabled())
+        if (IsAuditMaskingEnabled())
         {
             oldDto = ApplyMaskingFields(oldDto);
         }
@@ -64,7 +64,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var newDto = _mapper.Map<TDto>(entity);
 
-        if (IsAuditMaskingEabled())
+        if (IsAuditMaskingEnabled())
         {
             newDto = ApplyMaskingFields(newDto);
         }
@@ -343,7 +343,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
         return obj != null ? JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
     }
 
-    private bool IsAuditMaskingEabled()
+    private bool IsAuditMaskingEnabled()
     {
         if (
             _options.Properties != null
