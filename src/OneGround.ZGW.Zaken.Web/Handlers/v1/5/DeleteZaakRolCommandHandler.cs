@@ -104,7 +104,13 @@ class DeleteZaakRolCommandHandler : ZakenBaseHandler<DeleteZaakRolCommandHandler
         return new CommandResult(CommandStatus.OK);
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "rol" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "rol",
+            Properties = new Dictionary<string, object> { { AuditTrailServiceBase.MaskingEnabled, true } },
+        };
 }
 
 class DeleteZaakRolCommand : IRequest<CommandResult>

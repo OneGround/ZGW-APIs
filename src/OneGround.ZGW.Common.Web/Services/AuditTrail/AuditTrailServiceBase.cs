@@ -17,6 +17,9 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public abstract class AuditTrailServiceBase : IAuditTrailService
 {
+    // Generic settings
+    public const string MaskingEnabled = "MaskingEnabled";
+
     protected readonly IDbContextWithAuditTrail _context;
     protected readonly IMapper _mapper;
     protected readonly IHttpContextAccessor _httpContextAccessor;
@@ -49,7 +52,10 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var oldDto = _mapper.Map<TDto>(entity);
 
-        oldDto = ApplyMaskingFields(oldDto);
+        if (IsMaskingEabled())
+        {
+            oldDto = ApplyMaskingFields(oldDto);
+        }
 
         _oldJson = ToJson(oldDto);
     }
@@ -58,7 +64,10 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     {
         var newDto = _mapper.Map<TDto>(entity);
 
-        newDto = ApplyMaskingFields(newDto);
+        if (IsMaskingEabled())
+        {
+            newDto = ApplyMaskingFields(newDto);
+        }
 
         _newJson = ToJson(newDto);
     }
@@ -332,5 +341,19 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     private static string ToJson(object obj)
     {
         return obj != null ? JsonConvert.SerializeObject(obj, new ZGWJsonSerializerSettings()) : null;
+    }
+
+    private bool IsMaskingEabled()
+    {
+        if (
+            _options.Properties != null
+            && _options.Properties.TryGetValue(MaskingEnabled, out var value)
+            && bool.TryParse($"{value}", out var maskingEnabled)
+            && maskingEnabled
+        )
+        {
+            return true;
+        }
+        return false;
     }
 }

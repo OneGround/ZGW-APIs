@@ -162,7 +162,13 @@ class CreateZaakRolCommandHandler : ZakenBaseHandler<CreateZaakRolCommandHandler
         return result.Response;
     }
 
-    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "rol" };
+    private static AuditTrailOptions AuditTrailOptions =>
+        new AuditTrailOptions
+        {
+            Bron = ServiceRoleName.ZRC,
+            Resource = "rol",
+            Properties = new Dictionary<string, object> { { AuditTrailServiceBase.MaskingEnabled, true } },
+        };
 }
 
 class CreateZaakRolCommand : IRequest<CommandResult<ZaakRol>>
