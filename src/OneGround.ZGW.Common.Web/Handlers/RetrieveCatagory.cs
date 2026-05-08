@@ -4,5 +4,4 @@ public enum RetrieveCatagory
 {
     Minimal,
     All,
-    Always,
 }
