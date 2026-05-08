@@ -133,7 +133,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         {
             using var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: zaak.LegacyAuditTrail);
 
-            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: "BSN Gefilterde lijst van zaken opgevraagd", cancellationToken);
+            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: "Op BSN gefilterde lijst van zaken opgevraagd", cancellationToken);
         }
         await _context.SaveChangesAsync(cancellationToken);
     }
