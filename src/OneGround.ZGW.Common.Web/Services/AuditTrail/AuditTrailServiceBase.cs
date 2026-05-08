@@ -104,52 +104,48 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
         );
     }
 
-    public virtual Task GetListAsync(int count, int totalCount, int page, string filter = null, CancellationToken cancellationToken = default)
+    public virtual Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken = default)
     {
         return totalCount == 0
             ? WriteAsync(
                 AuditActie.retrieve,
-                filter == null ? "Lijst van objecten gelezen" : filter + " gefilterde lijst van objecten gelezen",
+                "Lijst van objecten gelezen",
                 "(lijst van)",
                 "(lijst van)",
                 HttpStatusCode.OK,
-                toelichting: filter == null ? "Lijst bevat geen objecten" : filter + " gefilterde lijst bevat geen objecten",
+                toelichting: "Lijst bevat geen objecten",
                 cancellationToken: cancellationToken
             )
             : WriteAsync(
                 AuditActie.retrieve,
-                filter == null ? "Lijst van objecten gelezen" : filter + " gefilterde lijst van objecten gelezen",
+                "Lijst van objecten gelezen",
                 "(lijst van)",
                 "(lijst van)",
                 HttpStatusCode.OK,
-                toelichting: filter == null
-                    ? $"Lijst van {count} van {totalCount} objecten gelezen (pagina {page})"
-                    : $"{filter} gefilterde lijst van {count} van {totalCount} objecten gelezen (pagina {page})",
+                toelichting: $"Lijst van {count} van {totalCount} objecten gelezen (pagina {page})",
                 cancellationToken: cancellationToken
             );
     }
 
-    public virtual Task GetListAsync(int totalCount, string filter = null, CancellationToken cancellationToken = default)
+    public virtual Task GetListAsync(int totalCount, CancellationToken cancellationToken = default)
     {
         return totalCount == 0
             ? WriteAsync(
                 AuditActie.retrieve,
-                filter == null ? "Lijst van objecten gelezen" : filter + " gefilterde lijst van objecten gelezen",
+                "Lijst van objecten gelezen",
                 "(lijst van)",
                 "(lijst van)",
                 HttpStatusCode.OK,
-                toelichting: filter == null ? "Lijst bevat geen objecten" : filter + " gefilterde lijst bevat geen objecten",
+                "Lijst bevat geen objecten",
                 cancellationToken: cancellationToken
             )
             : WriteAsync(
                 AuditActie.retrieve,
-                filter == null ? "Lijst van objecten gelezen" : filter + " gefilterde lijst van objecten gelezen",
+                "Lijst van objecten gelezen",
                 "(lijst van)",
                 "(lijst van)",
                 HttpStatusCode.OK,
-                toelichting: filter == null
-                    ? $"Lijst van {totalCount} objecten gelezen"
-                    : $"{filter} gefilterde lijst van {totalCount} objecten gelezen",
+                toelichting: $"Lijst van {totalCount} objecten gelezen",
                 cancellationToken: cancellationToken
             );
     }

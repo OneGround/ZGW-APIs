@@ -10,10 +10,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
+using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.Encryption;
@@ -29,6 +31,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
     private readonly IDistributedCacheHelper _cache;
     private readonly IZaakAuthorizationTempTableService _zaakAuthorizationTempTableService;
     private readonly IHashRotationService _hashRotationService;
+    private readonly IAuditTrailFactory _auditTrailFactory;
 
     public GetAllZakenQueryHandler(
         ILogger<GetAllZakenQueryHandler> logger,
@@ -39,7 +42,8 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         IDistributedCacheHelper cache,
         IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
         IZaakKenmerkenResolver zaakKenmerkenResolver,
-        IHashRotationService hashRotationService
+        IHashRotationService hashRotationService,
+        IAuditTrailFactory auditTrailFactory
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
@@ -47,6 +51,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         _zaakAuthorizationTempTableService = zaakAuthorizationTempTableService;
         _cache = cache;
         _hashRotationService = hashRotationService;
+        _auditTrailFactory = auditTrailFactory;
     }
 
     public async Task<QueryResult<PagedResult<Zaak>>> Handle(GetAllZakenQuery request, CancellationToken cancellationToken)
@@ -112,7 +117,25 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
         var result = new PagedResult<Zaak> { PageResult = pagedResult.Select(z => z.Zaak), Count = totalCount };
 
+        // Log to audit trail if BSN is used in the filter, as this means we are retrieving a list of zaken for a specific person, which is a privacy-sensitive action worth logging
+        if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn))
+        {
+            await LogToAuditTrail(result, cancellationToken);
+        }
+
         return new QueryResult<PagedResult<Zaak>>(result, QueryStatus.OK);
+    }
+
+    private async Task LogToAuditTrail(PagedResult<Zaak> result, CancellationToken cancellationToken)
+    {
+        // Note: Write 'retrieve' actie to audittrail for each zaak retrieved in this query (max 100 due to pagination)
+        foreach (var zaak in result.PageResult)
+        {
+            using var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: zaak.LegacyAuditTrail);
+
+            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: "BSN Gefilterde lijst van zaken opgevraagd", cancellationToken);
+        }
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private static Expression<Func<Zaak, bool>> GetZaakGeometryFilterPredicate(Geometry zaakGeometry, int srid)
@@ -156,6 +179,8 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
         return totalCount;
     }
+
+    private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" };
 }
 
 internal static class IQueryableExtension
