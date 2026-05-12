@@ -66,7 +66,8 @@ class GetAllVerzendingenQueryHandler
             // to the versie table. With EXISTS, PostgreSQL can use early termination for pagination.
             query = query.Where(v =>
                 _context.EnkelvoudigInformatieObjectVersies.Any(ver =>
-                    ver.Id == v.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
+                    ver.Owner == _rsin
+                    && ver.Id == v.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
                     && _context.TempInformatieObjectAuthorization.Any(a =>
                         a.InformatieObjectType == v.InformatieObject.InformatieObjectType
                         && (int)ver.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
