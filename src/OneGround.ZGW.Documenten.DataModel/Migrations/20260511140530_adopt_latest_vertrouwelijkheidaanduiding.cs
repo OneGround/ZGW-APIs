@@ -10,25 +10,33 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // 1. Create column if missing (lower envs). Nullable integer, no default.
+            // Design contract for this column (chosen by the original developer):
+            //   - value 9  → "not yet migrated by application" (sentinel; not a valid VertrouwelijkheidAanduiding)
+            //   - NULL     → "versie's vertrouwelijkheidaanduiding is genuinely null" (functionally valid)
+            //   - 0..7     → real enum value
+            // DEFAULT cannot be NULL because NULL is a legitimate functional value — a sentinel is
+            // required to distinguish "never migrated" from "deliberately null".
+
+            // 1. Create the column on envs where it does not yet exist (lower envs). Match prod's design.
             migrationBuilder.Sql(
                 @"
                 ALTER TABLE public.enkelvoudiginformatieobjecten
-                    ADD COLUMN IF NOT EXISTS latest_vertrouwelijkheidaanduiding integer;
+                    ADD COLUMN IF NOT EXISTS latest_vertrouwelijkheidaanduiding integer DEFAULT 9;
             "
             );
 
-            // 2. Drop the hard-coded DEFAULT 9 so new INSERTs that omit the
-            //    column produce NULL, not the wrong value. DROP DEFAULT is a no-op
-            //    if there is no default.
+            // 2. Ensure DEFAULT 9 is set. Idempotent: covers the case where the column was previously
+            //    created without the sentinel default (e.g. a prior version of this migration that
+            //    dropped the default).
             migrationBuilder.Sql(
                 @"
                 ALTER TABLE public.enkelvoudiginformatieobjecten
-                    ALTER COLUMN latest_vertrouwelijkheidaanduiding DROP DEFAULT;
+                    ALTER COLUMN latest_vertrouwelijkheidaanduiding SET DEFAULT 9;
             "
             );
 
-            // 3. Drop NOT NULL if present. DROP NOT NULL is a no-op if the
+            // 3. Ensure the column is nullable. The dev's design requires NULL to be representable
+            //    as a legitimate value (distinct from sentinel 9). DROP NOT NULL is a no-op if the
             //    column is already nullable.
             migrationBuilder.Sql(
                 @"
