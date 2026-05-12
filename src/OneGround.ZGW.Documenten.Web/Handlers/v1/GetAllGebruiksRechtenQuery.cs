@@ -60,7 +60,7 @@ class GetAllGebruiksRechtenQueryHandler
             // all versie rows. With EXISTS, PostgreSQL can evaluate authorization per-row.
             query = query.Where(g =>
                 _context.EnkelvoudigInformatieObjectVersies.Any(v =>
-                    ver.Owner == _rsin
+                    v.Owner == _rsin
                     && v.Id == g.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
                     && _context.TempInformatieObjectAuthorization.Any(a =>
                         a.InformatieObjectType == g.InformatieObject.InformatieObjectType
