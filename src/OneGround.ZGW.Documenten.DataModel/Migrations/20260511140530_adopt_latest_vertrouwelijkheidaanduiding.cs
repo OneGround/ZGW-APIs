@@ -10,7 +10,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
             // 1. Create column if missing (lower envs). Nullable integer, no default.
             migrationBuilder.Sql(
                 @"
