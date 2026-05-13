@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using NodaTime;
@@ -14,9 +15,11 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    partial class ZrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513062336_modify_zaak_identificatie_unique_index")]
+    partial class modify_zaak_identificatie_unique_index
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

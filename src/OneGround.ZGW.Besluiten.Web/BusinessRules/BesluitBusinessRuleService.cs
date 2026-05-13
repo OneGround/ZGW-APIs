@@ -34,18 +34,12 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
         // 1. Garanderen uniciteit verantwoordelijke_organisatie en identificatie op de Besluit-resource (brc-002)
         if (!string.IsNullOrEmpty(besluitAdd.Identificatie))
         {
-            if (
-                await _context
-                    .Besluiten.AsNoTracking()
-                    .AnyAsync(b =>
-                        b.Identificatie == besluitAdd.Identificatie && b.VerantwoordelijkeOrganisatie == besluitAdd.VerantwoordelijkeOrganisatie
-                    )
-            )
+            if (await _context.Besluiten.AsNoTracking().AnyAsync(b => b.Identificatie == besluitAdd.Identificatie && b.Owner == besluitAdd.Owner))
             {
                 var error = new ValidationError(
                     "identificatie",
                     ErrorCode.IdentificationNotUnique,
-                    "Deze identificatie bestaat al voor de verantwoordelijke organisatie."
+                    "Deze identificatie bestaat al voor deze organisatie."
                 );
 
                 errors.Add(error);
