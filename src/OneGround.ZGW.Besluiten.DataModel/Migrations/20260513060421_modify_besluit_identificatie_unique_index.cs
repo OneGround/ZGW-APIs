@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -20,7 +21,7 @@ namespace OneGround.ZGW.Besluiten.DataModel.Migrations
                     table: "besluiten",
                     columns: new[] { "owner", "identificatie" },
                     unique: true,
-                    filter: "creationtime > '2026-05-13T06:04:20Z'"
+                    filter: $"creationtime > '{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}'"
                 )
                 .Annotation("Npgsql:CreatedConcurrently", true);
         }
