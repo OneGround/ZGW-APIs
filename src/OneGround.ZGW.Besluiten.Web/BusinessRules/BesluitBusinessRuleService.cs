@@ -66,37 +66,40 @@ public class BesluitBusinessRuleService : IBesluitBusinessRuleService
 
             return false;
         }
-        if (
-            besluitUpdate.VerantwoordelijkeOrganisatie != null
-            && besluitExisting.VerantwoordelijkeOrganisatie != besluitUpdate.VerantwoordelijkeOrganisatie
-        )
-        {
-            var error = new ValidationError("verantwoordelijkeOrganisatie", ErrorCode.UpdateNotAllowed, "Dit veld mag niet gewijzigd worden.");
 
-            errors.Add(error);
+        // Note: We have a discussion with VNG about the exact rules so the old businessrule temporary intact until we have final clarity. The business rule is currently that the responsible organization (owner) cannot be changed after creation of the Besluit, but this is not yet final.
+        //if (
+        //    besluitUpdate.VerantwoordelijkeOrganisatie != null
+        //    && besluitExisting.VerantwoordelijkeOrganisatie != besluitUpdate.VerantwoordelijkeOrganisatie
+        //)
+        //{
+        //    var error = new ValidationError("verantwoordelijkeOrganisatie", ErrorCode.UpdateNotAllowed, "Dit veld mag niet gewijzigd worden.");
 
-            return false;
-        }
+        //    errors.Add(error);
+
+        //    return false;
+        //}
 
         // 1. Garanderen uniciteit verantwoordelijke_organisatie en identificatie op de Besluit-resource (brc-002)
-        if (
-            await _context
-                .Besluiten.AsNoTracking()
-                .AnyAsync(b =>
-                    b.Id != besluitExisting.Id
-                    && b.Identificatie == besluitUpdate.Identificatie
-                    && b.VerantwoordelijkeOrganisatie == besluitUpdate.VerantwoordelijkeOrganisatie
-                )
-        )
-        {
-            var error = new ValidationError(
-                "identificatie",
-                ErrorCode.IdentificationNotUnique,
-                "Deze identificatie bestaat al voor de verantwoordelijke organisatie."
-            );
+        //if (
+        //    await _context
+        //        .Besluiten.AsNoTracking()
+        //        .AnyAsync(b =>
+        //            b.Id != besluitExisting.Id
+        //            && b.Identificatie == besluitUpdate.Identificatie
+        //            && b.VerantwoordelijkeOrganisatie == besluitUpdate.VerantwoordelijkeOrganisatie
+        //        )
+        //)
+        //{
+        //    var error = new ValidationError(
+        //        "identificatie",
+        //        ErrorCode.IdentificationNotUnique,
+        //        "Deze identificatie bestaat al voor de verantwoordelijke organisatie."
+        //    );
 
-            errors.Add(error);
-        }
+        //    errors.Add(error);
+        //}
+        // Note-end
 
         // Valideren besluittype op de Besluit - resource(brc - 001)
         if (besluitExisting.BesluitType != besluitUpdate.BesluitType)
