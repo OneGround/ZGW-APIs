@@ -49,13 +49,10 @@ public class ValidateBodyParametersFilter<TBodyDto> : IAsyncResourceFilter
         {
             try
             {
-                string[] excludedQueryParameters = ["page", "expand", "ordering"];
-
                 var jObject = JObject.Parse(body);
                 var invalidParams = jObject
                     .Properties()
                     .Select(p => p.Name)
-                    .Where(k => !excludedQueryParameters.Contains(k, StringComparer.OrdinalIgnoreCase)) // Exclude pagination/expand parameters
                     .Where(k => !AllowedBodyParameters.Contains(k))
                     .ToList();
 
