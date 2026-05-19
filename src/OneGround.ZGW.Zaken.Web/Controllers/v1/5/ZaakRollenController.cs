@@ -67,6 +67,7 @@ public class ZaakRollenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakRollen.GetAll, Name = Operations.ZaakRollen.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakRolResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakRollenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] Zaken.Contracts.v1.Queries.GetAllZaakRollenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

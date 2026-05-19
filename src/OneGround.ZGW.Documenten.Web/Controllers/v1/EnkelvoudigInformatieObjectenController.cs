@@ -85,6 +85,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllEnkelvoudigInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters,
         int page = 1,

@@ -68,6 +68,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakTypeInformatieObjectTypen.GetAll, Name = Operations.ZaakTypeInformatieObjectTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakTypeInformatieObjectTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakTypeInformatieObjectTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakTypeInformatieObjectTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

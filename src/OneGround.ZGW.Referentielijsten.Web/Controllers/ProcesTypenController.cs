@@ -38,6 +38,7 @@ public class ProcesTypenController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpGet(ApiRoutes.ProcesTypen.GetAll, Name = Operations.ProcesTypen.List)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ProcesTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllProcesTypenQueryParameters>))]
     public IActionResult GetAllAsync([FromQuery] GetAllProcesTypenQueryParameters parameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), parameters);

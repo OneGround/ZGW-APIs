@@ -130,6 +130,7 @@ public class ResultaatTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.ResultaatTypen.GetAll, Name = Operations.ResultaatTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ResultaatTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllResultaatTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllResultaatTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

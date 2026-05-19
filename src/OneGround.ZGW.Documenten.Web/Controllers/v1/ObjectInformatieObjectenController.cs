@@ -55,6 +55,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllObjectInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
         CancellationToken cancellationToken

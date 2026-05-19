@@ -137,6 +137,7 @@ public class BesluitTypeController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)] // Note: Only DatumGeldigheid is supported in this version!!
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<BesluitTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

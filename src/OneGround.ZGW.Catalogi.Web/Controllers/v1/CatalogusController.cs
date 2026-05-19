@@ -65,6 +65,7 @@ public class CatalogusController : ZGWControllerBase
     [HttpGet(ApiRoutes.Catalogussen.GetAll, Name = Operations.Catalogussen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<CatalogusResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllCatalogussenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllCatalogussenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

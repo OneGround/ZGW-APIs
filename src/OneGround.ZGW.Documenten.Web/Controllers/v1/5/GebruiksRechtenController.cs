@@ -63,6 +63,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<GebruiksRechtResponseExpandedDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllGebruiksRechtenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllGebruiksRechtenQueryParameters queryParameters,
         CancellationToken cancellationToken

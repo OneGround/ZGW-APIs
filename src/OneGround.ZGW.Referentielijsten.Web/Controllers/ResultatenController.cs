@@ -61,6 +61,7 @@ public class ResultatenController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpGet(ApiRoutes.Resultaten.GetAll, Name = Operations.Resultaten.List)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ResultaatResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllResultatenQueryParameters>))]
     public IActionResult GetAllAsync([FromQuery] GetAllResultatenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

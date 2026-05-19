@@ -130,6 +130,7 @@ public class RolTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.RolTypen.GetAll, Name = Operations.RolTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<RolTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllRolTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllRolTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

@@ -130,6 +130,7 @@ public class EigenschapController : ZGWControllerBase
     [HttpGet(ApiRoutes.Eigenschappen.GetAll, Name = Operations.Eigenschappen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EigenschapResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllEigenschappenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllEigenschappenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

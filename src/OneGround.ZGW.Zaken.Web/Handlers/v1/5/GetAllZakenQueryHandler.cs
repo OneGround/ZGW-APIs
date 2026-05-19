@@ -117,23 +117,35 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
         var result = new PagedResult<Zaak> { PageResult = pagedResult.Select(z => z.Zaak), Count = totalCount };
 
-        // Log to audit trail if BSN is used in the filter, as this means we are retrieving a list of zaken for a specific person, which is a privacy-sensitive action worth logging
+        // Log to audit trail if BSN, Vestiginsnummer (KvK), Rsin is used in the filter, as this means we are retrieving a list of zaken for a specific person/vestiging/organisatie, which is a privacy-sensitive action worth logging
         if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn))
         {
-            await LogToAuditTrail(result, cancellationToken);
+            await LogToAuditTrail(result, "BSN", cancellationToken);
+        }
+        if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__vestiging__vestigingsNummer))
+        {
+            await LogToAuditTrail(result, "Vestigingsnummer", cancellationToken);
+        }
+        if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Bronorganisatie))
+        {
+            await LogToAuditTrail(result, "Bronorganisatie", cancellationToken);
+        }
+        if (request.GetAllZakenFilter.Bronorganisatie__in != null && request.GetAllZakenFilter.Bronorganisatie__in.Count() > 0)
+        {
+            await LogToAuditTrail(result, "Bronorganisatie (in)", cancellationToken);
         }
 
         return new QueryResult<PagedResult<Zaak>>(result, QueryStatus.OK);
     }
 
-    private async Task LogToAuditTrail(PagedResult<Zaak> result, CancellationToken cancellationToken)
+    private async Task LogToAuditTrail(PagedResult<Zaak> result, string field, CancellationToken cancellationToken)
     {
-        // Note: Write 'retrieve' actie to audittrail for each zaak retrieved in this query (max 100 due to pagination)
+        // Note: Write 'retrieve' actie to audittrail for each zaak retrieved in this query (max 100 due to pagination setting)
         foreach (var zaak in result.PageResult)
         {
             using var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: zaak.LegacyAuditTrail);
 
-            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: "Op BSN gefilterde lijst van zaken opgevraagd", cancellationToken);
+            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: $"Op {field} gefilterde lijst van zaken opgevraagd", cancellationToken);
         }
         await _context.SaveChangesAsync(cancellationToken);
     }

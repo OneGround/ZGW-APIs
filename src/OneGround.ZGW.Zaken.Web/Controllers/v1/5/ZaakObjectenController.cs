@@ -83,6 +83,7 @@ public class ZaakObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakObjecten.GetAll, Name = Operations.ZaakObjecten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakObjectResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters queryParameters,
         int page = 1

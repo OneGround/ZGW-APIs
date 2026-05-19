@@ -56,6 +56,7 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Besluiten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<BesluitInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitInformatieObjectenQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);

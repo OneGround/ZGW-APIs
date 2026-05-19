@@ -70,6 +70,7 @@ public class KlantContactenController : ZGWControllerBase
     [HttpGet(ApiRoutes.KlantContacten.GetAll, Name = Operations.KlantContacten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<KlantContactResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllKlantContactenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllKlantContactenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

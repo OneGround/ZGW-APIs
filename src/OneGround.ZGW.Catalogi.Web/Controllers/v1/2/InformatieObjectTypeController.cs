@@ -63,6 +63,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [HttpGet(Contracts.v1.ApiRoutes.InformatieObjectTypen.GetAll, Name = Contracts.v1.Operations.InformatieObjectTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<InformatieObjectTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllInformatieObjectTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllInformatieObjectTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

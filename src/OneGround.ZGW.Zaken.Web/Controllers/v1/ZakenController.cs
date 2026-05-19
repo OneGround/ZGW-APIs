@@ -21,6 +21,7 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -88,6 +89,7 @@ public class ZakenController : ZGWControllerBase
     [RequiresAcceptCrs]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZakenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZakenQueryParameters queryParameters, int page = 1, string ordering = null)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}, {Ordering}", nameof(GetAllAsync), queryParameters, page, ordering);
@@ -193,6 +195,7 @@ public class ZakenController : ZGWControllerBase
     [RequiresAcceptCrs]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<ZaakSearchRequestDto>))]
     public async Task<IActionResult> SearchAsync([FromBody] ZaakSearchRequestDto zaakSearchRequest, int page = 1, string ordering = null)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Page}, {Ordering}", nameof(SearchAsync), zaakSearchRequest, page, ordering);

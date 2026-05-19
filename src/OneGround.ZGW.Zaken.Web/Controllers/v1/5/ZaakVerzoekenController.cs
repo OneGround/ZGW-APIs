@@ -56,6 +56,7 @@ public class ZaakVerzoekenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ZaakVerzoekResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakVerzoekenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakVerzoekenQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
