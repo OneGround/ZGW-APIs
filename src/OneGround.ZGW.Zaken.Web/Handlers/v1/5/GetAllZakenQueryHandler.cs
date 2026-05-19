@@ -117,7 +117,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
         var result = new PagedResult<Zaak> { PageResult = pagedResult.Select(z => z.Zaak), Count = totalCount };
 
-        // Log to audit trail if BSN, Vestiginsnummer (KvK), Rsin is used in the filter, as this means we are retrieving a list of zaken for a specific person/vestiging/organisatie, which is a privacy-sensitive action worth logging
+        // Log to audit trail if BSN, Vestigingsnummer (KvK), Rsin is used in the filter, as this means we are retrieving a list of zaken for a specific person/vestiging/organisatie, which is a privacy-sensitive action worth logging
         if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn))
         {
             await LogToAuditTrail(result, "BSN", cancellationToken);
@@ -126,13 +126,9 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         {
             await LogToAuditTrail(result, "Vestigingsnummer", cancellationToken);
         }
-        if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Bronorganisatie))
+        if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId))
         {
-            await LogToAuditTrail(result, "Bronorganisatie", cancellationToken);
-        }
-        if (request.GetAllZakenFilter.Bronorganisatie__in != null && request.GetAllZakenFilter.Bronorganisatie__in.Count() > 0)
-        {
-            await LogToAuditTrail(result, "Bronorganisatie (in)", cancellationToken);
+            await LogToAuditTrail(result, "NnpId", cancellationToken);
         }
 
         return new QueryResult<PagedResult<Zaak>>(result, QueryStatus.OK);

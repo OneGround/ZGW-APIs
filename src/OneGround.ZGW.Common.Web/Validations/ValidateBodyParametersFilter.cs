@@ -50,11 +50,7 @@ public class ValidateBodyParametersFilter<TBodyDto> : IAsyncResourceFilter
             try
             {
                 var jObject = JObject.Parse(body);
-                var invalidParams = jObject
-                    .Properties()
-                    .Select(p => p.Name)
-                    .Where(k => !AllowedBodyParameters.Contains(k))
-                    .ToList();
+                var invalidParams = jObject.Properties().Select(p => p.Name).Where(k => !AllowedBodyParameters.Contains(k)).ToList();
 
                 if (invalidParams.Any())
                 {
@@ -84,10 +80,12 @@ public class ValidateBodyParametersFilter<TBodyDto> : IAsyncResourceFilter
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var type = typeof(TBodyDto);
-        foreach (var propertyName in type.GetProperties()
-                     .Select(prop => prop.GetCustomAttribute<JsonPropertyAttribute>())
-                     .Where(attr => attr != null && !string.IsNullOrWhiteSpace(attr.PropertyName))
-                     .Select(attr => attr!.PropertyName))
+        foreach (
+            var propertyName in type.GetProperties()
+                .Select(prop => prop.GetCustomAttribute<JsonPropertyAttribute>())
+                .Where(attr => attr != null && !string.IsNullOrWhiteSpace(attr.PropertyName))
+                .Select(attr => attr!.PropertyName)
+        )
         {
             set.Add(propertyName);
         }

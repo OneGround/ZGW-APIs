@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services;
 
+namespace OneGround.ZGW.Common.Web.Validations;
+
 /// <summary>
 /// Resource filter to validate query-parameters against allowed [FromQueryAttribute] attributes.
 /// </summary>

@@ -19,13 +19,13 @@ using OneGround.ZGW.Autorisaties.Web.Contracts;
 using OneGround.ZGW.Autorisaties.Web.Contracts.v1.Requests.Queries;
 using OneGround.ZGW.Autorisaties.Web.Handlers;
 using OneGround.ZGW.Autorisaties.Web.Models;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
