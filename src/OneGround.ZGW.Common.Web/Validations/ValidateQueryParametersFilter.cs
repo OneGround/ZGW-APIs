@@ -52,16 +52,11 @@ public class ValidateQueryParametersFilter<TQueryParametersDto> : IAsyncResource
 
     private static HashSet<string> GetAllowedQueryParameters()
     {
-        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var type = typeof(TQueryParametersDto);
-        foreach (var prop in type.GetProperties())
-        {
-            var attr = prop.GetCustomAttribute<FromQueryAttribute>();
-            if (attr != null && !string.IsNullOrWhiteSpace(attr.Name))
-            {
-                set.Add(attr.Name);
-            }
-        }
-        return set;
+        return typeof(TQueryParametersDto)
+            .GetProperties()
+            .Select(prop => prop.GetCustomAttribute<FromQueryAttribute>())
+            .Where(attr => attr != null && !string.IsNullOrWhiteSpace(attr.Name))
+            .Select(attr => attr!.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }
