@@ -87,13 +87,12 @@ public class ValidateBodyParametersFilter<TBodyDto> : IAsyncResourceFilter
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var type = typeof(TBodyDto);
-        foreach (var prop in type.GetProperties())
+        foreach (var propertyName in type.GetProperties()
+                     .Select(prop => prop.GetCustomAttribute<JsonPropertyAttribute>())
+                     .Where(attr => attr != null && !string.IsNullOrWhiteSpace(attr.PropertyName))
+                     .Select(attr => attr!.PropertyName))
         {
-            var attr = prop.GetCustomAttribute<JsonPropertyAttribute>();
-            if (attr != null && !string.IsNullOrWhiteSpace(attr.PropertyName))
-            {
-                set.Add(attr.PropertyName);
-            }
+            set.Add(propertyName);
         }
         return set;
     }
