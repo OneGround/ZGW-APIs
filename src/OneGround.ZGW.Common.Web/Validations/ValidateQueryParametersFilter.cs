@@ -27,12 +27,12 @@ public class ValidateQueryParametersFilter<TQueryParametersDto> : IAsyncResource
 
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
-        string[] excludedQueryParameters = ["page", "expand", "ordering"];
+        string[] noneFromQueryAttributes = ["page", "expand", "ordering"];
 
         var query = context.HttpContext.Request.Query;
         var invalidParams = query
-            .Keys.Where(k => !excludedQueryParameters.Contains(k, StringComparer.OrdinalIgnoreCase)) // Exclude pagination/expand parameters
-            .Where(k => !AllowedQueryParameters.Contains(k))
+            .Keys.Where(k => !noneFromQueryAttributes.Contains(k, StringComparer.OrdinalIgnoreCase)) // Exclude pagination/expand parameters
+            .Where(k => !AllowedQueryParameters.Contains(k, StringComparer.OrdinalIgnoreCase))
             .ToList();
         if (invalidParams.Any())
         {
