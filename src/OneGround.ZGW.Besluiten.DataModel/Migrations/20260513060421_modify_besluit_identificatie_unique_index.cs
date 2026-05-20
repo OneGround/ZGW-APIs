@@ -11,9 +11,11 @@ namespace OneGround.ZGW.Besluiten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten");
+            migrationBuilder.DropIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten").Annotation("Npgsql:CreatedConcurrently", true);
 
-            migrationBuilder.DropIndex(name: "IX_besluiten_verantwoordelijkeorganisatie_identificatie", table: "besluiten");
+            migrationBuilder
+                .DropIndex(name: "IX_besluiten_verantwoordelijkeorganisatie_identificatie", table: "besluiten")
+                .Annotation("Npgsql:CreatedConcurrently", true);
 
             migrationBuilder
                 .CreateIndex(
@@ -29,9 +31,11 @@ namespace OneGround.ZGW.Besluiten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten");
+            migrationBuilder.DropIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten").Annotation("Npgsql:CreatedConcurrently", true);
 
-            migrationBuilder.CreateIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten", columns: new[] { "owner", "identificatie" });
+            migrationBuilder
+                .CreateIndex(name: "IX_besluiten_owner_identificatie", table: "besluiten", columns: new[] { "owner", "identificatie" })
+                .Annotation("Npgsql:CreatedConcurrently", true);
 
             migrationBuilder
                 .CreateIndex(

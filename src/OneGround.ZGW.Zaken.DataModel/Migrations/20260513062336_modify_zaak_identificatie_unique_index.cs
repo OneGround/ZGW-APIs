@@ -11,9 +11,9 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "IX_zaken_bronorganisatie_identificatie", table: "zaken");
+            migrationBuilder.DropIndex(name: "IX_zaken_bronorganisatie_identificatie", table: "zaken").Annotation("Npgsql:CreatedConcurrently", true);
 
-            migrationBuilder.DropIndex(name: "IX_zaken_owner_identificatie", table: "zaken");
+            migrationBuilder.DropIndex(name: "IX_zaken_owner_identificatie", table: "zaken").Annotation("Npgsql:CreatedConcurrently", true);
 
             migrationBuilder
                 .CreateIndex(
@@ -40,7 +40,9 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                 )
                 .Annotation("Npgsql:CreatedConcurrently", true);
 
-            migrationBuilder.CreateIndex(name: "IX_zaken_owner_identificatie", table: "zaken", columns: new[] { "owner", "identificatie" });
+            migrationBuilder
+                .CreateIndex(name: "IX_zaken_owner_identificatie", table: "zaken", columns: new[] { "owner", "identificatie" })
+                .Annotation("Npgsql:CreatedConcurrently", true);
         }
     }
 }
