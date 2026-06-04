@@ -153,7 +153,7 @@ public class CreateZaakRolCommandHandlerTests : IAsyncLifetime
             RolType = TestRolTypeUrl,
             Roltoelichting = "test",
             BetrokkeneType = BetrokkeneType.natuurlijk_persoon,
-            NatuurlijkPersoon = new NatuurlijkPersoonZaakRol { InpBsn = "999999990", InpBsnEncrypted = "999999990" },
+            NatuurlijkPersoon = new NatuurlijkPersoonZaakRol { InpBsnEncrypted = "999999990" },
         };
 
         var command = new CreateZaakRolCommand { ZaakUrl = TestZaakUrl, ZaakRol = zaakRol };
@@ -177,7 +177,7 @@ public class CreateZaakRolCommandHandlerTests : IAsyncLifetime
             RolType = TestRolTypeUrl,
             Roltoelichting = "test",
             BetrokkeneType = BetrokkeneType.natuurlijk_persoon,
-            NatuurlijkPersoon = new NatuurlijkPersoonZaakRol { InpBsn = null, InpBsnEncrypted = null },
+            NatuurlijkPersoon = new NatuurlijkPersoonZaakRol { InpBsnEncrypted = null },
         };
 
         var command = new CreateZaakRolCommand { ZaakUrl = TestZaakUrl, ZaakRol = zaakRol };
