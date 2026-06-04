@@ -47,20 +47,40 @@ public class ValidateBodyParametersFilter<TBodyDto> : IAsyncResourceFilter
 
         if (!string.IsNullOrWhiteSpace(body))
         {
-            var jObject = JObject.Parse(body);
-            var invalidParams = jObject.Properties().Select(p => p.Name).Where(k => !AllowedBodyParameters.Contains(k)).ToList();
-
-            if (invalidParams.Any())
+            try
             {
+                var jObject = JObject.Parse(body);
+                var invalidParams = jObject.Properties().Select(p => p.Name).Where(k => !AllowedBodyParameters.Contains(k)).ToList();
+
+                if (invalidParams.Any())
+                {
+                    context.Result = _errorResponseBuilder.BadRequest(
+                        validationErrors: invalidParams
+                            .Select(e => new ValidationError
+                            {
+                                Name = e,
+                                Reason = "Invalid body parameter",
+                                Code = ErrorCode.Invalid,
+                            })
+                            .ToList()
+                    );
+                    return;
+                }
+            }
+            catch (JsonReaderException ex)
+            {
+                // Let the framework handle malformed JSON
                 context.Result = _errorResponseBuilder.BadRequest(
-                    validationErrors: invalidParams
-                        .Select(e => new ValidationError
+                    validationErrors: new List<ValidationError>
+                    {
+                        new ValidationError
                         {
-                            Name = e,
-                            Reason = "Invalid body parameter",
+                            Name = "body",
+                            Reason = $"Malformed JSON: {ex.Message}",
                             Code = ErrorCode.Invalid,
-                        })
-                        .ToList()
+                        },
+                    },
+                    title: "Malformed JSON."
                 );
                 return;
             }
