@@ -89,8 +89,6 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
 
         modelBuilder.Entity<ZaakRol.ZaakRol>().HasIndex(p => p.Owner);
 
-        modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
-
         modelBuilder.Entity<NatuurlijkPersoonZaakRol>(entity =>
         {
             entity.Property(p => p.InpBsnEncrypted).HasColumnName("inpbsn_encrypted");
