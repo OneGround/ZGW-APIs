@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -69,6 +70,7 @@ public class ApplicatiesController : ZGWControllerBase
     [HttpGet(ApiRoutes.Applicaties.GetAll, Name = Operations.Applicaties.List)]
     [Scope(AuthorizationScopes.Autorisaties.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ApplicatieResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllApplicatiesQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllApplicatiesQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.Referentielijsten.Web.Configuration;
 using OneGround.ZGW.Referentielijsten.Web.Controllers;
+using OneGround.ZGW.Referentielijsten.Web.Extensions;
 using OneGround.ZGW.Referentielijsten.Web.Services;
 
 namespace OneGround.ZGW.Referentielijsten.Web;
@@ -66,6 +67,9 @@ public class Startup
 
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
+
+        // Register the query parameter validation filters globally
+        services.AddQueryParameterValidations();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

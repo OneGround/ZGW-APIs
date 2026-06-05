@@ -23,6 +23,7 @@ using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -56,6 +57,7 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Besluiten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<BesluitInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitInformatieObjectenQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);

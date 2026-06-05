@@ -18,6 +18,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -70,6 +71,7 @@ public class KlantContactenController : ZGWControllerBase
     [HttpGet(ApiRoutes.KlantContacten.GetAll, Name = Operations.KlantContacten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<KlantContactResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllKlantContactenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllKlantContactenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
