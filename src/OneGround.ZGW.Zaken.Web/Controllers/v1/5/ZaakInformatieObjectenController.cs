@@ -17,6 +17,7 @@ using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Requests;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
@@ -65,6 +66,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ZaakInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakInformatieObjectenQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);

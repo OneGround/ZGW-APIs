@@ -35,6 +35,7 @@ using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using OneGround.ZGW.Zaken.Web.Expands.v1._5;
+using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.Web.Handlers;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
 using OneGround.ZGW.Zaken.Web.Handlers.v1.EntityUpdaters;
@@ -173,6 +174,9 @@ public class Startup
 
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
+
+        // Register the query/search-body parameter validation filters globally
+        services.AddQueryAndSearchParameterValidations();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

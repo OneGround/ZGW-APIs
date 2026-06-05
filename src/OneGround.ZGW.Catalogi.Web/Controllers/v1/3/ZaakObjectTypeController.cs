@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -72,6 +73,7 @@ public class ZaakObjectTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakObjectTypen.GetAll, Name = Operations.ZaakObjectTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakObjectTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakObjectTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakObjectTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

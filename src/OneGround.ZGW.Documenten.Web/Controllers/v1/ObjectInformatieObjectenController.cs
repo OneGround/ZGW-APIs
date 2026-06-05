@@ -13,6 +13,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
@@ -55,6 +56,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllObjectInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
         CancellationToken cancellationToken

@@ -22,6 +22,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
@@ -95,6 +96,7 @@ public class VerzendingenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<VerzendingResponseExpandedDto>))]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllVerzendingenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllVerzendingenQueryParameters queryParameters,
         int page = 1,

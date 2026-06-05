@@ -1,0 +1,64 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Web.Services;
+
+namespace OneGround.ZGW.Common.Web.Validations;
+
+/// <summary>
+/// Resource filter to validate query-parameters against allowed [FromQueryAttribute] attributes.
+/// </summary>
+public class ValidateQueryParametersFilter<TQueryParametersDto> : IAsyncResourceFilter
+    where TQueryParametersDto : class
+{
+    private readonly IErrorResponseBuilder _errorResponseBuilder;
+
+    private static readonly HashSet<string> AllowedQueryParameters = GetAllowedQueryParameters();
+
+    public ValidateQueryParametersFilter(IErrorResponseBuilder errorResponseBuilder)
+    {
+        _errorResponseBuilder = errorResponseBuilder;
+    }
+
+    public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
+    {
+        string[] noneFromQueryAttributes = ["page", "expand", "ordering"];
+
+        var query = context.HttpContext.Request.Query;
+        var invalidParams = query
+            .Keys.Where(k => !noneFromQueryAttributes.Contains(k, StringComparer.OrdinalIgnoreCase)) // Exclude pagination/expand parameters
+            .Where(k => !AllowedQueryParameters.Contains(k, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        if (invalidParams.Any())
+        {
+            context.Result = _errorResponseBuilder.BadRequest(
+                validationErrors: invalidParams
+                    .Select(e => new ValidationError
+                    {
+                        Name = e,
+                        Reason = "Invalid query parameter",
+                        Code = ErrorCode.Invalid,
+                    })
+                    .ToList()
+            );
+            return;
+        }
+
+        await next();
+    }
+
+    private static HashSet<string> GetAllowedQueryParameters()
+    {
+        return typeof(TQueryParametersDto)
+            .GetProperties()
+            .Select(prop => prop.GetCustomAttribute<FromQueryAttribute>())
+            .Where(attr => attr != null && !string.IsNullOrWhiteSpace(attr.Name))
+            .Select(attr => attr!.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+}

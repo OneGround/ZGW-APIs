@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.Web.Contracts.v1;
@@ -38,6 +39,7 @@ public class ProcesTypenController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpGet(ApiRoutes.ProcesTypen.GetAll, Name = Operations.ProcesTypen.List)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ProcesTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllProcesTypenQueryParameters>))]
     public IActionResult GetAllAsync([FromQuery] GetAllProcesTypenQueryParameters parameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), parameters);

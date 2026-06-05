@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -158,6 +159,7 @@ public class EigenschapController : ZGWControllerBase
     [HttpGet(ApiRoutes.Eigenschappen.GetAll, Name = Operations.Eigenschappen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EigenschapResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllEigenschappenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllEigenschappenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

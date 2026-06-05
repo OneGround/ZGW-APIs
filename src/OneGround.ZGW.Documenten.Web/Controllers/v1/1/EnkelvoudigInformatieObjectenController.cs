@@ -24,6 +24,7 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
@@ -82,6 +83,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Documenten.Contracts.v1.Queries.GetAllEnkelvoudigInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] Documenten.Contracts.v1.Queries.GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters,
         int page = 1,
