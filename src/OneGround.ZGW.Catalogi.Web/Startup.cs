@@ -9,6 +9,7 @@ using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.BusinessRules;
 using OneGround.ZGW.Catalogi.Web.Controllers;
+using OneGround.ZGW.Catalogi.Web.Extensions;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Catalogi.Web.Services;
 using OneGround.ZGW.Common.Batching;
@@ -147,6 +148,9 @@ public class Startup
 
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
+
+        // Register the query parameter validation filters globally
+        services.AddQueryParameterValidations();
     }
 
     public static void Configure(WebApplication app, IWebHostEnvironment env)

@@ -31,6 +31,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -80,6 +81,7 @@ public class BesluitenController : ZGWControllerBase
     [HttpGet(ApiRoutes.Besluiten.GetAll, Name = Operations.Besluiten.List)]
     [Scope(AuthorizationScopes.Besluiten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<BesluitResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
