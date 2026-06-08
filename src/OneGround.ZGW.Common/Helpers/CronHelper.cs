@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace OneGround.ZGW.Common.Helpers;
 
@@ -14,6 +15,11 @@ public static class CronHelper
         return $"{targetTime.Minute} {targetTime.Hour} {targetTime.Day} {targetTime.Month} *";
     }
 
+    // Divisors of 60 (excluding 60 itself) in descending order. A "*/N" minute step only fires
+    // on a strictly even cadence when N divides 60 evenly; otherwise the runs bunch up around the
+    // hour boundary (e.g. "*/50" fires at :00 and :50, so the :50 -> :00 gap is only 10 minutes).
+    private static readonly int[] EvenMinuteIntervals = [30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1];
+
     public static string CreateRecurringMinuteInterval(int maxMinutesBetweenRuns)
     {
         // Generate a *recurring* Cron ("*/N" minute step), as opposed to CreateOneTimeCron
@@ -23,18 +29,16 @@ public static class CronHelper
         // and the job is effectively stuck. A recurring step keeps firing, so Hangfire
         // automatically restarts it shortly after the server recovers.
         //
-        // Note on "*/N" semantics: it does NOT fire at a strictly fixed N-minute cadence. It
-        // fires at minutes 0, N, 2N, ... within each hour and then resets at the top of the
-        // hour, so when N does not divide 60 the runs bunch up around the hour boundary (e.g.
-        // "*/50" fires at :00 and :50, so the :50 -> :00 gap is only 10 minutes). The property
-        // we rely on is the *upper bound*: the gap between consecutive runs never exceeds N
-        // minutes. That is exactly what a renew-before-expiry job needs — bunching only ever
-        // makes the renewal fire sooner, never later, which is harmless. So N is the MAXIMUM
-        // minutes the token may go un-renewed, not a guaranteed exact interval.
-        //
-        // The minute field only supports 0-59, so clamp to [1, 59]. Renewing a little more
-        // often than strictly required is harmless; never renewing is what breaks these jobs.
-        var interval = Math.Clamp(maxMinutesBetweenRuns, 1, 59);
+        // Snap the interval to the largest divisor of 60 that is <= maxMinutesBetweenRuns. This
+        // gives two guarantees:
+        //   1. The chosen N divides 60, so "*/N" fires on a strictly even cadence (no bunching
+        //      around the hour boundary).
+        //   2. We round DOWN, never up, so the gap between runs never exceeds the requested
+        //      maximum — the token is always renewed before it expires. Renewing a little more
+        //      often than strictly required is harmless; never renewing is what breaks the job.
+        // Values below 1 fall back to every minute. The effective ceiling is 30 minutes (the
+        // largest divisor of 60 below 60), which is well within any realistic token lifetime.
+        var interval = EvenMinuteIntervals.FirstOrDefault(d => d <= maxMinutesBetweenRuns, 1);
 
         // Format: Minute Hour DayOfMonth Month DayOfWeek
         return $"*/{interval} * * * *";
