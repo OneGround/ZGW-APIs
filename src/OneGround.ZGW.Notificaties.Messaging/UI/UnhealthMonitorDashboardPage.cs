@@ -16,15 +16,34 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
 
     public async Task Dispatch(DashboardContext context)
     {
-        // Handle POST request for clearing cache
+        // Handle POST request for clearing the cache.
+        // When a "key" form value is supplied only that single subscriber is removed,
+        // otherwise the complete unhealthy cache is cleared.
         if (string.Equals(context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
         {
             try
             {
-                await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
+                var keyValues = await context.Request.GetFormValuesAsync("key");
+                var key = keyValues?.FirstOrDefault(k => !string.IsNullOrWhiteSpace(k));
+
+                int clearedCount;
+                string message;
+                if (!string.IsNullOrEmpty(key))
+                {
+                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, key);
+                    message = clearedCount > 0 ? "Subscriber removed successfully" : "Subscriber was no longer present (already cleared)";
+                }
+                else
+                {
+                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
+                    message = $"Cleared {clearedCount} subscriber(s) successfully";
+                }
+
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync("{\"success\": true, \"message\": \"Cache cleared successfully\"}");
+                await context.Response.WriteAsync(
+                    $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}"
+                );
                 return;
             }
             catch (Exception ex)
@@ -47,11 +66,13 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
         {
             var statusClass = state.IsCircuitOpen ? "status-blocked" : "status-warning";
             var statusText = state.IsCircuitOpen ? "BLOCKED" : "MONITORING";
+            var encodedKey = System.Net.WebUtility.HtmlEncode(key.ToString());
+            var encodedUrl = System.Net.WebUtility.HtmlEncode(state.Url);
 
             tableRows.AppendLine(
                 $@"
                 <tr class='{statusClass}'>
-                    <td>{System.Net.WebUtility.HtmlEncode(state.Url)}</td>
+                    <td>{encodedUrl}</td>
                     <td class='status-badge'>{statusText}</td>
                     <td>{state.ConsecutiveFailures}</td>
                     <td>{FormatDateTime(state.FirstFailureAt)}</td>
@@ -59,6 +80,9 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                     <td>{FormatDateTime(state.BlockedUntil)}</td>
                     <td>{state.LastStatusCode?.ToString() ?? "N/A"}</td>
                     <td class='error-message'>{System.Net.WebUtility.HtmlEncode(state.LastErrorMessage ?? "N/A")}</td>
+                    <td class='actions-cell'>
+                        <button class='delete-btn' data-key='{encodedKey}' data-url='{encodedUrl}' onclick='deleteItem(this)'>Delete</button>
+                    </td>
                 </tr>"
             );
         }
@@ -218,6 +242,27 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         font-size: 12px;
                         color: #666;
                     }}
+                    .actions-cell {{
+                        white-space: nowrap;
+                    }}
+                    .delete-btn {{
+                        background-color: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 6px 14px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        font-size: 13px;
+                        transition: background-color 0.2s;
+                    }}
+                    .delete-btn:hover {{
+                        background-color: #c82333;
+                    }}
+                    .delete-btn:disabled {{
+                        background-color: #6c757d;
+                        cursor: not-allowed;
+                    }}
                     .empty-state {{
                         text-align: center;
                         padding: 40px;
@@ -257,29 +302,92 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             opacity: 1;
                         }}
                     }}
+                    .modal-overlay {{
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: rgba(0,0,0,0.5);
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 2000;
+                    }}
+                    .modal-overlay.show {{
+                        display: flex;
+                    }}
+                    .modal {{
+                        background: white;
+                        padding: 25px 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                        max-width: 480px;
+                        width: 90%;
+                    }}
+                    .modal h2 {{
+                        margin: 0 0 12px 0;
+                        font-size: 18px;
+                        color: #333;
+                    }}
+                    .modal p {{
+                        margin: 0 0 20px 0;
+                        color: #555;
+                        font-size: 14px;
+                        word-break: break-word;
+                    }}
+                    .modal-buttons {{
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 10px;
+                    }}
+                    .modal-btn {{
+                        border: none;
+                        padding: 10px 18px;
+                        border-radius: 5px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background-color 0.2s;
+                    }}
+                    .modal-btn-confirm {{
+                        background-color: #dc3545;
+                        color: white;
+                    }}
+                    .modal-btn-confirm:hover {{
+                        background-color: #c82333;
+                    }}
+                    .modal-btn-cancel {{
+                        background-color: #e9ecef;
+                        color: #333;
+                    }}
+                    .modal-btn-cancel:hover {{
+                        background-color: #d3d9df;
+                    }}
                 </style>
                 <script>
                     let refreshIntervalId = null;
-                    
+                    let pendingAction = null;
+
                     function refreshTable() {{
                         fetch(window.location.href)
                             .then(response => response.text())
                             .then(html => {{
                                 const parser = new DOMParser();
                                 const doc = parser.parseFromString(html, 'text/html');
-                                
+
                                 const newSummary = doc.querySelector('.summary');
                                 const currentSummary = document.querySelector('.summary');
                                 if (newSummary && currentSummary) {{
                                     currentSummary.innerHTML = newSummary.innerHTML;
                                 }}
-                                
+
                                 const newContent = doc.querySelector('#table-content');
                                 const currentContent = document.querySelector('#table-content');
                                 if (newContent && currentContent) {{
                                     currentContent.innerHTML = newContent.innerHTML;
                                 }}
-                                
+
                                 const newTimestamp = doc.querySelector('.timestamp');
                                 const currentTimestamp = document.querySelector('.timestamp');
                                 if (newTimestamp && currentTimestamp) {{
@@ -288,11 +396,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             }})
                             .catch(error => console.error('Error refreshing table:', error));
                     }}
-                    
+
                     function toggleAutoRefresh() {{
                         const toggle = document.getElementById('autoRefreshToggle');
                         const isEnabled = toggle.checked;
-                        
+
                         if (isEnabled) {{
                             // Start auto-refresh every 3 seconds
                             refreshIntervalId = setInterval(refreshTable, 3000);
@@ -306,11 +414,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             localStorage.setItem('autoRefreshEnabled', 'false');
                         }}
                     }}
-                    
+
                     function initializeAutoRefresh() {{
                         const toggle = document.getElementById('autoRefreshToggle');
                         const savedState = localStorage.getItem('autoRefreshEnabled');
-                        
+
                         // Default to enabled if not set
                         if (savedState === null || savedState === 'true') {{
                             toggle.checked = true;
@@ -319,16 +427,49 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             toggle.checked = false;
                         }}
                     }}
-                    
+
+                    // Confirmation modal helpers
+                    function openConfirmModal(title, message, confirmLabel, action) {{
+                        pendingAction = action;
+                        document.getElementById('modalTitle').textContent = title;
+                        document.getElementById('modalMessage').textContent = message;
+                        document.getElementById('modalConfirmBtn').textContent = confirmLabel;
+                        document.getElementById('confirmModal').classList.add('show');
+                    }}
+
+                    function closeConfirmModal() {{
+                        pendingAction = null;
+                        document.getElementById('confirmModal').classList.remove('show');
+                    }}
+
+                    function confirmModalProceed() {{
+                        const action = pendingAction;
+                        document.getElementById('confirmModal').classList.remove('show');
+                        pendingAction = null;
+                        if (typeof action === 'function') {{
+                            action();
+                        }}
+                    }}
+
+                    // Ask for confirmation before clearing the whole cache
                     function clearCache() {{
+                        openConfirmModal(
+                            'Clear all unhealthy subscribers',
+                            'Are you sure you want to clear the cache for ALL unhealthy subscribers? This cannot be undone.',
+                            'Clear all',
+                            doClearAll
+                        );
+                    }}
+
+                    function doClearAll() {{
                         const btn = document.getElementById('clearCacheBtn');
                         btn.disabled = true;
                         btn.textContent = 'Clearing...';
-                        
+
                         fetch(window.location.href, {{
                             method: 'POST',
                             headers: {{
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/x-www-form-urlencoded'
                             }}
                         }})
                         .then(response => response.json())
@@ -351,24 +492,84 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             btn.textContent = 'Clear all';
                         }});
                     }}
-                    
+
+                    // Ask for confirmation before deleting a single subscriber
+                    function deleteItem(button) {{
+                        const key = button.getAttribute('data-key');
+                        const url = button.getAttribute('data-url') || 'this subscriber';
+                        openConfirmModal(
+                            'Delete subscriber',
+                            'Are you sure you want to remove ' + url + ' from the unhealthy cache?',
+                            'Delete',
+                            () => doDelete(key, button)
+                        );
+                    }}
+
+                    function doDelete(key, button) {{
+                        if (button) {{
+                            button.disabled = true;
+                            button.textContent = 'Deleting...';
+                        }}
+
+                        fetch(window.location.href, {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }},
+                            body: 'key=' + encodeURIComponent(key)
+                        }})
+                        .then(response => response.json())
+                        .then(data => {{
+                            if (data.success) {{
+                                showNotification(data.message || 'Subscriber removed successfully');
+                                setTimeout(() => {{
+                                    refreshTable();
+                                }}, 500);
+                            }} else {{
+                                showNotification(data.message || 'Failed to remove subscriber', true);
+                                if (button) {{
+                                    button.disabled = false;
+                                    button.textContent = 'Delete';
+                                }}
+                            }}
+                        }})
+                        .catch(error => {{
+                            console.error('Error removing subscriber:', error);
+                            showNotification('Error removing subscriber: ' + error.message, true);
+                            if (button) {{
+                                button.disabled = false;
+                                button.textContent = 'Delete';
+                            }}
+                        }});
+                    }}
+
                     function showNotification(message, isError = false) {{
                         const notification = document.getElementById('notification');
                         notification.textContent = message;
                         notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
                         notification.classList.add('show');
-                        
+
                         setTimeout(() => {{
                             notification.classList.remove('show');
                         }}, 3000);
                     }}
-                    
+
                     // Initialize auto-refresh on page load
                     window.addEventListener('DOMContentLoaded', initializeAutoRefresh);
                 </script>
             </head>
             <body>
                 <div id='notification' class='notification'></div>
+                <div id='confirmModal' class='modal-overlay'>
+                    <div class='modal'>
+                        <h2 id='modalTitle'>Please confirm</h2>
+                        <p id='modalMessage'></p>
+                        <div class='modal-buttons'>
+                            <button class='modal-btn modal-btn-cancel' onclick='closeConfirmModal()'>Cancel</button>
+                            <button id='modalConfirmBtn' class='modal-btn modal-btn-confirm' onclick='confirmModalProceed()'>Confirm</button>
+                        </div>
+                    </div>
+                </div>
                 <div class='container'>
                     <div class='header'>
                         <h1>Unhealthy notification receiver endpoints</h1>
@@ -385,8 +586,8 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         </div>
                     </div>
                     <div class='summary'>
-                        <strong>Total Tracked:</strong> {states.Count} subscriber(s) | 
-                        <strong>Blocked:</strong> {states.Count(s => s.Value.IsCircuitOpen)} | 
+                        <strong>Total Tracked:</strong> {states.Count} subscriber(s) |
+                        <strong>Blocked:</strong> {states.Count(s => s.Value.IsCircuitOpen)} |
                         <strong>Monitoring:</strong> {states.Count(s => !s.Value.IsCircuitOpen)}
                     </div>
 
@@ -403,6 +604,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                                     <th>Blocked Until</th>
                                     <th>Status Code</th>
                                     <th>Last Error</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -414,7 +616,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             <p>No unhealthy webhook receivers detected.</p>
                         </div>")}
                     </div>
-                    
+
                     <div class='timestamp'>
                         Last updated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
                     </div>
