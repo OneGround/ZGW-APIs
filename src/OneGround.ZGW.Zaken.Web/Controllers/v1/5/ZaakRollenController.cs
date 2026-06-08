@@ -19,6 +19,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakRol;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses.ZaakRol;
@@ -67,6 +68,7 @@ public class ZaakRollenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakRollen.GetAll, Name = Operations.ZaakRollen.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakRolResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakRollenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] Zaken.Contracts.v1.Queries.GetAllZaakRollenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

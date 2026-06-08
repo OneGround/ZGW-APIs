@@ -16,6 +16,7 @@ using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
@@ -63,6 +64,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ObjectInformatieObjectResponseExpandedDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllObjectInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllObjectInformatieObjectenQueryParameters queryParameters,
         CancellationToken cancellationToken

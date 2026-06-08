@@ -20,6 +20,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses.ZaakObject;
@@ -83,6 +84,7 @@ public class ZaakObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakObjecten.GetAll, Name = Operations.ZaakObjecten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakObjectResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters queryParameters,
         int page = 1

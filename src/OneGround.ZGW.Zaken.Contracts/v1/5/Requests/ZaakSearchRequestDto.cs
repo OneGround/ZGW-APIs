@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using OneGround.ZGW.Common.Contracts;
@@ -37,7 +36,7 @@ public class ZaakSearchRequestDto : IZakenCommonSearchableFields, IExpandParamet
     [JsonProperty("archiefactiedatum")]
     public string Archiefactiedatum { get; set; }
 
-    [FromQuery(Name = "archiefactiedatum__isnull")]
+    [JsonProperty("archiefactiedatum__isnull")]
     public string Archiefactiedatum__isnull { get; set; }
 
     [JsonProperty("archiefactiedatum__lt")]

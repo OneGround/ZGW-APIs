@@ -24,6 +24,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -137,6 +138,7 @@ public class BesluitTypeController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)] // Note: Only DatumGeldigheid is supported in this version!!
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<BesluitTypeResponseDto>))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitTypenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);

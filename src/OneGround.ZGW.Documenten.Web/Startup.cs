@@ -36,6 +36,7 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
@@ -177,6 +178,9 @@ public class Startup
 
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
+
+        // Register the query parameter validation filters globally
+        services.AddQueryParameterValidations();
     }
 
     public static void Configure(WebApplication app, IWebHostEnvironment env)
