@@ -17,21 +17,24 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
     public async Task Dispatch(DashboardContext context)
     {
         // Handle POST request for clearing the cache.
-        // When a "key" form value is supplied only that single subscriber is removed,
+        // When one or more "key" form values are supplied only those subscribers are removed,
         // otherwise the complete unhealthy cache is cleared.
         if (string.Equals(context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
         {
             try
             {
                 var keyValues = await context.Request.GetFormValuesAsync("key");
-                var key = keyValues?.FirstOrDefault(k => !string.IsNullOrWhiteSpace(k));
+                var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
 
                 int clearedCount;
                 string message;
-                if (!string.IsNullOrEmpty(key))
+                if (keys.Length > 0)
                 {
-                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, key);
-                    message = clearedCount > 0 ? "Subscriber removed successfully" : "Subscriber was no longer present (already cleared)";
+                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, keys);
+                    message =
+                        clearedCount > 0
+                            ? $"Removed {clearedCount} subscriber(s) successfully"
+                            : "Selected subscriber(s) were no longer present (already cleared)";
                 }
                 else
                 {
@@ -433,22 +436,30 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         pendingAction = action;
                         document.getElementById('modalTitle').textContent = title;
                         document.getElementById('modalMessage').textContent = message;
-                        document.getElementById('modalConfirmBtn').textContent = confirmLabel;
+                        const confirmBtn = document.getElementById('modalConfirmBtn');
+                        confirmBtn.textContent = confirmLabel;
+                        confirmBtn.disabled = false;
                         document.getElementById('confirmModal').classList.add('show');
+                        // Move keyboard focus into the dialog for accessibility
+                        confirmBtn.focus();
                     }}
 
                     function closeConfirmModal() {{
                         pendingAction = null;
+                        document.getElementById('modalConfirmBtn').disabled = false;
                         document.getElementById('confirmModal').classList.remove('show');
                     }}
 
                     function confirmModalProceed() {{
                         const action = pendingAction;
-                        document.getElementById('confirmModal').classList.remove('show');
-                        pendingAction = null;
-                        if (typeof action === 'function') {{
-                            action();
+                        // Guard against rapid double-clicks: ignore if there is no pending action
+                        if (typeof action !== 'function') {{
+                            return;
                         }}
+                        pendingAction = null;
+                        document.getElementById('modalConfirmBtn').disabled = true;
+                        document.getElementById('confirmModal').classList.remove('show');
+                        action();
                     }}
 
                     // Ask for confirmation before clearing the whole cache
@@ -461,36 +472,38 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         );
                     }}
 
-                    function doClearAll() {{
+                    // Shared POST helper - returns the parsed JSON response
+                    async function postClearRequest(body) {{
+                        const response = await fetch(window.location.href, {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }},
+                            body: body
+                        }});
+                        return response.json();
+                    }}
+
+                    async function doClearAll() {{
                         const btn = document.getElementById('clearCacheBtn');
                         btn.disabled = true;
                         btn.textContent = 'Clearing...';
 
-                        fetch(window.location.href, {{
-                            method: 'POST',
-                            headers: {{
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            }}
-                        }})
-                        .then(response => response.json())
-                        .then(data => {{
+                        try {{
+                            const data = await postClearRequest('');
                             if (data.success) {{
                                 showNotification(data.message || 'Cache cleared successfully');
-                                setTimeout(() => {{
-                                    refreshTable();
-                                }}, 500);
+                                setTimeout(refreshTable, 500);
                             }} else {{
                                 showNotification(data.message || 'Failed to clear cache', true);
                             }}
-                        }})
-                        .catch(error => {{
+                        }} catch (error) {{
                             console.error('Error clearing cache:', error);
                             showNotification('Error clearing cache: ' + error.message, true);
-                        }})
-                        .finally(() => {{
+                        }} finally {{
                             btn.disabled = false;
                             btn.textContent = 'Clear all';
-                        }});
+                        }}
                     }}
 
                     // Ask for confirmation before deleting a single subscriber
@@ -505,42 +518,34 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         );
                     }}
 
-                    function doDelete(key, button) {{
+                    function resetDeleteButton(button) {{
+                        if (button) {{
+                            button.disabled = false;
+                            button.textContent = 'Delete';
+                        }}
+                    }}
+
+                    async function doDelete(key, button) {{
                         if (button) {{
                             button.disabled = true;
                             button.textContent = 'Deleting...';
                         }}
 
-                        fetch(window.location.href, {{
-                            method: 'POST',
-                            headers: {{
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            }},
-                            body: 'key=' + encodeURIComponent(key)
-                        }})
-                        .then(response => response.json())
-                        .then(data => {{
+                        try {{
+                            const data = await postClearRequest('key=' + encodeURIComponent(key));
                             if (data.success) {{
                                 showNotification(data.message || 'Subscriber removed successfully');
-                                setTimeout(() => {{
-                                    refreshTable();
-                                }}, 500);
+                                // On success the row disappears after the refresh, so no button reset needed
+                                setTimeout(refreshTable, 500);
                             }} else {{
                                 showNotification(data.message || 'Failed to remove subscriber', true);
-                                if (button) {{
-                                    button.disabled = false;
-                                    button.textContent = 'Delete';
-                                }}
+                                resetDeleteButton(button);
                             }}
-                        }})
-                        .catch(error => {{
+                        }} catch (error) {{
                             console.error('Error removing subscriber:', error);
                             showNotification('Error removing subscriber: ' + error.message, true);
-                            if (button) {{
-                                button.disabled = false;
-                                button.textContent = 'Delete';
-                            }}
-                        }});
+                            resetDeleteButton(button);
+                        }}
                     }}
 
                     function showNotification(message, isError = false) {{
@@ -561,7 +566,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
             <body>
                 <div id='notification' class='notification'></div>
                 <div id='confirmModal' class='modal-overlay'>
-                    <div class='modal'>
+                    <div class='modal' role='dialog' aria-modal='true' aria-labelledby='modalTitle' aria-describedby='modalMessage'>
                         <h2 id='modalTitle'>Please confirm</h2>
                         <p id='modalMessage'></p>
                         <div class='modal-buttons'>
