@@ -1,20 +1,9 @@
-using System;
 using System.Linq;
 
 namespace OneGround.ZGW.Common.Helpers;
 
 public static class CronHelper
 {
-    public static string CreateOneTimeCron(int minutesFromNow)
-    {
-        // 1. Calculate the exact future time
-        var targetTime = DateTime.UtcNow.AddMinutes(minutesFromNow);
-
-        // 2. Generate a Cron that matches that specific Minute/Hour/Day
-        // Format: Minute Hour DayOfMonth Month DayOfWeek
-        return $"{targetTime.Minute} {targetTime.Hour} {targetTime.Day} {targetTime.Month} *";
-    }
-
     // Divisors of 60 (excluding 60 itself) in descending order. A "*/N" minute step only fires
     // on a strictly even cadence when N divides 60 evenly; otherwise the runs bunch up around the
     // hour boundary (e.g. "*/50" fires at :00 and :50, so the :50 -> :00 gap is only 10 minutes).
@@ -22,8 +11,8 @@ public static class CronHelper
 
     public static string CreateRecurringMinuteInterval(int maxMinutesBetweenRuns)
     {
-        // Generate a *recurring* Cron ("*/N" minute step), as opposed to CreateOneTimeCron
-        // which matches a single instant. A one-time cron is fragile: if its single matching
+        // Generate a *recurring* Cron ("*/N" minute step), as opposed to a one-time cron that
+        // matches a single instant. A one-time cron is fragile: if its single matching
         // instant is missed (the Hangfire server is down, e.g. during a Consul key rotation)
         // or the run fails after exhausting its retries, the next occurrence is ~a year away
         // and the job is effectively stuck. A recurring step keeps firing, so Hangfire
