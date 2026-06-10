@@ -16,46 +16,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
 
     public async Task Dispatch(DashboardContext context)
     {
-        // Handle POST request for clearing the cache.
-        // When one or more "key" form values are supplied only those subscribers are removed,
-        // otherwise the complete unhealthy cache is cleared.
+        // POST clears the cache (all entries, or only the supplied "key" values); GET renders the page.
         if (string.Equals(context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                var keyValues = await context.Request.GetFormValuesAsync("key");
-                var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
-
-                int clearedCount;
-                string message;
-                if (keys.Length > 0)
-                {
-                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, keys);
-                    message =
-                        clearedCount > 0
-                            ? $"Removed {clearedCount} subscriber(s) successfully"
-                            : "Selected subscriber(s) were no longer present (already cleared)";
-                }
-                else
-                {
-                    clearedCount = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
-                    message = $"Cleared {clearedCount} subscriber(s) successfully";
-                }
-
-                context.Response.StatusCode = 200;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(
-                    $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}"
-                );
-                return;
-            }
-            catch (Exception ex)
-            {
-                context.Response.StatusCode = 500;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync($"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}");
-                return;
-            }
+            await HandleClearRequestAsync(context);
+            return;
         }
 
         var states = await _healthTracker.GetAllUnhealthyAsync();
@@ -468,7 +433,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             'Clear all unhealthy subscribers',
                             'Are you sure you want to clear the cache for ALL unhealthy subscribers? This cannot be undone.',
                             'Clear all',
-                            doClearAll
+                            submitClearAllRequest
                         );
                     }}
 
@@ -484,7 +449,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         return response.json();
                     }}
 
-                    async function doClearAll() {{
+                    async function submitClearAllRequest() {{
                         const btn = document.getElementById('clearCacheBtn');
                         btn.disabled = true;
                         btn.textContent = 'Clearing...';
@@ -514,7 +479,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             'Delete subscriber',
                             'Are you sure you want to remove ' + url + ' from the unhealthy cache?',
                             'Delete',
-                            () => doDelete(key, button)
+                            () => submitDeleteRequest(key, button)
                         );
                     }}
 
@@ -525,7 +490,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         }}
                     }}
 
-                    async function doDelete(key, button) {{
+                    async function submitDeleteRequest(key, button) {{
                         if (button) {{
                             button.disabled = true;
                             button.textContent = 'Deleting...';
@@ -631,6 +596,44 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
         ";
 
         await response.WriteAsync(htmlContent);
+    }
+
+    private async Task HandleClearRequestAsync(DashboardContext context)
+    {
+        try
+        {
+            var keyValues = await context.Request.GetFormValuesAsync("key");
+            var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
+
+            var (clearedCount, message) = await ClearSubscribersAsync(keys);
+
+            context.Response.StatusCode = 200;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(
+                $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}"
+            );
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync($"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}");
+        }
+    }
+
+    private async Task<(int ClearedCount, string Message)> ClearSubscribersAsync(string[] keys)
+    {
+        // No keys means "clear everything".
+        if (keys.Length == 0)
+        {
+            var clearedAll = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
+            return (clearedAll, $"Cleared {clearedAll} subscriber(s) successfully");
+        }
+
+        var cleared = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, keys);
+        var message =
+            cleared > 0 ? $"Removed {cleared} subscriber(s) successfully" : "Selected subscriber(s) were no longer present (already cleared)";
+        return (cleared, message);
     }
 
     private static string FormatDateTime(DateTime? dateTime)
