@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using Hangfire.Dashboard;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
+using StackExchange.Redis;
 
 namespace OneGround.ZGW.Notificaties.Messaging.UI;
 
@@ -614,17 +615,12 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(payload);
         }
-        catch (OperationCanceledException)
+        catch (RedisException ex)
         {
-            // Request aborted (e.g. client disconnected): let cancellation propagate instead of
-            // masking it as a 500 response.
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // Deliberate error boundary for this dashboard endpoint. The most likely failure is the
-            // Redis-backed cache being unavailable (a StackExchange.Redis exception), which we want to
-            // surface to the page as a readable JSON error rather than an unhandled 500.
+            // Expected failure boundary: the Redis-backed cache is unavailable or erroring
+            // (RedisConnectionException, RedisTimeoutException, etc. all derive from RedisException).
+            // Surface it to the page as a readable JSON error rather than an unhandled 500. Anything
+            // else (a genuine bug, or a cancelled request) is left to propagate.
             var errorPayload = $"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}";
 
             context.Response.StatusCode = 500;
