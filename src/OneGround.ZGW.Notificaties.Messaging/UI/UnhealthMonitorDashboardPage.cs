@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using Hangfire.Dashboard;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Services;
-using StackExchange.Redis;
 
 namespace OneGround.ZGW.Notificaties.Messaging.UI;
 
@@ -601,32 +600,21 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
 
     private async Task HandleClearRequestAsync(DashboardContext context)
     {
-        try
-        {
-            var keyValues = await context.Request.GetFormValuesAsync("key");
-            var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
+        var keyValues = await context.Request.GetFormValuesAsync("key");
+        var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
 
-            var (clearedCount, message) = await ClearSubscribersAsync(keys);
+        var (clearedCount, message) = await ClearSubscribersAsync(keys);
 
-            // Build the JSON payload first, then keep the response I/O on its own.
-            var payload = $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}";
+        // Build the JSON payload first, then keep the response I/O on its own.
+        var payload = $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}";
 
-            context.Response.StatusCode = 200;
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(payload);
-        }
-        catch (RedisException ex)
-        {
-            // Expected failure boundary: the Redis-backed cache is unavailable or erroring
-            // (RedisConnectionException, RedisTimeoutException, etc. all derive from RedisException).
-            // Surface it to the page as a readable JSON error rather than an unhandled 500. Anything
-            // else (a genuine bug, or a cancelled request) is left to propagate.
-            var errorPayload = $"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}";
+        context.Response.StatusCode = 200;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(payload);
 
-            context.Response.StatusCode = 500;
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(errorPayload);
-        }
+        // No infra-specific error handling here: the health tracker (infra layer) logs store failures
+        // and the page's fetch handlers surface a failed request to the user, so cache/Redis errors
+        // propagate to the framework rather than being translated inside this UI dispatcher.
     }
 
     private async Task<(int ClearedCount, string Message)> ClearSubscribersAsync(string[] keys)
