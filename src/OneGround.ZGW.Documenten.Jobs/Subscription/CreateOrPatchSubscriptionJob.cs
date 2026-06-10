@@ -153,13 +153,17 @@ public class CreateOrPatchSubscriptionJob : SubscriptionJobBase<CreateOrPatchSub
                 }
             }
 
-            // Create a recurring job to renew the token before it expires (use ExpiresMinutesBefore)
+            // Keep the recurring job renewing the token before it expires (use ExpiresMinutesBefore).
+            // Use a *recurring* interval cron, not a one-time cron: a one-time cron describes a single
+            // instant, so a missed run during downtime (e.g. a key rotation) or a run that fails after its
+            // retries leaves the job stuck for ~a year. A recurring interval keeps firing, so Hangfire
+            // automatically restarts the renewal shortly after the server recovers.
             double refreshInMinutes =
                 token.expiresIn.TotalMinutes >= ExpiresMinutesBefore
                     ? Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes - ExpiresMinutesBefore))
                     : Math.Max(1, (int)Math.Floor(token.expiresIn.TotalMinutes / 2));
 
-            var refreshCronExpression = CronHelper.CreateOneTimeCron((int)refreshInMinutes);
+            var refreshCronExpression = CronHelper.CreateRecurringMinuteInterval((int)refreshInMinutes);
             RecurringJob.AddOrUpdate<CreateOrPatchSubscriptionJob>(GetJobId(rsin), h => h.ExecuteAsync(rsin), refreshCronExpression);
         }
 
