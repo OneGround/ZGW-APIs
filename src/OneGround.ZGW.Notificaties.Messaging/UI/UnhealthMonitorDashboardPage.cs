@@ -607,17 +607,29 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
 
             var (clearedCount, message) = await ClearSubscribersAsync(keys);
 
+            // Build the JSON payload first, then keep the response I/O on its own.
+            var payload = $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}";
+
             context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(
-                $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}"
-            );
+            await context.Response.WriteAsync(payload);
+        }
+        catch (OperationCanceledException)
+        {
+            // Request aborted (e.g. client disconnected): let cancellation propagate instead of
+            // masking it as a 500 response.
+            throw;
         }
         catch (Exception ex)
         {
+            // Deliberate error boundary for this dashboard endpoint. The most likely failure is the
+            // Redis-backed cache being unavailable (a StackExchange.Redis exception), which we want to
+            // surface to the page as a readable JSON error rather than an unhandled 500.
+            var errorPayload = $"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}";
+
             context.Response.StatusCode = 500;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync($"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}");
+            await context.Response.WriteAsync(errorPayload);
         }
     }
 
