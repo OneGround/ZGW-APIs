@@ -62,6 +62,7 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         _logger.LogDebug("Creating Besluit and validating....");
 
         var besluit = request.Besluit;
+        besluit.Owner = _rsin;
 
         if (!_authorizationContext.IsAuthorized(besluit))
         {
@@ -95,12 +96,12 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
 
         if (string.IsNullOrEmpty(besluit.Identificatie))
         {
-            var organisatie = request.Besluit.VerantwoordelijkeOrganisatie;
+            var owner = besluit.Owner;
 
             var besluitnummer = await _nummerGenerator.GenerateAsync(
-                organisatie,
+                owner,
                 "besluiten",
-                id => IsBesluitIdentificatieUnique(organisatie, id),
+                id => IsBesluitIdentificatieUnique(owner, id),
                 cancellationToken
             );
 
@@ -109,7 +110,6 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
 
         await _context.Besluiten.AddAsync(besluit, cancellationToken); // Note: Sequential Guid for Id is generated here by EF
 
-        besluit.Owner = _rsin;
         besluit.CatalogusId = catalogusId;
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
@@ -151,9 +151,9 @@ class CreateBesluitCommandHandler : BesluitenBaseHandler<CreateBesluitCommandHan
         return new CommandResult<Besluit>(besluit, CommandStatus.OK);
     }
 
-    private bool IsBesluitIdentificatieUnique(string organisatie, string identificatie)
+    private bool IsBesluitIdentificatieUnique(string owner, string identificatie)
     {
-        return !_context.Besluiten.AsNoTracking().Any(b => b.Identificatie == identificatie && organisatie == b.VerantwoordelijkeOrganisatie);
+        return !_context.Besluiten.AsNoTracking().Any(b => b.Identificatie == identificatie && owner == b.Owner);
     }
 
     private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.BRC, Resource = "besluit" };

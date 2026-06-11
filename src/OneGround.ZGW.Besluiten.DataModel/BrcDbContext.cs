@@ -31,7 +31,8 @@ public class BrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             .ToView(nameof(Authorization.TempBesluitAuthorization))
             .HasKey(x => x.BesluitType);
 
-        modelBuilder.Entity<Besluit>().HasIndex(p => new { p.VerantwoordelijkeOrganisatie, p.Identificatie }).IsUnique();
+        modelBuilder.Entity<Besluit>().HasIndex(e => new { e.Owner, e.Identificatie }).IsUnique().HasDatabaseName("IX_besluiten_owner_identificatie");
+        //.HasFilter($"creationtime > '{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}'"); // Note: Removed filter here. Stored in database once; not here at startup, otherwise the index will not be used for queries with creationtime filter in the past. The creationtime filter is needed to prevent unique constraint violation when creating a new besluit with the same identificatie, but with a different creationtime. By filtering out old versions, we can ensure that the unique constraint is only applied to new besluiten.
 
         modelBuilder.Entity<Besluit>().HasIndex(p => p.VerantwoordelijkeOrganisatie);
 
