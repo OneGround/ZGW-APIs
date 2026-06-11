@@ -260,6 +260,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
 
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersie = versie;
+            versie.InformatieObject.LatestVertrouwelijkheidAanduiding = versie.Vertrouwelijkheidaanduiding;
             versie.LatestInformatieObject = versie.InformatieObject;
 
             audittrail.SetNew<EnkelvoudigInformatieObjectGetResponseDto>(versie.InformatieObject);

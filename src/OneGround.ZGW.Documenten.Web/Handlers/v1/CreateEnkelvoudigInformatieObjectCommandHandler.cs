@@ -322,6 +322,7 @@ class CreateEnkelvoudigInformatieObjectCommandHandler
             // Sets the 'latest' EnkelvoudigInformationObjectVersion in the parent EnkelvoudigInformatieObject
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId = versie.Id;
             versie.InformatieObject.LatestEnkelvoudigInformatieObjectVersie = versie;
+            versie.InformatieObject.LatestVertrouwelijkheidAanduiding = versie.Vertrouwelijkheidaanduiding;
 
             versie.LatestInformatieObject = versie.InformatieObject;
 

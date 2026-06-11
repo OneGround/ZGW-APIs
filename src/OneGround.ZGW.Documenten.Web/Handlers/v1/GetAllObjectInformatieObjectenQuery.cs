@@ -64,7 +64,8 @@ class GetAllObjectInformatieObjectenQueryHandler
             // all versie rows. With EXISTS, PostgreSQL can evaluate authorization per-row.
             query = query.Where(o =>
                 _context.EnkelvoudigInformatieObjectVersies.Any(v =>
-                    v.Id == o.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
+                    v.Owner == _rsin
+                    && v.Id == o.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
                     && _context.TempInformatieObjectAuthorization.Any(a =>
                         a.InformatieObjectType == o.InformatieObject.InformatieObjectType
                         && (int)v.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding

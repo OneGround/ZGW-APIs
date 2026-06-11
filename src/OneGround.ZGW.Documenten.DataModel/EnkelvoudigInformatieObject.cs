@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Documenten.DataModel;
@@ -47,6 +48,9 @@ public class EnkelvoudigInformatieObject : OwnedEntity, IAuditableEntity, IUrlEn
 
     [Column("latest_enkelvoudiginformatieobjectversie_id")]
     public Guid? LatestEnkelvoudigInformatieObjectVersieId { get; set; }
+
+    [Column("latest_vertrouwelijkheidaanduiding")]
+    public VertrouwelijkheidAanduiding? LatestVertrouwelijkheidAanduiding { get; set; }
 
     public EnkelvoudigInformatieObjectVersie LatestEnkelvoudigInformatieObjectVersie { get; set; }
 
