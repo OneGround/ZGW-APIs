@@ -95,6 +95,7 @@ public class InpBsnBackfillService : BackgroundService
                 {
                     var bsn = bsnById[entity.Id];
                     entity.InpBsnEncrypted = bsn;
+                    entity.InpBsnHash = bsn;
                 }
 
                 await batchDb.SaveChangesAsync(stoppingToken);
