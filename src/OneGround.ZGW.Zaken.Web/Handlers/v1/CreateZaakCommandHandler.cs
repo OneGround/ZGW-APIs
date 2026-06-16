@@ -61,6 +61,7 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
         _logger.LogDebug("Creating Zaak and validating....");
 
         var zaak = request.Zaak;
+        zaak.Owner = _rsin;
 
         if (!_authorizationContext.IsAuthorized(request.Zaak.Zaaktype, request.Zaak.VertrouwelijkheidAanduiding, AuthorizationScopes.Zaken.Create))
         {
@@ -86,16 +87,11 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
 
         if (string.IsNullOrEmpty(zaak.Identificatie))
         {
-            var organisatie = request.Zaak.Bronorganisatie;
+            var owner = zaak.Owner;
 
             _nummerGenerator.SetTemplateKeyValue("{ztc}", zaaktype.Response.Identificatie);
 
-            var zaaknummer = await _nummerGenerator.GenerateAsync(
-                organisatie,
-                "zaken",
-                id => IsZaakIdentificatieUnique(organisatie, id),
-                cancellationToken
-            );
+            var zaaknummer = await _nummerGenerator.GenerateAsync(owner, "zaken", id => IsZaakIdentificatieUnique(owner, id), cancellationToken);
 
             zaak.Identificatie = zaaknummer;
         }
@@ -117,7 +113,6 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
 
         var catalogusId = _uriService.GetId(zaaktype.Response.Catalogus);
 
-        zaak.Owner = _rsin;
         zaak.CatalogusId = catalogusId;
         if (zaak.Verlenging != null)
             zaak.Verlenging.Owner = _rsin;
@@ -167,9 +162,9 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
         return new CommandResult<Zaak>(zaak, CommandStatus.OK);
     }
 
-    private bool IsZaakIdentificatieUnique(string organisatie, string identificatie)
+    private bool IsZaakIdentificatieUnique(string owner, string identificatie)
     {
-        return !_context.Zaken.AsNoTracking().Any(z => z.Identificatie == identificatie && z.Bronorganisatie == organisatie);
+        return !_context.Zaken.AsNoTracking().Any(z => z.Identificatie == identificatie && z.Owner == owner);
     }
 
     private static AuditTrailOptions AuditTrailOptions => new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaak" };

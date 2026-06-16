@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using NodaTime;
@@ -14,9 +15,11 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.DataModel.Migrations
 {
     [DbContext(typeof(ZrcDbContext))]
-    partial class ZrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513062336_modify_zaak_identificatie_unique_index")]
+    partial class modify_zaak_identificatie_unique_index
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -672,7 +675,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 
                     b.HasIndex("Owner", "Identificatie")
                         .IsUnique()
-                        .HasDatabaseName("IX_zaken_owner_identificatie");
+                        .HasDatabaseName("IX_zaken_owner_identificatie")
+                        .HasFilter("creationtime > '2026-05-13T06:23:35Z'");
 
                     b.ToTable("zaken");
                 });
@@ -1748,6 +1752,11 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("inpanummer");
 
+                    b.Property<string>("InpBsn")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("inpbsn");
+
                     b.Property<string>("InpBsnEncrypted")
                         .HasColumnType("text")
                         .HasColumnName("inpbsn_encrypted");
@@ -1794,6 +1803,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                     b.HasIndex("AnpIdentificatie");
 
                     b.HasIndex("InpANummer");
+
+                    b.HasIndex("InpBsn");
 
                     b.HasIndex("InpBsnHash");
 
