@@ -29,7 +29,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(name: "IX_zaken_owner_identificatie", table: "zaken");
+            migrationBuilder.DropIndex(name: "IX_zaken_owner_identificatie", table: "zaken").Annotation("Npgsql:CreatedConcurrently", true);
 
             migrationBuilder
                 .CreateIndex(
