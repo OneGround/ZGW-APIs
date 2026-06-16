@@ -25,9 +25,11 @@ public class InpBsnBackfillService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Check whether the legacy inpbsn column still exists. After migration
-        // 20260413000000_remove_inpbsn_plain_column_from_zaakrollen has run, there
-        // is nothing left to backfill and this service exits immediately.
+        // This service is intentionally retained after the legacy inpbsn column was removed
+        // (migration 20260604104355_remove_inpbsn_plain_column_from_zaakrollen).
+        // It is a safety net for a mixed-version rollout: a node still running old code may not
+        // yet have migrated plaintext BSNs to inpbsn_encrypted/inpbsn_hash. Once the column is
+        // dropped, this existence check returns false and the service exits immediately.
         bool columnExists;
 
         await using (var scope = _serviceProvider.CreateAsyncScope())
@@ -93,6 +95,7 @@ public class InpBsnBackfillService : BackgroundService
                 {
                     var bsn = bsnById[entity.Id];
                     entity.InpBsnEncrypted = bsn;
+                    entity.InpBsnHash = bsn;
                 }
 
                 await batchDb.SaveChangesAsync(stoppingToken);

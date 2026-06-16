@@ -37,7 +37,7 @@ public class ZrcDbContextHashTests
         await db.Database.EnsureCreatedAsync();
 
         var zaak = CreateZaak();
-        var persoon = new NatuurlijkPersoonZaakRol { InpBsn = "999999990", InpBsnEncrypted = "999999990" };
+        var persoon = new NatuurlijkPersoonZaakRol { InpBsnEncrypted = "999999990" };
         var rol = new ZaakRol
         {
             Zaak = zaak,
@@ -71,7 +71,7 @@ public class ZrcDbContextHashTests
         await db.Database.EnsureCreatedAsync();
 
         var zaak = CreateZaak();
-        var persoon = new NatuurlijkPersoonZaakRol { InpBsn = "999999990", InpBsnEncrypted = "999999990" };
+        var persoon = new NatuurlijkPersoonZaakRol { InpBsnEncrypted = "999999990" };
         var rol = new ZaakRol
         {
             Zaak = zaak,
