@@ -48,16 +48,12 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         // 1. Add rules
         if (!string.IsNullOrEmpty(zaakAdd.Identificatie))
         {
-            if (
-                await _context
-                    .Zaken.AsNoTracking()
-                    .AnyAsync(z => z.Identificatie == zaakAdd.Identificatie && z.Bronorganisatie == zaakAdd.Bronorganisatie)
-            )
+            if (await _context.Zaken.AsNoTracking().AnyAsync(z => z.Identificatie == zaakAdd.Identificatie && z.Owner == zaakAdd.Owner))
             {
                 var error = new ValidationError(
                     "identificatie",
                     ErrorCode.IdentificationNotUnique,
-                    "Deze identificatie bestaat al voor deze bronorganisatie."
+                    "Deze identificatie bestaat al voor deze organisatie."
                 );
 
                 errors.Add(error);

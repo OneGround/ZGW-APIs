@@ -33,7 +33,7 @@ public class BesluitBusinessRuleTest
         {
             Id = new Guid("0c55fd91-5efd-40f7-8024-0f1763ac9177"),
             Identificatie = "67122",
-            VerantwoordelijkeOrganisatie = "500",
+            Owner = "500",
         };
 
         var errors = new List<ValidationError>();
@@ -60,7 +60,7 @@ public class BesluitBusinessRuleTest
         {
             Id = new Guid("0c55fd91-5efd-40f7-8024-0f1763ac9177"),
             Identificatie = "54445",
-            VerantwoordelijkeOrganisatie = "500",
+            Owner = "500",
         };
 
         var errors = new List<ValidationError>();
@@ -86,7 +86,7 @@ public class BesluitBusinessRuleTest
         {
             Id = new Guid("10640fd5-e0ea-498b-be09-f9894f3caf68"),
             Identificatie = "67122",
-            VerantwoordelijkeOrganisatie = "500",
+            Owner = "500",
             BesluitType = "aaa",
         };
 
@@ -115,7 +115,7 @@ public class BesluitBusinessRuleTest
         {
             Id = new Guid("10640fd5-e0ea-498b-be09-f9894f3caf68"),
             Identificatie = "55555",
-            VerantwoordelijkeOrganisatie = "500",
+            Owner = "500",
             BesluitType = "ddd",
         };
 
@@ -172,7 +172,7 @@ public class BesluitBusinessRuleTest
         {
             Id = new Guid("0c55fd91-5efd-40f7-8024-0f1763ac9177"),
             Identificatie = "11111",
-            VerantwoordelijkeOrganisatie = "500",
+            Owner = "500",
             Datum = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
         };
 
@@ -427,9 +427,9 @@ public class BesluitBusinessRuleTest
                 {
                     Id = new Guid("10640fd5-e0ea-498b-be09-f9894f3caf68"),
                     Identificatie = "55555",
-                    VerantwoordelijkeOrganisatie = "500",
+                    VerantwoordelijkeOrganisatie = "123",
                     BesluitType = "aaa",
-                    Owner = "000000000",
+                    Owner = "500",
                 }
             );
             context.Besluiten.Add(
@@ -437,9 +437,9 @@ public class BesluitBusinessRuleTest
                 {
                     Id = new Guid("6eed92a0-20f8-427d-90dd-60c2e110f68b"),
                     Identificatie = "67122",
-                    VerantwoordelijkeOrganisatie = "500",
+                    VerantwoordelijkeOrganisatie = "123",
                     BesluitType = "bbb",
-                    Owner = "000000000",
+                    Owner = "500",
                 }
             );
 
