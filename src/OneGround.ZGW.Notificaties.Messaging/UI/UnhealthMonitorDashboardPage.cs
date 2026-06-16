@@ -16,24 +16,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
 
     public async Task Dispatch(DashboardContext context)
     {
-        // Handle POST request for clearing cache
+        // POST clears the cache (all entries, or only the supplied "key" values); GET renders the page.
         if (string.Equals(context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
-                context.Response.StatusCode = 200;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync("{\"success\": true, \"message\": \"Cache cleared successfully\"}");
-                return;
-            }
-            catch (Exception ex)
-            {
-                context.Response.StatusCode = 500;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync($"{{\"success\": false, \"message\": \"Error: {JavaScriptEncoder.Default.Encode(ex.Message)}\"}}");
-                return;
-            }
+            await HandleClearRequestAsync(context);
+            return;
         }
 
         var states = await _healthTracker.GetAllUnhealthyAsync();
@@ -47,11 +34,13 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
         {
             var statusClass = state.IsCircuitOpen ? "status-blocked" : "status-warning";
             var statusText = state.IsCircuitOpen ? "BLOCKED" : "MONITORING";
+            var encodedKey = System.Net.WebUtility.HtmlEncode(key.ToString());
+            var encodedUrl = System.Net.WebUtility.HtmlEncode(state.Url);
 
             tableRows.AppendLine(
                 $@"
                 <tr class='{statusClass}'>
-                    <td>{System.Net.WebUtility.HtmlEncode(state.Url)}</td>
+                    <td>{encodedUrl}</td>
                     <td class='status-badge'>{statusText}</td>
                     <td>{state.ConsecutiveFailures}</td>
                     <td>{FormatDateTime(state.FirstFailureAt)}</td>
@@ -59,6 +48,9 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                     <td>{FormatDateTime(state.BlockedUntil)}</td>
                     <td>{state.LastStatusCode?.ToString() ?? "N/A"}</td>
                     <td class='error-message'>{System.Net.WebUtility.HtmlEncode(state.LastErrorMessage ?? "N/A")}</td>
+                    <td class='actions-cell'>
+                        <button class='delete-btn' data-key='{encodedKey}' data-url='{encodedUrl}' onclick='deleteItem(this)'>Delete</button>
+                    </td>
                 </tr>"
             );
         }
@@ -218,6 +210,27 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         font-size: 12px;
                         color: #666;
                     }}
+                    .actions-cell {{
+                        white-space: nowrap;
+                    }}
+                    .delete-btn {{
+                        background-color: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 6px 14px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        font-size: 13px;
+                        transition: background-color 0.2s;
+                    }}
+                    .delete-btn:hover {{
+                        background-color: #c82333;
+                    }}
+                    .delete-btn:disabled {{
+                        background-color: #6c757d;
+                        cursor: not-allowed;
+                    }}
                     .empty-state {{
                         text-align: center;
                         padding: 40px;
@@ -257,29 +270,92 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             opacity: 1;
                         }}
                     }}
+                    .modal-overlay {{
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: rgba(0,0,0,0.5);
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 2000;
+                    }}
+                    .modal-overlay.show {{
+                        display: flex;
+                    }}
+                    .modal {{
+                        background: white;
+                        padding: 25px 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                        max-width: 480px;
+                        width: 90%;
+                    }}
+                    .modal h2 {{
+                        margin: 0 0 12px 0;
+                        font-size: 18px;
+                        color: #333;
+                    }}
+                    .modal p {{
+                        margin: 0 0 20px 0;
+                        color: #555;
+                        font-size: 14px;
+                        word-break: break-word;
+                    }}
+                    .modal-buttons {{
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 10px;
+                    }}
+                    .modal-btn {{
+                        border: none;
+                        padding: 10px 18px;
+                        border-radius: 5px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background-color 0.2s;
+                    }}
+                    .modal-btn-confirm {{
+                        background-color: #dc3545;
+                        color: white;
+                    }}
+                    .modal-btn-confirm:hover {{
+                        background-color: #c82333;
+                    }}
+                    .modal-btn-cancel {{
+                        background-color: #e9ecef;
+                        color: #333;
+                    }}
+                    .modal-btn-cancel:hover {{
+                        background-color: #d3d9df;
+                    }}
                 </style>
                 <script>
                     let refreshIntervalId = null;
-                    
+                    let pendingAction = null;
+
                     function refreshTable() {{
                         fetch(window.location.href)
                             .then(response => response.text())
                             .then(html => {{
                                 const parser = new DOMParser();
                                 const doc = parser.parseFromString(html, 'text/html');
-                                
+
                                 const newSummary = doc.querySelector('.summary');
                                 const currentSummary = document.querySelector('.summary');
                                 if (newSummary && currentSummary) {{
                                     currentSummary.innerHTML = newSummary.innerHTML;
                                 }}
-                                
+
                                 const newContent = doc.querySelector('#table-content');
                                 const currentContent = document.querySelector('#table-content');
                                 if (newContent && currentContent) {{
                                     currentContent.innerHTML = newContent.innerHTML;
                                 }}
-                                
+
                                 const newTimestamp = doc.querySelector('.timestamp');
                                 const currentTimestamp = document.querySelector('.timestamp');
                                 if (newTimestamp && currentTimestamp) {{
@@ -288,11 +364,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             }})
                             .catch(error => console.error('Error refreshing table:', error));
                     }}
-                    
+
                     function toggleAutoRefresh() {{
                         const toggle = document.getElementById('autoRefreshToggle');
                         const isEnabled = toggle.checked;
-                        
+
                         if (isEnabled) {{
                             // Start auto-refresh every 3 seconds
                             refreshIntervalId = setInterval(refreshTable, 3000);
@@ -306,11 +382,11 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             localStorage.setItem('autoRefreshEnabled', 'false');
                         }}
                     }}
-                    
+
                     function initializeAutoRefresh() {{
                         const toggle = document.getElementById('autoRefreshToggle');
                         const savedState = localStorage.getItem('autoRefreshEnabled');
-                        
+
                         // Default to enabled if not set
                         if (savedState === null || savedState === 'true') {{
                             toggle.checked = true;
@@ -319,56 +395,151 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             toggle.checked = false;
                         }}
                     }}
-                    
+
+                    // Confirmation modal helpers
+                    function openConfirmModal(title, message, confirmLabel, action) {{
+                        pendingAction = action;
+                        document.getElementById('modalTitle').textContent = title;
+                        document.getElementById('modalMessage').textContent = message;
+                        const confirmBtn = document.getElementById('modalConfirmBtn');
+                        confirmBtn.textContent = confirmLabel;
+                        confirmBtn.disabled = false;
+                        document.getElementById('confirmModal').classList.add('show');
+                        // Move keyboard focus into the dialog for accessibility
+                        confirmBtn.focus();
+                    }}
+
+                    function closeConfirmModal() {{
+                        pendingAction = null;
+                        document.getElementById('modalConfirmBtn').disabled = false;
+                        document.getElementById('confirmModal').classList.remove('show');
+                    }}
+
+                    function confirmModalProceed() {{
+                        const action = pendingAction;
+                        // Guard against rapid double-clicks: ignore if there is no pending action
+                        if (typeof action !== 'function') {{
+                            return;
+                        }}
+                        pendingAction = null;
+                        document.getElementById('modalConfirmBtn').disabled = true;
+                        document.getElementById('confirmModal').classList.remove('show');
+                        action();
+                    }}
+
+                    // Ask for confirmation before clearing the whole cache
                     function clearCache() {{
+                        openConfirmModal(
+                            'Clear all unhealthy subscribers',
+                            'Are you sure you want to clear the cache for ALL unhealthy subscribers? This cannot be undone.',
+                            'Clear all',
+                            submitClearAllRequest
+                        );
+                    }}
+
+                    // Shared POST helper - returns the parsed JSON response
+                    async function postClearRequest(body) {{
+                        const response = await fetch(window.location.href, {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }},
+                            body: body
+                        }});
+                        return response.json();
+                    }}
+
+                    async function submitClearAllRequest() {{
                         const btn = document.getElementById('clearCacheBtn');
                         btn.disabled = true;
                         btn.textContent = 'Clearing...';
-                        
-                        fetch(window.location.href, {{
-                            method: 'POST',
-                            headers: {{
-                                'Content-Type': 'application/json'
-                            }}
-                        }})
-                        .then(response => response.json())
-                        .then(data => {{
+
+                        try {{
+                            const data = await postClearRequest('');
                             if (data.success) {{
                                 showNotification(data.message || 'Cache cleared successfully');
-                                setTimeout(() => {{
-                                    refreshTable();
-                                }}, 500);
+                                setTimeout(refreshTable, 500);
                             }} else {{
                                 showNotification(data.message || 'Failed to clear cache', true);
                             }}
-                        }})
-                        .catch(error => {{
+                        }} catch (error) {{
                             console.error('Error clearing cache:', error);
                             showNotification('Error clearing cache: ' + error.message, true);
-                        }})
-                        .finally(() => {{
+                        }} finally {{
                             btn.disabled = false;
                             btn.textContent = 'Clear all';
-                        }});
+                        }}
                     }}
-                    
+
+                    // Ask for confirmation before deleting a single subscriber
+                    function deleteItem(button) {{
+                        const key = button.getAttribute('data-key');
+                        const url = button.getAttribute('data-url') || 'this subscriber';
+                        openConfirmModal(
+                            'Delete subscriber',
+                            'Are you sure you want to remove ' + url + ' from the unhealthy cache?',
+                            'Delete',
+                            () => submitDeleteRequest(key, button)
+                        );
+                    }}
+
+                    function resetDeleteButton(button) {{
+                        if (button) {{
+                            button.disabled = false;
+                            button.textContent = 'Delete';
+                        }}
+                    }}
+
+                    async function submitDeleteRequest(key, button) {{
+                        if (button) {{
+                            button.disabled = true;
+                            button.textContent = 'Deleting...';
+                        }}
+
+                        try {{
+                            const data = await postClearRequest('key=' + encodeURIComponent(key));
+                            if (data.success) {{
+                                showNotification(data.message || 'Subscriber removed successfully');
+                                // On success the row disappears after the refresh, so no button reset needed
+                                setTimeout(refreshTable, 500);
+                            }} else {{
+                                showNotification(data.message || 'Failed to remove subscriber', true);
+                                resetDeleteButton(button);
+                            }}
+                        }} catch (error) {{
+                            console.error('Error removing subscriber:', error);
+                            showNotification('Error removing subscriber: ' + error.message, true);
+                            resetDeleteButton(button);
+                        }}
+                    }}
+
                     function showNotification(message, isError = false) {{
                         const notification = document.getElementById('notification');
                         notification.textContent = message;
                         notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
                         notification.classList.add('show');
-                        
+
                         setTimeout(() => {{
                             notification.classList.remove('show');
                         }}, 3000);
                     }}
-                    
+
                     // Initialize auto-refresh on page load
                     window.addEventListener('DOMContentLoaded', initializeAutoRefresh);
                 </script>
             </head>
             <body>
                 <div id='notification' class='notification'></div>
+                <div id='confirmModal' class='modal-overlay'>
+                    <div class='modal' role='dialog' aria-modal='true' aria-labelledby='modalTitle' aria-describedby='modalMessage'>
+                        <h2 id='modalTitle'>Please confirm</h2>
+                        <p id='modalMessage'></p>
+                        <div class='modal-buttons'>
+                            <button class='modal-btn modal-btn-cancel' onclick='closeConfirmModal()'>Cancel</button>
+                            <button id='modalConfirmBtn' class='modal-btn modal-btn-confirm' onclick='confirmModalProceed()'>Confirm</button>
+                        </div>
+                    </div>
+                </div>
                 <div class='container'>
                     <div class='header'>
                         <h1>Unhealthy notification receiver endpoints</h1>
@@ -385,8 +556,8 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         </div>
                     </div>
                     <div class='summary'>
-                        <strong>Total Tracked:</strong> {states.Count} subscriber(s) | 
-                        <strong>Blocked:</strong> {states.Count(s => s.Value.IsCircuitOpen)} | 
+                        <strong>Total Tracked:</strong> {states.Count} subscriber(s) |
+                        <strong>Blocked:</strong> {states.Count(s => s.Value.IsCircuitOpen)} |
                         <strong>Monitoring:</strong> {states.Count(s => !s.Value.IsCircuitOpen)}
                     </div>
 
@@ -403,6 +574,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                                     <th>Blocked Until</th>
                                     <th>Status Code</th>
                                     <th>Last Error</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -414,7 +586,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             <p>No unhealthy webhook receivers detected.</p>
                         </div>")}
                     </div>
-                    
+
                     <div class='timestamp'>
                         Last updated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
                     </div>
@@ -424,6 +596,40 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
         ";
 
         await response.WriteAsync(htmlContent);
+    }
+
+    private async Task HandleClearRequestAsync(DashboardContext context)
+    {
+        var keyValues = await context.Request.GetFormValuesAsync("key");
+        var keys = keyValues?.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray() ?? [];
+
+        var (clearedCount, message) = await ClearSubscribersAsync(keys);
+
+        // Build the JSON payload first, then keep the response I/O on its own.
+        var payload = $"{{\"success\": true, \"cleared\": {clearedCount}, \"message\": \"{JavaScriptEncoder.Default.Encode(message)}\"}}";
+
+        context.Response.StatusCode = 200;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(payload);
+
+        // No infra-specific error handling here: the health tracker (infra layer) logs store failures
+        // and the page's fetch handlers surface a failed request to the user, so cache/Redis errors
+        // propagate to the framework rather than being translated inside this UI dispatcher.
+    }
+
+    private async Task<(int ClearedCount, string Message)> ClearSubscribersAsync(string[] keys)
+    {
+        // No keys means "clear everything".
+        if (keys.Length == 0)
+        {
+            var clearedAll = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None);
+            return (clearedAll, $"Cleared {clearedAll} subscriber(s) successfully");
+        }
+
+        var cleared = await _healthTracker.ClearAllUnhealthyAsync(CancellationToken.None, keys);
+        var message =
+            cleared > 0 ? $"Removed {cleared} subscriber(s) successfully" : "Selected subscriber(s) were no longer present (already cleared)";
+        return (cleared, message);
     }
 
     private static string FormatDateTime(DateTime? dateTime)
