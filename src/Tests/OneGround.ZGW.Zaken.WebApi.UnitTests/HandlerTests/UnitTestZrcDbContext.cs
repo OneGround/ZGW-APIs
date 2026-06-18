@@ -53,8 +53,6 @@ internal class UnitTestZrcDbContext : ZrcDbContext
             entity.HasIndex(p => p.InpBsnHash);
         });
 
-        modelBuilder.Entity<NatuurlijkPersoonZaakRol>().HasIndex(p => p.InpBsn);
-
         modelBuilder.Entity<Zaak>().Property(p => p.Archiefstatus).HasDefaultValue(ArchiefStatus.nog_te_archiveren);
         modelBuilder.Entity<Zaak>().Property(p => p.BetalingsIndicatie).HasDefaultValue(BetalingsIndicatie.nvt);
         modelBuilder
