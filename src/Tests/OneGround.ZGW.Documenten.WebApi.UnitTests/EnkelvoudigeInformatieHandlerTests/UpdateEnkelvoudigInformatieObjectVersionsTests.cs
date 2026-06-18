@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
@@ -19,6 +20,8 @@ using OneGround.ZGW.Documenten.Web.Handlers.v1._1;
 using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
 using Polly;
 using Xunit;
+using UpdateV1_5Command = OneGround.ZGW.Documenten.Web.Handlers.v1._5.UpdateEnkelvoudigInformatieObjectCommand;
+using UpdateV1_5Handler = OneGround.ZGW.Documenten.Web.Handlers.v1._5.UpdateEnkelvoudigInformatieObjectCommandHandler;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
 
@@ -1018,6 +1021,58 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         return currentEnkelvoudigInformatieObject;
     }
 
+    [Fact]
+    public async Task UpdateV1_1_SetsLatestVertrouwelijkheidAanduiding_ToVersieValue()
+    {
+        await SetupMocksAsync();
+
+        var handler = CreateHandler();
+
+        var current = await SetupCurrentEnkelvoudigInformatieObject("vha_test_base.txt", currentInhoud: null, currentBestandsomvang: 0);
+
+        var merged = MergeWithCurrentEnkelvoudigInformatieObject(
+            current,
+            partialEnkelvoudigInformatieObjectRequest: JsonConvert.DeserializeObject("{ 'vertrouwelijkheidaanduiding': 'intern' }")
+        );
+        merged.Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.intern;
+
+        var command = new UpdateEnkelvoudigInformatieObjectCommand
+        {
+            EnkelvoudigInformatieObjectVersie = merged,
+            ExistingEnkelvoudigInformatieObjectId = current.Id,
+        };
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        var savedEio = _mockDbContext.EnkelvoudigInformatieObjecten.Single(e => e.Id == result.Result.InformatieObject.Id);
+        Assert.Equal(VertrouwelijkheidAanduiding.intern, savedEio.LatestVertrouwelijkheidAanduiding);
+    }
+
+    [Fact]
+    public async Task UpdateV1_5_SetsLatestVertrouwelijkheidAanduiding_ToVersieValue()
+    {
+        await SetupMocksAsync();
+
+        var handler = BuildV1_5UpdateHandler();
+
+        var current = await SetupCurrentEnkelvoudigInformatieObject("vha_test_base_v1_5.txt", currentInhoud: null, currentBestandsomvang: 0);
+
+        var merged = MergeWithCurrentEnkelvoudigInformatieObject(
+            current,
+            partialEnkelvoudigInformatieObjectRequest: JsonConvert.DeserializeObject("{ 'vertrouwelijkheidaanduiding': 'intern' }")
+        );
+        merged.Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.intern;
+
+        var v1_5Command = new UpdateV1_5Command { EnkelvoudigInformatieObjectVersie = merged, ExistingEnkelvoudigInformatieObjectId = current.Id };
+
+        var result = await handler.Handle(v1_5Command, CancellationToken.None);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        var savedEio = _mockDbContext.EnkelvoudigInformatieObjecten.Single(e => e.Id == result.Result.InformatieObject.Id);
+        Assert.Equal(VertrouwelijkheidAanduiding.intern, savedEio.LatestVertrouwelijkheidAanduiding);
+    }
+
     private UpdateEnkelvoudigInformatieObjectCommandHandler CreateHandler()
     {
         var mockRcrpLogger = new Mock<ILogger<ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>>>();
@@ -1034,6 +1089,46 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
 
         return new UpdateEnkelvoudigInformatieObjectCommandHandler(
             logger: _mockLogger.Object,
+            configuration: _configuration,
+            context: _mockDbContext,
+            uriService: _mockUriService.Object,
+            nummerGenerator: _mockNummerGenerator.Object,
+            documentServicesResolver: _mockDocumentServicesResolver.Object,
+            enkelvoudigInformatieObjectBusinessRuleService: _mockEnkvoudigInfObjBusinessRuleService.Object,
+            catalogiServiceAgent: _mockCatalogiServiceAgent.Object,
+            auditTrailFactory: _mockAuditTrailFactory.Object,
+            authorizationContextAccessor: _mockAuthorizationContextAccessor.Object,
+            lockGenerator: _mockLockGenerator.Object,
+            formOptions: _mockFormOptions.Object,
+            notificatieService: _mockNotificatieService.Object,
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            entityMergerFactory: _mockEntityMergerFactory.Object,
+            concurrencyRetryPipeline: new ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>(
+                mockRcrpLogger.Object,
+                mockOptionsMonitor.Object
+            )
+        );
+    }
+
+    private UpdateV1_5Handler BuildV1_5UpdateHandler()
+    {
+        var mockRcrpLogger = new Mock<ILogger<ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>>>();
+        var mockOptionsMonitor = new Mock<IOptionsMonitor<HttpRetryStrategyOptions>>();
+        mockOptionsMonitor
+            .Setup(m => m.CurrentValue)
+            .Returns(
+                new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    BackoffType = DelayBackoffType.Exponential,
+                    Delay = TimeSpan.FromSeconds(1),
+                }
+            );
+
+        var mockV1_5Logger = new Mock<ILogger<UpdateV1_5Handler>>();
+
+        return new UpdateV1_5Handler(
+            logger: mockV1_5Logger.Object,
             configuration: _configuration,
             context: _mockDbContext,
             uriService: _mockUriService.Object,

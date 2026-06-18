@@ -1,14 +1,25 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
+using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
+using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._1;
+using Polly;
 using Xunit;
+using CreateV1_5Command = OneGround.ZGW.Documenten.Web.Handlers.v1._5.CreateEnkelvoudigInformatieObjectCommand;
+using CreateV1_5Handler = OneGround.ZGW.Documenten.Web.Handlers.v1._5.CreateEnkelvoudigInformatieObjectCommandHandler;
+using CreateV1Command = OneGround.ZGW.Documenten.Web.Handlers.v1.CreateEnkelvoudigInformatieObjectCommand;
+using CreateV1Handler = OneGround.ZGW.Documenten.Web.Handlers.v1.CreateEnkelvoudigInformatieObjectCommandHandler;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
 
@@ -408,10 +419,177 @@ public class CreateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         _mockNotificatieService.Verify(m => m.NotifyAsync(It.IsAny<Notification>(), default), Times.Never);
     }
 
+    [Fact]
+    public async Task CreateV1_1_SetsLatestVertrouwelijkheidAanduiding_ToVersieValue()
+    {
+        await SetupMocksAsync();
+
+        var handler = CreateHandler();
+
+        var command = new CreateEnkelvoudigInformatieObjectCommand
+        {
+            EnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+            {
+                Inhoud = null,
+                Bestandsomvang = 0,
+                Bestandsnaam = "vha_test_v1_1.txt",
+                Bronorganisatie = "000001375",
+                Formaat = "raw",
+                Taal = "eng",
+                Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.intern,
+                InformatieObject = new EnkelvoudigInformatieObject
+                {
+                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
+                },
+            },
+        };
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        var savedEio = _mockDbContext.EnkelvoudigInformatieObjecten.Single(e => e.Id == result.Result.InformatieObject.Id);
+        Assert.Equal(VertrouwelijkheidAanduiding.intern, savedEio.LatestVertrouwelijkheidAanduiding);
+    }
+
+    [Fact]
+    public async Task CreateV1_SetsLatestVertrouwelijkheidAanduiding_ToVersieValue()
+    {
+        await SetupMocksAsync();
+
+        _mockDocumentService
+            .Setup(m =>
+                m.AddDocumentAsync(
+                    It.IsAny<string>(),
+                    "vha_test_v1.txt",
+                    It.IsAny<string>(),
+                    It.IsAny<DocumentMeta>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new Document(new DocumentUrn("urn:dms:unittest:11111111-1111-1111-1111-111111111111"), 0));
+
+        var handler = BuildV1CreateHandler();
+
+        var command = new CreateV1Command
+        {
+            EnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+            {
+                Inhoud = null,
+                Bestandsomvang = 0,
+                Bestandsnaam = "vha_test_v1.txt",
+                Bronorganisatie = "000001375",
+                Formaat = "raw",
+                Taal = "eng",
+                Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.intern,
+                InformatieObject = new EnkelvoudigInformatieObject
+                {
+                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
+                },
+            },
+        };
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        var savedEio = _mockDbContext.EnkelvoudigInformatieObjecten.Single(e => e.Id == result.Result.InformatieObject.Id);
+        Assert.Equal(VertrouwelijkheidAanduiding.intern, savedEio.LatestVertrouwelijkheidAanduiding);
+    }
+
+    [Fact]
+    public async Task CreateV1_5_SetsLatestVertrouwelijkheidAanduiding_ToVersieValue()
+    {
+        await SetupMocksAsync();
+
+        var handler = BuildV1_5CreateHandler();
+
+        var command = new CreateV1_5Command
+        {
+            EnkelvoudigInformatieObjectVersie = new EnkelvoudigInformatieObjectVersie
+            {
+                Inhoud = null,
+                Bestandsomvang = 0,
+                Bestandsnaam = "vha_test_v1_5.txt",
+                Bronorganisatie = "000001375",
+                Formaat = "raw",
+                Taal = "eng",
+                Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.intern,
+                InformatieObject = new EnkelvoudigInformatieObject
+                {
+                    InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/7ce6dd03-a386-4771-834c-1f4c4deb0f8f",
+                },
+            },
+        };
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        var savedEio = _mockDbContext.EnkelvoudigInformatieObjecten.Single(e => e.Id == result.Result.InformatieObject.Id);
+        Assert.Equal(VertrouwelijkheidAanduiding.intern, savedEio.LatestVertrouwelijkheidAanduiding);
+    }
+
     private CreateEnkelvoudigInformatieObjectCommandHandler CreateHandler()
     {
         return new CreateEnkelvoudigInformatieObjectCommandHandler(
             logger: _mockLogger.Object,
+            configuration: _configuration,
+            context: _mockDbContext,
+            uriService: _mockUriService.Object,
+            nummerGenerator: _mockNummerGenerator.Object,
+            documentServicesResolver: _mockDocumentServicesResolver.Object,
+            enkelvoudigInformatieObjectBusinessRuleService: _mockEnkvoudigInfObjBusinessRuleService.Object,
+            catalogiServiceAgent: _mockCatalogiServiceAgent.Object,
+            auditTrailFactory: _mockAuditTrailFactory.Object,
+            authorizationContextAccessor: _mockAuthorizationContextAccessor.Object,
+            lockGenerator: _mockLockGenerator.Object,
+            formOptions: _mockFormOptions.Object,
+            notificatieService: _mockNotificatieService.Object,
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object
+        );
+    }
+
+    private CreateV1Handler BuildV1CreateHandler()
+    {
+        var mockOptionsMonitor = new Mock<IOptionsMonitor<HttpRetryStrategyOptions>>();
+        mockOptionsMonitor
+            .Setup(m => m.CurrentValue)
+            .Returns(
+                new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    BackoffType = DelayBackoffType.Exponential,
+                    Delay = TimeSpan.FromSeconds(1),
+                }
+            );
+
+        // v1 handler is internal — use NullLogger to avoid DynamicProxyGenAssembly2 visibility issue
+        return new CreateV1Handler(
+            logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<CreateV1Handler>.Instance,
+            configuration: _configuration,
+            context: _mockDbContext,
+            uriService: _mockUriService.Object,
+            nummerGenerator: _mockNummerGenerator.Object,
+            documentServicesResolver: _mockDocumentServicesResolver.Object,
+            enkelvoudigInformatieObjectBusinessRuleService: _mockEnkvoudigInfObjBusinessRuleService.Object,
+            notificatieService: _mockNotificatieService.Object,
+            catalogiServiceAgent: _mockCatalogiServiceAgent.Object,
+            auditTrailFactory: _mockAuditTrailFactory.Object,
+            authorizationContextAccessor: _mockAuthorizationContextAccessor.Object,
+            documentKenmerkenResolver: _mockDocumentKenmerkenResolver.Object,
+            entityMergerFactory: _mockEntityMergerFactory.Object,
+            concurrencyRetryPipeline: new ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>(
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<ResilienceConcurrencyRetryPipeline<EnkelvoudigInformatieObject>>.Instance,
+                mockOptionsMonitor.Object
+            )
+        );
+    }
+
+    private CreateV1_5Handler BuildV1_5CreateHandler()
+    {
+        var mockV1_5Logger = new Mock<ILogger<CreateV1_5Handler>>();
+
+        return new CreateV1_5Handler(
+            logger: mockV1_5Logger.Object,
             configuration: _configuration,
             context: _mockDbContext,
             uriService: _mockUriService.Object,
