@@ -1,9 +1,9 @@
-using System.Security.Cryptography;
-using System.Text;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Models;
 using OneGround.ZGW.Notificaties.Messaging.CircuitBreaker.Options;
 using StackExchange.Redis;
@@ -14,23 +14,19 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
     IDistributedCache cache,
     ILogger<RedisCircuitBreakerSubscriberHealthTracker> logger,
     IOptions<CircuitBreakerOptions> circuitBreakerOptions,
-    ConfigurationOptions configurationOptions
+    IConnectionMultiplexer connectionMultiplexer
 ) : ICircuitBreakerSubscriberHealthTracker
 {
-    private const string CacheKeyPrefix = "ZGW:NRC:CircuitBreaker:subscriber:";
-
     public async Task<IDictionary<RedisKey, CircuitBreakerSubscriberHealthState>> GetAllUnhealthyAsync(CancellationToken cancellationToken = default)
     {
-        using ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(configurationOptions);
+        IDatabase db = connectionMultiplexer.GetDatabase();
 
-        IDatabase db = redis.GetDatabase();
-
-        var endpoint = redis.GetEndPoints()[0];
-        IServer server = redis.GetServer(endpoint);
+        var endpoint = connectionMultiplexer.GetEndPoints()[0];
+        IServer server = connectionMultiplexer.GetServer(endpoint);
 
         var results = new Dictionary<RedisKey, CircuitBreakerSubscriberHealthState>();
 
-        foreach (var key in server.Keys(pattern: $"{CacheKeyPrefix}*"))
+        foreach (var key in server.Keys(pattern: $"{CircuitBreakerCacheKeys.SubscriberPrefix}*"))
         {
             if (key == default(RedisKey))
             {
@@ -95,11 +91,11 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         }
     }
 
-    public async Task<bool> IsHealthyAsync(string url, CancellationToken cancellationToken = default)
+    public async Task<bool> IsHealthyAsync(Guid abonnementId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var state = await GetHealthStateAsync(url, cancellationToken);
+            var state = await GetHealthStateAsync(abonnementId, cancellationToken);
 
             if (state == null)
             {
@@ -110,14 +106,14 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             // Check if circuit should transition from Open to Half-Open (monitoring)
             if (state.BlockedUntil.HasValue && DateTime.UtcNow >= state.BlockedUntil.Value)
             {
-                // Transition to half-open state - clear BlockedUntil and reset counters
-                // The presence of state with ConsecutiveFailures > 0 will indicate we're monitoring
-                logger.LogInformation(
-                    "Circuit breaker transitioned to HALF-OPEN for subscriber '{Url}'. Monitoring for recovery. Failure counters reset.",
-                    url
-                );
+                // Transition to half-open: drop the breaker state and allow one trial attempt.
+                await ResetHealthAsync(abonnementId, cancellationToken);
 
-                await MarkHealthyAsync(url, cancellationToken);
+                logger.LogInformation(
+                    "Circuit breaker transitioned to HALF-OPEN for subscription {AbonnementId} ('{Url}'). Monitoring for recovery.",
+                    state.AbonnementId,
+                    state.Url
+                );
 
                 return true; // Allow one attempt
             }
@@ -127,9 +123,10 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             if (!isHealthy)
             {
                 logger.LogWarning(
-                    "Subscriber health check failed: Circuit is OPEN for '{Url}'. "
+                    "Subscriber health check failed: Circuit is OPEN for subscription {AbonnementId} ('{Url}'). "
                         + "Blocked until {BlockedUntil}. Consecutive failures: {ConsecutiveFailures}",
-                    url,
+                    state.AbonnementId,
+                    state.Url,
                     state.BlockedUntil,
                     state.ConsecutiveFailures
                 );
@@ -139,13 +136,14 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error checking subscriber health for '{Url}'. Treating as healthy (fail-open).", url);
+            logger.LogError(ex, "Error checking subscriber health for subscription {AbonnementId}. Treating as healthy (fail-open).", abonnementId);
             // Fail-open: if we can't check health, allow the notification through
             return true;
         }
     }
 
     public async Task MarkUnhealthyAsync(
+        Guid abonnementId,
         string url,
         string? errorMessage = null,
         int? statusCode = null,
@@ -154,7 +152,9 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
     {
         try
         {
-            var state = await GetHealthStateAsync(url, cancellationToken) ?? new CircuitBreakerSubscriberHealthState { Url = url };
+            var state =
+                await GetHealthStateAsync(abonnementId, cancellationToken)
+                ?? new CircuitBreakerSubscriberHealthState { AbonnementId = abonnementId, Url = url };
 
             // Detect if we're failing during HALF-OPEN (monitoring) state:
             // State exists, BlockedUntil is null, and we have a low failure count
@@ -181,9 +181,10 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
                 if (wasInHalfOpen)
                 {
                     logger.LogWarning(
-                        "Circuit breaker RE-OPENED for subscriber '{Url}'. "
+                        "Circuit breaker RE-OPENED for subscription {AbonnementId} ('{Url}'). "
                             + "Failed again during monitoring. Consecutive failures: {ConsecutiveFailures}. "
                             + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
+                        abonnementId,
                         url,
                         state.ConsecutiveFailures,
                         state.BlockedUntil,
@@ -193,9 +194,10 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
                 else
                 {
                     logger.LogWarning(
-                        "Circuit breaker OPENED for subscriber '{Url}'. "
+                        "Circuit breaker OPENED for subscription {AbonnementId} ('{Url}'). "
                             + "Failure threshold reached: {ConsecutiveFailures}/{FailureThreshold}. "
                             + "Blocked until {BlockedUntil}. Last error: {ErrorMessage}",
+                        abonnementId,
                         url,
                         state.ConsecutiveFailures,
                         circuitBreakerOptions.Value.FailureThreshold,
@@ -207,8 +209,9 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             else
             {
                 logger.LogInformation(
-                    "Subscriber '{Url}' marked as unhealthy. Consecutive failures: {ConsecutiveFailures}/{FailureThreshold}. "
+                    "Subscription {AbonnementId} ('{Url}') marked as unhealthy. Consecutive failures: {ConsecutiveFailures}/{FailureThreshold}. "
                         + "Last error: {ErrorMessage}",
+                    abonnementId,
                     url,
                     state.ConsecutiveFailures,
                     circuitBreakerOptions.Value.FailureThreshold,
@@ -217,21 +220,22 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             }
 
             await SaveHealthStateAsync(state, cancellationToken);
+            await EnsureFailingSinceAsync(abonnementId, cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error marking subscriber '{Url}' as unhealthy. Health tracking may be inconsistent.", url);
+            logger.LogError(ex, "Error marking subscription {AbonnementId} as unhealthy. Health tracking may be inconsistent.", abonnementId);
         }
     }
 
-    public async Task MarkHealthyAsync(string url, CancellationToken cancellationToken = default)
+    public async Task MarkHealthyAsync(Guid abonnementId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var state = await GetHealthStateAsync(url, cancellationToken);
+            var state = await GetHealthStateAsync(abonnementId, cancellationToken);
             if (state == null)
             {
-                // Already healthy, nothing to do
+                await ClearFailingSinceAsync(abonnementId, cancellationToken);
                 return;
             }
 
@@ -239,32 +243,37 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             var previousFailures = state.ConsecutiveFailures;
 
             // Remove the health state (healthy = no tracking needed)
-            await ResetHealthAsync(url, cancellationToken);
+            await ResetHealthAsync(abonnementId, cancellationToken);
+            await ClearFailingSinceAsync(abonnementId, cancellationToken);
 
             if (wasCircuitOpen)
             {
                 logger.LogInformation(
-                    "Circuit breaker CLOSED for subscriber '{Url}'. " + "Subscriber recovered after {ConsecutiveFailures} failures.",
-                    url,
+                    "Circuit breaker CLOSED for subscription {AbonnementId}. " + "Subscriber recovered after {ConsecutiveFailures} failures.",
+                    abonnementId,
                     previousFailures
                 );
             }
             else if (previousFailures > 0)
             {
-                logger.LogInformation("Subscriber '{Url}' marked as healthy. Failure count reset from {PreviousFailures}.", url, previousFailures);
+                logger.LogInformation(
+                    "Subscription {AbonnementId} marked as healthy. Failure count reset from {PreviousFailures}.",
+                    abonnementId,
+                    previousFailures
+                );
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error marking subscriber '{Url}' as healthy. Health tracking may be inconsistent.", url);
+            logger.LogError(ex, "Error marking subscription {AbonnementId} as healthy. Health tracking may be inconsistent.", abonnementId);
         }
     }
 
-    public async Task<CircuitBreakerSubscriberHealthState?> GetHealthStateAsync(string url, CancellationToken cancellationToken = default)
+    public async Task<CircuitBreakerSubscriberHealthState?> GetHealthStateAsync(Guid abonnementId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var cacheKey = GetCacheKey(url);
+            var cacheKey = GetCacheKey(abonnementId);
             var cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
 
             if (string.IsNullOrEmpty(cachedData))
@@ -276,29 +285,54 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving health state for subscriber '{Url}'.", url);
+            logger.LogError(ex, "Error retrieving health state for subscription {AbonnementId}.", abonnementId);
             return null;
         }
     }
 
-    public async Task ResetHealthAsync(string url, CancellationToken cancellationToken = default)
+    public async Task ResetHealthAsync(Guid abonnementId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var cacheKey = GetCacheKey(url);
+            var cacheKey = GetCacheKey(abonnementId);
             await cache.RemoveAsync(cacheKey, cancellationToken);
 
-            logger.LogInformation("Health state reset for subscriber '{Url}'.", url);
+            logger.LogInformation("Health state reset for subscription {AbonnementId}.", abonnementId);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error resetting health state for subscriber '{Url}'.", url);
+            logger.LogError(ex, "Error resetting health state for subscription {AbonnementId}.", abonnementId);
         }
+    }
+
+    public async Task EnsureFailingSinceAsync(Guid abonnementId, CancellationToken cancellationToken = default)
+    {
+        var markerKey = CircuitBreakerCacheKeys.ForFailingSince(abonnementId);
+
+        var existing = await cache.GetStringAsync(markerKey, cancellationToken);
+        if (existing != null && DateTime.TryParse(existing, null, DateTimeStyles.RoundtripKind, out _))
+        {
+            // Set-once: the long-term failure window keeps accumulating across breaker open/half-open cycles.
+            return;
+        }
+
+        var options = new DistributedCacheEntryOptions
+        {
+            // Must outlive the longest gap between delivery attempts (retry schedule goes up
+            // to 1 day) so the window keeps accumulating across breaker cycles.
+            AbsoluteExpirationRelativeToNow = circuitBreakerOptions.Value.FailingSinceMarkerExpiration,
+        };
+        await cache.SetStringAsync(markerKey, DateTime.UtcNow.ToString("O"), options, cancellationToken);
+    }
+
+    public async Task ClearFailingSinceAsync(Guid abonnementId, CancellationToken cancellationToken = default)
+    {
+        await cache.RemoveAsync(CircuitBreakerCacheKeys.ForFailingSince(abonnementId), cancellationToken);
     }
 
     private async Task SaveHealthStateAsync(CircuitBreakerSubscriberHealthState state, CancellationToken cancellationToken)
     {
-        var cacheKey = GetCacheKey(state.Url);
+        var cacheKey = GetCacheKey(state.AbonnementId);
         var serialized = JsonSerializer.Serialize(state);
 
         var options = new DistributedCacheEntryOptions
@@ -309,13 +343,5 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
         await cache.SetStringAsync(cacheKey, serialized, options, cancellationToken);
     }
 
-    private static string GetCacheKey(string url)
-    {
-        // Use SHA256 hash of URL to create a safe, consistent cache key
-        var urlBytes = Encoding.UTF8.GetBytes(url);
-        var hashBytes = SHA256.HashData(urlBytes);
-        var hashString = Convert.ToBase64String(hashBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
-
-        return $"{CacheKeyPrefix}{hashString}";
-    }
+    private static string GetCacheKey(Guid abonnementId) => CircuitBreakerCacheKeys.ForSubscriber(abonnementId);
 }

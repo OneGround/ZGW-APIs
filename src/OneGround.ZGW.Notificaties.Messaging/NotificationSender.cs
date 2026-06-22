@@ -14,7 +14,13 @@ namespace OneGround.ZGW.Notificaties.Messaging;
 
 public interface INotificationSender
 {
-    public Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default);
+    public Task<SubscriberResult> SendAsync(
+        INotificatie notificatie,
+        Guid abonnementId,
+        string url,
+        string auth,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public class NotificationSender : INotificationSender
@@ -43,12 +49,18 @@ public class NotificationSender : INotificationSender
         _healthTracker = healthTracker;
     }
 
-    public async Task<SubscriberResult> SendAsync(INotificatie notificatie, string url, string auth, CancellationToken cancellationToken = default)
+    public async Task<SubscriberResult> SendAsync(
+        INotificatie notificatie,
+        Guid abonnementId,
+        string url,
+        string auth,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(notificatie);
 
         // Circuit breaker: Check if subscriber is healthy before attempting to send
-        var isHealthy = await SafeHealthCheckAsync(url, cancellationToken);
+        var isHealthy = await SafeHealthCheckAsync(abonnementId, url, cancellationToken);
         if (!isHealthy)
         {
             _logger.LogWarning(
@@ -123,7 +135,7 @@ public class NotificationSender : INotificationSender
             if (response.IsSuccessStatusCode)
             {
                 // Circuit breaker: Mark subscriber as healthy on success
-                await _healthTracker.MarkHealthyAsync(url, cancellationToken);
+                await _healthTracker.MarkHealthyAsync(abonnementId, cancellationToken);
 
                 _logger.LogDebug(
                     "{NotificationSender}: Subscriber marked as healthy. URL: {Url}, Channel: {Kanaal}",
@@ -137,7 +149,13 @@ public class NotificationSender : INotificationSender
             else
             {
                 // Circuit breaker: Mark subscriber as unhealthy on HTTP error
-                await _healthTracker.MarkUnhealthyAsync(url, $"HTTP {(int)response.StatusCode}", (int)response.StatusCode, cancellationToken);
+                await _healthTracker.MarkUnhealthyAsync(
+                    abonnementId,
+                    url,
+                    $"HTTP {(int)response.StatusCode}",
+                    (int)response.StatusCode,
+                    cancellationToken
+                );
 
                 _logger.LogWarning(
                     "{NotificationSender}: Subscriber marked as unhealthy due to HTTP error. URL: {Url}, Channel: {Kanaal}, Status: {StatusCode}",
@@ -158,12 +176,7 @@ public class NotificationSender : INotificationSender
         catch (TaskCanceledException tce)
         {
             // Circuit breaker: Mark subscriber as unhealthy on timeout
-            await _healthTracker.MarkUnhealthyAsync(
-                url,
-                "Request timeout",
-                statusCode: 408, // Request Timeout
-                cancellationToken
-            );
+            await _healthTracker.MarkUnhealthyAsync(abonnementId, url, "Request timeout", statusCode: 408, cancellationToken);
 
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
@@ -179,7 +192,7 @@ public class NotificationSender : INotificationSender
         catch (HttpRequestException httpEx)
         {
             // Circuit breaker: Mark subscriber as unhealthy on connection error
-            await _healthTracker.MarkUnhealthyAsync(url, httpEx.Message, statusCode: (int?)httpEx.StatusCode, cancellationToken);
+            await _healthTracker.MarkUnhealthyAsync(abonnementId, url, httpEx.Message, statusCode: (int?)httpEx.StatusCode, cancellationToken);
 
             _logger.LogWarning(
                 httpEx,
@@ -200,7 +213,7 @@ public class NotificationSender : INotificationSender
         catch (Exception ex)
         {
             // Circuit breaker: Mark subscriber as unhealthy on unexpected error
-            await _healthTracker.MarkUnhealthyAsync(url, "Unexpected error", statusCode: null, cancellationToken);
+            await _healthTracker.MarkUnhealthyAsync(abonnementId, url, "Unexpected error", statusCode: null, cancellationToken);
 
             // Note: Don't log the complete error stacktrace here (client consumer)
             _logger.LogWarning(
@@ -219,11 +232,11 @@ public class NotificationSender : INotificationSender
     /// Safely checks subscriber health with fail-open behavior.
     /// If health tracker fails, allows notification through.
     /// </summary>
-    private async Task<bool> SafeHealthCheckAsync(string url, CancellationToken cancellationToken)
+    private async Task<bool> SafeHealthCheckAsync(Guid abonnementId, string url, CancellationToken cancellationToken)
     {
         try
         {
-            return await _healthTracker.IsHealthyAsync(url, cancellationToken);
+            return await _healthTracker.IsHealthyAsync(abonnementId, cancellationToken);
         }
         catch (Exception ex)
         {
