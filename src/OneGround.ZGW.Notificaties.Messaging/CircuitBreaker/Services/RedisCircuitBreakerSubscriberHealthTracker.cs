@@ -37,7 +37,7 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
 
             if (type == RedisType.Hash)
             {
-                var cachedData = await cache.GetStringAsync(key!, CancellationToken.None);
+                var cachedData = await cache.GetStringAsync(key!, cancellationToken);
                 if (cachedData == null)
                 {
                     continue;
@@ -72,11 +72,12 @@ public class RedisCircuitBreakerSubscriberHealthTracker(
             var clearedCount = 0;
             foreach (var kvp in unhealthySubscribers)
             {
-                if (dictOnlyTheseRedisKeys.Count > 0 && !dictOnlyTheseRedisKeys.Contains(kvp.Key.ToString()))
+                var redisKey = kvp.Key.ToString();
+                if (dictOnlyTheseRedisKeys.Count > 0 && !dictOnlyTheseRedisKeys.Contains(redisKey))
                 {
                     continue;
                 }
-                await cache.RemoveAsync(kvp.Key!, cancellationToken);
+                await cache.RemoveAsync(redisKey, cancellationToken);
                 clearedCount++;
             }
 
