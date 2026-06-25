@@ -16,13 +16,13 @@ namespace OneGround.ZGW.Notificaties.Web.Handlers;
 class GetAbonnementQueryHandler : ZGWBaseHandler, IRequestHandler<GetAbonnementQuery, QueryResult<Abonnement>>
 {
     private readonly NrcDbContext _context;
-    private readonly ILogger<GetAllAbonnementenQueryHandler> _logger;
+    private readonly ILogger<GetAbonnementQueryHandler> _logger;
 
     public GetAbonnementQueryHandler(
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
         NrcDbContext context,
-        ILogger<GetAllAbonnementenQueryHandler> logger
+        ILogger<GetAbonnementQueryHandler> logger
     )
         : base(configuration, authorizationContextAccessor)
     {

@@ -71,17 +71,6 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 foreach (var abonnement in abonnementen)
                 {
-                    if (abonnement.Blocked)
-                    {
-                        Logger.LogInformation(
-                            "{Consumer}: subscription {AbonnementId} is blocked; no delivery job enqueued for channel '{Kanaal}'.",
-                            nameof(SendNotificatiesConsumer),
-                            abonnement.Id,
-                            notificatie.Kanaal
-                        );
-                        continue;
-                    }
-
                     if (ShouldNotifySubscriber(notificatie, abonnement, out var resolvedKenmerkBronnen))
                     {
                         SendNotificatieToSubscriber(context, notificatie, abonnement, resolvedKenmerkBronnen);
