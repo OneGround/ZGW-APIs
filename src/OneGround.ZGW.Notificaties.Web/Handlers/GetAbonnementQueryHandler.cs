@@ -43,7 +43,7 @@ class GetAbonnementQueryHandler : ZGWBaseHandler, IRequestHandler<GetAbonnementQ
                 .ThenInclude(a => a.Kanaal)
             .Include(a => a.AbonnementKanalen)
                 .ThenInclude(a => a.Filters)
-            .SingleOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
+            .SingleOrDefaultAsync(a => a.Id == request.Id && !a.Blocked, cancellationToken);
 
         if (abonnement == null)
         {
