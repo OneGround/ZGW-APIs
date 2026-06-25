@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -14,6 +15,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.DataModel.Authorization;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using OneGround.ZGW.Documenten.Web.Services;
 
@@ -26,6 +28,11 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     private readonly DrcDbContext _context;
     private readonly IDistributedCacheHelper _cache;
     private readonly IInformatieObjectAuthorizationTempTableService _informatieObjectAuthorizationTempTableService;
+    private readonly IConfiguration _configuration;
+
+    // TTL for cached count/page anchors. Count/Anchors for a given (rsin, page, filter) tuple are stable within this window.
+    private static readonly TimeSpan CountCacheLifetime = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan AnchorCacheLifetime = TimeSpan.FromMinutes(5);
 
     public GetAllEnkelvoudigInformatieObjectenQueryHandler(
         ILogger<GetAllEnkelvoudigInformatieObjectenQueryHandler> logger,
@@ -42,6 +49,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         _context = context;
         _cache = cache;
         _informatieObjectAuthorizationTempTableService = informatieObjectAuthorizationTempTableService;
+        _configuration = configuration;
     }
 
     public async Task<QueryResult<PagedResult<EnkelvoudigInformatieObject>>> Handle(
@@ -66,35 +74,32 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            // Use explicit subquery instead of navigation property to avoid a top-level LEFT JOIN
-            // to the versie table. With EXISTS, PostgreSQL can scan the (owner, id) covering index
-            // in order and stop after LIMIT matches (early termination), instead of materializing all rows.
-            query = query.Where(e =>
-                _context.EnkelvoudigInformatieObjectVersies.Any(v =>
-                    v.Id == e.LatestEnkelvoudigInformatieObjectVersieId
-                    && _context.TempInformatieObjectAuthorization.Any(a =>
-                        a.InformatieObjectType == e.InformatieObjectType && (int)v.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                    )
-                )
-            );
+            // Fetch auth pairs into C# to build an inline SQL predicate (OR chain of constants).
+            // Any reference to the temp table in the paginated query causes PostgreSQL to rewrite the
+            // filter as a semi-join where the 20-row temp table becomes the outer loop — forcing a Sort
+            // of all ~1M matching rows before LIMIT takes effect (214s). Inlining the pairs as SQL
+            // constants removes the join entirely so PostgreSQL can use the (owner, id) index scan with
+            // early termination. NULL LatestVertrouwelijkheidAanduiding → UNKNOWN in SQL → row excluded.
+            var authPairs = await _context.TempInformatieObjectAuthorization.AsNoTracking().ToListAsync(cancellationToken);
+
+            query = query.Where(BuildInlineAuthorizationPredicate(authPairs));
         }
 
-        // For count, use a JOIN-based query instead of EXISTS when authorization filtering is active.
-        // The EXISTS subquery is optimal for paginated queries (early termination per-row) but causes
-        // 1M individual index lookups for count. A JOIN lets PostgreSQL use a Hash Join — single
-        // streaming pass over the versie table — which is O(N+M) instead of O(N × log M).
+        // For count with authorization: use a JOIN-based query (not the inline OR predicate) so
+        // PostgreSQL can pick a Hash Join. The inline OR predicate has no join → PostgreSQL picks
+        // BitmapOr which becomes lossy at scale and causes massive heap rechecks (4M+ rows, 29s).
+        // A JOIN with enable_nestloop=off forces a single streaming Hash Join pass — O(N+M).
         var totalCount = hasAuthorizationFilter
             ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
             : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted (owner, id)
         // covering index with early termination, instead of materializing all matching rows.
-        var pageIds = await query
-            .OrderBy(e => e.Id)
-            .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
-            .Take(request.Pagination.Size)
-            .Select(e => e.Id)
-            .ToListAsync(cancellationToken);
+
+        var pageIds =
+            _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
+                ? await GetAnchorPagedResult(request, query, cancellationToken)
+                : await GetOffsetPagedResult(request, query, cancellationToken);
 
         // Phase 2: Fetch complete data for only the matched IDs (typically 100 PK lookups).
         var pagedResult =
@@ -113,6 +118,138 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         return new QueryResult<PagedResult<EnkelvoudigInformatieObject>>(result, QueryStatus.OK);
     }
 
+    private static async Task<List<Guid>> GetOffsetPagedResult(
+        GetAllEnkelvoudigInformatieObjectenQuery request,
+        IQueryable<EnkelvoudigInformatieObject> query,
+        CancellationToken cancellationToken
+    )
+    {
+        return await query
+            .OrderBy(e => e.Id)
+            .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
+            .Take(request.Pagination.Size)
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    private async Task<List<Guid>> GetAnchorPagedResult(
+        GetAllEnkelvoudigInformatieObjectenQuery request,
+        IQueryable<EnkelvoudigInformatieObject> query,
+        CancellationToken cancellationToken
+    )
+    {
+        var filterHash = ObjectHasher.ComputeSha1Hash(request.GetAllEnkelvoudigInformatieObjectenFilter);
+
+        Guid? anchor = null;
+        if (request.Pagination.Page > 1)
+        {
+            var previousAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 2}:{filterHash}";
+
+            // Look up the previous page's anchor in the distributed cache.
+            // Note: A sentinel (Guid.Empty) is cached when no real anchor is available yet,
+            // so the factory isn't re-invoked on subsequent lookups within the TTL. This means
+            // that if a deep page is requested before page 1, that page (and pages between)
+            // will fall back to the offset method until the sentinel expires - which is
+            // functionally correct, just less optimal.
+            var cachedAnchor = await _cache.GetAsync(
+                previousAnchorKey,
+                factory: () => Task.FromResult(Guid.Empty),
+                absoluteExpirationRelativeToNow: AnchorCacheLifetime,
+                cancellationToken
+            );
+
+            if (cachedAnchor != Guid.Empty)
+            {
+                anchor = cachedAnchor;
+            }
+        }
+
+        bool useSeekMethod = anchor.HasValue;
+
+        var orderedQuery = useSeekMethod
+            ? query
+                // Seek method: keyset pagination using the last seen Id as the anchor for the next page
+                .Where(e => e.Id.CompareTo(anchor.Value) > 0)
+                .OrderBy(e => e.Id)
+                .Take(request.Pagination.Size)
+            : query
+                // Offset method: traditional pagination using Skip/Take (very inefficient for deep pages)
+                .OrderBy(e => e.Id)
+                .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
+                .Take(request.Pagination.Size);
+
+        var result = await orderedQuery.Select(e => e.Id).ToListAsync(cancellationToken);
+
+        // Store anchor for the next page when we have a full page of results (or this is any page)
+        if (result.Count > 0 && (!useSeekMethod || result.Count == request.Pagination.Size))
+        {
+            var lastId = result[^1];
+
+            var currentAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 1}:{filterHash}";
+
+            // Note: GetAsync uses get-or-add semantics. If an entry already exists for this key
+            // within the TTL, the existing entry is kept. The anchor for a given (rsin, page, filter)
+            // tuple is stable within the TTL window, so this is acceptable.
+            await _cache.GetAsync(
+                currentAnchorKey,
+                factory: () => Task.FromResult(lastId),
+                absoluteExpirationRelativeToNow: AnchorCacheLifetime,
+                cancellationToken
+            );
+        }
+
+        return result;
+    }
+
+    private async Task<int> GetAuthorizationCountCachedAsync(
+        Expression<Func<EnkelvoudigInformatieObject, bool>> rsinFilter,
+        Expression<Func<EnkelvoudigInformatieObject, bool>> filter,
+        GetAllEnkelvoudigInformatieObjectenFilter filterModel,
+        CancellationToken cancellationToken
+    )
+    {
+        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+
+        return await _cache.GetAsync(
+            key,
+            factory: async () =>
+            {
+                // Without selectivity filters the result set is ~1M rows and the planner severely
+                // underestimates cardinality, causing it to prefer Nested Loop. With filters the
+                // result is small enough that the planner chooses correctly on its own.
+                bool anyFiltersSet =
+                    !string.IsNullOrEmpty(filterModel.Identificatie)
+                    || !string.IsNullOrEmpty(filterModel.Bronorganisatie)
+                    || (filterModel.Uuid_In != null && filterModel.Uuid_In.Any())
+                    || (filterModel.Trefwoorden_In != null && filterModel.Trefwoorden_In.Any());
+
+                // SET LOCAL requires an active transaction. Settings revert automatically when
+                // the transaction is disposed — safe for pooled connections.
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+                if (!anyFiltersSet)
+                {
+                    await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+                }
+
+                return await _context
+                    .EnkelvoudigInformatieObjecten.AsNoTracking()
+                    .Where(rsinFilter)
+                    .Where(filter)
+                    .Join(
+                        _context.TempInformatieObjectAuthorization,
+                        o => o.InformatieObjectType,
+                        a => a.InformatieObjectType,
+                        (o, a) => new { Object = o, Auth = a }
+                    )
+                    .Where(oa => (int)oa.Object.LatestVertrouwelijkheidAanduiding.Value <= oa.Auth.MaximumVertrouwelijkheidAanduiding)
+                    .CountAsync(cancellationToken);
+            },
+            absoluteExpirationRelativeToNow: CountCacheLifetime,
+            cancellationToken
+        );
+    }
+
     private async Task<int> GetTotalCountCachedAsync(
         IQueryable<EnkelvoudigInformatieObject> query,
         GetAllEnkelvoudigInformatieObjectenFilter filter,
@@ -129,76 +266,40 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             {
                 return await query.CountAsync(cancellationToken);
             },
-            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5),
+            absoluteExpirationRelativeToNow: CountCacheLifetime,
             cancellationToken
         );
 
         return totalCount;
     }
 
-    private async Task<int> GetAuthorizationCountCachedAsync(
-        Expression<Func<EnkelvoudigInformatieObject, bool>> rsinFilter,
-        Expression<Func<EnkelvoudigInformatieObject, bool>> filter,
-        GetAllEnkelvoudigInformatieObjectenFilter filterModel,
-        CancellationToken cancellationToken
+    // Builds: (iot == 'x' && (int)vha.Value <= 5) || (iot == 'y' && (int)vha.Value <= 3) || ...
+    // Using inline constants (no temp-table reference) forces PostgreSQL to use the (owner, id) index
+    // scan with per-row filter evaluation and early termination via LIMIT — no Sort node needed.
+    private static Expression<Func<EnkelvoudigInformatieObject, bool>> BuildInlineAuthorizationPredicate(
+        List<TempInformatieObjectAuthorization> authPairs
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+        var param = Expression.Parameter(typeof(EnkelvoudigInformatieObject), "o");
 
-        bool anyFiltersSet =
-            !string.IsNullOrEmpty(filterModel.Identificatie)
-            || !string.IsNullOrEmpty(filterModel.Bronorganisatie)
-            || (filterModel.Uuid_In != null && filterModel.Uuid_In.Any())
-            || (filterModel.Trefwoorden_In != null && filterModel.Trefwoorden_In.Any());
+        if (authPairs.Count == 0)
+            return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(Expression.Constant(false), param);
 
-        // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
-        int totalCount = await _cache.GetAsync(
-            key,
-            factory: async () =>
-            {
-                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-                if (!anyFiltersSet)
-                {
-                    // The planner severely underestimates cardinality (7K vs 1M actual) due to
-                    // stale/missing statistics on the temporary authorization table. This makes it
-                    // prefer Nested Loop (1M individual B-tree lookups = ~100s) over Hash Join
-                    // (single streaming pass = ~5s). Temporarily disable nested loops and increase
-                    // work_mem so the planner picks Hash Join for both the EIO→versie and auth joins.
-                    // SET LOCAL requires an active transaction — without one, PostgreSQL silently
-                    // treats it as session-scoped SET. Settings revert automatically when the
-                    // transaction is disposed (no manual RESET needed, safe for pooled connections).
-                    await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
-                }
+        Expression? body = null;
+        foreach (var pair in authPairs)
+        {
+            var iotProp = Expression.Property(param, nameof(EnkelvoudigInformatieObject.InformatieObjectType));
+            var iotEq = Expression.Equal(iotProp, Expression.Constant(pair.InformatieObjectType));
 
-                var result = await _context
-                    .EnkelvoudigInformatieObjecten.AsNoTracking()
-                    .Where(rsinFilter)
-                    .Where(filter)
-                    .Join(
-                        // Filter versie by owner too — without this, the Hash Join probes ALL
-                        // 69M versie rows. With the filter, it only scans ~1M versie rows for
-                        // this RSIN, using the existing (Owner, Id, Vertrouwelijkheidaanduiding) index.
-                        _context.EnkelvoudigInformatieObjectVersies.Where(v => v.Owner == _rsin),
-                        e => e.LatestEnkelvoudigInformatieObjectVersieId,
-                        v => v.Id,
-                        (e, v) => new { e.InformatieObjectType, v.Vertrouwelijkheidaanduiding }
-                    )
-                    .Where(ev =>
-                        _context.TempInformatieObjectAuthorization.Any(a =>
-                            a.InformatieObjectType == ev.InformatieObjectType
-                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                        )
-                    )
-                    .CountAsync(cancellationToken);
+            var vhaNullable = Expression.Property(param, nameof(EnkelvoudigInformatieObject.LatestVertrouwelijkheidAanduiding));
+            var vhaInt = Expression.Convert(Expression.Property(vhaNullable, "Value"), typeof(int));
+            var vhaLe = Expression.LessThanOrEqual(vhaInt, Expression.Constant(pair.MaximumVertrouwelijkheidAanduiding));
 
-                // Note: Settings automatically reverted — no RESET needed
-                return result;
-            },
-            absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(5), // Note: Keep the calculated total count the same for 5 minutes!
-            cancellationToken
-        );
+            var pairExpr = Expression.AndAlso(iotEq, vhaLe);
+            body = body == null ? pairExpr : Expression.OrElse(body, pairExpr);
+        }
 
-        return totalCount;
+        return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(body!, param);
     }
 
     private static Expression<Func<EnkelvoudigInformatieObject, bool>> GetEnkelvoudigInformatieObjectFilterPredicate(

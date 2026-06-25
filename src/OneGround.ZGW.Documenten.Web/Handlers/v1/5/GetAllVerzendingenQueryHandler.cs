@@ -62,16 +62,13 @@ class GetAllVerzendingenQueryHandler
                 cancellationToken
             );
 
-            // Use explicit subquery instead of navigation property to avoid a top-level LEFT JOIN
-            // to the versie table. With EXISTS, PostgreSQL can use early termination for pagination.
+            // Use EXISTS subquery instead of top-level JOIN to avoid a Sort on all matching rows.
+            // LatestVertrouwelijkheidAanduiding is denormalized on EIO — no join to versies needed.
+            // NULL LatestVertrouwelijkheidAanduiding evaluates to UNKNOWN in SQL — row excluded, matching old JOIN behavior.
             query = query.Where(v =>
-                _context.EnkelvoudigInformatieObjectVersies.Any(ver =>
-                    ver.Owner == _rsin
-                    && ver.Id == v.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
-                    && _context.TempInformatieObjectAuthorization.Any(a =>
-                        a.InformatieObjectType == v.InformatieObject.InformatieObjectType
-                        && (int)ver.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                    )
+                _context.TempInformatieObjectAuthorization.Any(a =>
+                    a.InformatieObjectType == v.InformatieObject.InformatieObjectType
+                    && (int)v.InformatieObject.LatestVertrouwelijkheidAanduiding.Value <= a.MaximumVertrouwelijkheidAanduiding
                 )
             );
         }
@@ -160,20 +157,16 @@ class GetAllVerzendingenQueryHandler
                         _context.EnkelvoudigInformatieObjecten,
                         v => v.InformatieObjectId,
                         e => e.Id,
-                        (v, e) => new { e.InformatieObjectType, e.LatestEnkelvoudigInformatieObjectVersieId }
+                        (v, e) => new { e.InformatieObjectType, e.LatestVertrouwelijkheidAanduiding }
                     )
                     .Join(
-                        _context.EnkelvoudigInformatieObjectVersies.Where(ver => ver.Owner == _rsin),
-                        ve => ve.LatestEnkelvoudigInformatieObjectVersieId,
-                        ver => ver.Id,
-                        (ve, ver) => new { ve.InformatieObjectType, ver.Vertrouwelijkheidaanduiding }
+                        _context.TempInformatieObjectAuthorization,
+                        ve => ve.InformatieObjectType,
+                        a => a.InformatieObjectType,
+                        (ve, a) => new { ve, a }
                     )
-                    .Where(ev =>
-                        _context.TempInformatieObjectAuthorization.Any(a =>
-                            a.InformatieObjectType == ev.InformatieObjectType
-                            && (int)ev.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                        )
-                    )
+                    // NULL LatestVertrouwelijkheidAanduiding evaluates to UNKNOWN in SQL — row excluded
+                    .Where(x => (int)x.ve.LatestVertrouwelijkheidAanduiding.Value <= x.a.MaximumVertrouwelijkheidAanduiding)
                     .CountAsync(cancellationToken);
 
                 return result;
