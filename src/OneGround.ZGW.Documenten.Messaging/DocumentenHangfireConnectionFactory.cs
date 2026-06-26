@@ -8,7 +8,7 @@ public class DocumentenHangfireConnectionFactory : IConnectionFactory
 {
     private readonly NpgsqlDataSource _dataSource;
 
-    public DocumentenHangfireConnectionFactory([FromKeyedServices("hangfire-documenten")] NpgsqlDataSource dataSource)
+    public DocumentenHangfireConnectionFactory([FromKeyedServices(HangfireServiceKeys.DataSource)] NpgsqlDataSource dataSource)
     {
         _dataSource = dataSource;
     }

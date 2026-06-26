@@ -8,7 +8,7 @@ public class NotificatiesHangfireConnectionFactory : IConnectionFactory
 {
     private readonly NpgsqlDataSource _dataSource;
 
-    public NotificatiesHangfireConnectionFactory([FromKeyedServices("hangfire-notificaties")] NpgsqlDataSource dataSource)
+    public NotificatiesHangfireConnectionFactory([FromKeyedServices(HangfireServiceKeys.DataSource)] NpgsqlDataSource dataSource)
     {
         _dataSource = dataSource;
     }
