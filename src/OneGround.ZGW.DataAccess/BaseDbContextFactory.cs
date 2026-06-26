@@ -48,12 +48,6 @@ public abstract class BaseDbContextFactory<TDbContext> : IDesignTimeDbContextFac
             }
         );
 
-        // TODO: Delete this
-        optionsBuilder.EnableSensitiveDataLogging(); // Shows parameter values
-        optionsBuilder.EnableDetailedErrors();
-        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
-        // ----
-
         return optionsBuilder;
     }
 
