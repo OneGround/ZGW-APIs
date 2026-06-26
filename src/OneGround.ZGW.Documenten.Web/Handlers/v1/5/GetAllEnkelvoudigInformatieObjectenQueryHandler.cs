@@ -74,12 +74,14 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            // Fetch auth pairs into C# to build an inline SQL predicate (OR chain of constants).
-            // Any reference to the temp table in the paginated query causes PostgreSQL to rewrite the
-            // filter as a semi-join where the 20-row temp table becomes the outer loop — forcing a Sort
-            // of all ~1M matching rows before LIMIT takes effect (214s). Inlining the pairs as SQL
-            // constants removes the join entirely so PostgreSQL can use the (owner, id) index scan with
-            // early termination. NULL LatestVertrouwelijkheidAanduiding → UNKNOWN in SQL → row excluded.
+            // Fetch auth pairs into C# and build an inline predicate grouped by VHA level.
+            // Any temp-table reference in the paginated query causes PostgreSQL to rewrite it as a
+            // semi-join where the temp table becomes the outer loop — forcing a Sort of all ~1M matching
+            // rows before LIMIT takes effect (214s). Inlining the data removes the join so PostgreSQL
+            // can use the sorted (owner, creationtime, id) index with early termination via LIMIT.
+            // Pairs are grouped by MaxVha: each group becomes iot = ANY(@types) AND vha <= maxVha.
+            // This collapses N pairs (up to 5000) into ≤7 OR terms (one per ZGW VHA level), keeping
+            // the predicate cheap to plan and execute regardless of how many types are authorized.
             var authPairs = await _context.TempInformatieObjectAuthorization.AsNoTracking().ToListAsync(cancellationToken);
 
             query = query.Where(BuildInlineAuthorizationPredicate(authPairs));
@@ -93,8 +95,9 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
             : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
-        // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted (owner, id)
-        // covering index with early termination, instead of materializing all matching rows.
+        // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
+        // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
+        // with early termination, instead of materializing all matching rows.
 
         var pageIds =
             _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
@@ -104,12 +107,13 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // Phase 2: Fetch complete data for only the matched IDs (typically 100 PK lookups).
         var pagedResult =
             pageIds.Count > 0
-                ? await _context
-                    .EnkelvoudigInformatieObjecten.AsNoTracking()
-                    .Where(e => pageIds.Contains(e.Id))
-                    .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                        .ThenInclude(e => e.BestandsDelen)
-                    .OrderBy(e => e.Id)
+                ? await OrderByPage(
+                        _context
+                            .EnkelvoudigInformatieObjecten.AsNoTracking()
+                            .Where(e => pageIds.Contains(e.Id))
+                            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+                                .ThenInclude(e => e.BestandsDelen)
+                    )
                     .ToListAsync(cancellationToken)
                 : [];
 
@@ -124,13 +128,18 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        return await query
-            .OrderBy(e => e.Id)
+        return await OrderByPage(query)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .Select(e => e.Id)
             .ToListAsync(cancellationToken);
     }
+
+    // Single source of truth for the page ordering. The keyset seek predicate in
+    // GetAnchorPagedResult is only correct while every ORDER BY matches this exact tuple,
+    // so all paging paths (offset, seek, and the Phase-2 fetch) must order through here.
+    private static IOrderedQueryable<EnkelvoudigInformatieObject> OrderByPage(IQueryable<EnkelvoudigInformatieObject> query) =>
+        query.OrderByDescending(e => e.CreationTime).ThenBy(e => e.Id);
 
     private async Task<List<Guid>> GetAnchorPagedResult(
         GetAllEnkelvoudigInformatieObjectenQuery request,
@@ -140,65 +149,76 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     {
         var filterHash = ObjectHasher.ComputeSha1Hash(request.GetAllEnkelvoudigInformatieObjectenFilter);
 
-        Guid? anchor = null;
+        PageAnchor? anchor = null;
         if (request.Pagination.Page > 1)
         {
             var previousAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 2}:{filterHash}";
 
-            // Look up the previous page's anchor in the distributed cache.
-            // Note: A sentinel (Guid.Empty) is cached when no real anchor is available yet,
-            // so the factory isn't re-invoked on subsequent lookups within the TTL. This means
-            // that if a deep page is requested before page 1, that page (and pages between)
-            // will fall back to the offset method until the sentinel expires - which is
-            // functionally correct, just less optimal.
+            // Look up the previous page's composite anchor in the distributed cache.
+            // A sentinel (PageAnchor.Sentinel) is stored when no real anchor is available yet,
+            // so the factory isn't re-invoked on subsequent lookups within the TTL. If a deep
+            // page is requested before page 1, it falls back to the offset method until the
+            // sentinel expires — functionally correct, just less optimal.
             var cachedAnchor = await _cache.GetAsync(
                 previousAnchorKey,
-                factory: () => Task.FromResult(Guid.Empty),
+                factory: () => Task.FromResult(PageAnchor.Sentinel),
                 absoluteExpirationRelativeToNow: AnchorCacheLifetime,
                 cancellationToken
             );
 
-            if (cachedAnchor != Guid.Empty)
-            {
+            if (cachedAnchor != PageAnchor.Sentinel)
                 anchor = cachedAnchor;
-            }
         }
 
-        bool useSeekMethod = anchor.HasValue;
+        bool useSeekMethod = anchor != null;
 
-        var orderedQuery = useSeekMethod
-            ? query
-                // Seek method: keyset pagination using the last seen Id as the anchor for the next page
-                .Where(e => e.Id.CompareTo(anchor.Value) > 0)
-                .OrderBy(e => e.Id)
-                .Take(request.Pagination.Size)
-            : query
-                // Offset method: traditional pagination using Skip/Take (very inefficient for deep pages)
-                .OrderBy(e => e.Id)
-                .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
+        IQueryable<EnkelvoudigInformatieObject> orderedQuery;
+        if (useSeekMethod)
+        {
+            // Seek method: keyset pagination using (CreationTime, Id) as the composite anchor.
+            // Rows "after" the anchor in (CreationTime DESC, Id ASC) order satisfy:
+            //   CreationTime < anchor.CreationTime
+            //   OR (CreationTime == anchor.CreationTime AND Id > anchor.Id)
+            orderedQuery = OrderByPage(
+                    query.Where(e => e.CreationTime < anchor!.CreationTime || (e.CreationTime == anchor.CreationTime && e.Id > anchor.Id))
+                )
                 .Take(request.Pagination.Size);
+        }
+        else
+        {
+            // Offset method: traditional Skip/Take fallback when no anchor is cached.
+            orderedQuery = OrderByPage(query).Skip(request.Pagination.Size * (request.Pagination.Page - 1)).Take(request.Pagination.Size);
+        }
 
-        var result = await orderedQuery.Select(e => e.Id).ToListAsync(cancellationToken);
+        // Phase 1 selects both Id and CreationTime — both are needed to build the composite anchor.
+        var pageData = await orderedQuery.Select(e => new { e.Id, e.CreationTime }).ToListAsync(cancellationToken);
 
-        // Store anchor for the next page when we have a full page of results (or this is any page)
+        var result = pageData.ConvertAll(x => x.Id);
+
         if (result.Count > 0 && (!useSeekMethod || result.Count == request.Pagination.Size))
         {
-            var lastId = result[^1];
-
+            var last = pageData[^1];
             var currentAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 1}:{filterHash}";
 
-            // Note: GetAsync uses get-or-add semantics. If an entry already exists for this key
-            // within the TTL, the existing entry is kept. The anchor for a given (rsin, page, filter)
-            // tuple is stable within the TTL window, so this is acceptable.
+            // GetAsync uses get-or-add semantics — if a key already exists within the TTL the
+            // existing entry is kept. The anchor for a given (rsin, page, filter) is stable
+            // within the TTL window, so this is acceptable.
             await _cache.GetAsync(
                 currentAnchorKey,
-                factory: () => Task.FromResult(lastId),
+                factory: () => Task.FromResult(new PageAnchor(last.CreationTime, last.Id)),
                 absoluteExpirationRelativeToNow: AnchorCacheLifetime,
                 cancellationToken
             );
         }
 
         return result;
+    }
+
+    // Composite keyset anchor for cursor-based pagination on (CreationTime DESC, Id ASC).
+    // Sentinel is stored in cache to prevent repeated factory calls when no real anchor exists yet.
+    private sealed record PageAnchor(DateTime CreationTime, Guid Id)
+    {
+        public static readonly PageAnchor Sentinel = new(DateTime.MinValue, Guid.Empty);
     }
 
     private async Task<int> GetAuthorizationCountCachedAsync(
@@ -273,9 +293,11 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         return totalCount;
     }
 
-    // Builds: (iot == 'x' && (int)vha.Value <= 5) || (iot == 'y' && (int)vha.Value <= 3) || ...
-    // Using inline constants (no temp-table reference) forces PostgreSQL to use the (owner, id) index
-    // scan with per-row filter evaluation and early termination via LIMIT — no Sort node needed.
+    // Builds: (iot = ANY(@types_for_vha5) AND vha <= 5) OR (iot = ANY(@types_for_vha3) AND vha <= 3) OR ...
+    // Groups N auth pairs by MaxVha so the predicate has ≤7 OR terms (one per ZGW VHA level) regardless
+    // of how many types are authorized. List.Contains() translates to = ANY(ARRAY[...]) in PostgreSQL —
+    // a single operator, efficient for large type sets. NULL LatestVertrouwelijkheidAanduiding evaluates
+    // to UNKNOWN in SQL → row excluded, matching the old JOIN behavior.
     private static Expression<Func<EnkelvoudigInformatieObject, bool>> BuildInlineAuthorizationPredicate(
         List<TempInformatieObjectAuthorization> authPairs
     )
@@ -285,18 +307,23 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         if (authPairs.Count == 0)
             return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(Expression.Constant(false), param);
 
+        var grouped = authPairs
+            .GroupBy(p => p.MaximumVertrouwelijkheidAanduiding)
+            .Select(g => (MaxVha: g.Key, Types: g.Select(p => p.InformatieObjectType).ToList()))
+            .ToList();
+
+        var iotProp = Expression.Property(param, nameof(EnkelvoudigInformatieObject.InformatieObjectType));
+        var vhaNullable = Expression.Property(param, nameof(EnkelvoudigInformatieObject.LatestVertrouwelijkheidAanduiding));
+        var vhaInt = Expression.Convert(Expression.Property(vhaNullable, "Value"), typeof(int));
+        var containsMethod = typeof(List<string>).GetMethod(nameof(List<string>.Contains))!;
+
         Expression? body = null;
-        foreach (var pair in authPairs)
+        foreach (var (maxVha, types) in grouped)
         {
-            var iotProp = Expression.Property(param, nameof(EnkelvoudigInformatieObject.InformatieObjectType));
-            var iotEq = Expression.Equal(iotProp, Expression.Constant(pair.InformatieObjectType));
-
-            var vhaNullable = Expression.Property(param, nameof(EnkelvoudigInformatieObject.LatestVertrouwelijkheidAanduiding));
-            var vhaInt = Expression.Convert(Expression.Property(vhaNullable, "Value"), typeof(int));
-            var vhaLe = Expression.LessThanOrEqual(vhaInt, Expression.Constant(pair.MaximumVertrouwelijkheidAanduiding));
-
-            var pairExpr = Expression.AndAlso(iotEq, vhaLe);
-            body = body == null ? pairExpr : Expression.OrElse(body, pairExpr);
+            var containsExpr = Expression.Call(Expression.Constant(types), containsMethod, iotProp);
+            var vhaLe = Expression.LessThanOrEqual(vhaInt, Expression.Constant(maxVha));
+            var groupExpr = Expression.AndAlso(containsExpr, vhaLe);
+            body = body == null ? groupExpr : Expression.OrElse(body, groupExpr);
         }
 
         return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(body!, param);
@@ -316,7 +343,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
 
         // Only reference the versie navigation when versie-based filters are actually set.
         // This avoids an unnecessary LEFT JOIN that prevents the planner from using the
-        // sorted (owner, id) covering index with early termination.
+        // sorted (owner, creationtime, id) covering index with early termination.
         bool hasVersieFilters = filter.Bronorganisatie != null || filter.Identificatie != null || filterTrefwoorden_In != null;
 
         if (!hasVersieFilters)

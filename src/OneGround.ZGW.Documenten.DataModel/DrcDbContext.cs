@@ -162,6 +162,21 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             .IncludeProperties(e => new { e.InformatieObjectType, e.LatestVertrouwelijkheidAanduiding })
             .HasDatabaseName("t3b_IX_eio_owner_id_incl_type_latest_vha");
 
+        // Covering index for cursor-based pagination on (CreationTime DESC, Id ASC).
+        // Allows Index Only Scan with inline auth predicate — no heap access needed to evaluate
+        // InformatieObjectType and LatestVertrouwelijkheidAanduiding from the INCLUDE columns.
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObject>()
+            .HasIndex(e => new
+            {
+                e.Owner,
+                e.CreationTime,
+                e.Id,
+            })
+            .IsDescending(false, true, false)
+            .IncludeProperties(e => new { e.InformatieObjectType, e.LatestVertrouwelijkheidAanduiding })
+            .HasDatabaseName("t3b_IX_eio_owner_creationtime_id_incl_type_vha");
+
         // Define 1:N relation between EnkelvoudigInformatieObject and EnkelvoudigInformatieObjectVersie
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()
