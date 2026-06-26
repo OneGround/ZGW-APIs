@@ -54,11 +54,11 @@ Each API has a Dutch name and a 2–3 letter role code (`ServiceRoleName` in `On
 | BRC | Besluiten | Besluitregistratie | Decisions |
 | NRC | Notificaties | Notificatieroutering | Subscriptions + change notifications |
 | AC | Autorisaties | Autorisatie | App access/authorization |
-| RL | Referentielijsten | — | Reference lists (proxy to external selectielijst) |
+| RL | Referentielijsten | — | Reference lists (process/result types etc.) served from static data bundled in `Web/Data/`; no DB |
 
 Async work runs in two message listeners (Hangfire + MassTransit/RabbitMQ): `OneGround.ZGW.Documenten.Messaging.Listener` (DRC_LISTENER) and `OneGround.ZGW.Notificaties.Messaging.Listener` (NRC_LISTENER).
 
-> The `Roxit.ZGW.*` directories under `src/` and `src/Tests/` are stale leftovers (`bin`/`obj` only) and are **not** in any solution. Work only in `OneGround.ZGW.*`. Note that csproj/assembly names drop the prefix (e.g. dir `OneGround.ZGW.Zaken.Web` holds `ZGW.Zaken.Web.csproj`).
+> By design, csproj/assembly names drop the `OneGround` prefix for brevity — e.g. dir `OneGround.ZGW.Zaken.Web` holds `ZGW.Zaken.Web.csproj` (assembly `OneGround.ZGW.Zaken.Web`). The `Roxit.ZGW.*` directories under `src/` and `src/Tests/` are stale leftovers (`bin`/`obj` only), not in any solution — work only in `OneGround.ZGW.*`.
 
 ## Per-API project layering
 
