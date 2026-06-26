@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 
 namespace OneGround.ZGW.DataAccess;
 
@@ -38,14 +39,12 @@ public abstract class BaseDbContextFactory<TDbContext> : IDesignTimeDbContextFac
 
     protected DbContextOptionsBuilder<TDbContext> CreateDbContextOptionsBuilder()
     {
+        var dataSource = new NpgsqlDataSourceBuilder(ConnectionString)
+            .UseNodaTime()
+            .Build();
+
         var optionsBuilder = new DbContextOptionsBuilder<TDbContext>();
-        optionsBuilder.UseNpgsql(
-            ConnectionString,
-            x =>
-            {
-                x.UseNetTopologySuite().UseNodaTime();
-            }
-        );
+        optionsBuilder.UseNpgsql(dataSource, x => x.UseNetTopologySuite().UseNodaTime());
 
         return optionsBuilder;
     }
