@@ -12,8 +12,10 @@ public static class NotificatiesJobsServiceExtensions
     {
         services.AddOptions<NotificatiesJobsOptions>().Configure(configureOptions).ValidateOnStart();
 
-        services.AddKeyedSingleton<NpgsqlDataSource>(HangfireServiceKeys.DataSource, (sp, _) =>
-            new NpgsqlDataSourceBuilder(sp.GetRequiredService<IOptions<NotificatiesJobsOptions>>().Value.ConnectionString).Build());
+        services.AddKeyedSingleton<NpgsqlDataSource>(
+            HangfireServiceKeys.DataSource,
+            (sp, _) => new NpgsqlDataSourceBuilder(sp.GetRequiredService<IOptions<NotificatiesJobsOptions>>().Value.ConnectionString).Build()
+        );
 
         services.AddSingleton<NotificatiesHangfireConnectionFactory>();
 

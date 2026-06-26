@@ -39,9 +39,9 @@ public abstract class BaseDbContextFactory<TDbContext> : IDesignTimeDbContextFac
 
     protected DbContextOptionsBuilder<TDbContext> CreateDbContextOptionsBuilder()
     {
-        var dataSource = new NpgsqlDataSourceBuilder(ConnectionString)
-            .UseNodaTime()
-            .Build();
+        var builder = new NpgsqlDataSourceBuilder(ConnectionString);
+        builder.UseNodaTime();
+        var dataSource = builder.Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<TDbContext>();
         optionsBuilder.UseNpgsql(dataSource, x => x.UseNetTopologySuite().UseNodaTime());

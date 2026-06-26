@@ -11,8 +11,10 @@ public static class DocumentenJobsServiceCollectionExtensions
     {
         services.AddOptions<DocumentenJobsOptions>().Configure(configureOptions).ValidateOnStart();
 
-        services.AddKeyedSingleton<NpgsqlDataSource>(HangfireServiceKeys.DataSource, (sp, _) =>
-            new NpgsqlDataSourceBuilder(sp.GetRequiredService<IOptions<DocumentenJobsOptions>>().Value.ConnectionString).Build());
+        services.AddKeyedSingleton<NpgsqlDataSource>(
+            HangfireServiceKeys.DataSource,
+            (sp, _) => new NpgsqlDataSourceBuilder(sp.GetRequiredService<IOptions<DocumentenJobsOptions>>().Value.ConnectionString).Build()
+        );
 
         services.AddSingleton<DocumentenHangfireConnectionFactory>();
     }
