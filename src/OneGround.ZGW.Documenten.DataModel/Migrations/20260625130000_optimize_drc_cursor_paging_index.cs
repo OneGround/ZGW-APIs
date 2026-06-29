@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 CREATE INDEX CONCURRENTLY IF NOT EXISTS ""t3b_IX_eio_owner_creationtime_id_incl_type_vha""
     ON public.enkelvoudiginformatieobjecten USING btree
     (owner COLLATE pg_catalog.""default"" ASC NULLS LAST,
-     creationtime DESC NULLS LAST,
+     creationtime DESC NULLS FIRST,
      id ASC NULLS LAST)
     INCLUDE (informatieobjecttype, latest_vertrouwelijkheidaanduiding)
     TABLESPACE pg_default;
