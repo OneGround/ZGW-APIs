@@ -17,5 +17,6 @@ public static class NotificatiesJobsServiceExtensions
     public static void AddNotificatiesServerJobs(this IServiceCollection services)
     {
         services.AddTransient<NotificatieJob>();
+        services.AddTransient<BlockFailingSubscriptionsJob>();
     }
 }
