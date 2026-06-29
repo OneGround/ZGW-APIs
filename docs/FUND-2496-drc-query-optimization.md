@@ -81,20 +81,32 @@ fallback, and the phase-2 fetch — order through a single private helper
 every `ORDER BY` matches that exact tuple, so funnelling them through one definition prevents a
 future ordering change from silently desyncing the seek from the sort.
 
-### 3. Count query — JOIN against temp table with planner hints
+### 3. Count query — same inline predicate, `enable_bitmapscan = off`
 
-For the count query (which must scan all matching rows), the inline OR predicate is intentionally
-**not** used. At scale, PostgreSQL would choose a BitmapOr plan that becomes lossy, causing
-millions of heap rechecks (~29 seconds). Instead, the count query:
+The count reuses the **same query** as the paged query — it already carries the inline VHA-grouped
+authorization predicate — so it is just a `COUNT(*)` over that query. No temp-table `JOIN`, no
+separate auth logic. (Earlier this was a dedicated `JOIN` against `TempInformatieObjectAuthorization`
+forced into a Hash Join via `SET LOCAL enable_nestloop = off`; that became unnecessary once the
+predicate was grouped by VHA level and the `(owner, InformatieObjectType, LatestVertrouwelijkheidAanduiding)`
+covering index existed.)
 
-- Joins directly against `TempInformatieObjectAuthorization` on `InformatieObjectType`.
-- Uses `LatestVertrouwelijkheidAanduiding` on the EIO row (no versie join).
-- Conditionally applies `SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB'`
-  within a transaction when no selectivity filters are set. This forces the planner to choose
-  a Hash Join (single streaming pass, O(N+M)) over Nested Loop.
-- The `anyFiltersSet` guard prevents the hint from firing when `Identificatie`,
-  `Bronorganisatie`, `Uuid_In`, or `Trefwoorden_In` are provided — in those cases the result
-  set is small enough that the planner chooses correctly on its own.
+The one risk specific to count: unlike the paged query there is **no `LIMIT`** to terminate early, so
+the planner has to process all matching rows. Without a selectivity filter (~1M rows) it may pick a
+**BitmapOr** plan that turns lossy at scale and triggers millions of heap rechecks (~29s). To prevent
+that, the count:
+
+- Conditionally applies `SET LOCAL enable_bitmapscan = off` within a transaction when no selectivity
+  filters are set. This steers the planner to a single **Index-Only Scan + filter + aggregate** over
+  the `t3b_IX_eio_owner_iot_latest_vha` covering index (`InformatieObjectType` and
+  `LatestVertrouwelijkheidAanduiding` are both in the index, so no heap access) — O(N), no BitmapOr.
+- The `anyFiltersSet` guard skips the hint when `Identificatie`, `Bronorganisatie`, `Uuid_In`, or
+  `Trefwoorden_In` are provided — those make the result set small enough that the planner chooses
+  correctly on its own.
+
+> **Must be validated with `EXPLAIN ANALYZE` on the largest tenant (`852256450`) before merge.** The
+> prior ~29s figure was measured before the VHA-grouping and the covering index existed, so it should
+> no longer apply — but the count is the one path without an early-exit `LIMIT`, so the planner's
+> choice here is the thing to confirm.
 
 ### 4. Cached count and anchor values
 
@@ -102,10 +114,10 @@ Both the total count and the authorization count are cached in distributed cache
 5-minute TTL, keyed on `(rsin, filter parameters)`. This avoids repeated expensive `COUNT(*)`
 queries during pagination of the same result set.
 
-### 5. Optional cursor-based pagination (v1.5 only, experimental)
+### 5. Optional cursor-based pagination (v1.5 only)
 
 A feature flag `Application:EnkelvoudigInformatieObjectenCursorPaging` enables keyset
-(seek-method) pagination for v1.5. When active, the query seeks past the previous page's anchor
+(seek-method) pagination for v1.5. When active (the default), the query seeks past the previous page's anchor
 instead of using `OFFSET`, making deep-page navigation O(K) instead of O(N).
 
 Because the result ordering is `(CreationTime DESC, Id ASC)`, the anchor is a **composite**
@@ -126,6 +138,27 @@ functionally correct, just less optimal.
 
 The flag is read directly from `IConfiguration` on every request — Consul-backed configuration
 reloads without a service restart.
+
+### 6. Same inline predicate applied to `GetAllVerzendingen`
+
+`GetAllVerzendingenQueryHandler` (v1.5) was migrated to the same pattern:
+
+- The paged query's temp-table `EXISTS` is replaced by the inline VHA-grouped predicate, built over
+  the `Verzending → InformatieObject` navigation (`InformatieObjectType` and
+  `LatestVertrouwelijkheidAanduiding` live on the EIO). The `Verzending → EIO` join itself remains —
+  those columns are only available there.
+- The count reuses that **same query** (it already carries the inline predicate), so the page and the
+  count share one predicate and can no longer drift; the old separate double-`JOIN` count is gone.
+
+The count uses the **same `SET LOCAL enable_bitmapscan = off`** lever as the EIO count (guarded by the
+same `anyFiltersSet` check). It shares the EIO count's failure mode — a lossy `BitmapOr` on the
+OR-predicate — so the same hint applies. The earlier `enable_nestloop = off` was carried over from the
+pre-inline version, where it compensated for the planner's cardinality misestimate on the **temp
+authorization table**; that table is no longer in the count query, so the reason is gone, and forcing a
+Hash Join could even hurt if `Verzendingen` is small (a nested-loop PK lookup into EIO would be
+cheaper). The `Verzending → EIO` join strategy is therefore left to the planner, which now has real
+statistics. Like the EIO count, this still needs an `EXPLAIN ANALYZE` confirmation on
+production-scale data before merge.
 
 ---
 
@@ -200,8 +233,8 @@ builds cannot run inside a transaction). `Down` drops it with `DROP INDEX CONCUR
 | `src/OneGround.ZGW.Documenten.Web/Configuration/ApplicationConfiguration.cs` | Added `EnkelvoudigInformatieObjectenCursorPaging` property |
 | `src/OneGround.ZGW.Documenten.Web/Handlers/v1/GetAllEnkelvoudigInformatieObjectenQueryHandler.cs` | Inline auth predicate, two-phase pagination, cached count, `anyFiltersSet` hint |
 | `src/OneGround.ZGW.Documenten.Web/Handlers/v1/1/GetAllEnkelvoudigInformatieObjectenQueryHandler.cs` | Same as v1.0 plus `BestandsDelen` include in phase 2 |
-| `src/OneGround.ZGW.Documenten.Web/Handlers/v1/5/GetAllEnkelvoudigInformatieObjectenQueryHandler.cs` | Inline auth predicate **grouped by VHA level** (`ANY` per level); `(CreationTime DESC, Id ASC)` ordering centralized in an `OrderByPage` helper shared by all four paging paths; two-phase pagination; cached count; cursor paging with composite `PageAnchor(CreationTime, Id)`; simplified count query via `LatestVertrouwelijkheidAanduiding` |
-| `src/OneGround.ZGW.Documenten.Web/Handlers/v1/5/GetAllVerzendingenQueryHandler.cs` | Auth filter and count query updated to use `LatestVertrouwelijkheidAanduiding` (eliminates versie join) |
+| `src/OneGround.ZGW.Documenten.Web/Handlers/v1/5/GetAllEnkelvoudigInformatieObjectenQueryHandler.cs` | Inline auth predicate **grouped by VHA level** (`ANY` per level); `(CreationTime DESC, Id ASC)` ordering centralized in an `OrderByPage` helper shared by all four paging paths; two-phase pagination; cached count; cursor paging with composite `PageAnchor(CreationTime, Id)`; count reuses the same inline-predicate query (no temp-table JOIN) with `SET LOCAL enable_bitmapscan = off` to force an Index-Only Scan |
+| `src/OneGround.ZGW.Documenten.Web/Handlers/v1/5/GetAllVerzendingenQueryHandler.cs` | Same inline VHA-grouped auth predicate over the `Verzending → InformatieObject` navigation (replaces the temp-table `EXISTS` in the paged query); count reuses that same query (no separate double-JOIN) with `SET LOCAL enable_bitmapscan = off`, aligned with the EIO count (the old `enable_nestloop = off` was for the now-removed temp-table join) |
 | `src/OneGround.ZGW.Documenten.Web/Handlers/v1/GetAllGebruiksRechtenQuery.cs` | Auth filter updated to use `LatestVertrouwelijkheidAanduiding` |
 | `src/OneGround.ZGW.Documenten.Web/Handlers/v1/GetAllObjectInformatieObjectenQuery.cs` | Auth filter updated to use `LatestVertrouwelijkheidAanduiding` |
 
@@ -212,10 +245,11 @@ builds cannot run inside a transaction). `Down` drops it with `DROP INDEX CONCUR
 - **NULL safety:** `LatestVertrouwelijkheidAanduiding` is nullable. The `.Value` access in SQL
   produces `UNKNOWN` (not `TRUE`) when the column is `NULL`, so rows without a version are
   excluded — consistent with the previous JOIN-based behavior.
-- **`SET LOCAL` requires a transaction:** The planner hints are issued with `SET LOCAL` inside
-  `BeginTransactionAsync`. Without an active transaction, PostgreSQL silently promotes `SET LOCAL`
-  to a session-scoped `SET`, which would affect subsequent queries on the same pooled connection.
-  The transaction is disposed after the count query, automatically reverting the settings.
+- **`SET LOCAL` requires a transaction:** The `enable_bitmapscan = off` hint for the count is issued
+  with `SET LOCAL` inside `BeginTransactionAsync`. Without an active transaction, PostgreSQL silently
+  promotes `SET LOCAL` to a session-scoped `SET`, which would affect subsequent queries on the same
+  pooled connection. The transaction is disposed after the count query, automatically reverting the
+  setting.
 - **`TempInformatieObjectAuthorization` is session-scoped:** The temp table is created once per
   request and holds at most 25 rows. Fetching it into C# memory for the inline predicate is
   negligible overhead.

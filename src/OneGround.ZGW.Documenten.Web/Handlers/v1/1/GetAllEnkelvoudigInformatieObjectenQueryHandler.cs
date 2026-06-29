@@ -80,7 +80,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the (owner, id) index
         // with early termination instead of materializing all matching rows.
         var pageIds = await query
-            .OrderBy(e => e.Id)
+            .OrderByDescending(e => e.CreationTime)
+            .ThenBy(e => e.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .Select(e => e.Id)
@@ -94,7 +95,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                     .Where(e => pageIds.Contains(e.Id))
                     .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
                         .ThenInclude(e => e.BestandsDelen)
-                    .OrderBy(e => e.Id)
+                    .OrderByDescending(e => e.CreationTime)
+                    .ThenBy(e => e.Id)
                     .ToListAsync(cancellationToken)
                 : [];
 

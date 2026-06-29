@@ -87,12 +87,13 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             query = query.Where(BuildInlineAuthorizationPredicate(authPairs));
         }
 
-        // For count with authorization: use a JOIN-based query (not the inline OR predicate) so
-        // PostgreSQL can pick a Hash Join. The inline OR predicate has no join → PostgreSQL picks
-        // BitmapOr which becomes lossy at scale and causes massive heap rechecks (4M+ rows, 29s).
-        // A JOIN with enable_nestloop=off forces a single streaming Hash Join pass — O(N+M).
+        // Count with authorization reuses the same query (it already carries the inline VHA-grouped
+        // auth predicate), so no temp-table JOIN is needed. Without a selectivity filter the planner
+        // may pick a BitmapOr that turns lossy at scale and triggers millions of heap rechecks (~29s);
+        // GetAuthorizationCountCachedAsync forces enable_bitmapscan=off so it uses the
+        // (owner, iot, vha) covering index as a single Index-Only Scan + aggregate — O(N), no heap.
         var totalCount = hasAuthorizationFilter
-            ? await GetAuthorizationCountCachedAsync(rsinFilter, filter, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
+            ? await GetAuthorizationCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
             : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
 
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
@@ -222,8 +223,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     }
 
     private async Task<int> GetAuthorizationCountCachedAsync(
-        Expression<Func<EnkelvoudigInformatieObject, bool>> rsinFilter,
-        Expression<Func<EnkelvoudigInformatieObject, bool>> filter,
+        IQueryable<EnkelvoudigInformatieObject> query,
         GetAllEnkelvoudigInformatieObjectenFilter filterModel,
         CancellationToken cancellationToken
     )
@@ -234,36 +234,30 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             key,
             factory: async () =>
             {
-                // Without selectivity filters the result set is ~1M rows and the planner severely
-                // underestimates cardinality, causing it to prefer Nested Loop. With filters the
-                // result is small enough that the planner chooses correctly on its own.
+                // The query already carries the inline VHA-grouped auth predicate, so this is just a
+                // COUNT over it — no temp-table JOIN. Unlike the paged query there is no LIMIT to
+                // terminate early, so without a selectivity filter (~1M rows) the planner may pick a
+                // BitmapOr that turns lossy and triggers millions of heap rechecks (~29s). Forcing
+                // enable_bitmapscan=off makes it use the (owner, iot, vha) covering index as a single
+                // Index-Only Scan + filter + aggregate. With a filter the result is small enough that
+                // the planner chooses correctly on its own.
                 bool anyFiltersSet =
                     !string.IsNullOrEmpty(filterModel.Identificatie)
                     || !string.IsNullOrEmpty(filterModel.Bronorganisatie)
                     || (filterModel.Uuid_In != null && filterModel.Uuid_In.Any())
                     || (filterModel.Trefwoorden_In != null && filterModel.Trefwoorden_In.Any());
 
-                // SET LOCAL requires an active transaction. Settings revert automatically when
-                // the transaction is disposed — safe for pooled connections.
-                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
                 if (!anyFiltersSet)
                 {
-                    await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_nestloop = off; SET LOCAL work_mem = '80MB';", cancellationToken);
+                    // SET LOCAL requires an active transaction. Settings revert automatically when
+                    // the transaction is disposed — safe for pooled connections.
+                    using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+                    await _context.Database.ExecuteSqlRawAsync("SET LOCAL enable_bitmapscan = off;", cancellationToken);
+
+                    return await query.CountAsync(cancellationToken);
                 }
 
-                return await _context
-                    .EnkelvoudigInformatieObjecten.AsNoTracking()
-                    .Where(rsinFilter)
-                    .Where(filter)
-                    .Join(
-                        _context.TempInformatieObjectAuthorization,
-                        o => o.InformatieObjectType,
-                        a => a.InformatieObjectType,
-                        (o, a) => new { Object = o, Auth = a }
-                    )
-                    .Where(oa => (int)oa.Object.LatestVertrouwelijkheidAanduiding.Value <= oa.Auth.MaximumVertrouwelijkheidAanduiding)
-                    .CountAsync(cancellationToken);
+                return await query.CountAsync(cancellationToken);
             },
             absoluteExpirationRelativeToNow: CountCacheLifetime,
             cancellationToken
