@@ -16,13 +16,13 @@ namespace OneGround.ZGW.Notificaties.Web.Handlers;
 class GetAbonnementQueryHandler : ZGWBaseHandler, IRequestHandler<GetAbonnementQuery, QueryResult<Abonnement>>
 {
     private readonly NrcDbContext _context;
-    private readonly ILogger<GetAllAbonnementenQueryHandler> _logger;
+    private readonly ILogger<GetAbonnementQueryHandler> _logger;
 
     public GetAbonnementQueryHandler(
         IConfiguration configuration,
         IAuthorizationContextAccessor authorizationContextAccessor,
         NrcDbContext context,
-        ILogger<GetAllAbonnementenQueryHandler> logger
+        ILogger<GetAbonnementQueryHandler> logger
     )
         : base(configuration, authorizationContextAccessor)
     {
@@ -39,6 +39,7 @@ class GetAbonnementQueryHandler : ZGWBaseHandler, IRequestHandler<GetAbonnementQ
         var abonnement = await _context
             .Abonnementen.AsNoTracking()
             .Where(rsinFilter)
+            .Where(a => !a.Blocked)
             .Include(a => a.AbonnementKanalen)
                 .ThenInclude(a => a.Kanaal)
             .Include(a => a.AbonnementKanalen)

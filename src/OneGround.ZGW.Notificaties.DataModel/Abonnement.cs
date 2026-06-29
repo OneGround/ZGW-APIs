@@ -26,5 +26,8 @@ public class Abonnement : OwnedEntity, IBaseEntity, IUrlEntity
     [MaxLength(8192)]
     public string Auth { get; set; }
 
+    [Column("blocked")]
+    public bool Blocked { get; set; }
+
     public IList<AbonnementKanaal> AbonnementKanalen { get; set; }
 }
