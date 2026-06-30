@@ -40,6 +40,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
             tableRows.AppendLine(
                 $@"
                 <tr class='{statusClass}'>
+                    <td>{state.AbonnementId}</td>
                     <td>{encodedUrl}</td>
                     <td class='status-badge'>{statusText}</td>
                     <td>{state.ConsecutiveFailures}</td>
@@ -566,6 +567,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Abonnement Id</th>
                                     <th>Subscriber URL</th>
                                     <th>Status</th>
                                     <th>Failures</th>

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Notificaties.DataModel;
@@ -11,9 +12,11 @@ using OneGround.ZGW.Notificaties.DataModel;
 namespace OneGround.ZGW.Notificaties.DataModel.Migrations
 {
     [DbContext(typeof(NrcDbContext))]
-    partial class NrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611121808_add_blocked_to_abonnementen")]
+    partial class add_blocked_to_abonnementen
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

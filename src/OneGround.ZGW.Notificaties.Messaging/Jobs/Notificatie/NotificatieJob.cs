@@ -58,6 +58,21 @@ public class NotificatieJob : INotificatieJob
                 _logger.LogWarning("Abonnement with id {abonnementId} not found. Probably deleted within the retry period of the job.", abonnementId);
                 return; // Job Ignored->Succeeded
             }
+            if (subscriber.Blocked)
+            {
+                _logger.LogWarning(
+                    "Abonnement {AbonnementId} is blocked. Notification on channel '{Kanaal}' not delivered. Unblock the subscription to resume delivery.",
+                    abonnementId,
+                    notificatie.Kanaal
+                );
+                context.WriteLineColored(
+                    ConsoleTextColor.Red,
+                    $"Abonnement '{abonnementId}' is blocked. Notification on channel '{notificatie.Kanaal}' not delivered."
+                );
+                throw new SubscriptionBlockedException(
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {notificatie.CorrelationId}: Abonnement '{abonnementId}' is blocked; notification on channel '{notificatie.Kanaal}' not delivered."
+                );
+            }
             if (string.IsNullOrWhiteSpace(subscriber.CallbackUrl))
             {
                 throw new GeneralException(
@@ -74,7 +89,7 @@ public class NotificatieJob : INotificatieJob
                 $"Try to deliver notification to subscriber '{subscriber.CallbackUrl}' on channel '{notificatie.Kanaal}'."
             );
 
-            var result = await _notificationSender.SendAsync(notificatie, subscriber.CallbackUrl, subscriber.Auth);
+            var result = await _notificationSender.SendAsync(notificatie, abonnementId, subscriber.CallbackUrl, subscriber.Auth);
             if (!result.Success)
             {
                 context.WriteLineColored(

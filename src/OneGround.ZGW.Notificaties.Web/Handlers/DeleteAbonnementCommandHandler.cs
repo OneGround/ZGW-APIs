@@ -36,7 +36,10 @@ class DeleteAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<DeleteAbo
 
         var rsinFilter = GetRsinFilterPredicate<Abonnement>();
 
-        var abonnement = await _context.Abonnementen.Where(rsinFilter).SingleOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
+        var abonnement = await _context
+            .Abonnementen.Where(rsinFilter)
+            .Where(a => !a.Blocked)
+            .SingleOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
 
         if (abonnement == null)
         {
