@@ -177,11 +177,22 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         if (useSeekMethod)
         {
             // Seek method: keyset pagination using (CreationTime, Id) as the composite anchor.
-            // Rows "after" the anchor in (CreationTime DESC, Id ASC) order satisfy:
-            //   CreationTime < anchor.CreationTime
-            //   OR (CreationTime == anchor.CreationTime AND Id > anchor.Id)
+            // Rows "after" the anchor in (CreationTime DESC, Id ASC) order are exactly those matching
+            // the OR-form:  CreationTime < anchor.CreationTime
+            //               OR (CreationTime == anchor.CreationTime AND Id > anchor.Id)
+            //
+            // That OR-form alone can never be a btree index-range bound (the mixed sort directions rule
+            // out a row-comparison rewrite), so PostgreSQL keeps it as a Filter and starts the scan at
+            // the top of the index — deep pages then re-scan everything newer than the anchor (offset-
+            // like cost). The leading "CreationTime <= anchor.CreationTime" conjunct fixes that: it is
+            // logically implied by both OR branches (so results are unchanged) but IS sargable, so
+            // PostgreSQL uses it as an Index Cond to start the scan at the anchor. The OR-form then only
+            // disambiguates the boundary rows (same CreationTime, Id tiebreak).
             orderedQuery = OrderByPage(
-                    query.Where(e => e.CreationTime < anchor!.CreationTime || (e.CreationTime == anchor.CreationTime && e.Id > anchor.Id))
+                    query.Where(e =>
+                        e.CreationTime <= anchor!.CreationTime
+                        && (e.CreationTime < anchor.CreationTime || (e.CreationTime == anchor.CreationTime && e.Id > anchor.Id))
+                    )
                 )
                 .Take(request.Pagination.Size);
         }
@@ -301,9 +312,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         if (authPairs.Count == 0)
             return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(Expression.Constant(false), param);
 
+        // Order groups by VHA and types within each group so the generated SQL is deterministic
+        // regardless of the (unordered) temp-table fetch order — stable SQL text => plan-cache reuse.
         var grouped = authPairs
             .GroupBy(p => p.MaximumVertrouwelijkheidAanduiding)
-            .Select(g => (MaxVha: g.Key, Types: g.Select(p => p.InformatieObjectType).ToList()))
+            .OrderBy(g => g.Key)
+            .Select(g => (MaxVha: g.Key, Types: g.Select(p => p.InformatieObjectType).OrderBy(t => t).ToList()))
             .ToList();
 
         var iotProp = Expression.Property(param, nameof(EnkelvoudigInformatieObject.InformatieObjectType));
