@@ -92,4 +92,5 @@ MediatR (CQRS), FluentValidation, AutoMapper, EF Core 8 + Npgsql, MassTransit + 
 - `docs/AUDITTRAIL.md` — audit-trail mechanics
 - `docs/DATAPROTECTION.md` — encryption/HMAC strategy + key generation
 - `docs/LOGS.md` — Serilog configuration
+- `docs/nrc/CIRCUIT_BREAKER.md` — per-subscription circuit breaker for notification delivery: state machine, Redis keys, automatic blocking
 - `localdev/README.md` — full local Docker stack, Keycloak, certs
