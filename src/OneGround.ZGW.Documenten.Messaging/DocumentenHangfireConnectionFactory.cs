@@ -1,22 +1,20 @@
 using Hangfire.PostgreSql;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
 namespace OneGround.ZGW.Documenten.Messaging;
 
 public class DocumentenHangfireConnectionFactory : IConnectionFactory
 {
-    private readonly IOptions<DocumentenJobsOptions> _options;
+    private readonly NpgsqlDataSource _dataSource;
 
-    public DocumentenHangfireConnectionFactory(IOptions<DocumentenJobsOptions> options)
+    public DocumentenHangfireConnectionFactory([FromKeyedServices(HangfireServiceKeys.DataSource)] NpgsqlDataSource dataSource)
     {
-        _options = options;
+        _dataSource = dataSource;
     }
 
     NpgsqlConnection IConnectionFactory.GetOrCreateConnection()
     {
-        var connection = new NpgsqlConnection(_options.Value.ConnectionString);
-        connection.Open();
-        return connection;
+        return _dataSource.OpenConnection();
     }
 }
