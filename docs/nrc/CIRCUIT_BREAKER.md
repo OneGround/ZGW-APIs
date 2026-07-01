@@ -11,7 +11,7 @@ If a subscription has been continuously failing for longer than a configurable l
 ## State Machine
 
 ```
-            3 failures
+            FailureThreshold failures
  CLOSED ─────────────────► OPEN
    ▲                          │
    │  success (half-open)     │  BreakDuration elapses
