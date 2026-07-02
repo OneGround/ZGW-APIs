@@ -497,7 +497,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             ? MimeTypeHelper.GetMimeType(enkelvoudigInformatieObjectVersie.Bestandsnaam)
             : enkelvoudigInformatieObjectVersie.Formaat;
 
-        return File(resultDwnl.Result, mimeType);
+        return File(resultDwnl.Result, MimeTypeHelper.GetSafeDownloadMimeType(mimeType));
     }
 
     //
