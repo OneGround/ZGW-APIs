@@ -21,20 +21,17 @@ using VertrouwelijkheidAanduiding = OneGround.ZGW.Common.DataModel.Vertrouwelijk
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.HandlerTests;
 
 /// <summary>
-/// Regression tests for the pre-4 owner filter on the versie subquery in
-/// GetAllVerzendingenQueryHandler (Handlers/v1/5/GetAllVerzendingenQueryHandler.cs).
+/// Tests for authorization filtering in GetAllVerzendingenQueryHandler
+/// (Handlers/v1/5/GetAllVerzendingenQueryHandler.cs).
 ///
-/// Bug: the inner .Any(ver => ver.Id == ... &amp;&amp; auth check) had no ver.Owner == _rsin guard
-/// on the page-query EXISTS subquery (lines 67–75). The count query at line 165 already had
-/// the filter via a JOIN .Where(ver => ver.Owner == _rsin), which is why analysis §1.6
-/// mistakenly marked Verzending as safe — the page query was overlooked.
+/// The handler filters on the denormalized LatestVertrouwelijkheidAanduiding on the EIO (reached via
+/// the Verzending → InformatieObject navigation), combined with the owner (rsin) filter. These tests
+/// cover: (1) an item whose VHA exceeds the authorized maximum for its type is excluded, and
+/// (2) only the current tenant's items are returned.
 ///
-/// Without the filter the planner probes all 70M versie rows for authorization, and — more
-/// critically — a Verzending whose EIO's LatestVersieId accidentally resolves to a versie
-/// owned by another tenant can produce a false-positive auth result.
-///
-/// Fix: add ver.Owner == _rsin as the FIRST predicate inside the Any() call so the
-/// database can use the (Owner, Id, Vertrouwelijkheidaanduiding) covering index.
+/// Note: the real null-VHA → excluded behaviour relies on SQL UNKNOWN semantics and can only be
+/// verified against PostgreSQL; the EF InMemory provider evaluates the predicate as plain C# (so a
+/// null .Value would throw), which is why the seeded EIOs always set LatestVertrouwelijkheidAanduiding.
 /// </summary>
 public class GetAllVerzendingenQueryHandlerTests
 {
@@ -43,51 +40,20 @@ public class GetAllVerzendingenQueryHandlerTests
     private const string InformatieObjectTypeX = "http://catalogi.example.com/informatieobjecttypen/type-x";
 
     /// <summary>
-    /// Regression test: RSIN_A's EIO has LatestVersieId that points to RSIN_B's versie
-    /// (openbaar — would pass the auth threshold). Without ver.Owner == _rsin in the subquery,
-    /// the handler returns the Verzending because it finds RSIN_B's versie satisfying
-    /// the auth check — a cross-tenant false positive. With the fix the subquery only
-    /// matches versies owned by RSIN_A, so no versie is found and the Verzending
-    /// is correctly excluded.
+    /// Auth filtering on the denormalized EIO column: a Verzending whose EIO's
+    /// LatestVertrouwelijkheidAanduiding exceeds the authorized maximum for its type must be excluded.
+    /// Here auth allows typeX only up to openbaar, but RSIN_A's EIO is vertrouwelijk, so its Verzending
+    /// must NOT be returned. (Replaces an earlier test whose premise — resolving the VHA via a
+    /// cross-tenant versie subquery — is obsolete now that the handler reads the denormalized
+    /// LatestVertrouwelijkheidAanduiding directly on the EIO.)
     /// </summary>
     [Fact]
-    public async Task Handle_WithAuthorizationFilter_DoesNotMatchVersieFromDifferentOwner_Verzending()
+    public async Task Handle_WithAuthorizationFilter_ExcludesItemWhoseVhaExceedsAuthThreshold_Verzending()
     {
         // Arrange
         using var ctx = BuildInMemoryDrcContext();
 
-        // RSIN_B has a versie with vha=openbaar that WOULD pass the auth check.
-        var rsinBVersieId = Guid.NewGuid();
-        var rsinBEioId = Guid.NewGuid();
-        ctx.EnkelvoudigInformatieObjecten.Add(
-            new EnkelvoudigInformatieObject
-            {
-                Id = rsinBEioId,
-                Owner = RsinB,
-                InformatieObjectType = InformatieObjectTypeX,
-                LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
-                CatalogusId = Guid.NewGuid(),
-                CreationTime = DateTime.UtcNow,
-            }
-        );
-        ctx.EnkelvoudigInformatieObjectVersies.Add(
-            new EnkelvoudigInformatieObjectVersie
-            {
-                Id = rsinBVersieId,
-                Owner = RsinB,
-                EnkelvoudigInformatieObjectId = rsinBEioId,
-                Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.openbaar, // would pass auth
-                Versie = 1,
-                Taal = "nld",
-                BeginRegistratie = DateTime.UtcNow,
-                Bestandsomvang = 0,
-                CreationTime = DateTime.UtcNow,
-            }
-        );
-
-        // RSIN_A has an EIO whose LatestVersieId points to RSIN_B's versie ID.
-        // (Without the owner filter the subquery resolves rsinBVersieId → finds
-        // RSIN_B's openbaar versie → auth passes → Verzending wrongly returned.)
+        // RSIN_A's EIO is typeX but classified 'vertrouwelijk' — above the authorized 'openbaar'.
         var rsinAEioId = Guid.NewGuid();
         ctx.EnkelvoudigInformatieObjecten.Add(
             new EnkelvoudigInformatieObject
@@ -95,8 +61,7 @@ public class GetAllVerzendingenQueryHandlerTests
                 Id = rsinAEioId,
                 Owner = RsinA,
                 InformatieObjectType = InformatieObjectTypeX,
-                // Deliberately point to RSIN_B's versie to expose the missing owner filter.
-                LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
+                LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.vertrouwelijk,
                 CatalogusId = Guid.NewGuid(),
                 CreationTime = DateTime.UtcNow,
             }
@@ -115,7 +80,7 @@ public class GetAllVerzendingenQueryHandlerTests
 
         await ctx.SaveChangesAsync();
 
-        // Auth allows typeX up to openbaar.
+        // Auth allows typeX only up to openbaar (vertrouwelijk is above this threshold).
         await SeedAuthTempTableAsync(ctx, maxVha: VertrouwelijkheidAanduiding.openbaar);
 
         var handler = BuildHandler(ctx, currentRsin: RsinA, hasAllAuthorizations: false);
@@ -130,9 +95,8 @@ public class GetAllVerzendingenQueryHandlerTests
             CancellationToken.None
         );
 
-        // Assert: RSIN_A's EIO has no own versie satisfying the auth check (only
-        // RSIN_B's versie matches the id, but the owner filter excludes it).
-        // The Verzending must NOT be returned.
+        // Assert: the EIO's VHA (vertrouwelijk) exceeds the authorized maximum (openbaar),
+        // so the Verzending must NOT be returned.
         Assert.Empty(result.Result.PageResult);
     }
 
@@ -198,6 +162,7 @@ public class GetAllVerzendingenQueryHandlerTests
                     Id = eioId,
                     Owner = rsin,
                     InformatieObjectType = InformatieObjectTypeX,
+                    LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
                     LatestEnkelvoudigInformatieObjectVersieId = versieId,
                     CatalogusId = Guid.NewGuid(),
                     CreationTime = DateTime.UtcNow,

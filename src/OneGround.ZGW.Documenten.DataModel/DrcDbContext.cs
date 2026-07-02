@@ -36,10 +36,6 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             .ToView(nameof(TempInformatieObjectAuthorization))
             .HasKey(t => t.InformatieObjectType);
 
-        modelBuilder.Entity<EnkelvoudigInformatieObject>().HasIndex(e => e.InformatieObjectType);
-
-        modelBuilder.Entity<EnkelvoudigInformatieObject>().HasIndex(e => e.Owner);
-
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Bronorganisatie);
 
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Identificatie);
@@ -95,15 +91,6 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
             })
             .IsDescending(false, false, true, false);
 
-        modelBuilder
-            .Entity<EnkelvoudigInformatieObjectVersie>()
-            .HasIndex(b => new
-            {
-                b.Owner,
-                b.Vertrouwelijkheidaanduiding,
-                b.Id,
-            });
-
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.InformatieObjectId);
 
         modelBuilder.Entity<ObjectInformatieObject>().HasIndex(e => e.Object);
@@ -130,14 +117,16 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
 
         modelBuilder.Entity<Verzending>().HasIndex(e => e.Betrokkene);
 
+        // Supports the auth COUNT query: JOIN on InformatieObjectType + WHERE LatestVertrouwelijkheidAanduiding <= MaxVha
         modelBuilder
             .Entity<EnkelvoudigInformatieObject>()
             .HasIndex(e => new
             {
                 e.Owner,
                 e.InformatieObjectType,
-                e.LatestEnkelvoudigInformatieObjectVersieId,
-            });
+                e.LatestVertrouwelijkheidAanduiding,
+            })
+            .HasDatabaseName("t3b_IX_eio_owner_iot_latest_vha");
 
         modelBuilder
             .Entity<EnkelvoudigInformatieObjectVersie>()
@@ -161,24 +150,32 @@ public class DrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDataMigrat
                 e.Identificatie,
             });
 
-        modelBuilder
-            .Entity<EnkelvoudigInformatieObjectVersie>()
-            .HasIndex(e => new
-            {
-                e.Vertrouwelijkheidaanduiding,
-                e.Id,
-                e.Owner,
-            });
-
         // GIN index on Trefwoorden array column for efficient overlap queries (trefwoorden filter)
         modelBuilder.Entity<EnkelvoudigInformatieObjectVersie>().HasIndex(e => e.Trefwoorden).HasMethod("gin");
 
-        // Covering index for the main list query pattern: RSIN filter → PK sort → FK lookup
+        // Covering index for the paginated list query: index scan on (Owner, Id) with inline auth predicate.
+        // IncludeProperties allows Index Only Scan — no heap access needed to evaluate the inline
+        // OR conditions on InformatieObjectType and LatestVertrouwelijkheidAanduiding.
         modelBuilder
             .Entity<EnkelvoudigInformatieObject>()
             .HasIndex(e => new { e.Owner, e.Id })
-            .IncludeProperties(e => new { e.InformatieObjectType, e.LatestEnkelvoudigInformatieObjectVersieId })
-            .HasDatabaseName("IX_eio_owner_id_incl_type_latest");
+            .IncludeProperties(e => new { e.InformatieObjectType, e.LatestVertrouwelijkheidAanduiding })
+            .HasDatabaseName("t3b_IX_eio_owner_id_incl_type_latest_vha");
+
+        // Covering index for cursor-based pagination on (CreationTime DESC, Id ASC).
+        // Allows Index Only Scan with inline auth predicate — no heap access needed to evaluate
+        // InformatieObjectType and LatestVertrouwelijkheidAanduiding from the INCLUDE columns.
+        modelBuilder
+            .Entity<EnkelvoudigInformatieObject>()
+            .HasIndex(e => new
+            {
+                e.Owner,
+                e.CreationTime,
+                e.Id,
+            })
+            .IsDescending(false, true, false)
+            .IncludeProperties(e => new { e.InformatieObjectType, e.LatestVertrouwelijkheidAanduiding })
+            .HasDatabaseName("t3b_IX_eio_owner_creationtime_id_incl_type_vha");
 
         // Define 1:N relation between EnkelvoudigInformatieObject and EnkelvoudigInformatieObjectVersie
         modelBuilder
