@@ -116,7 +116,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
 
         return await _cache.GetAsync(
             key,
@@ -154,7 +154,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
 
         return await _cache.GetAsync(
             key,

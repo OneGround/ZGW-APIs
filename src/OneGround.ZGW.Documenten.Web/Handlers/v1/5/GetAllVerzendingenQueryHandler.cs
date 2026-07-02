@@ -113,7 +113,7 @@ class GetAllVerzendingenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllVerzendingenFilter = filter });
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllVerzendingenFilter = filter });
 
         int totalCount = await _cache.GetAsync(
             key,
@@ -134,7 +134,7 @@ class GetAllVerzendingenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllVerzendingenFilter = filterModel });
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllVerzendingenFilter = filterModel });
 
         int totalCount = await _cache.GetAsync(
             key,

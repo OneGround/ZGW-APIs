@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Helpers;
@@ -33,6 +34,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     // TTL for cached count/page anchors. Count/Anchors for a given (rsin, page, filter) tuple are stable within this window.
     private static readonly TimeSpan CountCacheLifetime = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan AnchorCacheLifetime = TimeSpan.FromMinutes(5);
+
+    // Returned as the total count when the count query exceeds the command timeout on very large tenants.
+    // The unfiltered COUNT over the full owner partition can run for several seconds; rather than failing the
+    // whole request, we return this sentinel so the caller still gets a page. The real count reappears once the
+    // query completes within the timeout (e.g. after caches warm up); the sentinel is deliberately not cached.
+    private const int CountTimeoutSentinel = 999_999_999;
 
     public GetAllEnkelvoudigInformatieObjectenQueryHandler(
         ILogger<GetAllEnkelvoudigInformatieObjectenQueryHandler> logger,
@@ -92,9 +99,21 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // may pick a BitmapOr that turns lossy at scale and triggers millions of heap rechecks (~29s);
         // GetAuthorizationCountCachedAsync forces enable_bitmapscan=off so it uses the
         // (owner, iot, vha) covering index as a single Index-Only Scan + aggregate — O(N), no heap.
-        var totalCount = hasAuthorizationFilter
-            ? await GetAuthorizationCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
-            : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
+        int totalCount;
+        try
+        {
+            totalCount = hasAuthorizationFilter
+                ? await GetAuthorizationCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
+                : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
+        }
+        catch (Exception ex) when (IsCountTimeout(ex, cancellationToken))
+        {
+            // Don't fail the whole listing because the count is too expensive on this tenant — return a
+            // sentinel count and still serve the page. The factory threw before caching, so nothing poisoned
+            // the cache and the next request retries the real count.
+            _logger.LogWarning(ex, "Count query timed out for rsin {Rsin}; returning sentinel count {Sentinel}.", _rsin, CountTimeoutSentinel);
+            totalCount = CountTimeoutSentinel;
+        }
 
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
         // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
@@ -239,7 +258,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
 
         return await _cache.GetAsync(
             key,
@@ -281,8 +300,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        // Create a key for the current request+ClientId (uri contains the query-parameters as well)
-        var key = ObjectHasher.ComputeSha1Hash(new { ClientId = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
+        // Create a key for the current request+Rsin (uri contains the query-parameters as well)
+        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
 
         // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(
@@ -296,6 +315,26 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         );
 
         return totalCount;
+    }
+
+    // True only for a database command timeout on the count query — never for a genuine caller/client
+    // cancellation, which must keep bubbling up. A client-side Npgsql command timeout surfaces as an
+    // exception chain containing a TimeoutException; a server-side statement_timeout surfaces as a
+    // PostgresException with SqlState 57014 (query_canceled).
+    private static bool IsCountTimeout(Exception ex, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return false;
+
+        for (var current = ex; current != null; current = current.InnerException)
+        {
+            if (current is TimeoutException)
+                return true;
+            if (current is PostgresException { SqlState: PostgresErrorCodes.QueryCanceled })
+                return true;
+        }
+
+        return false;
     }
 
     // Builds: (iot = ANY(@types_for_vha5) AND vha <= 5) OR (iot = ANY(@types_for_vha3) AND vha <= 3) OR ...
