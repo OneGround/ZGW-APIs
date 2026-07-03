@@ -60,16 +60,13 @@ class GetAllObjectInformatieObjectenQueryHandler
                 cancellationToken
             );
 
-            // Use explicit subquery instead of top-level JOIN to avoid materializing
-            // all versie rows. With EXISTS, PostgreSQL can evaluate authorization per-row.
+            // Use EXISTS subquery instead of top-level JOIN to avoid a Sort on all matching rows.
+            // LatestVertrouwelijkheidAanduiding is denormalized on EIO — no join to versies needed.
+            // NULL LatestVertrouwelijkheidAanduiding evaluates to UNKNOWN in SQL — row excluded, matching old JOIN behavior.
             query = query.Where(o =>
-                _context.EnkelvoudigInformatieObjectVersies.Any(v =>
-                    v.Owner == _rsin
-                    && v.Id == o.InformatieObject.LatestEnkelvoudigInformatieObjectVersieId
-                    && _context.TempInformatieObjectAuthorization.Any(a =>
-                        a.InformatieObjectType == o.InformatieObject.InformatieObjectType
-                        && (int)v.Vertrouwelijkheidaanduiding <= a.MaximumVertrouwelijkheidAanduiding
-                    )
+                _context.TempInformatieObjectAuthorization.Any(a =>
+                    a.InformatieObjectType == o.InformatieObject.InformatieObjectType
+                    && (int)o.InformatieObject.LatestVertrouwelijkheidAanduiding.Value <= a.MaximumVertrouwelijkheidAanduiding
                 )
             );
         }
