@@ -18,7 +18,7 @@ public class NummerGeneratorTests
     private readonly Mock<ILogger<NummerGenerator<UnitTestDbContext>>> _loggerMock;
     private readonly Mock<ISqlCommandExecutor> _sqlCommandExecutor;
     private readonly DateTime _now = DateTime.Now;
-    private readonly string _rsin = "813264571";
+    private readonly string _rsin = "999993653";
 
     public NummerGeneratorTests()
     {

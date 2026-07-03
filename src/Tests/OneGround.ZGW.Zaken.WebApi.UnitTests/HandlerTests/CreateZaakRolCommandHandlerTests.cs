@@ -27,7 +27,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.HandlerTests;
 
 public class CreateZaakRolCommandHandlerTests : IAsyncLifetime
 {
-    private const string TestOwner = "813264571";
+    private const string TestOwner = "999993653";
     private const string TestZaakUrl = "http://zaken.local/api/v1/zaken/11111111-1111-1111-1111-111111111111";
     private const string TestRolTypeUrl = "http://catalogi.local/api/v1/roltypen/22222222-2222-2222-2222-222222222222";
     private const string TestZaakTypeUrl = "http://catalogi.local/api/v1/zaaktypen/33333333-3333-3333-3333-333333333333";

@@ -31,7 +31,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -64,7 +64,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "000001375",
+            Owner = "999990482",
         };
 
         var errors = new List<ValidationError>();
@@ -93,7 +93,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var existingEnkelvoudigInformatieObjectId = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221");
@@ -128,14 +128,14 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 Id = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911"),
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-                Owner = "813264571",
+                Owner = "999993653",
                 Lock = "e205101a45ab4fb082a35231d63f4151",
                 Locked = true,
             },
             Bronorganisatie = "1234",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var existingEnkelvoudigInformatieObjectId = new Guid("d57b1cf4-7f37-4ebc-91d5-be9066086911");
@@ -166,14 +166,14 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-                Owner = "813264571",
+                Owner = "999993653",
                 Lock = "e205101a45ab4fb082a35231d63f4151",
                 Locked = true,
             },
             Bronorganisatie = "2345",
             Identificatie = "DOCUMENT-2020-00000009",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var existingEnkelvoudigInformatieObjectId = new Guid("8a92aae3-bb25-4020-be90-8ef4132ada13");
@@ -205,7 +205,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             Bronorganisatie = "1234",
             Identificatie = "DOCUMENT-2020-00000002",
             Versie = 1,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -240,9 +240,9 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
-                Owner = "813264571",
+                Owner = "999993653",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -281,9 +281,9 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 InformatieObjectType = "https://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
-                Owner = "813264571",
+                Owner = "999993653",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -316,7 +316,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -365,7 +365,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             Titel = "new title",
             Taal = "EN",
             Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.geheim,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -393,7 +393,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         {
             Identificatie = "DOCUMENT-2020-00000009",
             InformatieObject = new EnkelvoudigInformatieObject { Locked = false, Lock = null },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -430,7 +430,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Lock = "99999999999999999999999999999999",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -467,7 +467,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -520,7 +520,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -576,7 +576,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -625,7 +625,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -676,7 +676,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -734,7 +734,7 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
             {
                 InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
             },
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var errors = new List<ValidationError>();
@@ -773,10 +773,10 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Identificatie = "DOCUMENT-2020-00000001",
                         Versie = 1,
                         Taal = string.Empty,
-                        Owner = "813264571",
+                        Owner = "999993653",
                     },
                 ],
-                Owner = "813264571",
+                Owner = "999993653",
             }
         );
 
@@ -793,10 +793,10 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Identificatie = "DOCUMENT-2020-00000002",
                         Versie = 1,
                         Taal = string.Empty,
-                        Owner = "813264571",
+                        Owner = "999993653",
                     },
                 ],
-                Owner = "813264571",
+                Owner = "999993653",
             }
         );
 
@@ -813,10 +813,10 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Identificatie = "DOCUMENT-2020-00000002",
                         Versie = 1,
                         Taal = string.Empty,
-                        Owner = "813264571",
+                        Owner = "999993653",
                     },
                 ],
-                Owner = "813264571",
+                Owner = "999993653",
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             }
@@ -836,10 +836,10 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Versie = 1,
                         Status = Status.definitief,
                         Taal = string.Empty,
-                        Owner = "813264571",
+                        Owner = "999993653",
                     },
                 ],
-                Owner = "813264571",
+                Owner = "999993653",
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             }
@@ -859,10 +859,10 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
                         Versie = 1,
                         Status = Status.in_bewerking,
                         Taal = string.Empty,
-                        Owner = "813264571",
+                        Owner = "999993653",
                     },
                 ],
-                Owner = "813264571",
+                Owner = "999993653",
                 Locked = true,
                 Lock = "e205101a45ab4fb082a35231d63f4151",
             }

@@ -83,7 +83,10 @@ foreach ($f in $files) {
     $lineNo = 0
     foreach ($line in ($text -split "`n")) {
         $lineNo++
-        foreach ($m in [regex]::Matches($line, '(?<!\d)\d{9}(?!\d)')) {
+        # \b boundaries treat letters/underscore as part of the token, so a 9-digit run
+        # embedded in a hex/GUID/UUID (e.g. "...-99c271455421") is NOT mistaken for a
+        # standalone BSN/RSIN. Genuine leaks are quote/space/colon-delimited and still match.
+        foreach ($m in [regex]::Matches($line, '\b\d{9}\b')) {
             $n = $m.Value
             if ((Test-Elfproef $n) -and -not $safeSet.Contains($n)) {
                 $violations.Add(("{0}:{1}: {2}" -f $f, $lineNo, $n))

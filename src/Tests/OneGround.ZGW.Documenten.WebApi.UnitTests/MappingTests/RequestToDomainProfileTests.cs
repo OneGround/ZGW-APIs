@@ -37,7 +37,7 @@ public class RequestToDomainProfileTests
     {
         // Setup
         _fixture.Customize<GetAllEnkelvoudigInformatieObjectenQueryParameters>(c =>
-            c.With(p => p.Identificatie, "DOC-2020-0000001").With(p => p.Bronorganisatie, "520087732")
+            c.With(p => p.Identificatie, "DOC-2020-0000001").With(p => p.Bronorganisatie, "999990561")
         );
         var value = _fixture.Create<GetAllEnkelvoudigInformatieObjectenQueryParameters>();
 
@@ -61,7 +61,7 @@ public class RequestToDomainProfileTests
 
         _fixture.Customize<EnkelvoudigInformatieObjectCreateRequestDto>(c =>
             c.With(p => p.Identificatie, "DOC-2020-0000001")
-                .With(p => p.Bronorganisatie, "520087732")
+                .With(p => p.Bronorganisatie, "999990561")
                 .With(p => p.CreatieDatum, "2020-11-12")
                 .With(p => p.Titel, "My document")
                 .With(p => p.Vertrouwelijkheidaanduiding, _fixture.Create<VertrouwelijkheidAanduiding>().ToString())
