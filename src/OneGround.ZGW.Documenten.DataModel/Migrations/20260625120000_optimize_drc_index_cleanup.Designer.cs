@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Documenten.DataModel;
@@ -12,9 +13,11 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations
 {
     [DbContext(typeof(DrcDbContext))]
-    partial class DrcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625120000_optimize_drc_index_cleanup")]
+    partial class optimize_drc_index_cleanup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -469,12 +472,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasIndex("Owner", "InformatieObjectType", "LatestVertrouwelijkheidAanduiding")
                         .HasDatabaseName("t3b_IX_eio_owner_iot_latest_vha");
-
-                    b.HasIndex("Owner", "CreationTime", "Id")
-                        .IsDescending(false, true, false)
-                        .HasDatabaseName("t3b_IX_eio_owner_creationtime_id_incl_type_vha");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Owner", "CreationTime", "Id"), new[] { "InformatieObjectType", "LatestVertrouwelijkheidAanduiding" });
 
                     b.ToTable("enkelvoudiginformatieobjecten");
                 });

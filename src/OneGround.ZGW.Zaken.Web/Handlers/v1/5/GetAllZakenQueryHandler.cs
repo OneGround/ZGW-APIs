@@ -162,11 +162,11 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         CancellationToken cancellationToken
     )
     {
-        // Create a key for the current request+ClientId (uri contains the query-parameters/geo as well)
+        // Create a key for the current request+Rsin (uri contains the query-parameters/geo as well)
         var key = ObjectHasher.ComputeSha1Hash(
             new
             {
-                ClientId = _rsin,
+                Rsin = _rsin,
                 GetAllZakenFilter = filter,
                 Geometrie = geometrie?.ToString(),
             }
