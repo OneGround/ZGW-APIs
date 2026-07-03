@@ -1,18 +1,22 @@
 name: CI PII Scan (BSN/RSIN)
 
+# No `paths:` filter: the scan must run on every push/PR to main so it can serve
+# as a required status check. A path-filtered workflow is *skipped* (not "success")
+# on unrelated changes, and a skipped required check leaves PRs stuck "waiting for
+# status" forever. The script already scopes itself to tracked src/ and docs/ files
+# and exits fast when nothing matches, so running it unconditionally is cheap.
 on:
   push:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'docs/**'
-      - '.github/workflows/ci-pii-scan.yml'
-      - '.github/scripts/Scan-ForPii.ps1'
   pull_request:
     branches:
       - main
   workflow_dispatch:
+
+# Read-only token: this job only checks out and scans files.
+permissions:
+  contents: read
 
 jobs:
   pii-scan:
@@ -22,6 +26,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # No git operations after checkout — don't leave GITHUB_TOKEN in .git/config.
+          persist-credentials: false
 
       - name: Install PowerShell
         uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0

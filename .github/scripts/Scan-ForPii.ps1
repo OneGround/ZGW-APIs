@@ -20,6 +20,16 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+# Resolve and validate before handing it to an external process — fail closed on a bad/missing path
+# rather than passing an unvalidated string through to `git -C`.
+try {
+    $Root = (Resolve-Path -LiteralPath $Root -ErrorAction Stop).Path
+}
+catch {
+    Write-Host "::error::Root path '$Root' does not exist or is not accessible: $($_.Exception.Message)"
+    exit 1
+}
+
 # Officially designated PUBLIC test values (RvIG "Testset persoonslijsten" / BRP-API proefomgeving).
 # These are government-published and safe to appear anywhere. Keep in sync with the RvIG dataset.
 $safe = @(
@@ -37,13 +47,37 @@ function Test-Elfproef([string]$n) {
     return ($sum % 11 -eq 0 -and $sum -ne 0)
 }
 
-$files = & git -C $Root ls-files -- 'src/**' 'docs/**' | Where-Object { $_ }
+# Build an explicit argument array (no shell interpolation) and validate that the resolved
+# $Root is a git work tree before running against it. On PowerShell 7.4+ a native command
+# that exits nonzero throws under $ErrorActionPreference='Stop' (via
+# $PSNativeCommandUseErrorActionPreference), so catch that; the $LASTEXITCODE check remains
+# for hosts where that preference is off.
+$gitArgs = @('-C', $Root, 'ls-files', '--', 'src/**', 'docs/**')
+try {
+    $files = & git @gitArgs | Where-Object { $_ }
+}
+catch {
+    Write-Host "::error::git ls-files failed in '$Root': $($_.Exception.Message) — not a git work tree?"
+    exit 1
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "::error::git ls-files failed in '$Root' (exit $LASTEXITCODE) — not a git work tree?"
+    exit 1
+}
 $violations = [System.Collections.Generic.List[string]]::new()
 
 foreach ($f in $files) {
     $full = Join-Path $Root $f
     if (-not (Test-Path -LiteralPath $full)) { continue }
-    $text = Get-Content -LiteralPath $full -Raw -ErrorAction SilentlyContinue
+    try {
+        $text = Get-Content -LiteralPath $full -Raw -ErrorAction Stop
+    }
+    catch {
+        # A CI gate that silently skips files it can't read can go green without actually
+        # having scanned them — treat a read failure as a violation instead.
+        $violations.Add(("{0}: could not be read for PII scan ({1})" -f $f, $_.Exception.Message))
+        continue
+    }
     if ([string]::IsNullOrEmpty($text)) { continue }
 
     $lineNo = 0
