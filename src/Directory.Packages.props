@@ -20,6 +20,8 @@
     <PackageVersion Include="MassTransit" Version="8.4.1" />
     <PackageVersion Include="MassTransit.Hangfire" Version="8.4.1" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.4.1" />
+    <PackageVersion Include="Mapster" Version="10.0.10" />
+    <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.10" />
     <PackageVersion Include="MediatR" Version="12.5.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.25" />
