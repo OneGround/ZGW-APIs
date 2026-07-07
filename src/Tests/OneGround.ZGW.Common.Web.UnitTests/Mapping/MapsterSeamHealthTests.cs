@@ -60,4 +60,39 @@ public class MapsterSeamHealthTests
 
         Assert.Equal(100, depth);
     }
+
+    private sealed class CyclicNode
+    {
+        public int Value { get; set; }
+        public CyclicNode Self { get; set; }
+    }
+
+    [Fact]
+    public void Cyclic_self_referencing_graph_terminates_without_crashing()
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var cyclic = new CyclicNode { Value = 1 };
+        cyclic.Self = cyclic; // genuine cycle: object references itself
+
+        var result = mapper.Map<CyclicNode>(cyclic);
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Value);
+
+        // Walk Self until it terminates (null) or we exceed a sane bound — must NOT infinitely recurse/hang.
+        var depth = 0;
+        var node = result;
+        while (node?.Self != null && depth < 1000)
+        {
+            node = node.Self;
+            depth++;
+        }
+
+        Assert.True(depth < 1000, "Cyclic mapping did not terminate within the expected depth bound.");
+    }
 }

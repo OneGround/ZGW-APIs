@@ -25,6 +25,17 @@ public static class MapsterServiceCollectionExtensions
 
         var config = new TypeAdapterConfig();
 
+        // Defense-in-depth against unbounded recursion on a cyclic object graph (e.g. an EF Core
+        // navigation-property loop) — mirrors why NullableEnumMapper/AutoMapper's DoS-hardening
+        // exists. At this depth, Mapster returns a default value instead of recursing further,
+        // rather than crashing the process with an uncatchable StackOverflowException. This is a
+        // safety net, not a statement about expected real object-graph depth — Phase 1 should
+        // revisit this value if a legitimate mapping needs to exceed it. 200 is chosen to clear
+        // any plausible legitimate ZGW domain object graph depth with headroom (see
+        // MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow, a
+        // 100-deep acyclic graph, which must map to full depth without truncation).
+        config.Default.MaxDepth(200);
+
         // Note: Mapster only maps properties/fields, not methods, so AutoMapper's
         // ShouldMapMethod = _ => false has no equivalent here (methods are never mapped).
 
