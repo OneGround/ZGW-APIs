@@ -2,6 +2,7 @@ using System.Reflection;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 
@@ -18,8 +19,7 @@ public static class MapsterServiceCollectionExtensions
         // ShouldMapMethod = _ => false has no equivalent here (methods are never mapped).
 
         // Parity with NullableEnumMapper: empty string maps to null for Nullable<enum>.
-        // TODO(Task 4): re-enable once RegisterNullableEnumRules exists
-        // config.RegisterNullableEnumRules(assemblies);
+        config.RegisterNullableEnumRules(assemblies);
 
         // Discover IRegister mapping definitions in the service assembly and Common.Web.
         config.Scan(assemblies);
