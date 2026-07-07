@@ -12,6 +12,16 @@ namespace OneGround.ZGW.Common.Web.Mapping.Mapster;
 /// </summary>
 public static class NullableEnumMapsterRegistration
 {
+    /// <summary>
+    /// Scans <paramref name="assemblies"/> for every distinct <c>Nullable&lt;enum&gt;</c> property type and
+    /// registers a string-&gt;that-enum conversion rule for each one on <paramref name="config"/>.
+    /// </summary>
+    /// <remarks>
+    /// Unlike the AutoMapper original, which matched any string-&gt;Nullable&lt;enum&gt; <c>TypePair</c>
+    /// globally regardless of declaring assembly, this rule discovery is scoped to
+    /// <paramref name="assemblies"/>: callers must pass every assembly that declares a nullable enum
+    /// type they map into, or no rule will be registered for those types.
+    /// </remarks>
     public static void RegisterNullableEnumRules(this TypeAdapterConfig config, IEnumerable<Assembly> assemblies)
     {
         var nullableEnumTypes = assemblies
@@ -22,7 +32,9 @@ public static class NullableEnumMapsterRegistration
             .Distinct()
             .ToList();
 
-        var register = typeof(NullableEnumMapsterRegistration).GetMethod(nameof(RegisterForEnum), BindingFlags.NonPublic | BindingFlags.Static);
+        var register =
+            typeof(NullableEnumMapsterRegistration).GetMethod(nameof(RegisterForEnum), BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException($"{nameof(RegisterForEnum)} method not found via reflection.");
 
         foreach (var enumType in nullableEnumTypes)
         {
@@ -30,7 +42,7 @@ public static class NullableEnumMapsterRegistration
         }
     }
 
-    public static TEnum? ParseNullableEnum<TEnum>(string source)
+    internal static TEnum? ParseNullableEnum<TEnum>(string source)
         where TEnum : struct, Enum
     {
         if (string.IsNullOrEmpty(source))
