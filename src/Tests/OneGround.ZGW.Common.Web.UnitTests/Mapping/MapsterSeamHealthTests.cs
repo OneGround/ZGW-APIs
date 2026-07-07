@@ -84,7 +84,7 @@ public class MapsterSeamHealthTests
         Assert.NotNull(result);
         Assert.Equal(1, result.Value);
 
-        // Walk Self until it terminates (null) or we exceed a sane bound — must NOT infinitely recurse/hang.
+        // Walk Self until it terminates (null) or we exceed a generous bound — must NOT infinitely recurse/hang.
         var depth = 0;
         var node = result;
         while (node?.Self != null && depth < 1000)
@@ -93,6 +93,10 @@ public class MapsterSeamHealthTests
             depth++;
         }
 
-        Assert.True(depth < 1000, "Cyclic mapping did not terminate within the expected depth bound.");
+        // Mapster's MaxDepth(200) substitutes a default (null) value once the recursion counter
+        // reaches the cap, so a self-referencing chain terminates at exactly MaxDepth - 1 levels.
+        // Asserting a tight range (not just "< 1000") pins the cap as the actual termination
+        // cause, not merely "it eventually stopped for some reason."
+        Assert.InRange(depth, 190, 199);
     }
 }
