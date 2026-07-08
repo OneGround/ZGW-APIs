@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AutoFixture;
 using Mapster;
@@ -14,10 +15,12 @@ using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests
+public class DomainToResponseProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
@@ -30,12 +33,23 @@ public class DomainToResponseProfileTests
 
         // MapsterUrlResolver reads IEntityUriService from MapContext, which ServiceMapper populates
         // from the DI container — so the mapper must be a ServiceMapper with the mock registered.
+        // The provider/scope must stay alive for the lifetime of this test class: MapsterUrlResolver
+        // resolves IEntityUriService lazily via MapContext at Map()-call time (inside each [Fact]),
+        // not eagerly here in the constructor — disposing them here throws ObjectDisposedException
+        // once a [Fact] runs.
         var services = new ServiceCollection();
         services.AddSingleton(_mockedUriService.Object);
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
-        var provider = services.BuildServiceProvider();
-        _mapper = provider.GetRequiredService<IMapper>();
+        _provider = services.BuildServiceProvider();
+        _scope = _provider.CreateScope();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+    }
+
+    public void Dispose()
+    {
+        _scope.Dispose();
+        _provider.Dispose();
     }
 
     [Fact]
