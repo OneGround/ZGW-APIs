@@ -18,7 +18,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId))
             // AutoMapper's default (AllowNullCollections = false) substitutes an empty collection for a null
             // source collection. Mapster has no such default and passes null through, so it must be made explicit
-            // here to keep parity with the AutoMapper baseline (see MapsterMappingParityTests).
+            // here to keep parity with the AutoMapper baseline. (Originally caught and proven by the temporary
+            // AutoMapper-vs-Mapster parity test for this service, deleted once AC's migration completed.)
             //
             // `config` must be passed explicitly here — a bare `.Adapt<AutorisatieResponseDto>()` (no config
             // argument) would resolve against Mapster's ambient TypeAdapterConfig.GlobalSettings instead of
