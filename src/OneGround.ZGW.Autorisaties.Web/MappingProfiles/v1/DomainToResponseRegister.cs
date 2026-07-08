@@ -21,7 +21,7 @@ public class DomainToResponseRegister : IRegister
             // here to keep parity with the AutoMapper baseline (see MapsterMappingParityTests).
             .Map(
                 dest => dest.Autorisaties,
-                src => (src.Autorisaties ?? new List<Autorisatie>()).Select(a => a.Adapt<AutorisatieResponseDto>()).ToList()
+                src => (src.Autorisaties ?? new List<Autorisatie>()).Select(a => a.Adapt<Autorisatie, AutorisatieResponseDto>(config)).ToList()
             );
 
         config.NewConfig<Autorisatie, AutorisatieResponseDto>().Map(dest => dest.ComponentWeergave, src => GetComponentWeergave(src.Component));
