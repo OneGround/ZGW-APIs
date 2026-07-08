@@ -13,12 +13,6 @@ public class RequestToDomainRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        // The nullable-enum property this profile maps into (Autorisatie.MaxVertrouwelijkheidaanduiding,
-        // type VertrouwelijkheidAanduiding?) lives in the *.DataModel assembly, which AddZgwMapster does
-        // not scan by default. Register the string->Nullable<enum> rules for this service's entities here
-        // so "" / unknown map to null (parity with the AutoMapper NullableEnumMapper).
-        config.RegisterNullableEnumRules(new[] { typeof(Autorisatie).Assembly });
-
         config
             .NewConfig<GetAllApplicatiesQueryParameters, GetAllApplicatiesFilter>()
             .Map(dest => dest.ClientIds, src => ProfileHelper.ArrayFromString(src.ClientIds));
