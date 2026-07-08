@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -41,11 +42,13 @@ public class ApplicatiesController : ZGWControllerBase
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ApplicatiesController(
         ILogger<ApplicatiesController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
@@ -54,6 +57,7 @@ public class ApplicatiesController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -75,8 +79,8 @@ public class ApplicatiesController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ApplicatiePageSize));
-        var filter = _mapper.Map<GetAllApplicatiesFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ApplicatiePageSize));
+        var filter = _mapsterMapper.Map<GetAllApplicatiesFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllApplicatiesQuery() { GetAllApplicatiesFilter = filter, Pagination = pagination });
 
@@ -85,7 +89,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var applicatiesResponse = _mapper.Map<List<ApplicatieResponseDto>>(result.Result.PageResult);
+        var applicatiesResponse = _mapsterMapper.Map<List<ApplicatieResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, applicatiesResponse, result.Result.Count);
 
@@ -114,7 +118,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var response = _mapper.Map<ApplicatieResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ApplicatieResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -156,7 +160,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var response = _mapper.Map<ApplicatieResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ApplicatieResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -176,7 +180,7 @@ public class ApplicatiesController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), applicatieRequest);
 
-        Applicatie applicatie = _mapper.Map<Applicatie>(applicatieRequest);
+        Applicatie applicatie = _mapsterMapper.Map<Applicatie>(applicatieRequest);
 
         var result = await _mediator.Send(new CreateApplicatieCommand() { Applicatie = applicatie });
 
@@ -185,7 +189,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var applicatieResponse = _mapper.Map<ApplicatieResponseDto>(result.Result);
+        var applicatieResponse = _mapsterMapper.Map<ApplicatieResponseDto>(result.Result);
 
         return Created(result.Result.Url, applicatieResponse);
     }
@@ -206,7 +210,7 @@ public class ApplicatiesController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), request, id);
 
-        Applicatie applicatie = _mapper.Map<Applicatie>(request);
+        Applicatie applicatie = _mapsterMapper.Map<Applicatie>(request);
 
         var result = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = applicatie });
 
@@ -220,7 +224,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapper.Map<ApplicatieResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ApplicatieResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -258,7 +262,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        Applicatie mergedApplicatie = _mapper.Map<Applicatie>(mergedApplicatieRequest);
+        Applicatie mergedApplicatie = _mapsterMapper.Map<Applicatie>(mergedApplicatieRequest);
 
         var resultUpd = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = mergedApplicatie });
 
@@ -267,7 +271,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var applicatieResponse = _mapper.Map<ApplicatieResponseDto>(resultUpd.Result);
+        var applicatieResponse = _mapsterMapper.Map<ApplicatieResponseDto>(resultUpd.Result);
 
         return Ok(applicatieResponse);
     }
