@@ -1,15 +1,14 @@
 using System;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.Contracts.v1.Requests.Queries;
 using OneGround.ZGW.Autorisaties.Web.MappingProfiles.v1;
 using OneGround.ZGW.Autorisaties.Web.Models;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web;
 using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
@@ -21,16 +20,10 @@ public class RequestToDomainProfileTests
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
@@ -55,6 +48,10 @@ public class RequestToDomainProfileTests
         Assert.True(result.ClientIds.All(c => value.ClientIds.Contains(c.ClientId)));
         Assert.Equal(value.HeeftAlleAutorisaties, result.HeeftAlleAutorisaties);
         Assert.Equal(value.Label, result.Label);
+        // The following must remain default (Ignored) — never populated from the request:
+        Assert.Equal(Guid.Empty, result.Id);
+        Assert.Null(result.CreatedBy);
+        Assert.Null(result.Owner);
     }
 
     [Fact]
@@ -62,7 +59,7 @@ public class RequestToDomainProfileTests
     {
         _fixture.Customize<AutorisatieRequestDto>(c =>
             c.With(p => p.Component, Component.zrc.ToString())
-                .With(p => p.MaxVertrouwelijkheidaanduiding, VertrouwelijkheidAanduiding.geheim.ToString)
+                .With(p => p.MaxVertrouwelijkheidaanduiding, VertrouwelijkheidAanduiding.geheim.ToString())
         );
 
         var value = _fixture.Create<AutorisatieRequestDto>();
@@ -73,5 +70,18 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.InformatieObjectType, result.InformatieObjectType);
         Assert.Equal(value.Component, result.Component.ToString());
         Assert.Equal(value.MaxVertrouwelijkheidaanduiding, result.MaxVertrouwelijkheidaanduiding.ToString());
+    }
+
+    [Fact]
+    public void Empty_MaxVertrouwelijkheidaanduiding_Maps_To_Null()
+    {
+        _fixture.Customize<AutorisatieRequestDto>(c =>
+            c.With(p => p.Component, Component.zrc.ToString()).With(p => p.MaxVertrouwelijkheidaanduiding, string.Empty)
+        );
+
+        var value = _fixture.Create<AutorisatieRequestDto>();
+        var result = _mapper.Map<Autorisatie>(value);
+
+        Assert.Null(result.MaxVertrouwelijkheidaanduiding);
     }
 }
