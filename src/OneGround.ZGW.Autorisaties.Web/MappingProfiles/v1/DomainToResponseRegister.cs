@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Mapster;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
@@ -14,7 +15,14 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<Applicatie, ApplicatieResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId));
+            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId))
+            // AutoMapper's default (AllowNullCollections = false) substitutes an empty collection for a null
+            // source collection. Mapster has no such default and passes null through, so it must be made explicit
+            // here to keep parity with the AutoMapper baseline (see MapsterMappingParityTests).
+            .Map(
+                dest => dest.Autorisaties,
+                src => (src.Autorisaties ?? new List<Autorisatie>()).Select(a => a.Adapt<AutorisatieResponseDto>()).ToList()
+            );
 
         config.NewConfig<Autorisatie, AutorisatieResponseDto>().Map(dest => dest.ComponentWeergave, src => GetComponentWeergave(src.Component));
 
