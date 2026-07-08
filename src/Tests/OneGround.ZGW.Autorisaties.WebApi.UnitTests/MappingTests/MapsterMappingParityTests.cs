@@ -67,6 +67,10 @@ public class MapsterMappingParityTests : IDisposable
                 new() { ClientId = "client-a" },
                 new() { ClientId = "client-b" },
             },
+            // Populate at least one nested Autorisatie so the parity test exercises the nested
+            // Autorisatie -> AutorisatieResponseDto conversion (incl. ComponentWeergave) inside the
+            // Applicatie -> ApplicatieResponseDto mapping, not just the top-level fields.
+            Autorisaties = new List<Autorisatie> { SampleAutorisatie() },
         };
 
     private static Autorisatie SampleAutorisatie() =>
@@ -85,6 +89,12 @@ public class MapsterMappingParityTests : IDisposable
         var expected = JsonConvert.SerializeObject(_autoMapper.Map<ApplicatieResponseDto>(input));
         var actual = JsonConvert.SerializeObject(_mapster.Map<ApplicatieResponseDto>(input));
         Assert.Equal(expected, actual);
+
+        // Guard against a false-positive parity match: both sides agreeing on "null" would pass Assert.Equal
+        // just as well as both agreeing on a real value. Pin the nested Autorisatie -> AutorisatieResponseDto
+        // conversion (incl. its computed ComponentWeergave) to a concrete, non-null expectation so this test
+        // genuinely exercises that nested mapping rather than trivially matching two empty/default results.
+        Assert.Contains("\"componentWeergave\":\"Zaakregistratiecomponent\"", actual);
     }
 
     [Fact]
