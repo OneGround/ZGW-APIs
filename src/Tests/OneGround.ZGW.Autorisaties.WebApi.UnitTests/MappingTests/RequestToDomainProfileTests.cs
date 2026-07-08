@@ -72,6 +72,9 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.MaxVertrouwelijkheidaanduiding, result.MaxVertrouwelijkheidaanduiding.ToString());
     }
 
+    // Guards config.RegisterNullableEnumRules(typeof(Autorisatie).Assembly) in RequestToDomainRegister
+    // above — if that call is ever removed, this silently regresses to VertrouwelijkheidAanduiding.openbaar,
+    // not a visible failure.
     [Fact]
     public void Empty_MaxVertrouwelijkheidaanduiding_Maps_To_Null()
     {
