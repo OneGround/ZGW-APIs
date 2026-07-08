@@ -100,4 +100,28 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.Component.ToString(), result.Component);
         Assert.Equal(value.MaxVertrouwelijkheidaanduiding.ToString(), result.MaxVertrouwelijkheidaanduiding);
     }
+
+    [Fact]
+    public void Applicatie_With_Autorisaties_Maps_Nested_Autorisaties_Including_ComponentWeergave()
+    {
+        var value = new Applicatie
+        {
+            Id = Guid.NewGuid(),
+            Label = "test",
+            ClientIds = new System.Collections.Generic.List<ApplicatieClient>(),
+            Autorisaties = new System.Collections.Generic.List<Autorisatie>
+            {
+                new Autorisatie { Component = Component.zrc, Scopes = new[] { "zaken.lezen" } },
+            },
+        };
+
+        var result = _mapper.Map<ApplicatieResponseDto>(value);
+
+        Assert.NotNull(result.Autorisaties);
+        Assert.Single(result.Autorisaties);
+        Assert.Equal(Component.zrc.ToString(), result.Autorisaties[0].Component);
+        // ComponentWeergave is a computed field from the nested Autorisatie->AutorisatieResponseDto rule;
+        // it is only populated if convention-based nested mapping used the local config (not GlobalSettings).
+        Assert.Equal("Zaakregistratiecomponent", result.Autorisaties[0].ComponentWeergave);
+    }
 }
