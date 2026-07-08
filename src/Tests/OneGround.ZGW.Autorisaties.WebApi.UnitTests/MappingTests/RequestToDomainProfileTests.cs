@@ -9,6 +9,7 @@ using OneGround.ZGW.Autorisaties.Web.Contracts.v1.Requests.Queries;
 using OneGround.ZGW.Autorisaties.Web.MappingProfiles.v1;
 using OneGround.ZGW.Autorisaties.Web.Models;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
@@ -21,6 +22,10 @@ public class RequestToDomainProfileTests
     public RequestToDomainProfileTests()
     {
         var config = new TypeAdapterConfig();
+        // The real seam (AddZgwMapster) registers the global nullable-enum rule once, before any
+        // IRegister.Register runs. This test builds its config directly from RequestToDomainRegister
+        // without going through AddZgwMapster, so the rule must be added explicitly here too.
+        config.RegisterNullableEnumRule();
         new RequestToDomainRegister().Register(config);
         config.Compile();
         _mapper = new Mapper(config);
@@ -72,9 +77,10 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.MaxVertrouwelijkheidaanduiding, result.MaxVertrouwelijkheidaanduiding.ToString());
     }
 
-    // Guards config.RegisterNullableEnumRules(typeof(Autorisatie).Assembly) in RequestToDomainRegister
-    // above — if that call is ever removed, this silently regresses to VertrouwelijkheidAanduiding.openbaar,
-    // not a visible failure.
+    // Guards the global nullable-enum rule (registered via config.RegisterNullableEnumRule() in this
+    // test's constructor, mirroring what AddZgwMapster does centrally for the real seam) — if that
+    // rule is ever missing, this silently regresses to VertrouwelijkheidAanduiding.openbaar, not a
+    // visible failure.
     [Fact]
     public void Empty_MaxVertrouwelijkheidaanduiding_Maps_To_Null()
     {
