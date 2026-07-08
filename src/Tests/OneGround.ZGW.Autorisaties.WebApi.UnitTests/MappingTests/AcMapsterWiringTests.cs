@@ -50,5 +50,12 @@ public class AcMapsterWiringTests
         // directly, since Applicatie.Url and ApplicatieResponseDto.Url share the same name/type).
         Assert.Equal("https://example.test/resolved-via-di", result.Url);
         mockedUriService.Verify(s => s.GetUri(It.IsAny<IUrlEntity>()), Times.AtLeastOnce());
+
+        // This is the one test that proves AC's REAL production path (through AddZgwMapster, with the
+        // global EmptyCollectionIfNull transform) yields empty-not-null for a null source collection:
+        // `applicatie.Autorisaties` is left null above, and convention-based nested mapping + the seam's
+        // transform must produce an empty (non-null) list — matching AutoMapper's AllowNullCollections=false.
+        Assert.NotNull(result.Autorisaties);
+        Assert.Empty(result.Autorisaties);
     }
 }
