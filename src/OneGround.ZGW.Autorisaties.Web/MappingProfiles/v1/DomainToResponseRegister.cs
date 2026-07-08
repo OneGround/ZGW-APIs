@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using Mapster;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
@@ -15,20 +14,11 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<Applicatie, ApplicatieResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId))
-            // AutoMapper's default (AllowNullCollections = false) substitutes an empty collection for a null
-            // source collection. Mapster has no such default and passes null through, so it must be made explicit
-            // here to keep parity with the AutoMapper baseline. (Originally caught and proven by the temporary
-            // AutoMapper-vs-Mapster parity test for this service, deleted once AC's migration completed.)
-            //
-            // `config` must be passed explicitly here — a bare `.Adapt<AutorisatieResponseDto>()` (no config
-            // argument) would resolve against Mapster's ambient TypeAdapterConfig.GlobalSettings instead of
-            // this local config, silently dropping the ComponentWeergave rule registered below. See
-            // MapsterSeamHealthTests.Bare_Adapt_call_does_not_see_a_locally_built_configs_custom_rule.
-            .Map(
-                dest => dest.Autorisaties,
-                src => (src.Autorisaties ?? new List<Autorisatie>()).Select(a => a.Adapt<Autorisatie, AutorisatieResponseDto>(config)).ToList()
-            );
+            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId));
+        // dest.Autorisaties is intentionally NOT mapped explicitly: Mapster's convention-based nested
+        // mapping handles List<Autorisatie> -> List<AutorisatieResponseDto> using this same local config
+        // (so the Autorisatie -> AutorisatieResponseDto rule below, incl. ComponentWeergave, applies), and
+        // the global EmptyCollectionIfNull transform (in AddZgwMapster) coalesces a null source to empty.
 
         config.NewConfig<Autorisatie, AutorisatieResponseDto>().Map(dest => dest.ComponentWeergave, src => GetComponentWeergave(src.Component));
 
