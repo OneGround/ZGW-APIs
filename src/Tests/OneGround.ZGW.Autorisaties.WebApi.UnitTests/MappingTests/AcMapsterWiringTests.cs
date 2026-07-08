@@ -19,7 +19,7 @@ public class AcMapsterWiringTests
     public void AddZgwMapster_discovers_AC_registers_from_the_web_assembly()
     {
         var mockedUriService = new Mock<IEntityUriService>();
-        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns("https://example.test/resolved-via-di");
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
@@ -32,10 +32,8 @@ public class AcMapsterWiringTests
 
         // Applicatie.Url is a computed, read-only property ($"/applicaties/{Id}"), so it can't be
         // set directly via an object initializer (unlike the plan's literal `Url = "/applicaties/x"`,
-        // which does not compile against the real DataModel type). Setting Id and asserting against
-        // the entity's own computed Url exercises the same resolver path: the mocked
-        // IEntityUriService.GetUri returns e.Url, so the response DTO's Url should equal the
-        // source entity's Url.
+        // which does not compile against the real DataModel type). Id is set only so the entity is
+        // otherwise valid; its computed Url is intentionally never compared against below.
         var applicatie = new Applicatie
         {
             Id = Guid.NewGuid(),
@@ -45,6 +43,12 @@ public class AcMapsterWiringTests
 
         var result = mapper.Map<ApplicatieResponseDto>(applicatie);
 
-        Assert.Equal(applicatie.Url, result.Url);
+        // The mock returns a literal unrelated to Applicatie.Url's own computed value ($"/applicaties/{Id}"),
+        // so this assertion only passes if MapsterUrlResolver actually called IEntityUriService.GetUri and
+        // its return value flowed through — not if Mapster's default same-name-property convention copy
+        // silently satisfied the assertion on its own (which it would if we compared against applicatie.Url
+        // directly, since Applicatie.Url and ApplicatieResponseDto.Url share the same name/type).
+        Assert.Equal("https://example.test/resolved-via-di", result.Url);
+        mockedUriService.Verify(s => s.GetUri(It.IsAny<IUrlEntity>()), Times.AtLeastOnce());
     }
 }
