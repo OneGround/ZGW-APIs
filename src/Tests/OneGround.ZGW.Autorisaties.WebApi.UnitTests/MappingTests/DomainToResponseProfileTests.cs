@@ -1,13 +1,13 @@
-using System;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Responses;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.MappingProfiles.v1;
-using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using Xunit;
@@ -22,23 +22,20 @@ public class DomainToResponseProfileTests
 
     public DomainToResponseProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(UrlResolver))
-            {
-                return new UrlResolver(_mockedUriService.Object);
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
+        var config = new TypeAdapterConfig();
+        new DomainToResponseRegister().Register(config);
+        config.Compile();
+
+        // MapsterUrlResolver reads IEntityUriService from MapContext, which ServiceMapper populates
+        // from the DI container — so the mapper must be a ServiceMapper with the mock registered.
+        var services = new ServiceCollection();
+        services.AddSingleton(_mockedUriService.Object);
+        services.AddSingleton(config);
+        services.AddScoped<IMapper, ServiceMapper>();
+        var provider = services.BuildServiceProvider();
+        _mapper = provider.GetRequiredService<IMapper>();
     }
 
     [Fact]
