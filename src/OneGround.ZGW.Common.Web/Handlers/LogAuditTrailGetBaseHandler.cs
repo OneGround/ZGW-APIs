@@ -1,25 +1,31 @@
 using System.Collections.Generic;
-using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
 
 namespace OneGround.ZGW.Common.Web.Handlers;
 
 public abstract class LogAuditTrailGetBaseHandler : ZGWBaseHandler
 {
-    private readonly IEnumerable<string> _audittrailRetrieveForRsins;
+    private readonly bool _isClientIdExcluded;
 
-    protected LogAuditTrailGetBaseHandler(IConfiguration configuration, IAuthorizationContextAccessor authorizationContextAccessor)
+    protected LogAuditTrailGetBaseHandler(
+        IConfiguration configuration,
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IHttpContextAccessor httpContextAccessor
+    )
         : base(configuration, authorizationContextAccessor)
     {
-        _audittrailRetrieveForRsins = Configuration.GetSection("Application:AudittrailRetrieveForRsins").Get<IEnumerable<string>>() ?? [];
-
         IsAudittrailRetrieveMinimal = Configuration.GetSection("Application:AudittrailRecordRetrieveMinimal").Get<bool?>() ?? true;
 
-        IsAudittrailRecordRetrieveList = Configuration.GetSection("Application:AudittrailRecordRetrieveList").Get<bool?>() ?? false;
+        var excludeClientIds = Configuration.GetSection("Application:AudittrailRetrieveRecordExcludeClientIds").Get<IEnumerable<string>>() ?? [];
+        var matcher = new ClientIdExcludeMatcher(excludeClientIds);
+
+        var clientId = httpContextAccessor.HttpContext?.GetClientId();
+        _isClientIdExcluded = matcher.IsExcluded(clientId);
     }
 
-    protected bool IsAudittrailRetrieveForRsin => _audittrailRetrieveForRsins.Contains(_rsin);
-    protected bool IsAudittrailRecordRetrieveList { get; }
+    protected bool IsClientIdExcluded => _isClientIdExcluded;
     protected bool IsAudittrailRetrieveMinimal { get; }
 }
