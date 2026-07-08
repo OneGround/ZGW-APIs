@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AutoMapper;
 using Mapster;
 using MapsterMapper;
@@ -94,7 +95,8 @@ public class MapsterMappingParityTests : IDisposable
         // just as well as both agreeing on a real value. Pin the nested Autorisatie -> AutorisatieResponseDto
         // conversion (incl. its computed ComponentWeergave) to a concrete, non-null expectation so this test
         // genuinely exercises that nested mapping rather than trivially matching two empty/default results.
-        Assert.Contains("\"componentWeergave\":\"Zaakregistratiecomponent\"", actual);
+        var deserialized = JsonConvert.DeserializeObject<ApplicatieResponseDto>(actual);
+        Assert.Equal("Zaakregistratiecomponent", deserialized.Autorisaties.Single().ComponentWeergave);
     }
 
     [Fact]
