@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
-using OneGround.ZGW.Common.Web;
+using Mapster;
+using MapsterMapper;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Contracts.v1.Requests;
 using OneGround.ZGW.Notificaties.DataModel;
@@ -19,27 +19,22 @@ public class RequestToDomainProfileTests
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        // The seam's global nullable-enum rule lives in AddZgwMapster, not in the register; this test
+        // builds config directly, so register it here too for parity with production (harmless if the
+        // profile maps no nullable enums).
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
     public void KanaalRequestDto_Maps_To_Kanaal()
     {
-        // Setup
         var value = _fixture.Create<KanaalRequestDto>();
-
-        // Act
         var result = _mapper.Map<Kanaal>(value);
 
-        // Assert
         Assert.Equal(value.DocumentatieLink, result.DocumentatieLink);
         Assert.Equal(value.Naam, result.Naam);
         Assert.Equal(value.Filters, result.Filters);
@@ -48,13 +43,9 @@ public class RequestToDomainProfileTests
     [Fact]
     public void AbonnementRequestDto_Maps_To_Abonnement()
     {
-        // Setup
         var value = _fixture.Create<AbonnementRequestDto>();
-
-        // Act
         var result = _mapper.Map<Abonnement>(value);
 
-        // Assert
         Assert.Equal(value.Auth, result.Auth);
         Assert.Equal(value.CallbackUrl, result.CallbackUrl);
         Assert.Equal(value.Kanalen.Count, result.AbonnementKanalen.Count);
@@ -63,13 +54,10 @@ public class RequestToDomainProfileTests
     [Fact]
     public void AbonnementKanalenRequestDto_Maps_To_AbonnementKanaal()
     {
-        // Setup
         var value = _fixture.Create<AbonnementKanaalDto>();
-
-        // Act
         var result = _mapper.Map<AbonnementKanaal>(value);
 
-        // Assert
+        // Kanaal is set by AfterMapping from src.Naam.
         Assert.Equal(value.Naam, result.Kanaal.Naam);
         Assert.Equal(value.Filters.Count, result.Filters.Count);
         Assert.Equal(value.Filters.Values, result.Filters.Select(f => f.Value));
@@ -82,21 +70,15 @@ public class RequestToDomainProfileTests
         _fixture.Customize<NotificatieDto>(c => c.With(p => p.Aanmaakdatum, DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")));
 
         var value = _fixture.Create<NotificatieDto>();
-
-        // Act
         var result = _mapper.Map<Notificatie>(value);
 
-        // Assert
         Assert.Equal(value.Kanaal, result.Kanaal);
-
         Assert.Equal(value.HoofdObject, result.HoofdObject);
         Assert.Equal(value.Resource, result.Resource);
         Assert.Equal(value.ResourceUrl, result.ResourceUrl);
         Assert.Equal(value.Actie, result.Actie);
         Assert.Equal(value.Aanmaakdatum, result.AanmaakDatum.ToString("yyyy-MM-ddTHH:mm:ssZ"));
-
         Assert.Equal(value.Kenmerken.Count, result.Kenmerken.Count);
-        Assert.Equal(value.Kenmerken.Select(k => k.Key), result.Kenmerken.Select(k => k.Key));
         Assert.Equal(value.Kenmerken.Select(k => k.Key), result.Kenmerken.Select(k => k.Key));
     }
 }
