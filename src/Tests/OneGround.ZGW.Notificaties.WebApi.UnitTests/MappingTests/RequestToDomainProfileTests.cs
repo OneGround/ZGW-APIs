@@ -49,6 +49,16 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Auth, result.Auth);
         Assert.Equal(value.CallbackUrl, result.CallbackUrl);
         Assert.Equal(value.Kanalen.Count, result.AbonnementKanalen.Count);
+
+        // The nested AbonnementKanaalDto -> AbonnementKanaal mapping runs as a collection element here
+        // (not top-level). This asserts each element's AfterMapping fired for the nested case too:
+        // dst.Kanaal is set from the source element's Naam.
+        Assert.NotEmpty(result.AbonnementKanalen);
+        for (var i = 0; i < result.AbonnementKanalen.Count; i++)
+        {
+            Assert.NotNull(result.AbonnementKanalen[i].Kanaal);
+            Assert.Equal(value.Kanalen[i].Naam, result.AbonnementKanalen[i].Kanaal.Naam);
+        }
     }
 
     [Fact]
