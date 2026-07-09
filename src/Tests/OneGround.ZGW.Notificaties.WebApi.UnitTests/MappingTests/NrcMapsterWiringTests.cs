@@ -30,12 +30,12 @@ public class NrcMapsterWiringTests
 
         var result = mapper.Map<KanaalResponseDto>(new Kanaal { Id = Guid.NewGuid(), Naam = "zaken" });
 
-        // Distinct literal (not derivable from the source) so this only passes if MapsterUrlResolver
-        // actually ran through DI via config.Scan discovery — not if a same-name convention copy
-        // satisfied it. (Kanaal has no `Url` source member anyway; the URL comes only from the resolver.
-        // Kanaal.Url is a computed, read-only property, so it's never assigned directly — the assertion
-        // below is only satisfiable via the DI-backed resolver, matching a bug the AC migration's own
-        // wiring test found and fixed: a mock that echoes the source's own value is a false positive.)
+        // Kanaal.Url is a computed, read-only property (`/kanaal/{Id}`) that Mapster's default
+        // convention would otherwise copy by name; the mocked literal below is distinguishable from
+        // that value, so a same-name convention copy can't satisfy the assertion — this only passes
+        // if MapsterUrlResolver actually ran through DI via config.Scan discovery. Matches a bug the
+        // AC migration's own wiring test found and fixed: a mock that echoes the source's own value
+        // is a false positive.
         Assert.Equal("https://example.test/resolved-via-di", result.Url);
         mockedUriService.Verify(s => s.GetUri(It.IsAny<IUrlEntity>()), Times.AtLeastOnce());
     }
