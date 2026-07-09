@@ -9,6 +9,7 @@
       "Tests\\OneGround.ZGW.Documenten.WebApi.UnitTests\\ZGW.Documenten.WebApi.UnitTests.csproj",
       "Tests\\OneGround.ZGW.Notificaties.Messaging.Listener.UnitTests\\ZGW.Notificaties.Messaging.Listener.UnitTests.csproj",
       "Tests\\OneGround.ZGW.Notificaties.WebApi.UnitTests\\ZGW.Notificaties.WebApi.UnitTests.csproj",
+      "Tests\\OneGround.ZGW.Referentielijsten.WebApi.UnitTests\\ZGW.Referentielijsten.WebApi.UnitTests.csproj",
       "Tests\\OneGround.ZGW.Zaken.WebApi.UnitTests\\ZGW.Zaken.WebApi.UnitTests.csproj",
       "Tests\\OneGround.ZGW.Common.UnitTests\\ZGW.Common.UnitTests.csproj"
     ]
