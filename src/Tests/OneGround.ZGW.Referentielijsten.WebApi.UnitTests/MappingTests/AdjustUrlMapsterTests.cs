@@ -8,12 +8,8 @@ using Xunit;
 
 namespace OneGround.ZGW.Referentielijsten.WebApi.UnitTests.MappingTests;
 
-public class AdjustUrlMapsterTests : IDisposable
+public class AdjustUrlMapsterTests
 {
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
-    private readonly IMapper _mapper;
-
     public class Src
     {
         public string Url { get; set; }
@@ -34,38 +30,66 @@ public class AdjustUrlMapsterTests : IDisposable
         }
     }
 
-    public AdjustUrlMapsterTests()
+    // Wraps the DI container built for a single test so the ServiceProvider/scope can be disposed
+    // via `using`, while letting each [Fact] wire up its own mocked HttpContext (host/port/scheme).
+    private sealed class MapperFixture : IDisposable
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Scheme = "https";
-        httpContext.Request.Host = new HostString("api.example.test", 8443);
-        var accessor = new Mock<IHttpContextAccessor>();
-        accessor.Setup(a => a.HttpContext).Returns(httpContext);
+        private readonly ServiceProvider _provider;
+        private readonly IServiceScope _scope;
 
-        var config = new TypeAdapterConfig();
-        new ProbeRegister().Register(config);
-        config.Compile();
+        public IMapper Mapper { get; }
 
-        var services = new ServiceCollection();
-        services.AddSingleton(accessor.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-    }
+        public MapperFixture(string host, int? port, string scheme)
+        {
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Scheme = scheme;
+            httpContext.Request.Host = port.HasValue ? new HostString(host, port.Value) : new HostString(host);
+            var accessor = new Mock<IHttpContextAccessor>();
+            accessor.Setup(a => a.HttpContext).Returns(httpContext);
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
+            var config = new TypeAdapterConfig();
+            new ProbeRegister().Register(config);
+            config.Compile();
+
+            var services = new ServiceCollection();
+            services.AddSingleton(accessor.Object);
+            services.AddSingleton(config);
+            services.AddScoped<IMapper, ServiceMapper>();
+            _provider = services.BuildServiceProvider();
+            _scope = _provider.CreateScope();
+            Mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        }
+
+        public void Dispose()
+        {
+            _scope.Dispose();
+            _provider.Dispose();
+        }
     }
 
     [Fact]
     public void Adjust_rewrites_host_port_and_scheme_to_the_current_request()
     {
-        var result = _mapper.Map<Dst>(new Src { Url = "http://upstream-source/api/v1/resultaten/abc" });
+        using var fixture = new MapperFixture(host: "api.example.test", port: 8443, scheme: "https");
+
+        var result = fixture.Mapper.Map<Dst>(new Src { Url = "http://upstream-source/api/v1/resultaten/abc" });
 
         Assert.Equal("https://api.example.test:8443/api/v1/resultaten/abc", result.Url);
+    }
+
+    [Fact]
+    public void Adjust_omits_the_port_when_it_is_the_scheme_default()
+    {
+        // Explicit HTTPS default port (443) — Host.Port.HasValue is true so the port is rewritten to
+        // 443, which IS the default for the rewritten https scheme, so IsDefaultPort is true and the
+        // ported logic resets Port to -1; UriBuilder then omits it entirely from the output (unlike
+        // the 8443 case above). Note: leaving the port unspecified does NOT exercise this branch —
+        // Host.Port.HasValue would be false, the port would never be overwritten, and it would stay
+        // at the *source* URL's default (80 for http), which isn't the default for https either.
+        using var fixture = new MapperFixture(host: "api.example.test", port: 443, scheme: "https");
+
+        var result = fixture.Mapper.Map<Dst>(new Src { Url = "http://upstream-source/api/v1/resultaten/abc" });
+
+        Assert.Equal("https://api.example.test/api/v1/resultaten/abc", result.Url);
     }
 }
