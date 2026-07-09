@@ -15,10 +15,7 @@ public sealed class ClientIdExcludeMatcher
 
     public ClientIdExcludeMatcher(IEnumerable<string> globPatterns)
     {
-        _patterns = (globPatterns ?? Enumerable.Empty<string>())
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .Select(ToRegex)
-            .ToArray();
+        _patterns = (globPatterns ?? Enumerable.Empty<string>()).Where(p => !string.IsNullOrWhiteSpace(p)).Select(ToRegex).ToArray();
     }
 
     public bool IsExcluded(string clientId)
