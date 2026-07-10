@@ -43,29 +43,9 @@ public class DomainToResponseRegister : IRegister
                 src => src.ZaakObjectTypen == null ? Enumerable.Empty<string>() : MapsterUrlResolver.ResolveUrls(src.ZaakObjectTypen)
             )
             .Ignore(dest => dest.GerelateerdeZaakTypen)
-            .Map(
-                dest => dest.InformatieObjectTypen,
-                src =>
-                    src.ZaakTypeInformatieObjectTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(
-                            src.ZaakTypeInformatieObjectTypen.Where(i => i.InformatieObjectType != null).Select(s => s.InformatieObjectType)
-                        )
-            )
-            .Map(
-                dest => dest.DeelZaakTypen,
-                src =>
-                    src.ZaakTypeDeelZaakTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.ZaakTypeDeelZaakTypen.Where(z => z.DeelZaakType != null).Select(s => s.DeelZaakType))
-            )
-            .Map(
-                dest => dest.BesluitTypen,
-                src =>
-                    src.ZaakTypeBesluitTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.ZaakTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType))
-            )
+            .Ignore(dest => dest.InformatieObjectTypen)
+            .Ignore(dest => dest.DeelZaakTypen)
+            .Ignore(dest => dest.BesluitTypen)
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -79,6 +59,36 @@ public class DomainToResponseRegister : IRegister
                             ZaakType = uriService.GetUri(z.GerelateerdeZaakType),
                         })
                         .ToList();
+
+                    // These three folds must run here, in .AfterMapping, not in a plain .Map(...)
+                    // projection: the global EmptyCollectionIfNull destination transform (registered in
+                    // AddZgwMapster, for parity with AutoMapper's AllowNullCollections=false default)
+                    // re-coalesces ANY null returned from an explicit .Map(...) lambda into an empty
+                    // collection -- including this PreCondition-emulating null, which is supposed to
+                    // reproduce AutoMapper's real "member left completely untouched" behavior (these
+                    // three destination properties have no field initializer, so untouched means null,
+                    // not empty). .AfterMapping runs after that transform pipeline has already applied,
+                    // so a plain assignment made here is not re-coalesced. Contrast with ZaakObjectTypen
+                    // above and InformatieObjectTypeResponseDto.ZaakTypen/BesluitTypen below, whose
+                    // destination DOES have a `= []` initializer -- there, folding to
+                    // Enumerable.Empty<string>() in a plain .Map(...) is correct (and the transform
+                    // coalescing it again is harmless).
+                    dest.InformatieObjectTypen =
+                        src.ZaakTypeInformatieObjectTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(
+                                src.ZaakTypeInformatieObjectTypen.Where(i => i.InformatieObjectType != null).Select(s => s.InformatieObjectType)
+                            );
+                    dest.DeelZaakTypen =
+                        src.ZaakTypeDeelZaakTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(
+                                src.ZaakTypeDeelZaakTypen.Where(z => z.DeelZaakType != null).Select(s => s.DeelZaakType)
+                            );
+                    dest.BesluitTypen =
+                        src.ZaakTypeBesluitTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(src.ZaakTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType));
                 }
             );
 
@@ -95,14 +105,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Map(dest => dest.VersieDatum, src => ProfileHelper.StringDateFromDate(src.VersieDatum))
             .Ignore(dest => dest.GerelateerdeZaakTypen)
-            .Map(
-                dest => dest.DeelZaakTypen,
-                src => src.ZaakTypeDeelZaakTypen == null ? null : src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct()
-            )
-            .Map(
-                dest => dest.BesluitTypen,
-                src => src.ZaakTypeBesluitTypen == null ? null : src.ZaakTypeBesluitTypen.Select(s => s.BesluitTypeOmschrijving).Distinct()
-            )
+            .Ignore(dest => dest.DeelZaakTypen)
+            .Ignore(dest => dest.BesluitTypen)
             // Note: unlike MapGerelateerdeZaakTypenResponse above, this port of MapMergedGerelateerdeZaakTypen
             // needs no IEntityUriService/URL lookup -- it uses the already-denormalized
             // GerelateerdeZaakTypeIdentificatie string field directly -- and, critically, does NOT filter out
@@ -126,6 +130,15 @@ public class DomainToResponseRegister : IRegister
                         );
                     }
                     dest.GerelateerdeZaakTypen = gerelateerdeZaakTypen;
+
+                    // See the long comment on the ZaakType->ZaakTypeResponseDto config above: these folds
+                    // must run in .AfterMapping, not a plain .Map(...), to avoid the global
+                    // EmptyCollectionIfNull destination transform re-coalescing a deliberate null (these
+                    // destination properties have no field initializer) into an empty collection.
+                    dest.DeelZaakTypen =
+                        src.ZaakTypeDeelZaakTypen == null ? null : src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct();
+                    dest.BesluitTypen =
+                        src.ZaakTypeBesluitTypen == null ? null : src.ZaakTypeBesluitTypen.Select(s => s.BesluitTypeOmschrijving).Distinct();
                 }
             );
 
@@ -139,12 +152,16 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
-            .Map(
-                dest => dest.Eigenschappen,
-                src =>
-                    src.StatusTypeVerplichteEigenschappen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.StatusTypeVerplichteEigenschappen.Select(s => s.Eigenschap))
+            .Ignore(dest => dest.Eigenschappen)
+            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
+            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
+            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            .AfterMapping(
+                (src, dest) =>
+                    dest.Eigenschappen =
+                        src.StatusTypeVerplichteEigenschappen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(src.StatusTypeVerplichteEigenschappen.Select(s => s.Eigenschap))
             )
             .Map(dest => dest.CheckListItemStatustypes, src => src.CheckListItemStatustypes)
             .Map(dest => dest.OmschrijvingGeneriek, src => ProfileHelper.EmptyWhenNull(src.OmschrijvingGeneriek))
@@ -160,12 +177,16 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(
-                dest => dest.Eigenschappen,
-                src =>
-                    src.StatusTypeVerplichteEigenschappen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.StatusTypeVerplichteEigenschappen.Select(s => s.Eigenschap))
+            .Ignore(dest => dest.Eigenschappen)
+            // See the long comment on the ZaakType->ZaakTypeResponseDto config above: must run in
+            // .AfterMapping, not a plain .Map(...), to avoid the global EmptyCollectionIfNull transform
+            // re-coalescing a deliberate null into an empty collection.
+            .AfterMapping(
+                (src, dest) =>
+                    dest.Eigenschappen =
+                        src.StatusTypeVerplichteEigenschappen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(src.StatusTypeVerplichteEigenschappen.Select(s => s.Eigenschap))
             );
 
         config
@@ -215,26 +236,32 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(
-                dest => dest.BesluitTypen,
-                src =>
-                    src.ResultaatTypeBesluitTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType))
-            )
-            .Map(
-                dest => dest.BesluittypeOmschrijvingen,
-                src =>
-                    src.ResultaatTypeBesluitTypen == null
-                        ? null
-                        : src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType.Omschrijving)
-            )
+            .Ignore(dest => dest.BesluitTypen)
+            .Ignore(dest => dest.BesluittypeOmschrijvingen)
             // Note: preserved verbatim from the AutoMapper source -- these two members are not a
             // PreCondition-fold at all. The original always maps them to a bare Enumerable.Empty<string>(),
             // unconditionally and regardless of source data (presumably a not-yet-implemented feature) -- do
             // not "improve" this by wiring up real source data.
             .Map(dest => dest.InformatieObjectTypen, src => Enumerable.Empty<string>())
-            .Map(dest => dest.InformatieObjectTypeOmschrijvingen, src => Enumerable.Empty<string>());
+            .Map(dest => dest.InformatieObjectTypeOmschrijvingen, src => Enumerable.Empty<string>())
+            // BesluitTypen/BesluittypeOmschrijvingen must run in .AfterMapping, not a plain .Map(...):
+            // see the long comment on the ZaakType->ZaakTypeResponseDto config above (global
+            // EmptyCollectionIfNull transform re-coalesces a deliberate null into an empty collection).
+            .AfterMapping(
+                (src, dest) =>
+                {
+                    dest.BesluitTypen =
+                        src.ResultaatTypeBesluitTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(
+                                src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType)
+                            );
+                    dest.BesluittypeOmschrijvingen =
+                        src.ResultaatTypeBesluitTypen == null
+                            ? null
+                            : src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType.Omschrijving);
+                }
+            );
 
         // Note: for PATCH operation
         config
@@ -244,12 +271,16 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(
-                dest => dest.BesluitTypen,
-                src =>
-                    src.ResultaatTypeBesluitTypen == null
-                        ? null
-                        : src.ResultaatTypeBesluitTypen.Where(z => z.BesluitType != null).Select(s => s.BesluitTypeOmschrijving).Distinct()
+            .Ignore(dest => dest.BesluitTypen)
+            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
+            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
+            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            .AfterMapping(
+                (src, dest) =>
+                    dest.BesluitTypen =
+                        src.ResultaatTypeBesluitTypen == null
+                            ? null
+                            : src.ResultaatTypeBesluitTypen.Where(z => z.BesluitType != null).Select(s => s.BesluitTypeOmschrijving).Distinct()
             );
 
         config
@@ -336,51 +367,49 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(
-                dest => dest.ZaakTypen,
-                src =>
-                    src.BesluitTypeZaakTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(src.BesluitTypeZaakTypen.Where(b => b.ZaakType != null).Select(b => b.ZaakType))
-            )
-            .Map(
-                dest => dest.InformatieObjectTypen,
-                src =>
-                    src.BesluitTypeInformatieObjectTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(
-                            src.BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null).Select(b => b.InformatieObjectType)
-                        )
-            )
-            .Map(
-                dest => dest.ResultaatTypen,
-                src =>
-                    src.BesluitTypeResultaatTypen == null
-                        ? null
-                        : MapsterUrlResolver.ResolveUrls(
-                            src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType)
-                        )
-            )
-            .Map(
-                dest => dest.ResultaatTypenOmschrijving,
-                src =>
-                    src.BesluitTypeResultaatTypen == null
-                        ? null
-                        : src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType.Omschrijving)
-            )
-            .Map(
-                dest => dest.VastgelegdIn,
-                src =>
-                    src.BesluitTypeInformatieObjectTypen == null
-                        ? null
-                        : src
-                            .BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null)
-                            .Select(b => b.InformatieObjectType.Omschrijving)
-                            .Distinct()
-            )
+            .Ignore(dest => dest.ZaakTypen)
+            .Ignore(dest => dest.InformatieObjectTypen)
+            .Ignore(dest => dest.ResultaatTypen)
+            .Ignore(dest => dest.ResultaatTypenOmschrijving)
+            .Ignore(dest => dest.VastgelegdIn)
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
-            .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn));
+            .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
+            // These five folds must run in .AfterMapping, not a plain .Map(...): see the long comment on
+            // the ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
+            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            .AfterMapping(
+                (src, dest) =>
+                {
+                    dest.ZaakTypen =
+                        src.BesluitTypeZaakTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(src.BesluitTypeZaakTypen.Where(b => b.ZaakType != null).Select(b => b.ZaakType));
+                    dest.InformatieObjectTypen =
+                        src.BesluitTypeInformatieObjectTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(
+                                src.BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null).Select(b => b.InformatieObjectType)
+                            );
+                    dest.ResultaatTypen =
+                        src.BesluitTypeResultaatTypen == null
+                            ? null
+                            : MapsterUrlResolver.ResolveUrls(
+                                src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType)
+                            );
+                    dest.ResultaatTypenOmschrijving =
+                        src.BesluitTypeResultaatTypen == null
+                            ? null
+                            : src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType.Omschrijving);
+                    dest.VastgelegdIn =
+                        src.BesluitTypeInformatieObjectTypen == null
+                            ? null
+                            : src
+                                .BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null)
+                                .Select(b => b.InformatieObjectType.Omschrijving)
+                                .Distinct();
+                }
+            );
 
         // Note: for PATCH operation
         config
@@ -389,21 +418,25 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(
-                dest => dest.ZaakTypen,
-                src =>
-                    src.BesluitTypeZaakTypen == null
-                        ? null
-                        : src.BesluitTypeZaakTypen.Where(z => z.ZaakType != null).Select(s => s.ZaakTypeIdentificatie).Distinct()
-            )
-            .Map(
-                dest => dest.InformatieObjectTypen,
-                src =>
-                    src.BesluitTypeInformatieObjectTypen == null
-                        ? null
-                        : src.BesluitTypeInformatieObjectTypen.Select(s => s.InformatieObjectTypeOmschrijving).Distinct()
-            )
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus));
+            .Ignore(dest => dest.ZaakTypen)
+            .Ignore(dest => dest.InformatieObjectTypen)
+            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
+            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
+            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
+            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            .AfterMapping(
+                (src, dest) =>
+                {
+                    dest.ZaakTypen =
+                        src.BesluitTypeZaakTypen == null
+                            ? null
+                            : src.BesluitTypeZaakTypen.Where(z => z.ZaakType != null).Select(s => s.ZaakTypeIdentificatie).Distinct();
+                    dest.InformatieObjectTypen =
+                        src.BesluitTypeInformatieObjectTypen == null
+                            ? null
+                            : src.BesluitTypeInformatieObjectTypen.Select(s => s.InformatieObjectTypeOmschrijving).Distinct();
+                }
+            );
 
         config
             .NewConfig<ZaakObjectType, ZaakObjectTypeResponseDto>()
