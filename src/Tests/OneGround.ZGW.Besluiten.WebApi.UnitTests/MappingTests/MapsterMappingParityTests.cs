@@ -96,12 +96,35 @@ public class MapsterMappingParityTests : IDisposable
     public void Besluit_to_BesluitRequestDto_parity() => AssertParity<BesluitRequestDto>(_fixture.Create<Besluit>());
 
     [Fact]
+    public void Besluit_with_null_VervalReden_to_BesluitResponseDto_parity()
+    {
+        // Guards the .AfterMapping block on Besluit -> BesluitResponseDto, which only fires when
+        // src.VervalReden is null. A plain _fixture.Create<Besluit>() essentially never produces a
+        // null nullable-enum, so that branch would never run on either mapper side without this case.
+        var value = _fixture.Build<Besluit>().Without(b => b.VervalReden).Create();
+        AssertParity<BesluitResponseDto>(value);
+    }
+
+    [Fact]
+    public void Besluit_with_null_VervalReden_to_BesluitRequestDto_parity()
+    {
+        // Same as above, but for the separate .AfterMapping block on the Besluit -> BesluitRequestDto
+        // (PATCH-merge) config.
+        var value = _fixture.Build<Besluit>().Without(b => b.VervalReden).Create();
+        AssertParity<BesluitRequestDto>(value);
+    }
+
+    [Fact]
     public void BesluitInformatieObject_to_ResponseDto_parity() =>
         AssertParity<BesluitInformatieObjectResponseDto>(_fixture.Create<BesluitInformatieObject>());
 
     [Fact]
     public void BesluitInformatieObject_to_RequestDto_parity() =>
         AssertParity<BesluitInformatieObjectRequestDto>(_fixture.Create<BesluitInformatieObject>());
+
+    [Fact]
+    public void BesluitInformatieObjectRequestDto_to_BesluitInformatieObject_parity() =>
+        AssertParity<BesluitInformatieObject>(_fixture.Create<BesluitInformatieObjectRequestDto>());
 
     [Fact]
     public void AuditTrailRegel_to_Dto_parity()
@@ -115,6 +138,26 @@ public class MapsterMappingParityTests : IDisposable
     {
         _fixture.Customize<BesluitRequestDto>(c =>
             c.With(p => p.VervalReden, VervalReden.ingetrokken_overheid.ToString())
+                .With(p => p.Datum, "2020-12-17")
+                .With(p => p.IngangsDatum, "2020-12-18")
+                .With(p => p.VervalDatum, "2020-12-19")
+                .With(p => p.PublicatieDatum, "2020-12-20")
+                .With(p => p.VerzendDatum, "2020-12-21")
+                .With(p => p.UiterlijkeReactieDatum, "2020-12-22")
+        );
+        AssertParity<Besluit>(_fixture.Create<BesluitRequestDto>());
+    }
+
+    [Fact]
+    public void BesluitRequestDto_with_empty_VervalReden_to_Besluit_parity()
+    {
+        // Guards against Mapster's known "silently substitutes the enum's zero-value member" gotcha
+        // for this exact field (see RequestToDomainProfileTests.
+        // BesluitRequestDto_Maps_EmptyVervalReden_To_Null_Not_ZeroValueEnumMember) -- but here cross-
+        // checked byte-for-byte against what AutoMapper itself actually produces for the same input,
+        // rather than against a hand-written expectation.
+        _fixture.Customize<BesluitRequestDto>(c =>
+            c.With(p => p.VervalReden, string.Empty)
                 .With(p => p.Datum, "2020-12-17")
                 .With(p => p.IngangsDatum, "2020-12-18")
                 .With(p => p.VervalDatum, "2020-12-19")
