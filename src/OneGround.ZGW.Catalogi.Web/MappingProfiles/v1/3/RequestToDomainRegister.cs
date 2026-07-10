@@ -1,6 +1,5 @@
 using Mapster;
 using NodaTime.Text;
-using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
