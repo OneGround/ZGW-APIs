@@ -918,6 +918,18 @@ public class MapsterMappingParityTests : IDisposable
     [Fact]
     public void BesluitType_v1_to_BesluitTypeRequestDto_parity() => AssertParity<Requests.BesluitTypeRequestDto>(_fixture.Create<BesluitType>());
 
+    [Fact]
+    public void BesluitType_v1_with_null_relations_to_BesluitTypeRequestDto_parity()
+    {
+        var source = new BesluitType
+        {
+            Id = Guid.NewGuid(),
+            BesluitTypeZaakTypen = null,
+            BesluitTypeInformatieObjectTypen = null,
+        };
+        AssertParity<Requests.BesluitTypeRequestDto>(source);
+    }
+
     // =====================================================================================
     // v1._3 DomainToResponseRegister / DomainToResponseProfile (24 pairs; 1 shared with v1, see above)
     // =====================================================================================
@@ -1238,6 +1250,21 @@ public class MapsterMappingParityTests : IDisposable
     }
 
     [Fact]
+    public void ResultaatType_v1_3_with_null_BesluitTypen_to_ResultaatTypeRequestDto_parity()
+    {
+        var zaakType = RootedZaakType();
+        var source = new ResultaatType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = zaakType,
+            ArchiefActieTermijn = NodaTime.Period.FromDays(1),
+            ProcesTermijn = NodaTime.Period.FromDays(1),
+            ResultaatTypeBesluitTypen = null,
+        };
+        AssertParity<Requests13.ResultaatTypeRequestDto>(source);
+    }
+
+    [Fact]
     public void Catalogus_v1_3_to_CatalogusResponseDto_parity()
     {
         var zaakType = new ZaakType { Id = Guid.NewGuid() };
@@ -1362,6 +1389,18 @@ public class MapsterMappingParityTests : IDisposable
             [
                 new BesluitTypeInformatieObjectType { InformatieObjectType = informatieObjectType, InformatieObjectTypeOmschrijving = "IOT1" },
             ],
+        };
+        AssertParity<Requests13.BesluitTypeRequestDto>(source);
+    }
+
+    [Fact]
+    public void BesluitType_v1_3_with_null_relations_to_BesluitTypeRequestDto_parity()
+    {
+        var source = new BesluitType
+        {
+            Id = Guid.NewGuid(),
+            BesluitTypeZaakTypen = null,
+            BesluitTypeInformatieObjectTypen = null,
         };
         AssertParity<Requests13.BesluitTypeRequestDto>(source);
     }
