@@ -73,6 +73,30 @@ public class RequestToDomainProfileTests
     }
 
     [Fact]
+    public void BesluitRequestDto_Maps_EmptyVervalReden_To_Null_Not_ZeroValueEnumMember()
+    {
+        _fixture.Customize<BesluitRequestDto>(c =>
+            c.With(p => p.VervalReden, string.Empty)
+                .With(p => p.Datum, "2020-12-17")
+                .With(p => p.IngangsDatum, "2020-12-18")
+                .With(p => p.VervalDatum, "2020-12-19")
+                .With(p => p.PublicatieDatum, "2020-12-20")
+                .With(p => p.VerzendDatum, "2020-12-21")
+                .With(p => p.UiterlijkeReactieDatum, "2020-12-22")
+        );
+
+        var value = _fixture.Create<BesluitRequestDto>();
+
+        var result = _mapper.Map<Besluit>(value);
+
+        // Guards against Mapster's default string->enum handling, which silently substitutes the
+        // enum's zero-value member (VervalReden.tijdelijk) for an empty/unrecognized string instead
+        // of mapping to null. BesluitRequestDto.VervalReden defaults to "" (it's optional on the
+        // request), so an omitted VervalReden must map to null, not tijdelijk.
+        Assert.Null(result.VervalReden);
+    }
+
+    [Fact]
     public void GetAllBesluitInformatieObjectenQueryParameters_Maps_To_GetAllBesluitInformatieObjectenFilter()
     {
         var value = _fixture.Create<GetAllBesluitInformatieObjectenQueryParameters>();
