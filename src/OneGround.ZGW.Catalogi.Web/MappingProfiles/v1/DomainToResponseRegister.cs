@@ -171,14 +171,14 @@ public class DomainToResponseRegister : IRegister
                 dest => dest.ZaakTypen,
                 src =>
                     src.InformatieObjectTypeZaakTypen == null
-                        ? null
+                        ? Enumerable.Empty<string>()
                         : MapsterUrlResolver.ResolveUrls(src.InformatieObjectTypeZaakTypen.Where(z => z.ZaakType != null).Select(b => b.ZaakType))
             )
             .Map(
                 dest => dest.BesluitTypen,
                 src =>
                     src.InformatieObjectTypeBesluitTypen == null
-                        ? null
+                        ? Enumerable.Empty<string>()
                         : MapsterUrlResolver.ResolveUrls(
                             src.InformatieObjectTypeBesluitTypen.Where(z => z.BesluitType != null).Select(b => b.BesluitType)
                         )
