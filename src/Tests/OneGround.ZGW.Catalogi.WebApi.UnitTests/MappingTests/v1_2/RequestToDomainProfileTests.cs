@@ -1,6 +1,8 @@
+using System;
 using Mapster;
 using MapsterMapper;
 using OneGround.ZGW.Catalogi.Contracts.v1._2.Queries;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._2;
 using OneGround.ZGW.Catalogi.Web.Models.v1;
 using Xunit;
@@ -34,8 +36,12 @@ public class RequestToDomainProfileTests
 
         Assert.Equal(value.Catalogus, result.Catalogus);
         Assert.Equal(value.Omschrijving, result.Omschrijving);
-        Assert.Equal(new System.DateOnly(2024, 3, 15), result.DatumGeldigheid);
-        Assert.Equal(OneGround.ZGW.Catalogi.DataModel.ConceptStatus.definitief, result.Status);
+        Assert.Equal(new DateOnly(2024, 3, 15), result.DatumGeldigheid);
+        // Status is a non-nullable enum, so this exercises Mapster's own built-in string->enum-name
+        // conversion, not the seam's RegisterNullableEnumRule (which only matches Nullable<enum>
+        // destinations) or NameMatchingStrategy.IgnoreCase (both members are already same-named,
+        // same-case) — both are irrelevant here and neither is active in this bare TypeAdapterConfig.
+        Assert.Equal(ConceptStatus.definitief, result.Status);
     }
 
     [Fact]
