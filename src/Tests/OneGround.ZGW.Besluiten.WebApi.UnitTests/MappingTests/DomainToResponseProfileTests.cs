@@ -4,11 +4,15 @@ using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OneGround.ZGW.Besluiten.Contracts.v1.Requests;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.MappingProfiles.v1;
+using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
+using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.DataAccess.AuditTrail;
 using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
@@ -90,5 +94,50 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<BesluitResponseDto>(value);
 
         Assert.Equal("", result.VervalReden);
+    }
+
+    [Fact]
+    public void AuditTrailRegel_Maps_To_AuditTrailRegelDto()
+    {
+        // AutoFixture's random strings for Oud/Nieuw won't deserialize as JSON, so pin them to
+        // valid JSON explicitly. This exercises ConvertWijzigingenToDto for real (a broken port
+        // would either throw during mapping or leave Wijzigingen.Oud/.Nieuw null).
+        var value = _fixture
+            .Build<AuditTrailRegel>()
+            .With(a => a.Oud, "{\"naam\":\"oud-waarde\"}")
+            .With(a => a.Nieuw, "{\"naam\":\"nieuw-waarde\"}")
+            .Create();
+
+        var result = _mapper.Map<AuditTrailRegelDto>(value);
+
+        Assert.Equal(value.Id.ToString(), result.Uuid);
+        Assert.Equal(ProfileHelper.StringDateFromDateTime(value.AanmaakDatum, true), result.AanmaakDatum);
+        Assert.NotNull(result.Wijzigingen.Oud);
+        Assert.NotNull(result.Wijzigingen.Nieuw);
+    }
+
+    [Fact]
+    public void Besluit_Maps_To_BesluitRequestDto_for_PATCH_merge()
+    {
+        // Covers the second, distinct .AfterMapping block (on the Besluit -> BesluitRequestDto
+        // config used to merge an existing BESLUIT with a PATCH), not the one already exercised
+        // by Besluit_with_null_VervalReden_Maps_VervalReden_To_Empty_String_via_AfterMapping above.
+        var value = _fixture.Create<Besluit>();
+
+        var result = _mapper.Map<BesluitRequestDto>(value);
+
+        Assert.Equal(value.Identificatie, result.Identificatie);
+        Assert.Equal(value.VerantwoordelijkeOrganisatie, result.VerantwoordelijkeOrganisatie);
+        Assert.Equal(value.BesluitType, result.BesluitType);
+        Assert.Equal(value.Zaak, result.Zaak);
+        Assert.Equal(value.Datum.ToString("yyyy-MM-dd"), result.Datum);
+        Assert.Equal(value.Toelichting, result.Toelichting);
+        Assert.Equal(value.BestuursOrgaan, result.BestuursOrgaan);
+        Assert.Equal(value.IngangsDatum.ToString("yyyy-MM-dd"), result.IngangsDatum);
+        Assert.Equal(value.VervalDatum.Value.ToString("yyyy-MM-dd"), result.VervalDatum);
+        Assert.Equal(value.VervalReden.ToString(), result.VervalReden);
+        Assert.Equal(value.PublicatieDatum.Value.ToString("yyyy-MM-dd"), result.PublicatieDatum);
+        Assert.Equal(value.VerzendDatum.Value.ToString("yyyy-MM-dd"), result.VerzendDatum);
+        Assert.Equal(value.UiterlijkeReactieDatum.Value.ToString("yyyy-MM-dd"), result.UiterlijkeReactieDatum);
     }
 }
