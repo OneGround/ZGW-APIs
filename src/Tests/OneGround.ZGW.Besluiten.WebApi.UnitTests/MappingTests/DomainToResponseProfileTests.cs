@@ -112,8 +112,12 @@ public class DomainToResponseProfileTests : IDisposable
 
         Assert.Equal(value.Id.ToString(), result.Uuid);
         Assert.Equal(ProfileHelper.StringDateFromDateTime(value.AanmaakDatum, true), result.AanmaakDatum);
-        Assert.NotNull(result.Wijzigingen.Oud);
-        Assert.NotNull(result.Wijzigingen.Nieuw);
+        // dynamic access into the deserialized payload proves ConvertWijzigingenToDto actually ran
+        // JsonConvert.DeserializeObject rather than just assigning the raw JSON string through --
+        // the latter would still be non-null (Assert.NotNull alone wouldn't catch it) but ".naam"
+        // wouldn't resolve to the pinned value below.
+        Assert.Equal("oud-waarde", ((dynamic)result.Wijzigingen.Oud).naam.ToString());
+        Assert.Equal("nieuw-waarde", ((dynamic)result.Wijzigingen.Nieuw).naam.ToString());
     }
 
     [Fact]
@@ -139,5 +143,22 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.PublicatieDatum.Value.ToString("yyyy-MM-dd"), result.PublicatieDatum);
         Assert.Equal(value.VerzendDatum.Value.ToString("yyyy-MM-dd"), result.VerzendDatum);
         Assert.Equal(value.UiterlijkeReactieDatum.Value.ToString("yyyy-MM-dd"), result.UiterlijkeReactieDatum);
+    }
+
+    [Fact]
+    public void Besluit_with_null_VervalReden_Maps_To_Empty_String_via_AfterMapping_on_BesluitRequestDto_map()
+    {
+        // Mirrors Besluit_with_null_VervalReden_Maps_VervalReden_To_Empty_String_via_AfterMapping,
+        // but targets the SEPARATE .AfterMapping block on the Besluit -> BesluitRequestDto (PATCH-merge)
+        // config. Besluit_Maps_To_BesluitRequestDto_for_PATCH_merge above uses a non-null VervalReden,
+        // so it never exercises this .AfterMapping branch -- its assertion passes purely from the
+        // preceding .Map(dest.VervalReden, src => src.VervalReden) call and would still pass even if
+        // this .AfterMapping block were deleted. This test forces the null case so the block is
+        // actually exercised.
+        var value = _fixture.Build<Besluit>().Without(b => b.VervalReden).Create();
+
+        var result = _mapper.Map<BesluitRequestDto>(value);
+
+        Assert.Equal("", result.VervalReden);
     }
 }
