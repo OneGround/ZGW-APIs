@@ -293,4 +293,25 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(relation.Toelichting, item.Toelichting);
         Assert.Equal(gerelateerd.Url, item.ZaakType);
     }
+
+    [Fact]
+    public void InformatieObjectType_with_no_ZaakType_or_BesluitType_relations_Maps_to_empty_collections_not_null()
+    {
+        // InformatieObjectTypeDto.ZaakTypen/.BesluitTypen are initialized with `= []` in the base
+        // class. AutoMapper's PreCondition (skip-the-whole-member-assignment-if-false) left those
+        // initializers in place when the source navigation collection was null. The folded Mapster
+        // .Map(...) always runs, so it must explicitly produce Enumerable.Empty<string>() (not null)
+        // in the null branch to preserve that "[]", not "null", contract -- InformatieObjectType with
+        // zero linked ZaakTypen/BesluitTypen is the normal/common case (not an edge case).
+        var source = _fixture
+            .Build<InformatieObjectType>()
+            .Without(i => i.InformatieObjectTypeZaakTypen)
+            .Without(i => i.InformatieObjectTypeBesluitTypen)
+            .Create();
+
+        var result = _mapper.Map<InformatieObjectTypeResponseDto>(source);
+
+        Assert.Empty(result.ZaakTypen);
+        Assert.Empty(result.BesluitTypen);
+    }
 }
