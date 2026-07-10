@@ -8,6 +8,9 @@ using Xunit;
 
 namespace OneGround.ZGW.Referentielijsten.WebApi.UnitTests.MappingTests;
 
+// Covers only the Mapster/DI boundary (IHttpContextAccessor resolution via MapContext, missing
+// registration, missing HttpContext). The rewrite logic itself is covered exhaustively, without any
+// Mapster/DI machinery, by RequestUrlRewriterTests.
 public class AdjustUrlMapsterTests
 {
     public class Src
@@ -31,7 +34,7 @@ public class AdjustUrlMapsterTests
     }
 
     // Wraps the DI container built for a single test so the ServiceProvider/scope can be disposed
-    // via `using`, while letting each [Fact] wire up its own mocked HttpContext (host/port/scheme).
+    // via `using`, while letting each [Fact] wire up its own accessor registration/mock.
     private sealed class MapperFixture : IDisposable
     {
         private readonly ServiceProvider _provider;
@@ -39,20 +42,17 @@ public class AdjustUrlMapsterTests
 
         public IMapper Mapper { get; }
 
-        public MapperFixture(string host, int? port, string scheme)
+        public MapperFixture(IHttpContextAccessor accessor)
         {
-            var httpContext = new DefaultHttpContext();
-            httpContext.Request.Scheme = scheme;
-            httpContext.Request.Host = port.HasValue ? new HostString(host, port.Value) : new HostString(host);
-            var accessor = new Mock<IHttpContextAccessor>();
-            accessor.Setup(a => a.HttpContext).Returns(httpContext);
-
             var config = new TypeAdapterConfig();
             new ProbeRegister().Register(config);
             config.Compile();
 
             var services = new ServiceCollection();
-            services.AddSingleton(accessor.Object);
+            if (accessor != null)
+            {
+                services.AddSingleton(accessor);
+            }
             services.AddSingleton(config);
             services.AddScoped<IMapper, ServiceMapper>();
             _provider = services.BuildServiceProvider();
@@ -68,9 +68,15 @@ public class AdjustUrlMapsterTests
     }
 
     [Fact]
-    public void Adjust_rewrites_host_port_and_scheme_to_the_current_request()
+    public void Adjust_delegates_to_RequestUrlRewriter_through_DI()
     {
-        using var fixture = new MapperFixture(host: "api.example.test", port: 8443, scheme: "https");
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Scheme = "https";
+        httpContext.Request.Host = new HostString("api.example.test", 8443);
+        var accessor = new Mock<IHttpContextAccessor>();
+        accessor.Setup(a => a.HttpContext).Returns(httpContext);
+
+        using var fixture = new MapperFixture(accessor.Object);
 
         var result = fixture.Mapper.Map<Dst>(new Src { Url = "http://upstream-source/api/v1/resultaten/abc" });
 
@@ -78,18 +84,27 @@ public class AdjustUrlMapsterTests
     }
 
     [Fact]
-    public void Adjust_omits_the_port_when_it_is_the_scheme_default()
+    public void Adjust_throws_when_IHttpContextAccessor_is_not_registered()
     {
-        // Explicit HTTPS default port (443) — Host.Port.HasValue is true so the port is rewritten to
-        // 443, which IS the default for the rewritten https scheme, so IsDefaultPort is true and the
-        // ported logic resets Port to -1; UriBuilder then omits it entirely from the output (unlike
-        // the 8443 case above). Note: leaving the port unspecified does NOT exercise this branch —
-        // Host.Port.HasValue would be false, the port would never be overwritten, and it would stay
-        // at the *source* URL's default (80 for http), which isn't the default for https either.
-        using var fixture = new MapperFixture(host: "api.example.test", port: 443, scheme: "https");
+        using var fixture = new MapperFixture(accessor: null);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => fixture.Mapper.Map<Dst>(new Src { Url = "http://upstream-source/x" }));
+
+        Assert.Contains("IHttpContextAccessor", exception.Message);
+    }
+
+    [Fact]
+    public void Adjust_returns_the_source_url_unchanged_when_HttpContext_is_null()
+    {
+        // e.g. a background job or any code path running outside an active HTTP request, where
+        // IHttpContextAccessor is registered but its HttpContext property is null.
+        var accessor = new Mock<IHttpContextAccessor>();
+        accessor.Setup(a => a.HttpContext).Returns((HttpContext)null);
+
+        using var fixture = new MapperFixture(accessor.Object);
 
         var result = fixture.Mapper.Map<Dst>(new Src { Url = "http://upstream-source/api/v1/resultaten/abc" });
 
-        Assert.Equal("https://api.example.test/api/v1/resultaten/abc", result.Url);
+        Assert.Equal("http://upstream-source/api/v1/resultaten/abc", result.Url);
     }
 }
