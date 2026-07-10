@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
