@@ -167,6 +167,12 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginGeldigheid, src => ProfileHelper.StringDateFromDate(src.BeginGeldigheid))
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
+            // InformatieObjectTypeDto initializes ZaakTypen/BesluitTypen with `= []` (unlike most
+            // other PreCondition-folded members in this file, which have no non-null default) — a
+            // null navigation collection must fold to Enumerable.Empty<string>(), not null, or the
+            // API response silently changes from "zaaktypen": [] to "zaaktypen": null for any
+            // InformatieObjectType with zero linked relations (a normal, common case, not an edge
+            // case). Check the destination property's own initializer before copying this pattern.
             .Map(
                 dest => dest.ZaakTypen,
                 src =>
