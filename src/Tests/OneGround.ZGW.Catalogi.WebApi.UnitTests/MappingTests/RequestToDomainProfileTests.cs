@@ -1,7 +1,7 @@
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.Contracts.v1.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1.Requests;
@@ -10,6 +10,7 @@ using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1;
 using OneGround.ZGW.Catalogi.Web.Models.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
@@ -21,16 +22,11 @@ public class RequestToDomainProfileTests
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.ShouldMapMethod = (m => false);
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
 
         _fixture.Customize<ZaakTypeInformatieObjectTypeRequestDto>(c => c.With(p => p.Richting, _fixture.Create<Richting>().ToString()));
 
