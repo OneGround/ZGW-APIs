@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NodaTime;
 using OneGround.ZGW.Catalogi.Contracts.v1;
@@ -10,54 +12,44 @@ using OneGround.ZGW.Catalogi.Contracts.v1.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1;
-using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests
+public class DomainToResponseProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(UrlResolver))
-            {
-                return new UrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlResolver))
-            {
-                return new MemberUrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlsResolver))
-            {
-                return new MemberUrlsResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MapGerelateerdeZaakTypenResponse))
-            {
-                return new MapGerelateerdeZaakTypenResponse(_mockedUriService.Object);
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
+        var config = new TypeAdapterConfig();
+        new DomainToResponseRegister().Register(config);
+        config.Compile();
+
+        var services = new ServiceCollection();
+        services.AddSingleton(_mockedUriService.Object);
+        services.AddSingleton(config);
+        services.AddScoped<IMapper, ServiceMapper>();
+        _provider = services.BuildServiceProvider();
+        _scope = _provider.CreateScope();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
 
         _fixture.Customize<ZaakTypeDeelZaakType>(c => c.Do(z => z.DeelZaakType = new ZaakType { Id = _fixture.Create<Guid>() }));
+    }
+
+    public void Dispose()
+    {
+        _scope.Dispose();
+        _provider.Dispose();
     }
 
     [Theory]
@@ -282,5 +274,23 @@ public class DomainToResponseProfileTests
         Assert.Equal(source.BesluitTypeInformatieObjectTypen.Select(b => b.InformatieObjectType.Url), result.InformatieObjectTypen);
         Assert.Equal(source.BeginGeldigheid.ToString("yyyy-MM-dd"), result.BeginGeldigheid);
         Assert.Equal(source.EindeGeldigheid.Value.ToString("yyyy-MM-dd"), result.EindeGeldigheid);
+    }
+
+    [Fact]
+    public void ZaakType_with_GerelateerdeZaakTypen_Maps_GerelateerdeZaakTypen_via_AfterMapping()
+    {
+        // ZaakType.Url is a computed, get-only property ($"/zaaktypen/{Id}"), so it cannot be set via
+        // object initializer -- only Id is set here and Url is asserted against its computed value.
+        var gerelateerd = new ZaakType { Id = _fixture.Create<Guid>() };
+        var relation = _fixture.Build<ZaakTypeGerelateerdeZaakType>().With(r => r.GerelateerdeZaakType, gerelateerd).Create();
+        var source = _fixture.Build<ZaakType>().With(z => z.ZaakTypeGerelateerdeZaakTypen, [relation]).Create();
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.NotNull(result.GerelateerdeZaakTypen);
+        var item = Assert.Single(result.GerelateerdeZaakTypen);
+        Assert.Equal(relation.AardRelatie.ToString(), item.AardRelatie);
+        Assert.Equal(relation.Toelichting, item.Toelichting);
+        Assert.Equal(gerelateerd.Url, item.ZaakType);
     }
 }
