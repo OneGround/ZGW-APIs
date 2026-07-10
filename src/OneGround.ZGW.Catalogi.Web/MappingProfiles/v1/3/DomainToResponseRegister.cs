@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Mapster;
-using MapsterMapper;
 using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
