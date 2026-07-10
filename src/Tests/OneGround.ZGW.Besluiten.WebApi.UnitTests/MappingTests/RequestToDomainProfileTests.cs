@@ -1,12 +1,12 @@
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Besluiten.Contracts.v1.Queries;
 using OneGround.ZGW.Besluiten.Contracts.v1.Requests;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.MappingProfiles.v1;
 using OneGround.ZGW.Besluiten.Web.Models.v1;
-using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
@@ -18,18 +18,14 @@ public class RequestToDomainProfileTests
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        // string -> Nullable<enum> (BesluitRequestDto.VervalReden -> Besluit.VervalReden) relies on the
+        // seam's global nullable-enum rule, which lives in AddZgwMapster, not the register; this test
+        // builds config directly, so register it here too for production parity.
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
