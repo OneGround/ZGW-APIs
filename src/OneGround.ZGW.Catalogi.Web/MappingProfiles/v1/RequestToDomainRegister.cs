@@ -178,6 +178,9 @@ public class RequestToDomainRegister : IRegister
 
         config.NewConfig<GetAllResultaatTypenQueryParameters, GetAllResultaatTypenFilter>();
 
+        // This is the v1 GetAllInformatieObjectTypenQueryParameters (OneGround.ZGW.Catalogi.Contracts.v1.Queries),
+        // not the same-simple-named v1/2 type (Contracts.v1._2.Queries) registered in
+        // MappingProfiles/v1/2/RequestToDomainRegister.cs — that sibling maps DatumGeldigheid instead of ignoring it.
         config
             .NewConfig<GetAllInformatieObjectTypenQueryParameters, GetAllInformatieObjectTypenFilter>()
             .Ignore(dest => dest.Omschrijving)
