@@ -99,6 +99,12 @@ public class MapsterMappingParityTests : IDisposable
             .Build<Resultaat>()
             .With(x => x.Url, "http://upstream/api/v1/resultaten/x")
             .With(x => x.ProcesType, "http://upstream/api/v1/procestypen/y")
+            // AutoFixture's bool generator is deterministic (true, then alternating) and Burgerzaken
+            // is the 6th bool declared on Resultaat, which lands on false — indistinguishable from
+            // the CLR default an unmapped destination member would fall back to. Pin it to a
+            // non-default value so a broken IgnoreCase name match (BurgerZaken vs Burgerzaken) would
+            // actually be caught instead of silently passing.
+            .With(x => x.Burgerzaken, true)
             .Create();
         AssertParity<Resultaat, ResultaatResponseDto>(value);
     }
