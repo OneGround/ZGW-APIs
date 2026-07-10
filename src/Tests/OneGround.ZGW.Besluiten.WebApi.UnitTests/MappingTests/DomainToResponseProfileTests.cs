@@ -1,49 +1,48 @@
-﻿using System;
+using System;
 using AutoFixture;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.MappingProfiles.v1;
-using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests
+public class DomainToResponseProfileTests : IDisposable
 {
     private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-        });
-
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
-
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(UrlResolver))
-            {
-                return new UrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlResolver))
-            {
-                return new MemberUrlResolver(_mockedUriService.Object);
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
+        var config = new TypeAdapterConfig();
+        new DomainToResponseRegister().Register(config);
+        config.Compile();
+
+        var services = new ServiceCollection();
+        services.AddSingleton(_mockedUriService.Object);
+        services.AddSingleton(config);
+        services.AddScoped<IMapper, ServiceMapper>();
+        _provider = services.BuildServiceProvider();
+        _scope = _provider.CreateScope();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+    }
+
+    public void Dispose()
+    {
+        _scope.Dispose();
+        _provider.Dispose();
     }
 
     [Fact]
@@ -76,5 +75,20 @@ public class DomainToResponseProfileTests
 
         Assert.Equal(value.InformatieObject, result.InformatieObject);
         Assert.Equal(value.Besluit.Url, result.Besluit);
+    }
+
+    [Fact]
+    public void Besluit_with_null_VervalReden_Maps_VervalReden_To_Empty_String_via_AfterMapping()
+    {
+        // AutoMapper original: .AfterMap sets dest.VervalReden = "" when src.VervalReden is null,
+        // because Mapster's default enum->string conversion on a null Nullable<enum> produces a
+        // null string, not "". Pin this explicitly with a source value distinguishable from Mapster's
+        // own possible default handling (null is the input we care about; asserting the OUTPUT is ""
+        // rather than null proves the .AfterMapping override actually ran and wasn't skipped/no-op'd).
+        var value = _fixture.Build<Besluit>().Without(b => b.VervalReden).Create();
+
+        var result = _mapper.Map<BesluitResponseDto>(value);
+
+        Assert.Equal("", result.VervalReden);
     }
 }
