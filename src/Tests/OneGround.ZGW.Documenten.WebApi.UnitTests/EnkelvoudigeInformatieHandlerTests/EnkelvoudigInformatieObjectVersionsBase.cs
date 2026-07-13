@@ -143,7 +143,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler> : IClass
         _mockAuthorizationContextAccessor = new Mock<IAuthorizationContextAccessor>();
         _mockAuthorizationContextAccessor
             .Setup(m => m.AuthorizationContext)
-            .Returns(new AuthorizationContext(new AuthorizedApplication { HasAllAuthorizations = true, Rsin = "813264571" }, []));
+            .Returns(new AuthorizationContext(new AuthorizedApplication { HasAllAuthorizations = true, Rsin = "999993653" }, []));
 
         // 14. Lock Generator
         _mockLockGenerator = new Mock<ILockGenerator>();
@@ -196,7 +196,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler> : IClass
                         Id = new Guid("f50ef517-8f97-4646-8b6e-02899eb80221"),
                         InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
                         EnkelvoudigInformatieObjectVersies = enkelvoudigeInformatieObjectVersies,
-                        Owner = "813264571",
+                        Owner = "999993653",
                         Lock = "33292",
                         Locked = false,
                         LatestEnkelvoudigInformatieObjectVersie = enkelvoudigeInformatieObjectVersies.Last(),

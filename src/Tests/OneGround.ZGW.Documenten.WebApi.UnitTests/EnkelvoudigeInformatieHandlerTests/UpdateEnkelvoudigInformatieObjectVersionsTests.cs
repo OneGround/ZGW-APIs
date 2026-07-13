@@ -996,11 +996,11 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             Inhoud = currentInhoud,
             Bestandsomvang = currentBestandsomvang,
             Versie = 1,
-            Bronorganisatie = "000001375",
+            Bronorganisatie = "999990482",
             Formaat = "raw",
             Taal = "eng",
             Vertrouwelijkheidaanduiding = Common.DataModel.VertrouwelijkheidAanduiding.openbaar,
-            Owner = "813264571",
+            Owner = "999993653",
         };
 
         var currentEnkelvoudigInformatieObject = new EnkelvoudigInformatieObject
@@ -1008,7 +1008,7 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
             Id = new Guid("882ff9a0-d4c8-441c-b9ac-8f3f0f46f5b4"),
             CreationTime = DateTime.UtcNow,
             InformatieObjectType = "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/bddcbdcc-c4ac-45df-984f-eec70134c1d2",
-            Owner = "813264571",
+            Owner = "999993653",
             Lock = null,
             Locked = false,
             LatestEnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie,
