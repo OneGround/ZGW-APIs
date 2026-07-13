@@ -1,10 +1,10 @@
-using System.Linq;
-using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using System;
+using Mapster;
+using MapsterMapper;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -21,525 +21,882 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 public class RequestToDomainProfileTests
 {
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    // Official RvIG test BSN value (elfproef-valid, never assigned to a real person/organization) -
+    // reused here as a stand-in RSIN/Bronorganisatie/VerantwoordelijkeOrganisatie, which share the same
+    // 9-digit elfproef structure.
+    private const string TestRsin = "999993653";
+
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-        });
-
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
     public void GetAllZakenQueryParameters_Maps_To_GetAllZakenFilter()
     {
-        _fixture.Customize<GetAllZakenQueryParameters>(c =>
-            c.With(p => p.Archiefactiedatum, "2020-11-05")
-                .With(p => p.Archiefactiedatum__gt, "2020-11-06")
-                .With(p => p.Archiefactiedatum__lt, "2020-11-07")
-                .With(p => p.Startdatum, "2020-11-08")
-                .With(p => p.Startdatum__gt, "2020-11-09")
-                .With(p => p.Startdatum__gte, "2020-11-10")
-                .With(p => p.Startdatum__lt, "2020-11-11")
-                .With(p => p.Startdatum__lte, "2020-11-12")
-                .With(p => p.Archiefnominatie, ArchiefNominatie.vernietigen.ToString())
-                .With(p => p.Archiefstatus, ArchiefStatus.overgedragen.ToString())
-                .With(p => p.Archiefnominatie__in, $"{ArchiefNominatie.blijvend_bewaren}, {ArchiefNominatie.vernietigen}")
-                .With(p => p.Archiefstatus__in, $"{ArchiefStatus.nog_te_archiveren}, {ArchiefStatus.gearchiveerd}")
-        );
-        var value = _fixture.Create<GetAllZakenQueryParameters>();
-        var result = _mapper.Map<GetAllZakenFilter>(value);
+        var source = new GetAllZakenQueryParameters
+        {
+            Identificatie = "ZK1",
+            Bronorganisatie = TestRsin,
+            Zaaktype = "https://example.test/zaaktypen/1",
+            Archiefactiedatum = "2020-11-05",
+            Archiefactiedatum__gt = "2020-11-06",
+            Archiefactiedatum__lt = "2020-11-07",
+            Startdatum = "2020-11-08",
+            Startdatum__gt = "2020-11-09",
+            Startdatum__gte = "2020-11-10",
+            Startdatum__lt = "2020-11-11",
+            Startdatum__lte = "2020-11-12",
+            Archiefnominatie = ArchiefNominatie.vernietigen.ToString(),
+            Archiefstatus = ArchiefStatus.overgedragen.ToString(),
+            Archiefnominatie__in = $"{ArchiefNominatie.blijvend_bewaren}, {ArchiefNominatie.vernietigen}",
+            Archiefstatus__in = $"{ArchiefStatus.nog_te_archiveren}, {ArchiefStatus.gearchiveerd}",
+        };
 
-        Assert.Equal(value.Archiefactiedatum, result.Archiefactiedatum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Archiefactiedatum__gt, result.Archiefactiedatum__gt.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Archiefactiedatum__lt, result.Archiefactiedatum__lt.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Archiefnominatie, result.Archiefnominatie.Value.ToString());
-        Assert.Equal(new[] { ArchiefNominatie.blijvend_bewaren, ArchiefNominatie.vernietigen }, result.Archiefnominatie__in);
-        Assert.Equal(value.Archiefstatus, result.Archiefstatus.Value.ToString());
-        Assert.Equal(new[] { ArchiefStatus.nog_te_archiveren, ArchiefStatus.gearchiveerd }, result.Archiefstatus__in);
-        Assert.Equal(value.Bronorganisatie, result.Bronorganisatie);
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.Startdatum, result.Startdatum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Startdatum__gt, result.Startdatum__gt.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Startdatum__gte, result.Startdatum__gte.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Startdatum__lt, result.Startdatum__lt.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Startdatum__lte, result.Startdatum__lte.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Zaaktype, result.Zaaktype);
+        var result = _mapper.Map<GetAllZakenFilter>(source);
+
+        Assert.Equal(new DateOnly(2020, 11, 5), result.Archiefactiedatum);
+        Assert.Equal(new DateOnly(2020, 11, 6), result.Archiefactiedatum__gt);
+        Assert.Equal(new DateOnly(2020, 11, 7), result.Archiefactiedatum__lt);
+        Assert.Equal(ArchiefNominatie.vernietigen, result.Archiefnominatie);
+        Assert.Equal([ArchiefNominatie.blijvend_bewaren, ArchiefNominatie.vernietigen], result.Archiefnominatie__in);
+        Assert.Equal(ArchiefStatus.overgedragen, result.Archiefstatus);
+        Assert.Equal([ArchiefStatus.nog_te_archiveren, ArchiefStatus.gearchiveerd], result.Archiefstatus__in);
+        Assert.Equal(source.Bronorganisatie, result.Bronorganisatie);
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(new DateOnly(2020, 11, 8), result.Startdatum);
+        Assert.Equal(new DateOnly(2020, 11, 9), result.Startdatum__gt);
+        Assert.Equal(new DateOnly(2020, 11, 10), result.Startdatum__gte);
+        Assert.Equal(new DateOnly(2020, 11, 11), result.Startdatum__lt);
+        Assert.Equal(new DateOnly(2020, 11, 12), result.Startdatum__lte);
+        Assert.Equal(source.Zaaktype, result.Zaaktype);
     }
 
     [Fact]
     public void ZaakRequestDto_Maps_To_Zaak()
     {
-        static Point createPoint() => new Point(23.45, 53.20);
-
         var point = new Point(23.45, 53.20);
-        _fixture.Customize<ZaakRequestDto>(c =>
-            c.With(p => p.Zaakgeometrie, createPoint())
-                .With(p => p.Registratiedatum, "2020-11-06")
-                .With(p => p.Startdatum, "2020-11-07")
-                .With(p => p.EinddatumGepland, "2020-11-08")
-                .With(p => p.UiterlijkeEinddatumAfdoening, "2020-11-09")
-                .With(p => p.Publicatiedatum, "2020-11-10")
-                .With(p => p.LaatsteBetaaldatum, "2020-11-11T12:13:14Z")
-                .With(p => p.Archiefactiedatum, "2020-11-12")
-                .With(p => p.Verlenging, new ZaakVerlengingDto { Duur = "P365D", Reden = _fixture.Create<string>() })
-                .With(p => p.Vertrouwelijkheidaanduiding, _fixture.Create<VertrouwelijkheidAanduiding>().ToString())
-                .With(p => p.Archiefnominatie, _fixture.Create<ArchiefNominatie>().ToString())
-                .With(p => p.Archiefstatus, _fixture.Create<ArchiefStatus>().ToString())
-                .With(p => p.Betalingsindicatie, _fixture.Create<BetalingsIndicatie>().ToString())
-        );
-        var value = _fixture.Create<ZaakRequestDto>();
-        var result = _mapper.Map<Zaak>(value);
+        var source = new ZaakRequestDto
+        {
+            Identificatie = "ZK1",
+            Bronorganisatie = TestRsin,
+            Omschrijving = "omschrijving",
+            Toelichting = "toelichting",
+            Zaaktype = "https://example.test/zaaktypen/1/",
+            Registratiedatum = "2020-11-06",
+            VerantwoordelijkeOrganisatie = TestRsin,
+            Startdatum = "2020-11-07",
+            EinddatumGepland = "2020-11-08",
+            UiterlijkeEinddatumAfdoening = "2020-11-09",
+            Publicatiedatum = "2020-11-10",
+            Communicatiekanaal = "communicatiekanaal",
+            ProductenOfDiensten = ["https://example.test/producten/1"],
+            Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.openbaar.ToString(),
+            Betalingsindicatie = BetalingsIndicatie.geheel.ToString(),
+            LaatsteBetaaldatum = "2020-11-11T12:13:14Z",
+            Zaakgeometrie = point,
+            Verlenging = new ZaakVerlengingDto { Duur = "P365D", Reden = "reden" },
+            Opschorting = new ZaakOpschortingDto { Indicatie = true, Reden = "opschorting reden" },
+            Selectielijstklasse = "selectielijstklasse",
+            RelevanteAndereZaken = [new RelevanteAndereZaakDto { Url = "https://example.test/zaken/2", AardRelatie = "vervolg" }],
+            Kenmerken = [new ZaakKenmerkDto { Bron = "bron", Kenmerk = "kenmerk" }],
+            Archiefnominatie = ArchiefNominatie.blijvend_bewaren.ToString(),
+            Archiefstatus = ArchiefStatus.nog_te_archiveren.ToString(),
+            Archiefactiedatum = "2020-11-12",
+        };
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.Bronorganisatie, result.Bronorganisatie);
-        Assert.Equal(value.Omschrijving, result.Omschrijving);
-        Assert.Equal(value.Toelichting, result.Toelichting);
-        Assert.Equal(value.Zaaktype, result.Zaaktype);
-        Assert.Equal(value.Registratiedatum, result.Registratiedatum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.VerantwoordelijkeOrganisatie, result.VerantwoordelijkeOrganisatie);
-        Assert.Equal(value.Startdatum, result.Startdatum.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.EinddatumGepland, result.EinddatumGepland.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.UiterlijkeEinddatumAfdoening, result.UiterlijkeEinddatumAfdoening.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Publicatiedatum, result.Publicatiedatum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Communicatiekanaal, result.Communicatiekanaal);
-        Assert.Equal(value.ProductenOfDiensten, result.ProductenOfDiensten);
-        Assert.Equal(value.Vertrouwelijkheidaanduiding, result.VertrouwelijkheidAanduiding.ToString());
-        Assert.Equal(value.Betalingsindicatie, result.BetalingsIndicatie.ToString());
-        Assert.Equal(value.LaatsteBetaaldatum, result.LaatsteBetaaldatum.Value.ToString("yyyy-MM-ddThh:mm:ssZ"));
-        Assert.Equal(createPoint(), result.Zaakgeometrie);
-        Assert.Equal(value.Verlenging.Duur, result.Verlenging.Duur.ToString());
-        Assert.Equal(value.Verlenging.Reden, result.Verlenging.Reden);
-        Assert.Equal(value.Opschorting.Indicatie, result.Opschorting.Indicatie);
-        Assert.Equal(value.Opschorting.Reden, result.Opschorting.Reden);
-        Assert.Equal(value.Selectielijstklasse, result.Selectielijstklasse);
-        Assert.All(value.RelevanteAndereZaken, c => Assert.NotNull(result.RelevanteAndereZaken.SingleOrDefault(s => s.AardRelatie == c.AardRelatie)));
-        Assert.All(value.Kenmerken, c => Assert.NotNull(result.Kenmerken.SingleOrDefault(s => s.Bron == c.Bron && s.Kenmerk == c.Kenmerk)));
-        Assert.Equal(value.Archiefactiedatum, result.Archiefactiedatum.Value.ToString("yyyy-MM-dd"));
-        Assert.Equal(value.Archiefnominatie, result.Archiefnominatie.Value.ToString());
-        Assert.Equal(value.Archiefstatus, result.Archiefstatus.ToString());
+        var result = _mapper.Map<Zaak>(source);
+
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(source.Bronorganisatie, result.Bronorganisatie);
+        Assert.Equal(source.Omschrijving, result.Omschrijving);
+        Assert.Equal(source.Toelichting, result.Toelichting);
+        Assert.Equal("https://example.test/zaaktypen/1", result.Zaaktype);
+        Assert.Equal(new DateOnly(2020, 11, 6), result.Registratiedatum);
+        Assert.Equal(source.VerantwoordelijkeOrganisatie, result.VerantwoordelijkeOrganisatie);
+        Assert.Equal(new DateOnly(2020, 11, 7), result.Startdatum);
+        Assert.Equal(new DateOnly(2020, 11, 8), result.EinddatumGepland);
+        Assert.Equal(new DateOnly(2020, 11, 9), result.UiterlijkeEinddatumAfdoening);
+        Assert.Equal(new DateOnly(2020, 11, 10), result.Publicatiedatum);
+        Assert.Equal(source.Communicatiekanaal, result.Communicatiekanaal);
+        Assert.Equal(source.ProductenOfDiensten, result.ProductenOfDiensten);
+        Assert.Equal(VertrouwelijkheidAanduiding.openbaar, result.VertrouwelijkheidAanduiding);
+        Assert.Equal(BetalingsIndicatie.geheel, result.BetalingsIndicatie);
+        Assert.Equal(new DateTime(2020, 11, 11, 12, 13, 14, DateTimeKind.Utc), result.LaatsteBetaaldatum);
+        Assert.Equal(point, result.Zaakgeometrie);
+        Assert.NotNull(result.Verlenging);
+        Assert.Equal(source.Verlenging.Duur, result.Verlenging.Duur.ToString());
+        Assert.Equal(source.Verlenging.Reden, result.Verlenging.Reden);
+        Assert.NotNull(result.Opschorting);
+        Assert.Equal(source.Opschorting.Indicatie, result.Opschorting.Indicatie);
+        Assert.Equal(source.Opschorting.Reden, result.Opschorting.Reden);
+        Assert.Equal(source.Selectielijstklasse, result.Selectielijstklasse);
+        Assert.NotNull(result.RelevanteAndereZaken);
+        Assert.Single(result.RelevanteAndereZaken);
+        Assert.Equal("vervolg", result.RelevanteAndereZaken[0].AardRelatie);
+        Assert.NotNull(result.Kenmerken);
+        Assert.Single(result.Kenmerken);
+        Assert.Equal("bron", result.Kenmerken[0].Bron);
+        Assert.Equal("kenmerk", result.Kenmerken[0].Kenmerk);
+        Assert.Equal(new DateOnly(2020, 11, 12), result.Archiefactiedatum);
+        Assert.Equal(ArchiefNominatie.blijvend_bewaren, result.Archiefnominatie);
+        Assert.Equal(ArchiefStatus.nog_te_archiveren, result.Archiefstatus);
     }
 
     [Fact]
     public void RelevanteAndereZaakDto_Maps_To_RelevanteAndereZaak()
     {
-        var value = _fixture.Create<RelevanteAndereZaakDto>();
-        var result = _mapper.Map<RelevanteAndereZaak>(value);
+        var source = new RelevanteAndereZaakDto { Url = "https://example.test/zaken/2", AardRelatie = "vervolg" };
 
-        Assert.Equal(value.AardRelatie, result.AardRelatie);
+        var result = _mapper.Map<RelevanteAndereZaak>(source);
+
+        Assert.Equal(source.AardRelatie, result.AardRelatie);
     }
 
     [Fact]
     public void ZaakKenmerkDto_Maps_To_ZaakKenmerk()
     {
-        var value = _fixture.Create<ZaakKenmerkDto>();
-        var result = _mapper.Map<ZaakKenmerk>(value);
+        var source = new ZaakKenmerkDto { Bron = "bron", Kenmerk = "kenmerk" };
 
-        Assert.Equal(value.Bron, result.Bron);
-        Assert.Equal(value.Kenmerk, result.Kenmerk);
+        var result = _mapper.Map<ZaakKenmerk>(source);
+
+        Assert.Equal(source.Bron, result.Bron);
+        Assert.Equal(source.Kenmerk, result.Kenmerk);
     }
 
     [Fact]
     public void GetAllZaakStatussenQueryParameters_Maps_To_GetAllZaakStatussenFilter()
     {
-        var value = _fixture.Create<GetAllZaakStatussenQueryParameters>();
-        var result = _mapper.Map<GetAllZaakStatussenFilter>(value);
+        var source = new GetAllZaakStatussenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            StatusType = "https://example.test/statustypen/1",
+        };
 
-        Assert.Equal(value.StatusType, result.StatusType);
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllZaakStatussenFilter>(source);
+
+        Assert.Equal(source.StatusType, result.StatusType);
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
     public void ZaakStatusRequestDto_Maps_To_ZaakStatus()
     {
-        _fixture.Customize<ZaakStatusRequestDto>(c => c.With(p => p.DatumStatusGezet, "2020-11-06T12:13:14Z"));
-        var value = _fixture.Create<ZaakStatusRequestDto>();
-        var result = _mapper.Map<ZaakStatus>(value);
+        var source = new ZaakStatusRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            StatusType = "https://example.test/statustypen/1",
+            DatumStatusGezet = "2020-11-06T12:13:14Z",
+            StatusToelichting = "toelichting",
+        };
 
-        Assert.Equal(value.DatumStatusGezet, result.DatumStatusGezet.ToString("yyyy-MM-ddThh:mm:ssZ"));
-        Assert.Equal(value.StatusToelichting, result.StatusToelichting);
-        Assert.Equal(value.StatusType, result.StatusType);
+        var result = _mapper.Map<ZaakStatus>(source);
+
+        Assert.Equal(new DateTime(2020, 11, 6, 12, 13, 14, DateTimeKind.Utc), result.DatumStatusGezet);
+        Assert.Equal(source.StatusToelichting, result.StatusToelichting);
+        Assert.Equal(source.StatusType, result.StatusType);
     }
 
     [Fact]
     public void GetAllZaakObjectenQueryParameters_Maps_To_GetAllZaakObjectenFilter()
     {
-        _fixture.Customize<GetAllZaakObjectenQueryParameters>(c => c.With(p => p.ObjectType, _fixture.Create<ObjectType>().ToString()));
-        var value = _fixture.Create<GetAllZaakObjectenQueryParameters>();
-        var result = _mapper.Map<GetAllZaakObjectenFilter>(value);
+        var source = new GetAllZaakObjectenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            Object = "https://example.test/objects/1",
+            ObjectType = ObjectType.gemeentelijke_openbare_ruimte.ToString(),
+        };
 
-        Assert.Equal(value.Object, result.Object);
-        Assert.Equal(value.ObjectType, result.ObjectType.ToString());
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllZaakObjectenFilter>(source);
+
+        Assert.Equal(source.Object, result.Object);
+        Assert.Equal(ObjectType.gemeentelijke_openbare_ruimte, result.ObjectType);
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
-    public void ZaakObjectRequestDto_Maps_To_ZaakObject()
+    public void ZaakObjectRequestDto_without_derived_data_Maps_To_ZaakObject_with_null_nested_objects()
     {
-        _fixture.Customize<ZaakObjectRequestDto>(c => c.With(p => p.ObjectType, ObjectType.gemeentelijke_openbare_ruimte.ToString()));
-        var value = _fixture.Create<ZaakObjectRequestDto>();
-        var result = _mapper.Map<ZaakObject>(value);
+        var source = new ZaakObjectRequestDto
+        {
+            Object = "https://example.test/objects/1",
+            ObjectType = ObjectType.gemeentelijke_openbare_ruimte.ToString(),
+            ObjectTypeOverige = "overige",
+            RelatieOmschrijving = "relatie omschrijving",
+        };
 
-        Assert.Equal(value.Object, result.Object);
-        Assert.Equal(value.ObjectType, result.ObjectType.ToString());
-        Assert.Equal(value.ObjectTypeOverige, result.ObjectTypeOverige);
-        Assert.Equal(value.RelatieOmschrijving, result.RelatieOmschrijving);
+        var result = _mapper.Map<ZaakObject>(source);
+
+        Assert.Equal(source.Object, result.Object);
+        Assert.Equal(ObjectType.gemeentelijke_openbare_ruimte, result.ObjectType);
+        Assert.Equal(source.ObjectTypeOverige, result.ObjectTypeOverige);
+        Assert.Equal(source.RelatieOmschrijving, result.RelatieOmschrijving);
         Assert.Null(result.Adres);
+        Assert.Null(result.Buurt);
+        Assert.Null(result.Pand);
+        Assert.Null(result.KadastraleOnroerendeZaak);
         Assert.Null(result.Gemeente);
-        Assert.Null(result.Overige);
         Assert.Null(result.TerreinGebouwdObject);
+        Assert.Null(result.Overige);
+        Assert.Null(result.WozWaardeObject);
+    }
+
+    [Fact]
+    public void ZaakObjectRequestDto_base_typed_reference_holding_AdresZaakObjectRequestDto_dispatches_to_Adres_mapping()
+    {
+        // The whole point of this test: `request` is declared and passed around as the BASE type
+        // ZaakObjectRequestDto, but at runtime holds an AdresZaakObjectRequestDto instance (this mirrors
+        // how a controller receives it after a custom JSON converter resolves the concrete subtype).
+        // AutoMapper needed .IncludeAllDerived() to dispatch on the runtime type here; Mapster's
+        // IMapper.Map<TDestination>(object source) does this by default, dispatching on source.GetType()
+        // and using the AdresZaakObjectRequestDto->ZaakObject config registered further down. If that
+        // dispatch stopped working, result.Adres below would be null (only the base config would run).
+        ZaakObjectRequestDto request = new AdresZaakObjectRequestDto
+        {
+            Object = "https://example.test/objects/1",
+            ObjectType = ObjectType.adres.ToString(),
+            RelatieOmschrijving = "relatie omschrijving",
+            ObjectIdentificatie = new AdresZaakObjectDto
+            {
+                Huisletter = "A",
+                Huisnummer = 12,
+                HuisnummerToevoeging = "bis",
+                GorOpenbareRuimteNaam = "Teststraat",
+                Identificatie = "ID1",
+                WplWoonplaatsNaam = "Teststad",
+                Postcode = "1234AB",
+            },
+        };
+
+        var result = _mapper.Map<ZaakObject>(request);
+
+        Assert.Equal(request.Object, result.Object);
+        Assert.Equal(ObjectType.adres, result.ObjectType);
+        Assert.Equal(request.RelatieOmschrijving, result.RelatieOmschrijving);
+        Assert.NotNull(result.Adres);
+        Assert.Equal("A", result.Adres.Huisletter);
+        Assert.Equal(12, result.Adres.Huisnummer);
+        Assert.Equal("bis", result.Adres.HuisnummerToevoeging);
+        Assert.Equal("Teststraat", result.Adres.GorOpenbareRuimteNaam);
+        Assert.Equal("ID1", result.Adres.Identificatie);
+        Assert.Equal("Teststad", result.Adres.WplWoonplaatsNaam);
+        Assert.Equal("1234AB", result.Adres.Postcode);
+    }
+
+    [Fact]
+    public void ZaakRolRequestDto_base_typed_reference_holding_NatuurlijkPersoonZaakRolRequestDto_dispatches_to_NatuurlijkPersoon_mapping()
+    {
+        // Lower-priority twin of the ZaakObject dispatch test above: same base-typed-reference-holding-
+        // derived-instance shape, proving the dropped .IncludeAllDerived() on ZaakRolRequestDto->ZaakRol
+        // isn't needed either.
+        ZaakRolRequestDto request = new NatuurlijkPersoonZaakRolRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            Betrokkene = "https://example.test/betrokkenen/1",
+            BetrokkeneType = BetrokkeneType.natuurlijk_persoon.ToString(),
+            RolType = "https://example.test/roltypen/1",
+            RolToelichting = "toelichting",
+            BetrokkeneIdentificatie = new NatuurlijkPersoonZaakRolDto { InpBsn = "999993653", Geslachtsnaam = "Jansen" },
+        };
+
+        var result = _mapper.Map<ZaakRol>(request);
+
+        Assert.Equal(request.Betrokkene, result.Betrokkene);
+        Assert.Equal(BetrokkeneType.natuurlijk_persoon, result.BetrokkeneType);
+        Assert.NotNull(result.NatuurlijkPersoon);
+        Assert.Equal("999993653", result.NatuurlijkPersoon.InpBsnEncrypted);
+        Assert.Equal("Jansen", result.NatuurlijkPersoon.Geslachtsnaam);
     }
 
     [Fact]
     public void AdresZaakObjectDto_Maps_To_AdresZaakObject()
     {
-        var value = _fixture.Create<AdresZaakObjectDto>();
-        var result = _mapper.Map<AdresZaakObject>(value);
+        var source = new AdresZaakObjectDto
+        {
+            GorOpenbareRuimteNaam = "Teststraat",
+            Huisletter = "A",
+            Huisnummer = 1,
+            HuisnummerToevoeging = "bis",
+            Identificatie = "ID1",
+            Postcode = "1234AB",
+            WplWoonplaatsNaam = "Teststad",
+        };
 
-        Assert.Equal(value.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
-        Assert.Equal(value.Huisletter, result.Huisletter);
-        Assert.Equal(value.Huisnummer, result.Huisnummer);
-        Assert.Equal(value.HuisnummerToevoeging, result.HuisnummerToevoeging);
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.Postcode, result.Postcode);
-        Assert.Equal(value.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
+        var result = _mapper.Map<AdresZaakObject>(source);
+
+        Assert.Equal(source.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
+        Assert.Equal(source.Huisletter, result.Huisletter);
+        Assert.Equal(source.Huisnummer, result.Huisnummer);
+        Assert.Equal(source.HuisnummerToevoeging, result.HuisnummerToevoeging);
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(source.Postcode, result.Postcode);
+        Assert.Equal(source.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
     }
 
     [Fact]
     public void BuurtZaakObjectDto_Maps_To_BuurtZaakObject()
     {
-        var value = _fixture.Create<BuurtZaakObjectDto>();
-        var result = _mapper.Map<BuurtZaakObject>(value);
+        var source = new BuurtZaakObjectDto
+        {
+            BuurtCode = "BC1",
+            BuurtNaam = "Buurtnaam",
+            GemGemeenteCode = "GC1",
+            WykWijkCode = "WC1",
+        };
 
-        Assert.Equal(value.BuurtCode, result.BuurtCode);
-        Assert.Equal(value.BuurtNaam, result.BuurtNaam);
-        Assert.Equal(value.GemGemeenteCode, result.GemGemeenteCode);
-        Assert.Equal(value.WykWijkCode, result.WykWijkCode);
+        var result = _mapper.Map<BuurtZaakObject>(source);
+
+        Assert.Equal(source.BuurtCode, result.BuurtCode);
+        Assert.Equal(source.BuurtNaam, result.BuurtNaam);
+        Assert.Equal(source.GemGemeenteCode, result.GemGemeenteCode);
+        Assert.Equal(source.WykWijkCode, result.WykWijkCode);
     }
 
     [Fact]
     public void PandZaakObjectDto_Maps_To_PandZaakObject()
     {
-        var value = _fixture.Create<PandZaakObjectDto>();
-        var result = _mapper.Map<PandZaakObject>(value);
+        var source = new PandZaakObjectDto { Identificatie = "ID1" };
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
+        var result = _mapper.Map<PandZaakObject>(source);
+
+        Assert.Equal(source.Identificatie, result.Identificatie);
     }
 
     [Fact]
     public void KadastraleOnroerendeZaakObjectDto_Maps_To_KadastraleOnroerendeZaakObject()
     {
-        var value = _fixture.Create<KadastraleOnroerendeZaakObjectDto>();
-        var result = _mapper.Map<KadastraleOnroerendeZaakObject>(value);
+        var source = new KadastraleOnroerendeZaakObjectDto { KadastraleAanduiding = "aanduiding", KadastraleIdentificatie = "ID1" };
 
-        Assert.Equal(value.KadastraleAanduiding, result.KadastraleAanduiding);
-        Assert.Equal(value.KadastraleIdentificatie, result.KadastraleIdentificatie);
+        var result = _mapper.Map<KadastraleOnroerendeZaakObject>(source);
+
+        Assert.Equal(source.KadastraleAanduiding, result.KadastraleAanduiding);
+        Assert.Equal(source.KadastraleIdentificatie, result.KadastraleIdentificatie);
     }
 
     [Fact]
     public void GemeenteZaakObjectDto_Maps_To_GemeenteZaakObject()
     {
-        var value = _fixture.Create<GemeenteZaakObjectDto>();
-        var result = _mapper.Map<GemeenteZaakObject>(value);
+        var source = new GemeenteZaakObjectDto { GemeenteCode = "GC1", GemeenteNaam = "Gemeentenaam" };
 
-        Assert.Equal(value.GemeenteCode, result.GemeenteCode);
-        Assert.Equal(value.GemeenteNaam, result.GemeenteNaam);
+        var result = _mapper.Map<GemeenteZaakObject>(source);
+
+        Assert.Equal(source.GemeenteCode, result.GemeenteCode);
+        Assert.Equal(source.GemeenteNaam, result.GemeenteNaam);
     }
 
     [Fact]
     public void TerreinGebouwdObjectZaakObjectDto_Maps_To_TerreinGebouwdObjectZaakObject()
     {
-        var value = _fixture.Create<TerreinGebouwdObjectZaakObjectDto>();
-        var result = _mapper.Map<TerreinGebouwdObjectZaakObject>(value);
+        var source = new TerreinGebouwdObjectZaakObjectDto
+        {
+            Identificatie = "ID1",
+            AdresAanduidingGrp = new AdresAanduidingGrpDto
+            {
+                AoaHuisletter = "A",
+                AoaHuisnummer = 1,
+                AoaHuisnummertoevoeging = "bis",
+                AoaPostcode = "1234AB",
+                GorOpenbareRuimteNaam = "Teststraat",
+                NumIdentificatie = "NUM1",
+                OaoIdentificatie = "OAO1",
+                OgoLocatieAanduiding = "OGO1",
+                WplWoonplaatsNaam = "Teststad",
+            },
+        };
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.AdresAanduidingGrp.AoaHuisletter, result.AdresAanduidingGrp_AoaHuisletter);
-        Assert.Equal(value.AdresAanduidingGrp.AoaHuisnummer, result.AdresAanduidingGrp_AoaHuisnummer);
-        Assert.Equal(value.AdresAanduidingGrp.AoaHuisnummertoevoeging, result.AdresAanduidingGrp_AoaHuisnummertoevoeging);
-        Assert.Equal(value.AdresAanduidingGrp.AoaPostcode, result.AdresAanduidingGrp_AoaPostcode);
-        Assert.Equal(value.AdresAanduidingGrp.GorOpenbareRuimteNaam, result.AdresAanduidingGrp_GorOpenbareRuimteNaam);
-        Assert.Equal(value.AdresAanduidingGrp.NumIdentificatie, result.AdresAanduidingGrp_NumIdentificatie);
-        Assert.Equal(value.AdresAanduidingGrp.OaoIdentificatie, result.AdresAanduidingGrp_OaoIdentificatie);
-        Assert.Equal(value.AdresAanduidingGrp.OgoLocatieAanduiding, result.AdresAanduidingGrp_OgoLocatieAanduiding);
-        Assert.Equal(value.AdresAanduidingGrp.WplWoonplaatsNaam, result.AdresAanduidingGrp_WplWoonplaatsNaam);
+        var result = _mapper.Map<TerreinGebouwdObjectZaakObject>(source);
+
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(source.AdresAanduidingGrp.AoaHuisletter, result.AdresAanduidingGrp_AoaHuisletter);
+        Assert.Equal(source.AdresAanduidingGrp.AoaHuisnummer, result.AdresAanduidingGrp_AoaHuisnummer);
+        Assert.Equal(source.AdresAanduidingGrp.AoaHuisnummertoevoeging, result.AdresAanduidingGrp_AoaHuisnummertoevoeging);
+        Assert.Equal(source.AdresAanduidingGrp.AoaPostcode, result.AdresAanduidingGrp_AoaPostcode);
+        Assert.Equal(source.AdresAanduidingGrp.GorOpenbareRuimteNaam, result.AdresAanduidingGrp_GorOpenbareRuimteNaam);
+        Assert.Equal(source.AdresAanduidingGrp.NumIdentificatie, result.AdresAanduidingGrp_NumIdentificatie);
+        Assert.Equal(source.AdresAanduidingGrp.OaoIdentificatie, result.AdresAanduidingGrp_OaoIdentificatie);
+        Assert.Equal(source.AdresAanduidingGrp.OgoLocatieAanduiding, result.AdresAanduidingGrp_OgoLocatieAanduiding);
+        Assert.Equal(source.AdresAanduidingGrp.WplWoonplaatsNaam, result.AdresAanduidingGrp_WplWoonplaatsNaam);
     }
 
     [Fact]
     public void OverigeZaakObjectDto_Maps_To_OverigeZaakObject()
     {
-        var value = _fixture.Create<OverigeZaakObjectDto>();
-        var result = _mapper.Map<OverigeZaakObject>(value);
+        var source = new OverigeZaakObjectDto { OverigeData = JToken.Parse("""{"foo":"bar"}""") };
 
-        Assert.Equal(value.OverigeData, result.OverigeData);
+        var result = _mapper.Map<OverigeZaakObject>(source);
+
+        Assert.Equal(source.OverigeData.ToString(Newtonsoft.Json.Formatting.None), result.OverigeData);
     }
 
     [Fact]
     public void WozWaardeZaakObjectDto_Maps_To_WozWaardeZaakObject()
     {
-        var value = _fixture.Create<WozWaardeZaakObjectDto>();
-        var result = _mapper.Map<WozWaardeZaakObject>(value);
+        var source = new WozWaardeZaakObjectDto { WaardePeildatum = "2020-01-01" };
 
-        Assert.Equal(value.WaardePeildatum, result.WaardePeildatum);
+        var result = _mapper.Map<WozWaardeZaakObject>(source);
+
+        Assert.Equal(source.WaardePeildatum, result.WaardePeildatum);
     }
 
     [Fact]
     public void WozObjectDto_Maps_To_WozObject()
     {
-        var value = _fixture.Create<WozObjectDto>();
-        var result = _mapper.Map<WozObject>(value);
+        var source = new WozObjectDto { WozObjectNummer = "WOZ1" };
 
-        Assert.Equal(value.WozObjectNummer, result.WozObjectNummer);
+        var result = _mapper.Map<WozObject>(source);
+
+        Assert.Equal(source.WozObjectNummer, result.WozObjectNummer);
     }
 
     [Fact]
     public void AanduidingWozObjectDto_Maps_To_AanduidingWozObject()
     {
-        var value = _fixture.Create<AanduidingWozObjectDto>();
-        var result = _mapper.Map<AanduidingWozObject>(value);
+        var source = new AanduidingWozObjectDto
+        {
+            AoaHuisletter = "A",
+            AoaHuisnummer = 1,
+            AoaHuisnummerToevoeging = "bis",
+            AoaIdentificatie = "AOA1",
+            AoaPostcode = "1234AB",
+            GorOpenbareRuimteNaam = "Teststraat",
+            LocatieOmschrijving = "locatie",
+            WplWoonplaatsNaam = "Teststad",
+        };
 
-        Assert.Equal(value.AoaHuisletter, result.AoaHuisletter);
-        Assert.Equal(value.AoaHuisnummer, result.AoaHuisnummer);
-        Assert.Equal(value.AoaHuisnummerToevoeging, result.AoaHuisnummerToevoeging);
-        Assert.Equal(value.AoaIdentificatie, result.AoaIdentificatie);
-        Assert.Equal(value.AoaPostcode, result.AoaPostcode);
-        Assert.Equal(value.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
-        Assert.Equal(value.LocatieOmschrijving, result.LocatieOmschrijving);
-        Assert.Equal(value.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
+        var result = _mapper.Map<AanduidingWozObject>(source);
+
+        Assert.Equal(source.AoaHuisletter, result.AoaHuisletter);
+        Assert.Equal(source.AoaHuisnummer, result.AoaHuisnummer);
+        Assert.Equal(source.AoaHuisnummerToevoeging, result.AoaHuisnummerToevoeging);
+        Assert.Equal(source.AoaIdentificatie, result.AoaIdentificatie);
+        Assert.Equal(source.AoaPostcode, result.AoaPostcode);
+        Assert.Equal(source.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
+        Assert.Equal(source.LocatieOmschrijving, result.LocatieOmschrijving);
+        Assert.Equal(source.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
+    }
+
+    [Fact]
+    public void OverigeZaakObjectRequestDto_MapsWith_CreateOverigeZaakObject()
+    {
+        var source = new OverigeZaakObjectRequestDto
+        {
+            ObjectIdentificatie = new OverigeZaakObjectDto { OverigeData = JToken.Parse("""{"foo":"bar","n":3}""") },
+        };
+
+        var result = _mapper.Map<OverigeZaakObject>(source);
+
+        // The factory JSON-serializes the JToken via Newtonsoft's JsonConvert - not just ToString() on the
+        // token - so this asserts the actual serialized content, not merely that OverigeData is non-null.
+        Assert.Equal("{\"foo\":\"bar\",\"n\":3}", result.OverigeData);
+    }
+
+    [Fact]
+    public void TerreinGebouwdObjectZaakObjectRequestDto_MapsWith_CreateTerreinGebouwdObjectZaakObject()
+    {
+        var source = new TerreinGebouwdObjectZaakObjectRequestDto
+        {
+            ObjectIdentificatie = new TerreinGebouwdObjectZaakObjectDto
+            {
+                Identificatie = "ID1",
+                AdresAanduidingGrp = new AdresAanduidingGrpDto
+                {
+                    AoaHuisletter = "A",
+                    AoaHuisnummer = 1,
+                    AoaHuisnummertoevoeging = "bis",
+                    AoaPostcode = "1234AB",
+                    GorOpenbareRuimteNaam = "Teststraat",
+                    NumIdentificatie = "NUM1",
+                    OaoIdentificatie = "OAO1",
+                    OgoLocatieAanduiding = "OGO1",
+                    WplWoonplaatsNaam = "Teststad",
+                },
+            },
+        };
+
+        var result = _mapper.Map<TerreinGebouwdObjectZaakObject>(source);
+
+        Assert.Equal("ID1", result.Identificatie);
+        Assert.Equal("A", result.AdresAanduidingGrp_AoaHuisletter);
+        Assert.Equal(1, result.AdresAanduidingGrp_AoaHuisnummer);
+        Assert.Equal("bis", result.AdresAanduidingGrp_AoaHuisnummertoevoeging);
+        Assert.Equal("1234AB", result.AdresAanduidingGrp_AoaPostcode);
+        Assert.Equal("Teststraat", result.AdresAanduidingGrp_GorOpenbareRuimteNaam);
+        Assert.Equal("NUM1", result.AdresAanduidingGrp_NumIdentificatie);
+        Assert.Equal("OAO1", result.AdresAanduidingGrp_OaoIdentificatie);
+        Assert.Equal("OGO1", result.AdresAanduidingGrp_OgoLocatieAanduiding);
+        Assert.Equal("Teststad", result.AdresAanduidingGrp_WplWoonplaatsNaam);
+    }
+
+    [Fact]
+    public void TerreinGebouwdObjectZaakObjectRequestDto_with_null_AdresAanduidingGrp_does_not_throw()
+    {
+        var source = new TerreinGebouwdObjectZaakObjectRequestDto
+        {
+            ObjectIdentificatie = new TerreinGebouwdObjectZaakObjectDto { Identificatie = "ID1", AdresAanduidingGrp = null },
+        };
+
+        var result = _mapper.Map<TerreinGebouwdObjectZaakObject>(source);
+
+        Assert.Equal("ID1", result.Identificatie);
+        Assert.Null(result.AdresAanduidingGrp_AoaHuisletter);
+        Assert.Equal(0, result.AdresAanduidingGrp_AoaHuisnummer);
+        Assert.Null(result.AdresAanduidingGrp_AoaHuisnummertoevoeging);
+        Assert.Null(result.AdresAanduidingGrp_AoaPostcode);
+        Assert.Null(result.AdresAanduidingGrp_GorOpenbareRuimteNaam);
+        Assert.Null(result.AdresAanduidingGrp_NumIdentificatie);
+        Assert.Null(result.AdresAanduidingGrp_OaoIdentificatie);
+        Assert.Null(result.AdresAanduidingGrp_OgoLocatieAanduiding);
+        Assert.Null(result.AdresAanduidingGrp_WplWoonplaatsNaam);
     }
 
     [Fact]
     public void GetAllZaakInformatieObjectenQueryParameters_Maps_To_GetAllZaakInformatieObjectenFilter()
     {
-        var value = _fixture.Create<GetAllZaakInformatieObjectenQueryParameters>();
-        var result = _mapper.Map<GetAllZaakInformatieObjectenFilter>(value);
+        var source = new GetAllZaakInformatieObjectenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            InformatieObject = "https://example.test/informatieobjecten/1",
+        };
 
-        Assert.Equal(value.InformatieObject, result.InformatieObject);
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllZaakInformatieObjectenFilter>(source);
+
+        Assert.Equal(source.InformatieObject, result.InformatieObject);
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
     public void ZaakInformatieObjectRequestDto_Maps_To_ZaakInformatieObject()
     {
-        var value = _fixture.Create<ZaakInformatieObjectRequestDto>();
-        var result = _mapper.Map<ZaakInformatieObject>(value);
+        var source = new ZaakInformatieObjectRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            InformatieObject = "https://example.test/informatieobjecten/1",
+            Beschrijving = "beschrijving",
+            Titel = "titel",
+        };
 
-        Assert.Equal(value.Beschrijving, result.Beschrijving);
-        Assert.Equal(value.InformatieObject, result.InformatieObject);
-        Assert.Equal(value.Titel, result.Titel);
+        var result = _mapper.Map<ZaakInformatieObject>(source);
+
+        Assert.Equal(source.Beschrijving, result.Beschrijving);
+        Assert.Equal(source.InformatieObject, result.InformatieObject);
+        Assert.Equal(source.Titel, result.Titel);
     }
 
     [Fact]
     public void GetAllZaakRollenQueryParameters_Maps_To_GetAllZaakRollenFilter()
     {
-        _fixture.Customize<GetAllZaakRollenQueryParameters>(c =>
-            c.With(p => p.BetrokkeneType, BetrokkeneType.niet_natuurlijk_persoon.ToString())
-                .With(p => p.OmschrijvingGeneriek, OmschrijvingGeneriek.belanghebbende.ToString())
-        );
-        var value = _fixture.Create<GetAllZaakRollenQueryParameters>();
-        var result = _mapper.Map<GetAllZaakRollenFilter>(value);
+        var source = new GetAllZaakRollenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            Betrokkene = "https://example.test/betrokkenen/1",
+            BetrokkeneType = BetrokkeneType.niet_natuurlijk_persoon.ToString(),
+            BetrokkeneIdentificatie__natuurlijkPersoon__inpBsn = "999993653",
+            BetrokkeneIdentificatie__natuurlijkPersoon__anpIdentificatie = "ANP1",
+            BetrokkeneIdentificatie__natuurlijkPersoon__inpA_nummer = "A1",
+            BetrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId = "NNP1",
+            BetrokkeneIdentificatie__nietNatuurlijkPersoon__annIdentificatie = "ANN1",
+            BetrokkeneIdentificatie__vestiging__vestigingsNummer = "VN1",
+            BetrokkeneIdentificatie__organisatorischeEenheid__identificatie = "OE1",
+            BetrokkeneIdentificatie__medewerker__identificatie = "MW1",
+            RolType = "https://example.test/roltypen/1",
+            Omschrijving = "omschrijving",
+            OmschrijvingGeneriek = OmschrijvingGeneriek.belanghebbende.ToString(),
+        };
 
-        Assert.Equal(value.Betrokkene, result.Betrokkene);
-        Assert.Equal(value.BetrokkeneType, result.BetrokkeneType.ToString());
-        Assert.Equal(value.BetrokkeneIdentificatie__medewerker__identificatie, result.MedewerkerIdentificatie);
-        Assert.Equal(value.BetrokkeneIdentificatie__natuurlijkPersoon__anpIdentificatie, result.NatuurlijkPersoonAnpIdentificatie);
-        Assert.Equal(value.BetrokkeneIdentificatie__natuurlijkPersoon__inpA_nummer, result.NatuurlijkPersoonInpANummer);
-        Assert.Equal(value.BetrokkeneIdentificatie__natuurlijkPersoon__inpBsn, result.NatuurlijkPersoonInpBsn);
-        Assert.Equal(value.BetrokkeneIdentificatie__nietNatuurlijkPersoon__annIdentificatie, result.NietNatuurlijkPersoonAnnIdentificatie);
-        Assert.Equal(value.BetrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId, result.NietNatuurlijkPersoonInnNnpId);
-        Assert.Equal(value.Omschrijving, result.Omschrijving);
-        Assert.Equal(value.OmschrijvingGeneriek, result.OmschrijvingGeneriek.ToString());
-        Assert.Equal(value.BetrokkeneIdentificatie__organisatorischeEenheid__identificatie, result.OrganisatorischeEenheidIdentificatie);
-        Assert.Equal(value.RolType, result.RolType);
-        Assert.Equal(value.BetrokkeneIdentificatie__vestiging__vestigingsNummer, result.VestigingNummer);
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllZaakRollenFilter>(source);
+
+        Assert.Equal(source.Betrokkene, result.Betrokkene);
+        Assert.Equal(BetrokkeneType.niet_natuurlijk_persoon, result.BetrokkeneType);
+        Assert.Equal(source.BetrokkeneIdentificatie__medewerker__identificatie, result.MedewerkerIdentificatie);
+        Assert.Equal(source.BetrokkeneIdentificatie__natuurlijkPersoon__anpIdentificatie, result.NatuurlijkPersoonAnpIdentificatie);
+        Assert.Equal(source.BetrokkeneIdentificatie__natuurlijkPersoon__inpA_nummer, result.NatuurlijkPersoonInpANummer);
+        Assert.Equal(source.BetrokkeneIdentificatie__natuurlijkPersoon__inpBsn, result.NatuurlijkPersoonInpBsn);
+        Assert.Equal(source.BetrokkeneIdentificatie__nietNatuurlijkPersoon__annIdentificatie, result.NietNatuurlijkPersoonAnnIdentificatie);
+        Assert.Equal(source.BetrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId, result.NietNatuurlijkPersoonInnNnpId);
+        Assert.Equal(source.Omschrijving, result.Omschrijving);
+        Assert.Equal(OmschrijvingGeneriek.belanghebbende, result.OmschrijvingGeneriek);
+        Assert.Equal(source.BetrokkeneIdentificatie__organisatorischeEenheid__identificatie, result.OrganisatorischeEenheidIdentificatie);
+        Assert.Equal(source.RolType, result.RolType);
+        Assert.Equal(source.BetrokkeneIdentificatie__vestiging__vestigingsNummer, result.VestigingNummer);
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
     public void ZaakRolRequestDto_Maps_To_ZaakRol()
     {
-        _fixture.Customize<ZaakRolRequestDto>(c =>
-            c.With(p => p.BetrokkeneType, _fixture.Create<BetrokkeneType>().ToString())
-                .With(p => p.IndicatieMachtiging, _fixture.Create<IndicatieMachtiging>().ToString())
-        );
-        var value = _fixture.Create<ZaakRolRequestDto>();
-        var result = _mapper.Map<ZaakRol>(value);
+        var source = new ZaakRolRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            Betrokkene = "https://example.test/betrokkenen/1",
+            BetrokkeneType = BetrokkeneType.natuurlijk_persoon.ToString(),
+            RolType = "https://example.test/roltypen/1",
+            RolToelichting = "roltoelichting",
+            IndicatieMachtiging = IndicatieMachtiging.gemachtigde.ToString(),
+        };
 
-        Assert.Equal(value.Betrokkene, result.Betrokkene);
-        Assert.Equal(value.BetrokkeneType, result.BetrokkeneType.ToString());
-        Assert.Equal(value.RolType, result.RolType);
-        Assert.Equal(value.RolToelichting, result.Roltoelichting);
-        Assert.Equal(value.IndicatieMachtiging, result.IndicatieMachtiging.ToString());
+        var result = _mapper.Map<ZaakRol>(source);
+
+        Assert.Equal(source.Betrokkene, result.Betrokkene);
+        Assert.Equal(BetrokkeneType.natuurlijk_persoon, result.BetrokkeneType);
+        Assert.Equal(source.RolType, result.RolType);
+        Assert.Equal(source.RolToelichting, result.Roltoelichting);
+        Assert.Equal(IndicatieMachtiging.gemachtigde, result.IndicatieMachtiging);
     }
 
     [Fact]
     public void VerblijfsadresDto_Maps_To_Verblijfsadres()
     {
-        var value = _fixture.Create<VerblijfsadresDto>();
-        var result = _mapper.Map<Verblijfsadres>(value);
+        var source = new VerblijfsadresDto
+        {
+            AoaIdentificatie = "AOA1",
+            WplWoonplaatsNaam = "Teststad",
+            GorOpenbareRuimteNaam = "Teststraat",
+            AoaPostcode = "1234AB",
+            AoaHuisnummer = 1,
+            AoaHuisletter = "A",
+            AoaHuisnummertoevoeging = "bis",
+            InpLocatiebeschrijving = "beschrijving",
+        };
 
-        Assert.Equal(value.AoaIdentificatie, result.AoaIdentificatie);
-        Assert.Equal(value.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
-        Assert.Equal(value.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
-        Assert.Equal(value.AoaPostcode, result.AoaPostcode);
-        Assert.Equal(value.AoaHuisnummer, result.AoaHuisnummer);
-        Assert.Equal(value.AoaHuisletter, result.AoaHuisletter);
-        Assert.Equal(value.AoaHuisnummertoevoeging, result.AoaHuisnummertoevoeging);
-        Assert.Equal(value.InpLocatiebeschrijving, result.InpLocatiebeschrijving);
+        var result = _mapper.Map<Verblijfsadres>(source);
+
+        Assert.Equal(source.AoaIdentificatie, result.AoaIdentificatie);
+        Assert.Equal(source.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
+        Assert.Equal(source.GorOpenbareRuimteNaam, result.GorOpenbareRuimteNaam);
+        Assert.Equal(source.AoaPostcode, result.AoaPostcode);
+        Assert.Equal(source.AoaHuisnummer, result.AoaHuisnummer);
+        Assert.Equal(source.AoaHuisletter, result.AoaHuisletter);
+        Assert.Equal(source.AoaHuisnummertoevoeging, result.AoaHuisnummertoevoeging);
+        Assert.Equal(source.InpLocatiebeschrijving, result.InpLocatiebeschrijving);
     }
 
     [Fact]
     public void SubVerblijfBuitenlandDto_Maps_To_SubVerblijfBuitenland()
     {
-        var value = _fixture.Create<SubVerblijfBuitenlandDto>();
-        var result = _mapper.Map<SubVerblijfBuitenland>(value);
+        var source = new SubVerblijfBuitenlandDto
+        {
+            LndLandcode = "NL",
+            LndLandnaam = "Nederland",
+            SubAdresBuitenland1 = "adres1",
+            SubAdresBuitenland2 = "adres2",
+            SubAdresBuitenland3 = "adres3",
+        };
 
-        Assert.Equal(value.LndLandcode, result.LndLandcode);
-        Assert.Equal(value.LndLandnaam, result.LndLandnaam);
-        Assert.Equal(value.SubAdresBuitenland1, result.SubAdresBuitenland1);
-        Assert.Equal(value.SubAdresBuitenland2, result.SubAdresBuitenland2);
-        Assert.Equal(value.SubAdresBuitenland3, result.SubAdresBuitenland3);
+        var result = _mapper.Map<SubVerblijfBuitenland>(source);
+
+        Assert.Equal(source.LndLandcode, result.LndLandcode);
+        Assert.Equal(source.LndLandnaam, result.LndLandnaam);
+        Assert.Equal(source.SubAdresBuitenland1, result.SubAdresBuitenland1);
+        Assert.Equal(source.SubAdresBuitenland2, result.SubAdresBuitenland2);
+        Assert.Equal(source.SubAdresBuitenland3, result.SubAdresBuitenland3);
     }
 
     [Fact]
     public void NatuurlijkPersoonZaakRolDto_Maps_To_NatuurlijkPersoonZaakRol()
     {
-        _fixture.Customize<NatuurlijkPersoonZaakRolDto>(c =>
-            c.With(p => p.Geboortedatum, "2020-11-04").With(p => p.Geslachtsaanduiding, _fixture.Create<Geslachtsaanduiding>().ToString())
-        );
-        var value = _fixture.Create<NatuurlijkPersoonZaakRolDto>();
-        var result = _mapper.Map<NatuurlijkPersoonZaakRol>(value);
+        var source = new NatuurlijkPersoonZaakRolDto
+        {
+            InpBsn = "999993653",
+            AnpIdentificatie = "ANP1",
+            InpANummer = "A1",
+            Geslachtsnaam = "Jansen",
+            VoorvoegselGeslachtsnaam = "van",
+            Voorletters = "J.",
+            Voornamen = "Jan",
+            Geslachtsaanduiding = Geslachtsaanduiding.m.ToString(),
+            Geboortedatum = "2020-11-04",
+        };
+
+        var result = _mapper.Map<NatuurlijkPersoonZaakRol>(source);
 
         Assert.Null(result.InpBsnHash);
         Assert.Null(result.InpBsnHashKeyVersion);
-        Assert.Equal(value.InpBsn, result.InpBsnEncrypted);
-        Assert.Equal(value.AnpIdentificatie, result.AnpIdentificatie);
-        Assert.Equal(value.InpANummer, result.InpANummer);
-        Assert.Equal(value.Geslachtsnaam, result.Geslachtsnaam);
-        Assert.Equal(value.VoorvoegselGeslachtsnaam, result.VoorvoegselGeslachtsnaam);
-        Assert.Equal(value.Voorletters, result.Voorletters);
-        Assert.Equal(value.Voornamen, result.Voornamen);
-        Assert.Equal(value.Geslachtsaanduiding, result.Geslachtsaanduiding.ToString());
-        Assert.Equal(value.Geboortedatum, result.Geboortedatum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(source.InpBsn, result.InpBsnEncrypted);
+        Assert.Equal(source.AnpIdentificatie, result.AnpIdentificatie);
+        Assert.Equal(source.InpANummer, result.InpANummer);
+        Assert.Equal(source.Geslachtsnaam, result.Geslachtsnaam);
+        Assert.Equal(source.VoorvoegselGeslachtsnaam, result.VoorvoegselGeslachtsnaam);
+        Assert.Equal(source.Voorletters, result.Voorletters);
+        Assert.Equal(source.Voornamen, result.Voornamen);
+        Assert.Equal(Geslachtsaanduiding.m, result.Geslachtsaanduiding);
+        Assert.Equal(new DateTime(2020, 11, 4), result.Geboortedatum);
     }
 
     [Fact]
     public void NietNatuurlijkPersoonZaakRolDto_Maps_To_NietNatuurlijkPersoonZaakRol()
     {
-        _fixture.Customize<NietNatuurlijkPersoonZaakRolDto>(c => c.With(p => p.InnRechtsvorm, _fixture.Create<InnRechtsvorm>().ToString()));
-        var value = _fixture.Create<NietNatuurlijkPersoonZaakRolDto>();
-        var result = _mapper.Map<NietNatuurlijkPersoonZaakRol>(value);
+        var source = new NietNatuurlijkPersoonZaakRolDto
+        {
+            InnNnpId = "NNP1",
+            AnnIdentificatie = "ANN1",
+            StatutaireNaam = "Naam BV",
+            InnRechtsvorm = InnRechtsvorm.besloten_vennootschap.ToString(),
+            Bezoekadres = "Bezoekadres 1",
+        };
 
-        Assert.Equal(value.InnNnpId, result.InnNnpId);
-        Assert.Equal(value.AnnIdentificatie, result.AnnIdentificatie);
-        Assert.Equal(value.StatutaireNaam, result.StatutaireNaam);
-        Assert.Equal(value.InnRechtsvorm, result.InnRechtsvorm.ToString());
-        Assert.Equal(value.Bezoekadres, result.Bezoekadres);
+        var result = _mapper.Map<NietNatuurlijkPersoonZaakRol>(source);
+
+        Assert.Equal(source.InnNnpId, result.InnNnpId);
+        Assert.Equal(source.AnnIdentificatie, result.AnnIdentificatie);
+        Assert.Equal(source.StatutaireNaam, result.StatutaireNaam);
+        Assert.Equal(InnRechtsvorm.besloten_vennootschap, result.InnRechtsvorm);
+        Assert.Equal(source.Bezoekadres, result.Bezoekadres);
     }
 
     [Fact]
     public void MedewerkerZaakRolDto_Maps_To_MedewerkerZaakRol()
     {
-        var value = _fixture.Create<MedewerkerZaakRolDto>();
-        var result = _mapper.Map<MedewerkerZaakRol>(value);
+        var source = new MedewerkerZaakRolDto
+        {
+            Identificatie = "MW1",
+            Achternaam = "Achternaam",
+            Voorletters = "V.",
+            VoorvoegselAchternaam = "van",
+        };
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.Achternaam, result.Achternaam);
-        Assert.Equal(value.Voorletters, result.Voorletters);
-        Assert.Equal(value.VoorvoegselAchternaam, result.VoorvoegselAchternaam);
+        var result = _mapper.Map<MedewerkerZaakRol>(source);
+
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(source.Achternaam, result.Achternaam);
+        Assert.Equal(source.Voorletters, result.Voorletters);
+        Assert.Equal(source.VoorvoegselAchternaam, result.VoorvoegselAchternaam);
     }
 
     [Fact]
     public void VestigingZaakRolDto_Maps_To_VestigingZaakRol()
     {
-        var value = _fixture.Create<VestigingZaakRolDto>();
-        var result = _mapper.Map<VestigingZaakRol>(value);
+        var source = new VestigingZaakRolDto { VestigingsNummer = "VN1", Handelsnaam = ["Naam 1", "Naam 2"] };
 
-        Assert.Equal(value.VestigingsNummer, result.VestigingsNummer);
-        Assert.Equal(value.Handelsnaam.Length, result.Handelsnaam.Count);
-        Assert.All(value.Handelsnaam, c => Assert.Contains(c, result.Handelsnaam));
+        var result = _mapper.Map<VestigingZaakRol>(source);
+
+        Assert.Equal(source.VestigingsNummer, result.VestigingsNummer);
+        Assert.Equal(source.Handelsnaam.Length, result.Handelsnaam.Count);
+        Assert.All(source.Handelsnaam, c => Assert.Contains(c, result.Handelsnaam));
     }
 
     [Fact]
     public void OrganisatorischeEenheidZaakRolDto_Maps_To_OrganisatorischeEenheidZaakRol()
     {
-        var value = _fixture.Create<OrganisatorischeEenheidZaakRolDto>();
-        var result = _mapper.Map<OrganisatorischeEenheidZaakRol>(value);
+        var source = new OrganisatorischeEenheidZaakRolDto
+        {
+            Identificatie = "OE1",
+            Naam = "Naam",
+            IsGehuisvestIn = "https://example.test/vestigingen/1",
+        };
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.Naam, result.Naam);
-        Assert.Equal(value.IsGehuisvestIn, result.IsGehuisvestIn);
+        var result = _mapper.Map<OrganisatorischeEenheidZaakRol>(source);
+
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(source.Naam, result.Naam);
+        Assert.Equal(source.IsGehuisvestIn, result.IsGehuisvestIn);
     }
 
     [Fact]
     public void ZaakResultaatRequestDto_Maps_To_ZaakResultaat()
     {
-        var value = _fixture.Create<ZaakResultaatRequestDto>();
-        var result = _mapper.Map<ZaakResultaat>(value);
+        var source = new ZaakResultaatRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            ResultaatType = "https://example.test/resultaattypen/1",
+            Toelichting = "toelichting",
+        };
 
-        Assert.Equal(value.Toelichting, result.Toelichting);
-        Assert.Equal(value.ResultaatType, result.ResultaatType);
+        var result = _mapper.Map<ZaakResultaat>(source);
+
+        Assert.Equal(source.Toelichting, result.Toelichting);
+        Assert.Equal(source.ResultaatType, result.ResultaatType);
     }
 
     [Fact]
     public void GetAllZaakResultatenQueryParameters_Maps_To_GetAllZaakResultatenFilter()
     {
-        var value = _fixture.Create<GetAllZaakResultatenQueryParameters>();
-        var result = _mapper.Map<GetAllZaakResultatenFilter>(value);
+        var source = new GetAllZaakResultatenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            ResultaatType = "https://example.test/resultaattypen/1",
+        };
 
-        Assert.Equal(value.ResultaatType, result.ResultaatType);
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllZaakResultatenFilter>(source);
+
+        Assert.Equal(source.ResultaatType, result.ResultaatType);
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
     public void ZaakEigenschapRequestDto_Maps_To_ZaakEigenschap()
     {
-        _fixture.Customize<ZaakEigenschapRequestDto>(c => c.With(p => p.Zaak, "/zaken/9337ba82-999a-4440-aa02-2b7b0b6c33f6"));
+        var source = new ZaakEigenschapRequestDto
+        {
+            Zaak = "https://example.test/zaken/9337ba82-999a-4440-aa02-2b7b0b6c33f6",
+            Eigenschap = "https://example.test/eigenschappen/1",
+            Waarde = "waarde",
+        };
 
-        var value = _fixture.Create<ZaakEigenschapRequestDto>();
-        var result = _mapper.Map<ZaakEigenschap>(value);
+        var result = _mapper.Map<ZaakEigenschap>(source);
 
-        Assert.Equal(value.Waarde, result.Waarde);
+        Assert.Equal(source.Waarde, result.Waarde);
+        Assert.Equal(source.Eigenschap, result.Eigenschap);
+        Assert.Equal(new Guid("9337ba82-999a-4440-aa02-2b7b0b6c33f6"), result.ZaakId);
+    }
+
+    [Fact]
+    public void ZaakEigenschapRequestDto_with_unparseable_zaak_url_throws()
+    {
+        var source = new ZaakEigenschapRequestDto
+        {
+            Zaak = "https://example.test/zaken/not-a-guid",
+            Eigenschap = "e",
+            Waarde = "w",
+        };
+
+        Assert.Throws<InvalidOperationException>(() => _mapper.Map<ZaakEigenschap>(source));
     }
 
     [Fact]
     public void ZaakBesluitRequestDto_Maps_To_ZaakBesluit()
     {
-        var value = _fixture.Create<ZaakBesluitRequestDto>();
-        var result = _mapper.Map<ZaakBesluit>(value);
+        var source = new ZaakBesluitRequestDto { Besluit = "https://example.test/besluiten/1" };
 
-        Assert.Equal(value.Besluit, result.Besluit);
+        var result = _mapper.Map<ZaakBesluit>(source);
+
+        Assert.Equal(source.Besluit, result.Besluit);
     }
 
     [Fact]
     public void GetAllKlantContactenQueryParameters_Maps_To_GetAllKlantContactenFilter()
     {
-        var value = _fixture.Create<GetAllKlantContactenQueryParameters>();
-        var result = _mapper.Map<GetAllKlantContactenFilter>(value);
+        var source = new GetAllKlantContactenQueryParameters { Zaak = "https://example.test/zaken/1" };
 
-        Assert.Equal(value.Zaak, result.Zaak);
+        var result = _mapper.Map<GetAllKlantContactenFilter>(source);
+
+        Assert.Equal(source.Zaak, result.Zaak);
     }
 
     [Fact]
     public void KlantContactRequestDto_Maps_To_KlantContact()
     {
-        _fixture.Customize<KlantContactRequestDto>(c => c.With(p => p.DatumTijd, "2020-11-05 12:59:01"));
+        var source = new KlantContactRequestDto
+        {
+            Zaak = "https://example.test/zaken/1",
+            Identificatie = "KC1",
+            DatumTijd = "2020-11-05 12:59:01",
+            Kanaal = "kanaal",
+            Onderwerp = "onderwerp",
+            Toelichting = "toelichting",
+        };
 
-        var value = _fixture.Create<KlantContactRequestDto>();
-        var result = _mapper.Map<KlantContact>(value);
+        var result = _mapper.Map<KlantContact>(source);
 
-        Assert.Equal(value.Identificatie, result.Identificatie);
-        Assert.Equal(value.DatumTijd, result.DatumTijd.ToString("yyyy-MM-dd HH:mm:ss"));
-        Assert.Equal(value.Kanaal, result.Kanaal);
-        Assert.Equal(value.Onderwerp, result.Onderwerp);
-        Assert.Equal(value.Toelichting, result.Toelichting);
+        Assert.Equal(source.Identificatie, result.Identificatie);
+        Assert.Equal(new DateTime(2020, 11, 5, 12, 59, 1), result.DatumTijd);
+        Assert.Equal(source.Kanaal, result.Kanaal);
+        Assert.Equal(source.Onderwerp, result.Onderwerp);
+        Assert.Equal(source.Toelichting, result.Toelichting);
     }
 }
