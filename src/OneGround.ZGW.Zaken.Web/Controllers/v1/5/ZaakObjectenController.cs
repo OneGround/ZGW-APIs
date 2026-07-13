@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -54,11 +53,13 @@ public class ZaakObjectenController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IZaakObjectValidatorService _zaakObjectValidatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ZaakObjectenController(
         ILogger<ZaakObjectenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
@@ -67,6 +68,7 @@ public class ZaakObjectenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _zaakObjectValidatorService = zaakObjectValidatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -92,8 +94,8 @@ public class ZaakObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
-        var filter = _mapper.Map<GetAllZaakObjectenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
+        var filter = _mapsterMapper.Map<GetAllZaakObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakObjectenQuery { GetAllZaakObjectenFilter = filter, Pagination = pagination });
 
@@ -102,7 +104,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakObjectResponse = _mapper.Map<IEnumerable<ZaakObject>, List<ZaakObjectResponseDto>>(result.Result.PageResult);
+        var zaakObjectResponse = _mapsterMapper.Map<IEnumerable<ZaakObject>, List<ZaakObjectResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakObjectResponse, result.Result.Count);
 
@@ -149,7 +151,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -203,7 +205,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakObject zaakObject = _mapper.Map<ZaakObject>(zaakObjectRequest);
+        ZaakObject zaakObject = _mapsterMapper.Map<ZaakObject>(zaakObjectRequest);
 
         var result = await _mediator.Send(new CreateZaakObjectCommand { ZaakObject = zaakObject, ZaakUrl = zaakObjectRequest.Zaak });
 
@@ -217,7 +219,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -244,7 +246,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        var zaakobject = _mapper.Map<ZaakObject>(zaakobjectRequest);
+        var zaakobject = _mapsterMapper.Map<ZaakObject>(zaakobjectRequest);
 
         var result = await _mediator.Send(new UpdateZaakObjectCommand { ZaakObject = zaakobject, ZaakObjectId = id });
 
@@ -258,7 +260,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var zaakObjectResponse = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
 
         return Ok(zaakObjectResponse);
     }
@@ -301,7 +303,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakObject mergedZaakObject = _mapper.Map<ZaakObject>(mergedZaakObjectRequest);
+        ZaakObject mergedZaakObject = _mapsterMapper.Map<ZaakObject>(mergedZaakObjectRequest);
 
         switch (resultGet.Result.ObjectType)
         {
@@ -316,7 +318,7 @@ public class ZaakObjectenController : ZGWControllerBase
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
 
-                mergedZaakObject.Adres = _mapper.Map<AdresZaakObject>(mergedAdresZaakObjectRequest);
+                mergedZaakObject.Adres = _mapsterMapper.Map<AdresZaakObject>(mergedAdresZaakObjectRequest);
                 break;
 
             case ObjectType.buurt:
@@ -329,7 +331,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Buurt = _mapper.Map<BuurtZaakObject>(mergedBuurtZaakObjectRequest);
+                mergedZaakObject.Buurt = _mapsterMapper.Map<BuurtZaakObject>(mergedBuurtZaakObjectRequest);
                 break;
 
             case ObjectType.gemeente:
@@ -342,7 +344,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Gemeente = _mapper.Map<GemeenteZaakObject>(mergedGemeenteZaakObjectRequest);
+                mergedZaakObject.Gemeente = _mapsterMapper.Map<GemeenteZaakObject>(mergedGemeenteZaakObjectRequest);
                 break;
 
             case ObjectType.kadastrale_onroerende_zaak:
@@ -361,7 +363,9 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.KadastraleOnroerendeZaak = _mapper.Map<KadastraleOnroerendeZaakObject>(mergedKadastraleOnroerendeZaakObjectRequest);
+                mergedZaakObject.KadastraleOnroerendeZaak = _mapsterMapper.Map<KadastraleOnroerendeZaakObject>(
+                    mergedKadastraleOnroerendeZaakObjectRequest
+                );
                 break;
 
             case ObjectType.overige:
@@ -374,7 +378,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Overige = _mapper.Map<OverigeZaakObject>(mergedOverigeZaakObjectRequest);
+                mergedZaakObject.Overige = _mapsterMapper.Map<OverigeZaakObject>(mergedOverigeZaakObjectRequest);
                 break;
 
             case ObjectType.pand:
@@ -387,7 +391,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Pand = _mapper.Map<PandZaakObject>(mergedPandZaakObjectRequest);
+                mergedZaakObject.Pand = _mapsterMapper.Map<PandZaakObject>(mergedPandZaakObjectRequest);
                 break;
 
             case ObjectType.terrein_gebouwd_object:
@@ -406,7 +410,9 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.TerreinGebouwdObject = _mapper.Map<TerreinGebouwdObjectZaakObject>(mergedTerreinGebouwdObjectZaakObjectRequest);
+                mergedZaakObject.TerreinGebouwdObject = _mapsterMapper.Map<TerreinGebouwdObjectZaakObject>(
+                    mergedTerreinGebouwdObjectZaakObjectRequest
+                );
                 break;
 
             case ObjectType.woz_waarde:
@@ -424,7 +430,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.WozWaardeObject = _mapper.Map<WozWaardeZaakObject>(mergedWozWaardeZaakObjectRequest);
+                mergedZaakObject.WozWaardeObject = _mapsterMapper.Map<WozWaardeZaakObject>(mergedWozWaardeZaakObjectRequest);
                 break;
         }
 
@@ -447,7 +453,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapper.Map<ZaakObject, ZaakObjectResponseDto>(resultUpd.Result);
+        var zaakObjectResponse = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(resultUpd.Result);
 
         return Ok(zaakObjectResponse);
     }
