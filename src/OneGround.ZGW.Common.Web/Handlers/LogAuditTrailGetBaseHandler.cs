@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Configuration;
 
 namespace OneGround.ZGW.Common.Web.Handlers;
 
@@ -17,10 +17,11 @@ public abstract class LogAuditTrailGetBaseHandler : ZGWBaseHandler
     )
         : base(configuration, authorizationContextAccessor)
     {
-        IsAudittrailRetrieveMinimal = Configuration.GetSection("Application:AudittrailRecordRetrieveMinimal").Get<bool?>() ?? true;
+        var settings = Configuration.GetSection(AuditTrailRetrieveOptions.SectionName).Get<AuditTrailRetrieveOptions>() ?? new();
 
-        var excludeClientIds = Configuration.GetSection("Application:AudittrailRetrieveRecordExcludeClientIds").Get<IEnumerable<string>>() ?? [];
-        var matcher = new ClientIdExcludeMatcher(excludeClientIds);
+        IsAudittrailRetrieveMinimal = settings.AudittrailRecordRetrieveMinimal;
+
+        var matcher = new ClientIdExcludeMatcher(settings.AudittrailRetrieveRecordExcludeClientIds);
 
         var clientId = httpContextAccessor.HttpContext?.GetClientId();
         _isClientIdExcluded = matcher.IsExcluded(clientId);

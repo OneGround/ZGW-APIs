@@ -28,10 +28,7 @@ public class LogAuditTrailGetHandlersTests
 
     private static IHttpContextAccessor HttpContextWithClientId(string clientId)
     {
-        var httpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("client_id", clientId) })),
-        };
+        var httpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("client_id", clientId) })) };
         var accessor = new Mock<IHttpContextAccessor>();
         accessor.Setup(a => a.HttpContext).Returns(httpContext);
         return accessor.Object;

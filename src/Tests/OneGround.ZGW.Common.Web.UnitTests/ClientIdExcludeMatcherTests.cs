@@ -7,15 +7,15 @@ namespace OneGround.ZGW.Common.Web.UnitTests;
 public class ClientIdExcludeMatcherTests
 {
     [Theory]
-    [InlineData("acme.tool-*", "acme.tool-000", true)]       // '*' suffix matches
+    [InlineData("acme.tool-*", "acme.tool-000", true)] // '*' suffix matches
     [InlineData("acme.tool-*", "acme.tool-foo", true)]
-    [InlineData("acme.tool-*", "acme.tool-", true)]          // '*' matches empty
+    [InlineData("acme.tool-*", "acme.tool-", true)] // '*' matches empty
     [InlineData("beta-*", "beta-abc", true)]
-    [InlineData("beta-*", "beta", false)]                    // prefix glob needs the dash
-    [InlineData("acme.tool-*", "acmeXtool-foo", false)]      // '.' is literal, not a wildcard
-    [InlineData("client-xyz", "client-xyz", true)]           // exact, no wildcard
-    [InlineData("client-xyz", "client-xyz1", false)]         // anchored (whole string)
-    [InlineData("ACME.TOOL-*", "acme.tool-foo", true)]       // case-insensitive
+    [InlineData("beta-*", "beta", false)] // prefix glob needs the dash
+    [InlineData("acme.tool-*", "acmeXtool-foo", false)] // '.' is literal, not a wildcard
+    [InlineData("client-xyz", "client-xyz", true)] // exact, no wildcard
+    [InlineData("client-xyz", "client-xyz1", false)] // anchored (whole string)
+    [InlineData("ACME.TOOL-*", "acme.tool-foo", true)] // case-insensitive
     public void IsExcluded_matches_expected(string pattern, string clientId, bool expected)
     {
         var matcher = new ClientIdExcludeMatcher(new[] { pattern });
