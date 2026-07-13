@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,6 +12,8 @@ namespace OneGround.ZGW.Common.Web.Handlers;
 /// </summary>
 public sealed class ClientIdExcludeMatcher
 {
+    private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(100);
+
     private readonly Regex[] _patterns;
 
     public ClientIdExcludeMatcher(IEnumerable<string> globPatterns)
@@ -23,13 +26,21 @@ public sealed class ClientIdExcludeMatcher
         if (string.IsNullOrEmpty(clientId))
             return false;
 
-        return _patterns.Any(r => r.IsMatch(clientId));
+        try
+        {
+            return _patterns.Any(r => r.IsMatch(clientId));
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // Fail open: prefer logging a client we couldn't match over silently skipping it.
+            return false;
+        }
     }
 
     private static Regex ToRegex(string glob)
     {
         // Escape everything literally, then re-open only '*' (escaped by Regex.Escape as "\*") as ".*".
         var escaped = Regex.Escape(glob.Trim()).Replace("\\*", ".*");
-        return new Regex($"^{escaped}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return new Regex($"^{escaped}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, MatchTimeout);
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using OneGround.ZGW.Common.Web.Handlers;
 using Xunit;
 
@@ -66,5 +68,27 @@ public class ClientIdExcludeMatcherTests
 
         Assert.True(matcher.IsExcluded("beta-abc"));
         Assert.False(matcher.IsExcluded("anything-else"));
+    }
+
+    [Fact]
+    public void IsExcluded_fails_open_instead_of_hanging_on_pathological_pattern()
+    {
+        // Many wildcard segments that never resolve to a match force heavy backtracking.
+        // Without a match timeout this can burn CPU for a long time; with it, IsExcluded
+        // must return quickly and report "not excluded" rather than throwing or hanging.
+        var pathologicalPattern = string.Concat(Enumerable.Repeat("a*", 30)) + "b";
+        var nonMatchingClientId = new string('a', 40);
+
+        var matcher = new ClientIdExcludeMatcher(new[] { pathologicalPattern });
+
+        var stopwatch = Stopwatch.StartNew();
+        var result = matcher.IsExcluded(nonMatchingClientId);
+        stopwatch.Stop();
+
+        Assert.False(result);
+        Assert.True(
+            stopwatch.Elapsed < TimeSpan.FromSeconds(2),
+            $"IsExcluded took {stopwatch.Elapsed}, expected it to be bounded by the match timeout"
+        );
     }
 }

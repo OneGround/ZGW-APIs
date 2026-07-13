@@ -171,4 +171,44 @@ public class LogAuditTrailGetHandlersTests
 
         factory.Verify(f => f.Create(It.IsAny<AuditTrailOptions>(), It.IsAny<bool>()), Times.Never());
     }
+
+    [Fact]
+    public async Task List_retrieve_All_category_is_skipped_when_minimal_config_is_true()
+    {
+        var (factory, context) = AuditTrailDeps();
+        var handler = new LogAuditTrailGetObjectListCommandHandler(
+            BuildConfig(minimal: true),
+            context,
+            factory.Object,
+            AuthContextAccessor(),
+            HttpContextWithClientId("municipality-client-1")
+        );
+
+        await handler.Handle(
+            new LogAuditTrailGetObjectListCommand { RetrieveCatagory = RetrieveCatagory.All, TotalCount = 5 },
+            CancellationToken.None
+        );
+
+        factory.Verify(f => f.Create(It.IsAny<AuditTrailOptions>(), It.IsAny<bool>()), Times.Never());
+    }
+
+    [Fact]
+    public async Task List_retrieve_All_category_is_recorded_when_minimal_config_is_false()
+    {
+        var (factory, context) = AuditTrailDeps();
+        var handler = new LogAuditTrailGetObjectListCommandHandler(
+            BuildConfig(minimal: false),
+            context,
+            factory.Object,
+            AuthContextAccessor(),
+            HttpContextWithClientId("municipality-client-1")
+        );
+
+        await handler.Handle(
+            new LogAuditTrailGetObjectListCommand { RetrieveCatagory = RetrieveCatagory.All, TotalCount = 5 },
+            CancellationToken.None
+        );
+
+        factory.Verify(f => f.Create(It.IsAny<AuditTrailOptions>(), It.IsAny<bool>()), Times.Once());
+    }
 }
