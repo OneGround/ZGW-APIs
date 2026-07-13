@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -28,14 +27,20 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class ZaakResultatenController : ZGWControllerBase
 {
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+
     public ZaakResultatenController(
         ILogger<ZaakResultatenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+    {
+        _mapsterMapper = mapsterMapper;
+    }
 
     /// <summary>
     /// Een specifieke RESULTAAT opvragen.
@@ -67,7 +72,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand

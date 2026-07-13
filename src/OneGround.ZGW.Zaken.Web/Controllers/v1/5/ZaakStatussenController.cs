@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -43,11 +42,13 @@ public class ZaakStatussenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ZaakStatussenController(
         ILogger<ZaakStatussenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
@@ -55,6 +56,7 @@ public class ZaakStatussenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
@@ -76,8 +78,8 @@ public class ZaakStatussenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakStatussenPageSize));
-        var filter = _mapper.Map<GetAllZaakStatussenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakStatussenPageSize));
+        var filter = _mapsterMapper.Map<GetAllZaakStatussenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakStatussenQuery { GetAllZaakStatussenFilter = filter, Pagination = pagination });
 
@@ -86,7 +88,7 @@ public class ZaakStatussenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakStatussenResponse = _mapper.Map<List<ZaakStatusGetResponseDto>>(result.Result.PageResult);
+        var zaakStatussenResponse = _mapsterMapper.Map<List<ZaakStatusGetResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakStatussenResponse, result.Result.Count);
 
@@ -133,7 +135,7 @@ public class ZaakStatussenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakStatusResponse = _mapper.Map<ZaakStatusGetResponseDto>(result.Result);
+        var zaakStatusResponse = _mapsterMapper.Map<ZaakStatusGetResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -182,7 +184,7 @@ public class ZaakStatussenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakStatusRequest);
 
-        ZaakStatus zaakstatus = _mapper.Map<ZaakStatus>(zaakStatusRequest);
+        ZaakStatus zaakstatus = _mapsterMapper.Map<ZaakStatus>(zaakStatusRequest);
 
         var result = await _mediator.Send(new CreateZaakStatusCommand { ZaakStatus = zaakstatus, ZaakUrl = zaakStatusRequest.Zaak });
 
@@ -196,7 +198,7 @@ public class ZaakStatussenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakStatusResponse = _mapper.Map<ZaakStatusCreateResponseDto>(result.Result);
+        var zaakStatusResponse = _mapsterMapper.Map<ZaakStatusCreateResponseDto>(result.Result);
 
         return Created(zaakStatusResponse.Url, zaakStatusResponse);
     }

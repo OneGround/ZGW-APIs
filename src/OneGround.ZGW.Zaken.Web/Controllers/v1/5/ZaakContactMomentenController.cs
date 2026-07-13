@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -36,14 +35,20 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class ZaakContactmomentenController : ZGWControllerBase
 {
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+
     public ZaakContactmomentenController(
         ILogger<ZaakContactmomentenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+    {
+        _mapsterMapper = mapsterMapper;
+    }
 
     /// <summary>
     /// Alle ZAAK-CONTACTMOMENTen opvragen.
@@ -62,11 +67,11 @@ public class ZaakContactmomentenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapper.Map<GetAllZaakContactmomentenFilter>(queryParameters);
+        var filter = _mapsterMapper.Map<GetAllZaakContactmomentenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakContactmomentenQuery { GetAllZaakContactmomentenFilter = filter });
 
-        var zaakContactmomentResponse = _mapper.Map<IList<ZaakContactmomentResponseDto>>(result.Result);
+        var zaakContactmomentResponse = _mapsterMapper.Map<IList<ZaakContactmomentResponseDto>>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -108,7 +113,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakContactmomentResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakContactmomentResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -139,7 +144,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakContactmomentRequest);
 
-        ZaakContactmoment zaakcontactmoment = _mapper.Map<ZaakContactmoment>(zaakContactmomentRequest);
+        ZaakContactmoment zaakcontactmoment = _mapsterMapper.Map<ZaakContactmoment>(zaakContactmomentRequest);
 
         var result = await _mediator.Send(
             new CreateZaakContactmomentCommand { ZaakContactmoment = zaakcontactmoment, ZaakUrl = zaakContactmomentRequest.Zaak }
@@ -160,7 +165,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakContactmomentResponse = _mapper.Map<ZaakContactmomentResponseDto>(result.Result);
+        var zaakContactmomentResponse = _mapsterMapper.Map<ZaakContactmomentResponseDto>(result.Result);
 
         return Created(zaakContactmomentResponse.Url, zaakContactmomentResponse);
     }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,17 +38,20 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 public class ZaakInformatieObjectenController : ZGWControllerBase
 {
     private readonly IValidatorService _validatorService;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ZaakInformatieObjectenController(
         ILogger<ZaakInformatieObjectenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
         _validatorService = validatorService;
     }
 
@@ -71,7 +73,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapper.Map<GetAllZaakInformatieObjectenFilter>(queryParameters);
+        var filter = _mapsterMapper.Map<GetAllZaakInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakInformatieObjectenQuery { GetAllZaakInformatieObjectenFilter = filter });
 
@@ -80,7 +82,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var zaakInformatieObjectenResponse = _mapper.Map<IList<ZaakInformatieObjectResponseDto>>(result.Result);
+        var zaakInformatieObjectenResponse = _mapsterMapper.Map<IList<ZaakInformatieObjectResponseDto>>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -123,7 +125,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakInformatieObjectResponse = _mapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
+        var zaakInformatieObjectResponse = _mapsterMapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -173,7 +175,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakInformatieObjectRequest);
 
-        ZaakInformatieObject zaakInformatieObject = _mapper.Map<ZaakInformatieObject>(zaakInformatieObjectRequest);
+        ZaakInformatieObject zaakInformatieObject = _mapsterMapper.Map<ZaakInformatieObject>(zaakInformatieObjectRequest);
 
         var result = await _mediator.Send(
             new CreateZaakInformatieObjectCommand
@@ -199,7 +201,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakResponse = _mapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
+        var zaakResponse = _mapsterMapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
 
         return Created(zaakResponse.Url, zaakResponse);
     }
@@ -220,7 +222,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), zaakInformatieObjectRequest, id);
 
-        ZaakInformatieObject zaakInformatieObject = _mapper.Map<ZaakInformatieObject>(zaakInformatieObjectRequest);
+        ZaakInformatieObject zaakInformatieObject = _mapsterMapper.Map<ZaakInformatieObject>(zaakInformatieObjectRequest);
 
         var result = await _mediator.Send(
             new UpdateZaakInformatieObjectCommand
@@ -247,7 +249,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakInformatieObjectResponse = _mapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
+        var zaakInformatieObjectResponse = _mapsterMapper.Map<ZaakInformatieObjectResponseDto>(result.Result);
 
         return Ok(zaakInformatieObjectResponse);
     }
@@ -290,7 +292,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakInformatieObject mergedZaakInformatieObject = _mapper.Map<ZaakInformatieObject>(mergedZaakInformatieObjectRequest);
+        ZaakInformatieObject mergedZaakInformatieObject = _mapsterMapper.Map<ZaakInformatieObject>(mergedZaakInformatieObjectRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateZaakInformatieObjectCommand
@@ -313,7 +315,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakInformatieObjectResponse = _mapper.Map<ZaakInformatieObjectResponseDto>(resultUpd.Result);
+        var zaakInformatieObjectResponse = _mapsterMapper.Map<ZaakInformatieObjectResponseDto>(resultUpd.Result);
 
         return Ok(zaakInformatieObjectResponse);
     }
