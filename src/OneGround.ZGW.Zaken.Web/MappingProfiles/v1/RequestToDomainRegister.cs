@@ -87,12 +87,17 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Publicatiedatum, src => ProfileHelper.DateFromStringOptional(src.Publicatiedatum))
             .Map(dest => dest.LaatsteBetaaldatum, src => ProfileHelper.DateTimeFromString(src.LaatsteBetaaldatum))
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
-            // The source DTO's string-typed VertrouwelijkheidAanduiding/Betalingsindicatie/Archiefnominatie/
-            // Archiefstatus were pure name-convention (unmapped) in the AutoMapper source - AutoMapper's
-            // convention resolver does the string->enum conversion automatically. Empirically, Mapster's
-            // property-name-convention matching alone does NOT reliably perform this conversion in this large,
-            // many-config TypeAdapterConfig (verified: it silently left the destination at its default enum
-            // value instead of parsing the string), so these are mapped explicitly here to force the conversion.
+            // The source DTO's string-typed Vertrouwelijkheidaanduiding/Betalingsindicatie/Archiefnominatie/
+            // Archiefstatus were pure name-convention (unmapped) in the AutoMapper source. Two different reasons
+            // convention alone doesn't reproduce this under Mapster, both artifacts of these registers being unit-
+            // tested via a bare, isolated TypeAdapterConfig() (see RequestToDomainProfileTests.cs) rather than the
+            // real AddZgwMapster-wired config: (1) Vertrouwelijkheidaanduiding/Betalingsindicatie differ from their
+            // destination's casing (VertrouwelijkheidAanduiding/BetalingsIndicatie) -- reproduced automatically in
+            // production only via the global NameMatchingStrategy.IgnoreCase default (Risk #11), which a bare
+            // TypeAdapterConfig() doesn't have; (2) Archiefnominatie is a Nullable<enum> destination, reproduced
+            // automatically in production only via the global RegisterNullableEnumRule() (Risk #2), likewise absent
+            // from a bare config. Explicit .Map(...) calls make the register correct under BOTH a bare test config
+            // and the real seam, so they're kept even though production alone wouldn't have needed them.
             .Map(dest => dest.VertrouwelijkheidAanduiding, src => src.Vertrouwelijkheidaanduiding)
             .Map(dest => dest.BetalingsIndicatie, src => src.Betalingsindicatie)
             .Map(dest => dest.Archiefnominatie, src => src.Archiefnominatie)
