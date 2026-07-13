@@ -20,8 +20,8 @@ namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 // so shared nested-DTO configs registered over there (e.g. AdresZaakObject->AdresZaakObjectDto,
 // NatuurlijkPersoonZaakRol->NatuurlijkPersoonZaakRolDto, the Geometry->Geometry / JToken->JToken same-type
 // clone rules, etc.) apply here too - this file only registers the type pairs that are genuinely new or
-// different in v1.5 (distinct v1._5-namespaced DTOs), exactly mirroring which CreateMap calls the source
-// AutoMapper profile (DomainToResponseProfile.cs, same folder) declares.
+// different in v1.5 (distinct v1._5-namespaced DTOs), exactly mirroring which CreateMap calls the original
+// AutoMapper profile (now removed, having served its purpose once this port was verified) declared.
 public class DomainToResponseRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
