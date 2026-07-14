@@ -1,25 +1,32 @@
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Configuration;
 
 namespace OneGround.ZGW.Common.Web.Handlers;
 
 public abstract class LogAuditTrailGetBaseHandler : ZGWBaseHandler
 {
-    private readonly IEnumerable<string> _audittrailRetrieveForRsins;
+    private readonly bool _isClientIdExcluded;
 
-    protected LogAuditTrailGetBaseHandler(IConfiguration configuration, IAuthorizationContextAccessor authorizationContextAccessor)
+    protected LogAuditTrailGetBaseHandler(
+        IConfiguration configuration,
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IHttpContextAccessor httpContextAccessor
+    )
         : base(configuration, authorizationContextAccessor)
     {
-        _audittrailRetrieveForRsins = Configuration.GetSection("Application:AudittrailRetrieveForRsins").Get<IEnumerable<string>>() ?? [];
+        var settings = Configuration.GetSection(AuditTrailRetrieveOptions.SectionName).Get<AuditTrailRetrieveOptions>() ?? new();
 
-        IsAudittrailRetrieveMinimal = Configuration.GetSection("Application:AudittrailRecordRetrieveMinimal").Get<bool?>() ?? true;
+        IsAudittrailRetrieveMinimal = settings.AudittrailRecordRetrieveMinimal;
 
-        IsAudittrailRecordRetrieveList = Configuration.GetSection("Application:AudittrailRecordRetrieveList").Get<bool?>() ?? false;
+        var matcher = new ClientIdExcludeMatcher(settings.AudittrailRetrieveRecordExcludeClientIds);
+
+        var clientId = httpContextAccessor.HttpContext?.GetClientId();
+        _isClientIdExcluded = matcher.IsExcluded(clientId);
     }
 
-    protected bool IsAudittrailRetrieveForRsin => _audittrailRetrieveForRsins.Contains(_rsin);
-    protected bool IsAudittrailRecordRetrieveList { get; }
+    protected bool IsClientIdExcluded => _isClientIdExcluded;
     protected bool IsAudittrailRetrieveMinimal { get; }
 }
