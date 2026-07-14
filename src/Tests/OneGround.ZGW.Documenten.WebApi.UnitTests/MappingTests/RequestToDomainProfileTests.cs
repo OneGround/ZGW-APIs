@@ -1,8 +1,8 @@
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Documenten.Contracts.v1;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
@@ -20,16 +20,13 @@ public class RequestToDomainProfileTests
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        // The seam's global nullable-enum rule lives in AddZgwMapster, not in the register; this test
+        // builds config directly, so register it here too for parity with production.
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
