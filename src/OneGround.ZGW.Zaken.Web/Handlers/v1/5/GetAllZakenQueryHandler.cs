@@ -14,6 +14,7 @@ using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -32,6 +33,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
     private readonly IZaakAuthorizationTempTableService _zaakAuthorizationTempTableService;
     private readonly IHashRotationService _hashRotationService;
     private readonly IAuditTrailFactory _auditTrailFactory;
+    private readonly IRetrieveAuditClientExclusion _clientExclusion;
 
     public GetAllZakenQueryHandler(
         ILogger<GetAllZakenQueryHandler> logger,
@@ -43,7 +45,8 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         IZaakAuthorizationTempTableService zaakAuthorizationTempTableService,
         IZaakKenmerkenResolver zaakKenmerkenResolver,
         IHashRotationService hashRotationService,
-        IAuditTrailFactory auditTrailFactory
+        IAuditTrailFactory auditTrailFactory,
+        IRetrieveAuditClientExclusion clientExclusion
     )
         : base(logger, configuration, authorizationContextAccessor, uriService, zaakKenmerkenResolver)
     {
@@ -52,6 +55,7 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         _cache = cache;
         _hashRotationService = hashRotationService;
         _auditTrailFactory = auditTrailFactory;
+        _clientExclusion = clientExclusion;
     }
 
     public async Task<QueryResult<PagedResult<Zaak>>> Handle(GetAllZakenQuery request, CancellationToken cancellationToken)
@@ -136,6 +140,9 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
 
     private async Task LogToAuditTrail(PagedResult<Zaak> result, string field, CancellationToken cancellationToken)
     {
+        if (_clientExclusion.IsCurrentClientExcluded)
+            return;
+
         // Note: Write 'retrieve' actie to audittrail for each zaak retrieved in this query (max 100 due to pagination setting)
         foreach (var zaak in result.PageResult)
         {
