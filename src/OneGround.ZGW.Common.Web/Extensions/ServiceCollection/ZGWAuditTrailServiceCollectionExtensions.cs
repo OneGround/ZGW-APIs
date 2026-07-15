@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.DataAccess.AuditTrail;
 
@@ -14,6 +15,7 @@ public static class ZGWAuditTrailServiceCollectionExtensions
         services.AddTransient<DeltaBasedAuditTrail>();
         services.AddTransient<IDeltaBasedAuditTrailWithImporter, DeltaBasedAuditTrailWithImporter>();
         services.AddScoped<IAuditTrailFactory, AuditTrailFactory>();
+        services.AddScoped<IRetrieveAuditClientExclusion, RetrieveAuditClientExclusion>();
 
         services.AddScoped<IAuditTrailMigrator, AuditTrailMigrator>();
 #if DEBUG
