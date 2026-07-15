@@ -1,7 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -20,9 +19,9 @@ public class LogAuditTrailGetObjectListCommandHandler : LogAuditTrailGetBaseHand
         IDbContextWithAuditTrail context,
         IAuditTrailFactory auditTrailFactory,
         IAuthorizationContextAccessor authorizationContextAccessor,
-        IHttpContextAccessor httpContextAccessor
+        IRetrieveAuditClientExclusion clientExclusion
     )
-        : base(configuration, authorizationContextAccessor, httpContextAccessor)
+        : base(configuration, authorizationContextAccessor, clientExclusion)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;

@@ -34,6 +34,11 @@ public class LogAuditTrailGetHandlersTests
         return accessor.Object;
     }
 
+    private static IRetrieveAuditClientExclusion Exclusion(IConfiguration config, string clientId)
+    {
+        return new RetrieveAuditClientExclusion(config, HttpContextWithClientId(clientId));
+    }
+
     private static IAuthorizationContextAccessor AuthContextAccessor()
     {
         var accessor = new Mock<IAuthorizationContextAccessor>();
@@ -66,12 +71,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task Object_retrieve_is_recorded_for_non_excluded_client()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true, "acme.tool-*");
         var handler = new LogAuditTrailGetObjectCommandHandler(
-            BuildConfig(minimal: true, "acme.tool-*"),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(new LogAuditTrailGetObjectCommand { RetrieveCatagory = RetrieveCatagory.Minimal }, CancellationToken.None);
@@ -83,12 +89,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task Object_retrieve_is_skipped_for_excluded_client()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true, "acme.tool-*");
         var handler = new LogAuditTrailGetObjectCommandHandler(
-            BuildConfig(minimal: true, "acme.tool-*"),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("acme.tool-000")
+            Exclusion(config, "acme.tool-000")
         );
 
         await handler.Handle(new LogAuditTrailGetObjectCommand { RetrieveCatagory = RetrieveCatagory.Minimal }, CancellationToken.None);
@@ -100,12 +107,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task Object_retrieve_All_category_is_skipped_when_minimal_config_is_true()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true);
         var handler = new LogAuditTrailGetObjectCommandHandler(
-            BuildConfig(minimal: true),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(new LogAuditTrailGetObjectCommand { RetrieveCatagory = RetrieveCatagory.All }, CancellationToken.None);
@@ -117,12 +125,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task Object_retrieve_All_category_is_recorded_when_minimal_config_is_false()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: false);
         var handler = new LogAuditTrailGetObjectCommandHandler(
-            BuildConfig(minimal: false),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(new LogAuditTrailGetObjectCommand { RetrieveCatagory = RetrieveCatagory.All }, CancellationToken.None);
@@ -136,12 +145,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task List_retrieve_is_recorded_for_non_excluded_client()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true, "acme.tool-*");
         var handler = new LogAuditTrailGetObjectListCommandHandler(
-            BuildConfig(minimal: true, "acme.tool-*"),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(
@@ -156,12 +166,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task List_retrieve_is_skipped_for_excluded_client()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true, "acme.tool-*");
         var handler = new LogAuditTrailGetObjectListCommandHandler(
-            BuildConfig(minimal: true, "acme.tool-*"),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("acme.tool-000")
+            Exclusion(config, "acme.tool-000")
         );
 
         await handler.Handle(
@@ -176,12 +187,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task List_retrieve_All_category_is_skipped_when_minimal_config_is_true()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: true);
         var handler = new LogAuditTrailGetObjectListCommandHandler(
-            BuildConfig(minimal: true),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(
@@ -196,12 +208,13 @@ public class LogAuditTrailGetHandlersTests
     public async Task List_retrieve_All_category_is_recorded_when_minimal_config_is_false()
     {
         var (factory, context) = AuditTrailDeps();
+        var config = BuildConfig(minimal: false);
         var handler = new LogAuditTrailGetObjectListCommandHandler(
-            BuildConfig(minimal: false),
+            config,
             context,
             factory.Object,
             AuthContextAccessor(),
-            HttpContextWithClientId("municipality-client-1")
+            Exclusion(config, "municipality-client-1")
         );
 
         await handler.Handle(
