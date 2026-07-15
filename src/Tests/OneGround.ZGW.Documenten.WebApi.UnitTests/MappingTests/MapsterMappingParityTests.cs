@@ -57,24 +57,29 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 /// <c>TypeAdapterConfig()</c> (as used by the per-register unit tests) cannot exercise this class of
 /// bug, because it has no <c>EmptyCollectionIfNull</c> transform registered at all.
 /// </summary>
-public class MapsterMappingParityTests : IDisposable
+/// <summary>
+/// Builds the dual AutoMapper/Mapster setup once and shares it across every fact in
+/// <see cref="MapsterMappingParityTests"/> via <c>IClassFixture</c>. xUnit gives each <c>[Fact]</c> a
+/// fresh test-class instance by default; without this fixture, all ~54 facts would each rebuild a full
+/// 8-profile AutoMapper <c>MapperConfiguration</c> plus an 8-register Mapster <c>TypeAdapterConfig</c>
+/// from scratch. DRC's domain model has a genuine multi-path cyclic EF navigation graph
+/// (<c>EnkelvoudigInformatieObject</c> &lt;-&gt; <c>EnkelvoudigInformatieObjectVersie</c> &lt;-&gt;
+/// <c>Verzending</c>, see <c>MaxDepth(200)</c>'s comment in <c>AddZgwMapster</c>); rebuilding both
+/// configs 54 times over compounds their (individually modest) cost into minutes of runtime and
+/// runaway memory growth. Sharing the setup once, as any normal xUnit test class would for expensive
+/// fixtures, keeps each fact's actual cost to just its own <c>Map</c> call.
+/// </summary>
+public class MapsterMappingParityFixture : IDisposable
 {
-    // Official RvIG test BSN, reused here purely as a safe, non-real 9-digit placeholder for
-    // Bronorganisatie -- never assigned to a real person or organisation.
-    private const string TestBronorganisatie = "999993653";
-
-    private readonly OmitOnRecursionFixture _fixture = new();
-    private readonly Mock<IEntityUriService> _mockedUriService = new();
-    private readonly AutoMapperIMapper _autoMapper;
+    public Mock<IEntityUriService> MockedUriService { get; } = new();
+    public AutoMapperIMapper AutoMapper { get; }
+    public MapsterIMapper MapsterMapper { get; }
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly MapsterIMapper _mapsterMapper;
 
-    public MapsterMappingParityTests()
+    public MapsterMappingParityFixture()
     {
-        _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+        MockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
         // AutoMapper side: all 8 profiles, with every DI-backed resolver/mapping-action wired plus the
         // NullableEnumMapper (request side) that ports as RegisterNullableEnumRule on Mapster.
@@ -91,31 +96,31 @@ public class MapsterMappingParityTests : IDisposable
             cfg.Internal().Mappers.Insert(0, new NullableEnumMapper());
             cfg.ShouldMapMethod = _ => false;
         });
-        _autoMapper = amConfig.CreateMapper(t =>
+        AutoMapper = amConfig.CreateMapper(t =>
         {
             if (t == typeof(UrlResolver))
-                return new UrlResolver(_mockedUriService.Object);
+                return new UrlResolver(MockedUriService.Object);
             if (t == typeof(MemberUrlResolver))
-                return new MemberUrlResolver(_mockedUriService.Object);
+                return new MemberUrlResolver(MockedUriService.Object);
 
             // The three IMappingAction shapes, replicated per version: a pure "request" port with no
             // ctor args, and two DI-backed ports (uriService-injecting "response" and "download link").
             if (t == typeof(MappingV1.MapLatestEnkelvoudigInformatieObjectVersieRequest))
                 return new MappingV1.MapLatestEnkelvoudigInformatieObjectVersieRequest();
             if (t == typeof(MappingV1.MapLatestEnkelvoudigInformatieObjectVersieResponse))
-                return new MappingV1.MapLatestEnkelvoudigInformatieObjectVersieResponse(_mockedUriService.Object);
+                return new MappingV1.MapLatestEnkelvoudigInformatieObjectVersieResponse(MockedUriService.Object);
             if (t == typeof(MappingV11.MapLatestEnkelvoudigInformatieObjectVersieRequest))
                 return new MappingV11.MapLatestEnkelvoudigInformatieObjectVersieRequest();
             if (t == typeof(MappingV11.MapLatestEnkelvoudigInformatieObjectVersieResponse))
-                return new MappingV11.MapLatestEnkelvoudigInformatieObjectVersieResponse(_mockedUriService.Object);
+                return new MappingV11.MapLatestEnkelvoudigInformatieObjectVersieResponse(MockedUriService.Object);
             if (t == typeof(MappingV11.MapDownloadLink))
-                return new MappingV11.MapDownloadLink(_mockedUriService.Object);
+                return new MappingV11.MapDownloadLink(MockedUriService.Object);
             if (t == typeof(MappingV15.MapLatestEnkelvoudigInformatieObjectVersieRequest))
                 return new MappingV15.MapLatestEnkelvoudigInformatieObjectVersieRequest();
             if (t == typeof(MappingV15.MapLatestEnkelvoudigInformatieObjectVersieResponse))
-                return new MappingV15.MapLatestEnkelvoudigInformatieObjectVersieResponse(_mockedUriService.Object);
+                return new MappingV15.MapLatestEnkelvoudigInformatieObjectVersieResponse(MockedUriService.Object);
             if (t == typeof(MappingV15.MapDownloadLink))
-                return new MappingV15.MapDownloadLink(_mockedUriService.Object);
+                return new MappingV15.MapDownloadLink(MockedUriService.Object);
 
             throw new NotImplementedException($"Mapper is missing the service: {t}");
         });
@@ -135,21 +140,43 @@ public class MapsterMappingParityTests : IDisposable
         new MappingV15.RequestToPaginationRegister().Register(config);
         new MappingV15.RequestToDomainRegister().Register(config);
         new MappingV15.DomainToResponseRegister().Register(config);
-        config.Compile();
+
+        // Deliberately NOT calling config.Compile() here: production's AddZgwMapster never does
+        // either, relying on Mapster's lazy per-type-pair compilation, which only ever pays the
+        // cyclic-graph traversal cost for the specific type pairs actually mapped.
 
         var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
+        services.AddSingleton(MockedUriService.Object);
         services.AddSingleton(config);
         services.AddScoped<MapsterIMapper, ServiceMapper>();
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _mapsterMapper = _scope.ServiceProvider.GetRequiredService<MapsterIMapper>();
+        MapsterMapper = _scope.ServiceProvider.GetRequiredService<MapsterIMapper>();
     }
 
     public void Dispose()
     {
         _scope.Dispose();
         _provider.Dispose();
+    }
+}
+
+public class MapsterMappingParityTests : IClassFixture<MapsterMappingParityFixture>
+{
+    // Official RvIG test BSN, reused here purely as a safe, non-real 9-digit placeholder for
+    // Bronorganisatie -- never assigned to a real person or organisation.
+    private const string TestBronorganisatie = "999993653";
+
+    private readonly OmitOnRecursionFixture _fixture = new();
+    private readonly MapsterMappingParityFixture _mappers;
+    private Mock<IEntityUriService> _mockedUriService => _mappers.MockedUriService;
+    private AutoMapperIMapper _autoMapper => _mappers.AutoMapper;
+    private MapsterIMapper _mapsterMapper => _mappers.MapsterMapper;
+
+    public MapsterMappingParityTests(MapsterMappingParityFixture mappers)
+    {
+        _mappers = mappers;
+        _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
     }
 
     private void AssertParity<TDest>(object source)
@@ -185,8 +212,17 @@ public class MapsterMappingParityTests : IDisposable
         );
 
     [Fact]
-    public void DownloadEnkelvoudigInformatieObjectQueryParameters_to_Filter_parity() =>
+    public void DownloadEnkelvoudigInformatieObjectQueryParameters_to_Filter_parity()
+    {
+        // Versie/RegistratieOp are numeric/date strings on the wire (parsed on the domain filter) --
+        // AutoFixture's default anonymous strings ("Versie<guid>"/"RegistratieOp<guid>") aren't
+        // parseable, so give both real values.
+        _fixture.Customize<QueriesV15.DownloadEnkelvoudigInformatieObjectQueryParameters>(c =>
+            c.With(p => p.Versie, "3").With(p => p.RegistratieOp, "2024-03-15T10:30:00Z")
+        );
+
         AssertParity<ModelsV1.GetEnkelvoudigInformatieObjectFilter>(_fixture.Create<QueriesV15.DownloadEnkelvoudigInformatieObjectQueryParameters>());
+    }
 
     // =====================================================================================
     // v1 RequestToDomainRegister / RequestToDomainProfile (9 configs)

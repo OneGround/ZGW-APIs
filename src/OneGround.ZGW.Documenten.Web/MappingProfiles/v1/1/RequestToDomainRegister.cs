@@ -34,6 +34,16 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
+            // EnkelvoudigInformatieObjectVersie.InformatieObject/LatestInformatieObject form a
+            // multi-path cyclic EF navigation graph back through EnkelvoudigInformatieObject. Under
+            // the real AddZgwMapster global MaxDepth(200), Mapster's compiler exhaustively expands
+            // this cycle when resolving InformatieObject's own type, even though it's populated by a
+            // manual `new EnkelvoudigInformatieObject{...}` rather than Mapster's own auto-mapping.
+            // Scoping MaxDepth down for just this type pair (rather than lowering the shared global
+            // default used by all 7 migrated services) neutralizes the otherwise combinatorial
+            // compile-time blowup -- empirically, 2 is required (1 suppresses the explicit
+            // InformatieObject assignment entirely, silently leaving it null).
+            .MaxDepth(2)
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
@@ -80,6 +90,9 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
+            // See the matching comment on the CreateRequestDto->Versie config above: scoping MaxDepth
+            // down to 2 neutralizes the same cyclic-graph compile-time blowup for this type pair.
+            .MaxDepth(2)
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
