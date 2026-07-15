@@ -3,14 +3,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Common;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.DataModel;
@@ -27,29 +31,18 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandle
 
 public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInformatieObjectVersionsBase<UpdateEnkelvoudigInformatieObjectCommandHandler>
 {
-    private readonly IRequestMerger _requestMerger;
-    private readonly IMapper _mapper;
+    private readonly IMapper _mapsterMapper;
+    private static readonly JsonSerializer _jsonSerializer = new ZGWJsonSerializer();
 
     public UpdateEnkelvoudigInformatieObjectVersionsTests(TestMocksFixture fixture)
         : base(fixture)
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-            config.AddProfile(new RequestToDomainProfile());
-            config.ShouldMapMethod = (m => false);
-        });
+        var config = new TypeAdapterConfig();
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        new DomainToResponseRegister().Register(config);
 
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(MapLatestEnkelvoudigInformatieObjectVersieRequest))
-            {
-                return new MapLatestEnkelvoudigInformatieObjectVersieRequest();
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
-
-        _requestMerger = new RequestMerger(_mapper);
+        _mapsterMapper = new Mapper(config);
     }
 
     [Fact]
@@ -967,17 +960,33 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         );
     }
 
+    // Reimplements RequestMerger.MergePartialUpdateToObjectRequest's JSON-merge behavior directly
+    // (rather than constructing a real RequestMerger, which is hardcoded to AutoMapper.IMapper and
+    // out of scope for this migration): map the current entity to its request-DTO shape via the
+    // real production Mapster register, JSON-merge the partial patch on top with RequestMerger's
+    // exact merge settings, then map the merged request through to a domain Versie the same way
+    // production controllers now do via _mapsterMapper.
     private EnkelvoudigInformatieObjectVersie MergeWithCurrentEnkelvoudigInformatieObject(
         EnkelvoudigInformatieObject currentEnkelvoudigInformatieObject,
         dynamic partialEnkelvoudigInformatieObjectRequest
     )
     {
-        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
-            EnkelvoudigInformatieObjectUpdateRequestDto,
-            EnkelvoudigInformatieObject
-        >(currentEnkelvoudigInformatieObject, partialEnkelvoudigInformatieObjectRequest);
+        var existingObjectRequest = _mapsterMapper.Map<EnkelvoudigInformatieObjectUpdateRequestDto>(currentEnkelvoudigInformatieObject);
 
-        EnkelvoudigInformatieObjectVersie mergedEnkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+        var joExistingObjectRequest = JObject.FromObject(existingObjectRequest, _jsonSerializer);
+        joExistingObjectRequest.Merge(
+            (JObject)partialEnkelvoudigInformatieObjectRequest,
+            new JsonMergeSettings
+            {
+                MergeArrayHandling = MergeArrayHandling.Replace,
+                PropertyNameComparison = StringComparison.OrdinalIgnoreCase,
+                MergeNullValueHandling = MergeNullValueHandling.Merge,
+            }
+        );
+
+        var mergedEnkelvoudigInformatieObjectRequest = joExistingObjectRequest.ToObject<EnkelvoudigInformatieObjectUpdateRequestDto>(_jsonSerializer);
+
+        EnkelvoudigInformatieObjectVersie mergedEnkelvoudigInformatieObjectVersie = _mapsterMapper.Map<EnkelvoudigInformatieObjectVersie>(
             mergedEnkelvoudigInformatieObjectRequest
         );
 

@@ -110,6 +110,36 @@ public class RequestToDomainProfileTests
     }
 
     [Fact]
+    public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
+    {
+        // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- a real request
+        // omitting them must not NullReferenceException on the member-path access inside the register
+        // (found via a genuine regression: AutoMapper's MapFrom auto-null-guards these paths, Mapster's
+        // .Map lambdas do not).
+        _fixture.Customize<EnkelvoudigInformatieObjectCreateRequestDto>(c =>
+            c.With(p => p.Identificatie, "DOC-2020-0000002")
+                .With(p => p.Bronorganisatie, "999990561")
+                .With(p => p.CreatieDatum, "2020-11-12")
+                .With(p => p.OntvangstDatum, "2020-11-13")
+                .With(p => p.VerzendDatum, "2020-11-14")
+                .With(p => p.Taal, "eng")
+                .With(p => p.InformatieObjectType, "https://some-informatieobjecttype")
+                .Without(p => p.Ondertekening)
+                .Without(p => p.Integriteit)
+        );
+
+        var value = _fixture.Create<EnkelvoudigInformatieObjectCreateRequestDto>();
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectVersie>(value);
+
+        Assert.Null(result.Ondertekening_Datum);
+        Assert.Null(result.Ondertekening_Soort);
+        Assert.Equal(default, result.Integriteit_Algoritme);
+        Assert.Null(result.Integriteit_Datum);
+        Assert.Null(result.Integriteit_Waarde);
+    }
+
+    [Fact]
     public void EnkelvoudigInformatieObjectUpdateRequestDto_With_Lock_Maps_To_EnkelvoudigInformatieObjectVersie()
     {
         // Setup
