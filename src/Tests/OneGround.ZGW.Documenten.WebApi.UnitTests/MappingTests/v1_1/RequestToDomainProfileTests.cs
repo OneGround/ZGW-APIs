@@ -141,6 +141,27 @@ public class RequestToDomainProfileTests
     }
 
     [Fact]
+    public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
+    {
+        // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- a real request
+        // omitting them must not NullReferenceException on the member-path access inside the register
+        // (found via a genuine regression: AutoMapper's MapFrom auto-null-guards these paths, Mapster's
+        // .Map lambdas do not). AlgoritmeFromString itself throws on a null argument by design, so the
+        // register must skip calling it entirely rather than merely null-guard its argument.
+        var value = CreateRequestDto();
+        value.Ondertekening = null;
+        value.Integriteit = null;
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectVersie>(value);
+
+        Assert.Null(result.Ondertekening_Datum);
+        Assert.Null(result.Ondertekening_Soort);
+        Assert.Equal(default, result.Integriteit_Algoritme);
+        Assert.Null(result.Integriteit_Datum);
+        Assert.Null(result.Integriteit_Waarde);
+    }
+
+    [Fact]
     public void EnkelvoudigInformatieObjectUpdateRequestDto_With_Lock_Maps_To_EnkelvoudigInformatieObjectVersie()
     {
         // Setup

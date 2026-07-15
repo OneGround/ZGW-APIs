@@ -52,7 +52,15 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
-            .Map(dest => dest.Ondertekening_Datum, src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum))
+            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
+            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
+            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
+            // here. Guard explicitly to match AutoMapper's original behavior (?. isn't usable here -- the
+            // .Map source selector compiles to an Expression<Func<>>, and C# forbids ?. in expression trees).
+            .Map(
+                dest => dest.Ondertekening_Datum,
+                src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
+            )
             .Map(
                 dest => dest.InformatieObject,
                 src => new EnkelvoudigInformatieObject
@@ -61,10 +69,10 @@ public class RequestToDomainRegister : IRegister
                     IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                 }
             )
-            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening.Soort)
-            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit.Algoritme)
-            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum))
-            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit.Waarde)
+            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening == null ? null : src.Ondertekening.Soort)
+            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? null : src.Integriteit.Algoritme)
+            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
+            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
             .Ignore(dest => dest.Versie)
             .Map(dest => dest.Taal, src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
             .Ignore(dest => dest.BeginRegistratie)
@@ -122,11 +130,16 @@ public class RequestToDomainRegister : IRegister
                     IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                 }
             )
-            .Map(dest => dest.Ondertekening_Datum, src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum))
-            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening.Soort)
-            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit.Algoritme)
-            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum))
-            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit.Waarde)
+            // See the matching comment on the CreateRequestDto config above: Ondertekening/Integriteit
+            // are optional, so member-path access must be null-guarded explicitly for Mapster.
+            .Map(
+                dest => dest.Ondertekening_Datum,
+                src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
+            )
+            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening == null ? null : src.Ondertekening.Soort)
+            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? null : src.Integriteit.Algoritme)
+            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
+            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
             .Ignore(dest => dest.Versie)
             .Map(dest => dest.Taal, src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
             .Ignore(dest => dest.BeginRegistratie)

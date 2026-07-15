@@ -77,11 +77,21 @@ public class RequestToDomainRegister : IRegister
                     IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                 }
             )
-            .Map(dest => dest.Ondertekening_Datum, src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum))
-            .Map(dest => dest.Ondertekening_Soort, src => SoortFromString(src.Ondertekening.Soort))
-            .Map(dest => dest.Integriteit_Algoritme, src => AlgoritmeFromString(src.Integriteit.Algoritme))
-            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum))
-            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit.Waarde)
+            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
+            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
+            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
+            // here. Guard explicitly (?. isn't usable -- the .Map source selector compiles to an
+            // Expression<Func<>>, and C# forbids ?. in expression trees). AlgoritmeFromString throws
+            // ArgumentNullException on a null argument by design (distinct null-vs-throw enum-parse
+            // semantics), so its whole call must be skipped, not just null-guard its argument.
+            .Map(
+                dest => dest.Ondertekening_Datum,
+                src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
+            )
+            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening == null ? null : SoortFromString(src.Ondertekening.Soort))
+            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? default : AlgoritmeFromString(src.Integriteit.Algoritme))
+            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
+            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
             .Map(dest => dest.Vertrouwelijkheidaanduiding, src => VertrouwelijkheidAanduidingFromString(src.Vertrouwelijkheidaanduiding))
             .Map(dest => dest.Status, src => StatusFromString(src.Status))
             .Map(dest => dest.Verschijningsvorm, src => src.Verschijningsvorm)
@@ -129,11 +139,21 @@ public class RequestToDomainRegister : IRegister
                     IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
                 }
             )
-            .Map(dest => dest.Ondertekening_Datum, src => ProfileHelper.DateFromStringOptional(src.Ondertekening.Datum))
-            .Map(dest => dest.Ondertekening_Soort, src => SoortFromString(src.Ondertekening.Soort))
-            .Map(dest => dest.Integriteit_Algoritme, src => AlgoritmeFromString(src.Integriteit.Algoritme))
-            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit.Datum))
-            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit.Waarde)
+            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
+            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
+            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
+            // here. Guard explicitly (?. isn't usable -- the .Map source selector compiles to an
+            // Expression<Func<>>, and C# forbids ?. in expression trees). AlgoritmeFromString throws
+            // ArgumentNullException on a null argument by design (distinct null-vs-throw enum-parse
+            // semantics), so its whole call must be skipped, not just null-guard its argument.
+            .Map(
+                dest => dest.Ondertekening_Datum,
+                src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
+            )
+            .Map(dest => dest.Ondertekening_Soort, src => src.Ondertekening == null ? null : SoortFromString(src.Ondertekening.Soort))
+            .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? default : AlgoritmeFromString(src.Integriteit.Algoritme))
+            .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
+            .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
             .Map(dest => dest.Vertrouwelijkheidaanduiding, src => VertrouwelijkheidAanduidingFromString(src.Vertrouwelijkheidaanduiding))
             .Map(dest => dest.Status, src => StatusFromString(src.Status))
             .Map(dest => dest.Verschijningsvorm, src => src.Verschijningsvorm)
