@@ -34,28 +34,20 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
-            // EnkelvoudigInformatieObjectVersie.InformatieObject/LatestInformatieObject form a
-            // multi-path cyclic EF navigation graph back through EnkelvoudigInformatieObject. Under
-            // the real AddZgwMapster global MaxDepth(200), Mapster's compiler exhaustively expands
-            // this cycle when resolving InformatieObject's own type, even though it's populated by a
-            // manual `new EnkelvoudigInformatieObject{...}` rather than Mapster's own auto-mapping.
-            // Scoping MaxDepth down for just this type pair (rather than lowering the shared global
-            // default used by all 7 migrated services) neutralizes the otherwise combinatorial
-            // compile-time blowup -- empirically, 2 is required (1 suppresses the explicit
-            // InformatieObject assignment entirely, silently leaving it null).
-            .MaxDepth(2)
+            // EnkelvoudigInformatieObjectVersie.InformatieObject/LatestInformatieObject form a cyclic EF
+            // navigation graph back through EnkelvoudigInformatieObject. Assigning InformatieObject via a
+            // mapped member (.Map) pulls EnkelvoudigInformatieObject into the destination type graph
+            // Mapster's compiler analyzes, and under the global MaxDepth(200) it exhaustively expands that
+            // cycle -> an effectively-unbounded compile-time blowup. Assigning it in .AfterMapping instead
+            // (which runs outside the compiled member-mapping pipeline -- same mechanism as the Risk #17
+            // EmptyCollectionIfNull fix) keeps EnkelvoudigInformatieObject out of the analyzed graph
+            // entirely: no recursion, no per-config MaxDepth tuning, and robust to future model cycles.
+            // LatestInformatieObject stays .Ignore()'d below for the same reason (it's never assigned).
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
-            .Map(
-                dest => dest.InformatieObject,
-                src => new EnkelvoudigInformatieObject
-                {
-                    InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
-                    IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
-                }
-            )
+            .Ignore(dest => dest.InformatieObject)
             // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
             // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
             // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
@@ -79,7 +71,15 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
             .Ignore(dest => dest.LatestInformatieObject)
-            .Ignore(dest => dest.RowVersion);
+            .Ignore(dest => dest.RowVersion)
+            .AfterMapping(
+                (src, dest) =>
+                    dest.InformatieObject = new EnkelvoudigInformatieObject
+                    {
+                        InformatieObjectType = src.InformatieObjectType.TrimEnd('/'),
+                        IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
+                    }
+            );
 
         // Create new version of EnkelvoudigInformatieObject: versie 2, versie 3, etc
         config
@@ -100,22 +100,14 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
-            // See the matching comment on the CreateRequestDto->Versie config above: scoping MaxDepth
-            // down to 2 neutralizes the same cyclic-graph compile-time blowup for this type pair.
-            .MaxDepth(2)
+            // See the matching comment on the CreateRequestDto->Versie config above: InformatieObject is
+            // assigned in .AfterMapping (not .Map) to keep EnkelvoudigInformatieObject out of the cyclic
+            // type graph Mapster's compiler analyzes under the global MaxDepth(200).
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
-            .Map(
-                dest => dest.InformatieObject,
-                src => new EnkelvoudigInformatieObject
-                {
-                    InformatieObjectType = src.InformatieObjectType,
-                    Lock = src.Lock,
-                    IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
-                }
-            )
+            .Ignore(dest => dest.InformatieObject)
             // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
             // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
             // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
@@ -139,7 +131,16 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
             .Ignore(dest => dest.LatestInformatieObject)
-            .Ignore(dest => dest.RowVersion);
+            .Ignore(dest => dest.RowVersion)
+            .AfterMapping(
+                (src, dest) =>
+                    dest.InformatieObject = new EnkelvoudigInformatieObject
+                    {
+                        InformatieObjectType = src.InformatieObjectType,
+                        Lock = src.Lock,
+                        IndicatieGebruiksrecht = src.IndicatieGebruiksrecht,
+                    }
+            );
     }
 
     private static VertrouwelijkheidAanduiding? VertrouwelijkheidAanduidingFromString(string vertrouwelijkheidaanduiding)
