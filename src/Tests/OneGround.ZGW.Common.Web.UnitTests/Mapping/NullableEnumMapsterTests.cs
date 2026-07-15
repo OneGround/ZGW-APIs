@@ -1,5 +1,3 @@
-using System;
-using System.Reflection;
 using Mapster;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
@@ -20,17 +18,10 @@ public class NullableEnumMapsterTests
         Large,
     }
 
-    // A type carrying a Nullable<enum> property so the registrar discovers Colour? in this assembly.
-    private sealed class Holder
-    {
-        public Colour? Colour { get; set; }
-        public Size? Size { get; set; }
-    }
-
     private static TypeAdapterConfig BuildConfig()
     {
         var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRules(new[] { typeof(NullableEnumMapsterTests).Assembly });
+        config.RegisterNullableEnumRule();
         config.Compile();
         return config;
     }
@@ -62,21 +53,11 @@ public class NullableEnumMapsterTests
     }
 
     [Fact]
-    public void Enum_type_from_unregistered_assembly_is_not_covered_by_rule()
+    public void Two_distinct_enum_types_are_both_handled_by_the_same_global_rule()
     {
-        // Registering against an assembly that does not declare Colour means no rule is
-        // registered for Colour?, so Mapster falls back to its default string->enum behavior,
-        // which throws on an unrecognized value instead of returning null the way our rule does.
-        var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRules(Array.Empty<Assembly>());
-        config.Compile();
-
-        Assert.ThrowsAny<Exception>(() => "Purple".Adapt<Colour?>(config));
-    }
-
-    [Fact]
-    public void Two_distinct_enum_types_each_get_independent_correct_rules()
-    {
+        // Neither Colour nor Size was ever scanned or passed anywhere — the single global rule
+        // registered by BuildConfig() covers both automatically, which is the whole point of
+        // replacing assembly scanning with a type-shape-based `When` rule.
         var config = BuildConfig();
 
         var colourResult = "Green".Adapt<Colour?>(config);

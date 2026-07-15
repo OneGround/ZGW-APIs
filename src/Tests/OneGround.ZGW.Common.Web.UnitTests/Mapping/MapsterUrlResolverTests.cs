@@ -49,4 +49,10 @@ public class MapsterUrlResolverTests
     {
         Assert.Null(MapsterUrlResolver.ResolveUrl(null));
     }
+
+    [Fact]
+    public void ResolveUrls_returns_null_for_null_collection()
+    {
+        Assert.Null(MapsterUrlResolver.ResolveUrls(null));
+    }
 }
