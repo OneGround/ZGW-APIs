@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -38,11 +37,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 public class ObjectInformatieObjectenController : ZGWControllerBase
 {
     private readonly IObjectExpander<InformatieObjectContext> _expander;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ObjectInformatieObjectenController(
         ILogger<ObjectInformatieObjectenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
@@ -50,6 +51,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
+        _mapsterMapper = mapsterMapper;
     }
 
     /// <summary>
@@ -73,14 +75,14 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
+        var filter = _mapsterMapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
             cancellationToken
         );
 
-        var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
+        var objectInformatieObjectenResponse = _mapsterMapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
@@ -136,7 +138,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObject = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObject = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 

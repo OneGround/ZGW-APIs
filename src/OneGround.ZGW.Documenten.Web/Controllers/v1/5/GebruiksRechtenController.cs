@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -38,11 +37,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 public class GebruiksRechtenController : ZGWControllerBase
 {
     private readonly IObjectExpander<InformatieObjectContext> _expander;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
@@ -50,6 +51,7 @@ public class GebruiksRechtenController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
+        _mapsterMapper = mapsterMapper;
     }
 
     /// <summary>
@@ -73,11 +75,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
+        var filter = _mapsterMapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
 
         var result = await _mediator.Send(new Handlers.v1.GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
-        var gebruiksRechtenResponse = _mapper.Map<List<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>>(result.Result);
+        var gebruiksRechtenResponse = _mapsterMapper.Map<List<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
@@ -135,7 +137,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksrecht = _mapper.Map<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>(result.Result);
+        var gebruiksrecht = _mapsterMapper.Map<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
