@@ -142,7 +142,11 @@ class UpdateZaakTypeCommandHandler
                     zaakType.ZaakTypeInformatieObjectTypen.Select(t => t.InformatieObjectType),
                     zaakType.Catalogus.Owner
                 );
-                await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeBesluitTypen.Select(z => z.BesluitType), zaakType.Catalogus.Owner);
+                // Note: soft-referenced entries have no resolved BesluitType (yet); only invalidate what actually resolved.
+                await _cacheInvalidator.InvalidateAsync(
+                    zaakType.ZaakTypeBesluitTypen.Select(z => z.BesluitType).Where(b => b != null),
+                    zaakType.Catalogus.Owner
+                );
                 await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeDeelZaakTypen.Select(z => z.DeelZaakType), zaakType.Catalogus.Owner);
                 await _cacheInvalidator.InvalidateAsync(
                     zaakType.ZaakTypeGerelateerdeZaakTypen.Select(z => z.GerelateerdeZaakType),
