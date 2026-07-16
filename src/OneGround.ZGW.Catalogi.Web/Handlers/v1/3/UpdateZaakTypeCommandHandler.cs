@@ -142,7 +142,11 @@ class UpdateZaakTypeCommandHandler
                     zaakType.ZaakTypeInformatieObjectTypen.Select(t => t.InformatieObjectType),
                     zaakType.Catalogus.Owner
                 );
-                await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeBesluitTypen.Select(z => z.BesluitType), zaakType.Catalogus.Owner);
+                // Note: soft-referenced entries have no resolved BesluitType (yet); only invalidate what actually resolved.
+                await _cacheInvalidator.InvalidateAsync(
+                    zaakType.ZaakTypeBesluitTypen.Select(z => z.BesluitType).Where(b => b != null),
+                    zaakType.Catalogus.Owner
+                );
                 await _cacheInvalidator.InvalidateAsync(zaakType.ZaakTypeDeelZaakTypen.Select(z => z.DeelZaakType), zaakType.Catalogus.Owner);
                 await _cacheInvalidator.InvalidateAsync(
                     zaakType.ZaakTypeGerelateerdeZaakTypen.Select(z => z.GerelateerdeZaakType),
@@ -495,7 +499,27 @@ class UpdateZaakTypeCommandHandler
 
             if (besluitTypenWithinGeldigheid.Count == 0)
             {
-                _logger.LogInformation("Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend.", index, besluitType);
+                _logger.LogInformation(
+                    "Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend. Relatie wordt vastgelegd als soft-reference.",
+                    index,
+                    besluitType
+                );
+
+                // Note: No matching besluittype (yet) in this catalog; persist the relation as a soft reference on omschrijving.
+                //   The BesluitType navigation is resolved later on read by
+                //   ZaakTypeDataService.ResolveZaakTypeBesluitTypeRelations once a matching besluittype exists within geldigheid.
+                besluitTypen.AddRangeUnique(
+                    [
+                        new ZaakTypeBesluitType
+                        {
+                            ZaakType = zaakType,
+                            BesluitTypeOmschrijving = besluitType,
+                            Owner = zaakType.Owner,
+                        },
+                    ],
+                    (x, y) => x.BesluitTypeOmschrijving == y.BesluitTypeOmschrijving
+                );
+
                 continue;
             }
 

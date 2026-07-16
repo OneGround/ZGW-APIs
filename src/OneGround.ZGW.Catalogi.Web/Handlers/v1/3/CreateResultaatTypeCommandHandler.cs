@@ -180,7 +180,27 @@ class CreateResultaatTypeCommandHandler
 
             if (besluitTypenWithinGeldigheid.Count == 0)
             {
-                _logger.LogInformation("Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend.", index, besluitType);
+                _logger.LogInformation(
+                    "Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend. Relatie wordt vastgelegd als soft-reference.",
+                    index,
+                    besluitType
+                );
+
+                // Note: No matching besluittype (yet) in this catalog; persist the relation as a soft reference on omschrijving.
+                //   The BesluitType navigation is resolved later on read by
+                //   GetResultaatTypeQueryHandler.ResolveZaakTypeBesluitTypeRelations once a matching besluittype exists within geldigheid.
+                besluitTypen.AddRangeUnique(
+                    [
+                        new ResultaatTypeBesluitType
+                        {
+                            ResultaatType = resultaatType,
+                            BesluitTypeOmschrijving = besluitType,
+                            Owner = resultaatType.Owner,
+                        },
+                    ],
+                    (x, y) => x.BesluitTypeOmschrijving == y.BesluitTypeOmschrijving
+                );
+
                 continue;
             }
 
@@ -198,7 +218,8 @@ class CreateResultaatTypeCommandHandler
 
         _context.ResultaatTypeBesluitTypen.AddRange(besluitTypen);
 
-        await _cacheInvalidator.InvalidateAsync(besluitTypen.Select(t => t.BesluitType), resultaatType.Owner);
+        // Note: soft-referenced entries have no resolved BesluitType (yet); only invalidate what actually resolved.
+        await _cacheInvalidator.InvalidateAsync(besluitTypen.Select(t => t.BesluitType).Where(b => b != null), resultaatType.Owner);
     }
 }
 
