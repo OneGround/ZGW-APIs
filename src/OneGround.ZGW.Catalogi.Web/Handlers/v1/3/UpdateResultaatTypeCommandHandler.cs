@@ -231,7 +231,8 @@ public class UpdateResultaatTypeCommandHandler
                 );
 
                 // Note: No matching besluittype (yet) in this catalog; persist the relation as a soft reference on omschrijving.
-                //   The BesluitType navigation resolves later (elsewhere) once a matching besluittype exists within geldigheid.
+                //   The BesluitType navigation is resolved later on read by
+                //   GetResultaatTypeQueryHandler.ResolveZaakTypeBesluitTypeRelations once a matching besluittype exists within geldigheid.
                 besluitTypen.AddRangeUnique(
                     [
                         new ResultaatTypeBesluitType
