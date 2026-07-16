@@ -1,4 +1,3 @@
-using Dapper;
 using Hangfire;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Common.Batching;
-using OneGround.ZGW.Common.Converters;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Messaging;
@@ -130,8 +128,6 @@ public class Startup
         );
         services.AddNotificatiesJobs(o => o.ConnectionString = Configuration.GetConnectionString("UserConnectionString"));
 #endif
-        SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
-
         //Note: this should be AFTER all httpclients being added!
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
     }

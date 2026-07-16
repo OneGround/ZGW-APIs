@@ -13,6 +13,18 @@ public static class CircuitBreakerServiceCollectionExtensions
             .AddOptions<CircuitBreakerOptions>()
             .Bind(configuration.GetSection(CircuitBreakerOptions.CircuitBreaker))
             .ValidateDataAnnotations()
+            .Validate(
+                o => o.BreakDuration > TimeSpan.Zero,
+                $"{CircuitBreakerOptions.CircuitBreaker}: {nameof(CircuitBreakerOptions.BreakDuration)} must be greater than zero."
+            )
+            .Validate(
+                o => TimeSpan.FromMinutes(o.CacheExpirationMinutes) > o.BreakDuration,
+                $"{CircuitBreakerOptions.CircuitBreaker}: {nameof(CircuitBreakerOptions.CacheExpirationMinutes)} must exceed {nameof(CircuitBreakerOptions.BreakDuration)} so an open circuit survives until its half-open transition."
+            )
+            .Validate(
+                o => o.BlockSubscriptionAfter > o.BreakDuration,
+                $"{CircuitBreakerOptions.CircuitBreaker}: {nameof(CircuitBreakerOptions.BlockSubscriptionAfter)} must be greater than {nameof(CircuitBreakerOptions.BreakDuration)}."
+            )
             .ValidateOnStart();
 
         services.AddSingleton<ICircuitBreakerSubscriberHealthTracker, RedisCircuitBreakerSubscriberHealthTracker>();

@@ -8,3 +8,4 @@ This directory contains detailed documentation for the OneGround ZGW APIs implem
 - **[Logging Configuration](./LOGS.md)** - Detailed logging strategy using Serilog with file rotation, size limits, and retention policies
 - **[Data Protection & Encryption](./DATAPROTECTION.md)** - Security guide for DataProtection key storage, HMAC hashing for searchable lookups, and certificate-based encryption at rest
 - **[Audit trail](./AUDITTRAIL.md)** - Guid with a description of the various audit tracks and how they work.
+- **[Circuit Breaker](./nrc/CIRCUIT_BREAKER.md)** - Per-subscription circuit breaker for notification delivery: state machine, Redis key design, and automatic blocking.

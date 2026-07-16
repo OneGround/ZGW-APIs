@@ -61,6 +61,7 @@ public class GetAllGebruiksRechtenQueryHandlerTests
                 Owner = RsinB,
                 InformatieObjectType = InformatieObjectTypeX,
                 LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
+                LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
                 CatalogusId = Guid.NewGuid(),
                 CreationTime = DateTime.UtcNow,
             }
@@ -83,6 +84,8 @@ public class GetAllGebruiksRechtenQueryHandlerTests
         // RSIN_A has an EIO whose LatestVersieId points to RSIN_B's versie ID.
         // (Without the owner filter the subquery resolves rsinBVersieId → finds
         // RSIN_B's openbaar versie → auth passes → GR wrongly returned.)
+        // Set LatestVertrouwelijkheidAanduiding to a restrictive level so the denormalized
+        // check in the handler fails and the GebruiksRecht is correctly excluded.
         var rsinAEioId = Guid.NewGuid();
         ctx.EnkelvoudigInformatieObjecten.Add(
             new EnkelvoudigInformatieObject
@@ -90,6 +93,7 @@ public class GetAllGebruiksRechtenQueryHandlerTests
                 Id = rsinAEioId,
                 Owner = RsinA,
                 InformatieObjectType = InformatieObjectTypeX,
+                LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.zeer_geheim,
                 // Deliberately point to RSIN_B's versie to expose the missing owner filter.
                 LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
                 CatalogusId = Guid.NewGuid(),
@@ -182,6 +186,7 @@ public class GetAllGebruiksRechtenQueryHandlerTests
                     Id = eioId,
                     Owner = rsin,
                     InformatieObjectType = InformatieObjectTypeX,
+                    LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
                     LatestEnkelvoudigInformatieObjectVersieId = versieId,
                     CatalogusId = Guid.NewGuid(),
                     CreationTime = DateTime.UtcNow,

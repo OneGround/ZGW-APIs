@@ -3,6 +3,11 @@
 public class CircuitBreakerSubscriberHealthState
 {
     /// <summary>
+    /// The subscription (abonnement) this health state tracks.
+    /// </summary>
+    public Guid AbonnementId { get; set; }
+
+    /// <summary>
     /// The subscriber URL that this health state tracks.
     /// </summary>
     public string Url { get; set; } = string.Empty;

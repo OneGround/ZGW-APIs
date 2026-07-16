@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
@@ -18,9 +19,10 @@ public class LogAuditTrailGetObjectListCommandHandler : LogAuditTrailGetBaseHand
         IConfiguration configuration,
         IDbContextWithAuditTrail context,
         IAuditTrailFactory auditTrailFactory,
-        IAuthorizationContextAccessor authorizationContextAccessor
+        IAuthorizationContextAccessor authorizationContextAccessor,
+        IHttpContextAccessor httpContextAccessor
     )
-        : base(configuration, authorizationContextAccessor)
+        : base(configuration, authorizationContextAccessor, httpContextAccessor)
     {
         _context = context;
         _auditTrailFactory = auditTrailFactory;
@@ -29,8 +31,7 @@ public class LogAuditTrailGetObjectListCommandHandler : LogAuditTrailGetBaseHand
     public async Task<CommandResult> Handle(LogAuditTrailGetObjectListCommand request, CancellationToken cancellationToken)
     {
         if (
-            IsAudittrailRetrieveForRsin
-            && IsAudittrailRecordRetrieveList
+            !IsClientIdExcluded
             && (
                 request.RetrieveCatagory == RetrieveCatagory.Minimal
                 || (request.RetrieveCatagory == RetrieveCatagory.All && !IsAudittrailRetrieveMinimal)

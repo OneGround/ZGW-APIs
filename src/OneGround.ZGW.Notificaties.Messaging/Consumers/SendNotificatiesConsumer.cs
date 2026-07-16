@@ -196,7 +196,7 @@ public class SendNotificatiesConsumer : ConsumerBase<SendNotificatiesConsumer>, 
 
                 var _abonnementen = await dbContext
                     .Abonnementen.AsNoTracking()
-                    .Where(a => a.Owner == rsin)
+                    .Where(a => a.Owner == rsin && !a.Blocked)
                     .Include(a => a.AbonnementKanalen)
                         .ThenInclude(a => a.Kanaal)
                     .Include(a => a.AbonnementKanalen)

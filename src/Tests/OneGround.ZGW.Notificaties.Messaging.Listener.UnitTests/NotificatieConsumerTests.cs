@@ -55,6 +55,9 @@ public class SendNotificatiesConsumerTests
         _configuration = Options.Create(new ApplicationOptions() { AbonnementenCacheExpirationTime = TimeSpan.FromMinutes(2) });
 
         _memoryCache = new MockMemoryCache();
+
+        // Existing tests assume an active (non-blocked) subscription; pin it so the skip-when-blocked guard doesn't flip them.
+        _fixture.Customize<Abonnement>(c => c.With(a => a.Blocked, false));
     }
 
     [Fact]
@@ -1119,6 +1122,63 @@ public class SendNotificatiesConsumerTests
         await consumer.Consume(message.Object);
 
         _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendNotification_WhenSubscriptionBlocked_DoesNotEnqueue()
+    {
+        var channel = _fixture.Create<Kanaal>();
+        channel.Naam = "zaken";
+        channel.Filters = [];
+        channel.AbonnementKanalen = [];
+
+        var subscription = _fixture.Create<Abonnement>();
+        subscription.AbonnementKanalen = [];
+        subscription.Owner = "owner";
+        subscription.Blocked = true; // blocked
+
+        var context = await SetupDbContext(c =>
+        {
+            c.Kanalen.Add(channel);
+            c.Abonnementen.Add(subscription);
+            c.AbonnementKanalen.Add(
+                new AbonnementKanaal
+                {
+                    Abonnement = subscription,
+                    Kanaal = channel,
+                    Id = Guid.NewGuid(),
+                    Filters = [],
+                }
+            );
+        });
+
+        var serviceProvider = BuildServiceCollection(context);
+
+        var consumer = new SendNotificatiesConsumer(
+            _logger.Object,
+            serviceProvider,
+            _memoryCache,
+            _notificatieScheduler.Object,
+            _configuration,
+            _notificationFilterService.Object
+        );
+
+        var notificatie = new Mock<ISendNotificaties>();
+        notificatie.Setup(s => s.Kanaal).Returns("zaken");
+        notificatie.Setup(s => s.Rsin).Returns("owner");
+        // Not ignored: without the blocked-skip this WOULD enqueue.
+        _notificationFilterService
+            .Setup(x => x.IsIgnored(It.IsAny<ISendNotificaties>(), It.IsAny<Abonnement>(), It.IsAny<AbonnementKanaal>()))
+            .Returns(false);
+
+        var message = new Mock<ConsumeContext<ISendNotificaties>>();
+        message.Setup(s => s.Message).Returns(notificatie.Object);
+        var headersMock = new Mock<Headers>();
+        message.Setup(s => s.Headers).Returns(headersMock.Object);
+
+        await consumer.Consume(message.Object);
+
+        _notificatieScheduler.Verify(m => m.Enqueue(It.IsAny<Expression<Func<NotificatieJob, Task>>>()), Times.Never);
     }
 
     private static ServiceProvider BuildServiceCollection(NrcDbContext context)

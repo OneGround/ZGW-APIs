@@ -14,6 +14,7 @@ public class RequestToDomainProfile : Profile
         CreateMap<AbonnementRequestDto, Abonnement>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.AbonnementKanalen, opt => opt.MapFrom(src => src.Kanalen))
+            .ForMember(dest => dest.Blocked, opt => opt.Ignore())
             .ForMember(dest => dest.Owner, opt => opt.Ignore());
 
         CreateMap<AbonnementKanaalDto, AbonnementKanaal>()

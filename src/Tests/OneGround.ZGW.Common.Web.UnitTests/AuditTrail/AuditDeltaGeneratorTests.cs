@@ -1495,7 +1495,7 @@ public class AuditDeltaGeneratorTests
                     },
                 },
             },
-            bronorganisatie = "805307631",
+            bronorganisatie = "999993586",
         };
 
         var current = new
@@ -1503,7 +1503,7 @@ public class AuditDeltaGeneratorTests
             toelichting = "Testzaak",
             omschrijving = "Zaak with modified geometrie type 'Point'",
             zaakgeometrie = new { type = "Point", coordinates = new[] { 68436.707, 421115.413 } },
-            bronorganisatie = "805307631",
+            bronorganisatie = "999993586",
         };
 
         var propertiesUsingCurrentValue = new List<string> { "zaakgeometrie" };

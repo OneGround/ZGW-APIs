@@ -1,8 +1,9 @@
 using System;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoFixture;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,16 @@ public class RedisCircuitBreakerSubscriberHealthTrackerTests
     private readonly Mock<ILogger<RedisCircuitBreakerSubscriberHealthTracker>> _loggerMock;
     private readonly CircuitBreakerOptions _settings;
     private readonly RedisCircuitBreakerSubscriberHealthTracker _sut;
-    private readonly Fixture _fixture;
+
+    private static readonly Guid AbonnementId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+    private const string Url = "https://example.com/webhook";
+    private static readonly string BreakerKey = $"ZGW:NRC:CircuitBreaker:subscriber:{AbonnementId}";
+    private static readonly string MarkerKey = $"ZGW:NRC:CircuitBreaker:failing-since:{AbonnementId}";
+
+    private CircuitBreakerSubscriberHealthState? _savedState;
+    private DistributedCacheEntryOptions? _savedStateOptions;
+    private string? _savedMarker;
+    private DistributedCacheEntryOptions? _savedMarkerOptions;
 
     public RedisCircuitBreakerSubscriberHealthTrackerTests()
     {
@@ -32,209 +42,253 @@ public class RedisCircuitBreakerSubscriberHealthTrackerTests
             FailureThreshold = 3,
             BreakDuration = TimeSpan.FromMinutes(5),
             CacheExpirationMinutes = 10,
+            BlockSubscriptionAfter = TimeSpan.FromDays(14),
         };
         var optionsMock = new Mock<IOptions<CircuitBreakerOptions>>();
         optionsMock.Setup(o => o.Value).Returns(_settings);
 
-        _sut = new RedisCircuitBreakerSubscriberHealthTracker(_cacheMock.Object, _loggerMock.Object, optionsMock.Object, new ConfigurationOptions());
-        _fixture = new Fixture();
+        // Capture every breaker-state write
+        _cacheMock
+            .Setup(c => c.SetAsync(BreakerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
+                (key, value, options, ct) =>
+                {
+                    _savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(Encoding.UTF8.GetString(value));
+                    _savedStateOptions = options;
+                }
+            )
+            .Returns(Task.CompletedTask);
+
+        // Capture every failing-since marker write
+        _cacheMock
+            .Setup(c => c.SetAsync(MarkerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
+                (key, value, options, ct) =>
+                {
+                    _savedMarker = Encoding.UTF8.GetString(value);
+                    _savedMarkerOptions = options;
+                }
+            )
+            .Returns(Task.CompletedTask);
+
+        _sut = new RedisCircuitBreakerSubscriberHealthTracker(
+            _cacheMock.Object,
+            _loggerMock.Object,
+            optionsMock.Object,
+            Mock.Of<IConnectionMultiplexer>()
+        );
     }
+
+    private void SetupState(CircuitBreakerSubscriberHealthState? state)
+    {
+        var bytes = state == null ? null : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(state));
+        _cacheMock.Setup(c => c.GetAsync(BreakerKey, It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+    }
+
+    // ---------- IsHealthyAsync ----------
 
     [Fact]
     public async Task IsHealthyAsync_WhenNoHealthStateExists_ReturnsTrue()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        SetupState(null);
 
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
+        var result = await _sut.IsHealthyAsync(AbonnementId);
 
-        // Assert
         Assert.True(result);
     }
 
     [Fact]
     public async Task IsHealthyAsync_WhenCircuitIsClosed_ReturnsTrue()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 1,
-            BlockedUntil = null,
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 1,
+                BlockedUntil = null,
+            }
+        );
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        var result = await _sut.IsHealthyAsync(AbonnementId);
 
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
-
-        // Assert
         Assert.True(result);
     }
 
     [Fact]
     public async Task IsHealthyAsync_WhenCircuitIsOpen_ReturnsFalse()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddMinutes(5),
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 3,
+                BlockedUntil = DateTime.UtcNow.AddMinutes(5),
+            }
+        );
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        var result = await _sut.IsHealthyAsync(AbonnementId);
 
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
-
-        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public async Task IsHealthyAsync_WhenCircuitExpired_ReturnsTrue()
+    public async Task IsHealthyAsync_UsesAbonnementIdBasedCacheKey()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddMinutes(-1), // Already expired
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(null);
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        await _sut.IsHealthyAsync(AbonnementId);
 
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
-
-        // Assert
-        Assert.True(result);
+        _cacheMock.Verify(c => c.GetAsync(BreakerKey, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task IsHealthyAsync_WhenBlockedUntilExpires_TransitionsToHalfOpen_DeletingState()
+    {
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 3,
+                BlockedUntil = DateTime.UtcNow.AddSeconds(-1), // expired -> half-open
+                FirstFailureAt = DateTime.UtcNow.AddMinutes(-10),
+                LastFailureAt = DateTime.UtcNow.AddMinutes(-5),
+            }
+        );
+
+        var result = await _sut.IsHealthyAsync(AbonnementId);
+
+        Assert.True(result); // one attempt allowed
+        // The short-lived breaker state is DELETED on half-open and no new state is written.
+        _cacheMock.Verify(c => c.RemoveAsync(BreakerKey, It.IsAny<CancellationToken>()), Times.Once);
+        _cacheMock.Verify(
+            c => c.SetAsync(BreakerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
+            Times.Never
+        );
+    }
+
+    [Fact]
+    public async Task IsHealthyAsync_WhenCacheThrowsException_ReturnsTrue()
+    {
+        _cacheMock.Setup(c => c.GetAsync(BreakerKey, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Redis connection failed"));
+
+        var result = await _sut.IsHealthyAsync(AbonnementId);
+
+        Assert.True(result); // fail-open
+    }
+
+    // ---------- MarkUnhealthyAsync: breaker cycle ----------
 
     [Fact]
     public async Task MarkUnhealthyAsync_FirstFailure_IncrementsFailureCount()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var errorMessage = "Connection timeout";
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        SetupState(null);
 
-        CircuitBreakerSubscriberHealthState? savedState = null;
-        _cacheMock
-            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
-                (key, value, options, ct) =>
-                    savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(System.Text.Encoding.UTF8.GetString(value))
-            )
-            .Returns(Task.CompletedTask);
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "Connection timeout", 500);
 
-        // Act
-        await _sut.MarkUnhealthyAsync(url, errorMessage, 500);
-
-        // Assert
-        Assert.NotNull(savedState);
-        Assert.Equal(url, savedState.Url);
-        Assert.Equal(1, savedState.ConsecutiveFailures);
-        Assert.Equal(errorMessage, savedState.LastErrorMessage);
-        Assert.Equal(500, savedState.LastStatusCode);
-        Assert.NotNull(savedState.FirstFailureAt);
-        Assert.NotNull(savedState.LastFailureAt);
-        Assert.Null(savedState.BlockedUntil); // Circuit not open yet
+        Assert.NotNull(_savedState);
+        Assert.Equal(AbonnementId, _savedState.AbonnementId);
+        Assert.Equal(Url, _savedState.Url);
+        Assert.Equal(1, _savedState.ConsecutiveFailures);
+        Assert.Equal("Connection timeout", _savedState.LastErrorMessage);
+        Assert.Equal(500, _savedState.LastStatusCode);
+        Assert.Null(_savedState.BlockedUntil);
     }
 
     [Fact]
     public async Task MarkUnhealthyAsync_ReachesThreshold_OpensCircuit()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var existingState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 2, // One below threshold
-            FirstFailureAt = DateTime.UtcNow.AddMinutes(-2),
-        };
-        var serialized = JsonSerializer.Serialize(existingState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 2,
+                FirstFailureAt = DateTime.UtcNow.AddMinutes(-2),
+                LastFailureAt = DateTime.UtcNow.AddMinutes(-1),
+            }
+        );
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "Third failure");
 
-        CircuitBreakerSubscriberHealthState? savedState = null;
-        _cacheMock
-            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
-                (key, value, options, ct) =>
-                    savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(System.Text.Encoding.UTF8.GetString(value))
-            )
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await _sut.MarkUnhealthyAsync(url, "Third failure");
-
-        // Assert
-        Assert.NotNull(savedState);
-        Assert.Equal(3, savedState.ConsecutiveFailures);
-        Assert.NotNull(savedState.BlockedUntil);
-        Assert.True(savedState.BlockedUntil > DateTime.UtcNow);
-        Assert.True(savedState.IsCircuitOpen);
+        Assert.NotNull(_savedState);
+        Assert.Equal(3, _savedState.ConsecutiveFailures);
+        Assert.NotNull(_savedState.BlockedUntil);
+        Assert.True(_savedState.IsCircuitOpen);
     }
 
     [Fact]
-    public async Task MarkHealthyAsync_ResetsHealthState()
+    public async Task MarkUnhealthyAsync_SavesStateWithTenMinuteTtl()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 2,
-            BlockedUntil = DateTime.UtcNow.AddMinutes(5),
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(null);
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "boom", 500);
 
-        // Act
-        await _sut.MarkHealthyAsync(url);
-
-        // Assert
-        _cacheMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(_savedStateOptions);
+        Assert.Equal(TimeSpan.FromMinutes(_settings.CacheExpirationMinutes), _savedStateOptions.AbsoluteExpirationRelativeToNow);
     }
+
+    // ---------- MarkHealthyAsync ----------
+
+    [Fact]
+    public async Task MarkHealthyAsync_ResetsState()
+    {
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 2,
+                BlockedUntil = DateTime.UtcNow.AddMinutes(5),
+            }
+        );
+
+        await _sut.MarkHealthyAsync(AbonnementId);
+
+        _cacheMock.Verify(c => c.RemoveAsync(BreakerKey, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task MarkHealthyAsync_WhenNoBreakerState_DoesNotTouchBreakerKey()
+    {
+        SetupState(null);
+
+        await _sut.MarkHealthyAsync(AbonnementId);
+
+        _cacheMock.Verify(c => c.RemoveAsync(BreakerKey, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MarkHealthyAsync_WhenNoBreakerState_ClearsFailingSinceMarker()
+    {
+        SetupState(null);
+
+        await _sut.MarkHealthyAsync(AbonnementId);
+
+        _cacheMock.Verify(c => c.RemoveAsync(MarkerKey, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // ---------- Get/Reset ----------
 
     [Fact]
     public async Task GetHealthStateAsync_WhenStateExists_ReturnsState()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 2,
-            LastErrorMessage = "Test error",
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupState(
+            new CircuitBreakerSubscriberHealthState
+            {
+                AbonnementId = AbonnementId,
+                Url = Url,
+                ConsecutiveFailures = 2,
+                LastErrorMessage = "Test error",
+            }
+        );
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        var result = await _sut.GetHealthStateAsync(AbonnementId);
 
-        // Act
-        var result = await _sut.GetHealthStateAsync(url);
-
-        // Assert
         Assert.NotNull(result);
-        Assert.Equal(url, result.Url);
+        Assert.Equal(AbonnementId, result.AbonnementId);
         Assert.Equal(2, result.ConsecutiveFailures);
         Assert.Equal("Test error", result.LastErrorMessage);
     }
@@ -242,255 +296,101 @@ public class RedisCircuitBreakerSubscriberHealthTrackerTests
     [Fact]
     public async Task GetHealthStateAsync_WhenNoStateExists_ReturnsNull()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        SetupState(null);
 
-        // Act
-        var result = await _sut.GetHealthStateAsync(url);
+        var result = await _sut.GetHealthStateAsync(AbonnementId);
 
-        // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public async Task ResetHealthAsync_RemovesCacheEntry()
+    public async Task ResetHealthAsync_RemovesTheStateKey()
     {
-        // Arrange
-        var url = "https://example.com/webhook";
+        await _sut.ResetHealthAsync(AbonnementId);
 
-        // Act
-        await _sut.ResetHealthAsync(url);
-
-        // Assert
-        _cacheMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cacheMock.Verify(c => c.RemoveAsync(BreakerKey, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task IsHealthyAsync_WhenCacheThrowsException_ReturnsTrue()
-    {
-        // Arrange
-        var url = "https://example.com/webhook";
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Redis connection failed"));
-
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
-
-        // Assert
-        Assert.True(result); // Fail-open behavior
-    }
+    // ---------- Half-open failure flow ----------
 
     [Fact]
-    public async Task HalfOpenState_WhenBlockedUntilExpires_TransitionsToHalfOpen_AndReturnsHealthy()
+    public async Task HalfOpenState_WhenFailureAfterExpiry_ReopensCircuitAfterThreshold()
     {
-        // Arrange - Circuit is OPEN with BlockedUntil in the past
-        var url = "https://example.com/webhook";
-        var healthState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddSeconds(-1), // Expired 1 second ago
-            FirstFailureAt = DateTime.UtcNow.AddMinutes(-10),
-            LastFailureAt = DateTime.UtcNow.AddMinutes(-5),
-        };
-        var serialized = JsonSerializer.Serialize(healthState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        // After half-open deleted the state, failures start a fresh breaker cycle.
+        _cacheMock.Setup(c => c.GetAsync(BreakerKey, It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
-
-        // Setup to capture the MarkHealthyAsync call (which clears the state)
-        _cacheMock.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _sut.IsHealthyAsync(url);
-
-        // Assert
-        Assert.True(result); // Should return true, allowing one attempt
-        _cacheMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once); // State should be cleared
-    }
-
-    [Fact]
-    public async Task HalfOpenState_WhenSuccessfulAfterExpiry_TransitionsToClosed()
-    {
-        // Arrange - Simulate the full flow:
-        // 1. Circuit was OPEN with expired BlockedUntil
-        // 2. IsHealthyAsync transitions to HALF-OPEN (clears state)
-        // 3. Request succeeds and calls MarkHealthyAsync
-        var url = "https://example.com/webhook";
-
-        // Step 1: Circuit is open but BlockedUntil has expired
-        var openState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddSeconds(-1),
-            FirstFailureAt = DateTime.UtcNow.AddMinutes(-10),
-            LastFailureAt = DateTime.UtcNow.AddMinutes(-5),
-        };
-        var serializedOpen = JsonSerializer.Serialize(openState);
-        var bytesOpen = System.Text.Encoding.UTF8.GetBytes(serializedOpen);
-
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytesOpen);
-        _cacheMock.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-
-        // Step 2: Check health - should transition to HALF-OPEN
-        var isHealthy = await _sut.IsHealthyAsync(url);
-        Assert.True(isHealthy);
-
-        // Step 3: After successful request, state should already be cleared
-        // Verify the state was cleared (transitioned to CLOSED)
-        _cacheMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task HalfOpenState_WhenFailureAfterExpiry_ReopensCircuit()
-    {
-        // Arrange - Simulate the flow where a failure occurs during HALF-OPEN state
-        var url = "https://example.com/webhook";
-
-        CircuitBreakerSubscriberHealthState? savedState = null;
-
-        // Setup mock to capture state and also return it on next GetAsync call
+        // Each SetAsync updates what the next GetAsync returns (simulates the real cache)
         _cacheMock
-            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.SetAsync(BreakerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
             .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
                 (key, value, options, ct) =>
                 {
-                    savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(System.Text.Encoding.UTF8.GetString(value));
-                    // Update the GetAsync mock to return the latest state
-                    _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(value);
+                    _savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(Encoding.UTF8.GetString(value));
+                    _cacheMock.Setup(c => c.GetAsync(BreakerKey, It.IsAny<CancellationToken>())).ReturnsAsync(value);
                 }
             )
             .Returns(Task.CompletedTask);
 
-        // Step 1: Circuit was OPEN, BlockedUntil expired, and IsHealthyAsync cleared the state (HALF-OPEN)
-        // Now there's no state (or minimal state)
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "Failed during half-open", 500);
+        Assert.Equal(1, _savedState!.ConsecutiveFailures);
+        Assert.Null(_savedState.BlockedUntil);
 
-        // Step 2: First failure in monitoring state
-        await _sut.MarkUnhealthyAsync(url, "Failed during half-open", 500);
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "Failed again", 500);
+        Assert.Equal(2, _savedState!.ConsecutiveFailures);
+        Assert.Null(_savedState.BlockedUntil);
 
-        // Assert - Should have 1 failure but circuit still monitoring
-        Assert.NotNull(savedState);
-        Assert.Equal(1, savedState.ConsecutiveFailures);
-        Assert.Null(savedState.BlockedUntil); // Not blocked yet
+        await _sut.MarkUnhealthyAsync(AbonnementId, Url, "Failed third time", 500);
+        Assert.Equal(3, _savedState!.ConsecutiveFailures);
+        Assert.NotNull(_savedState.BlockedUntil);
+        Assert.True(_savedState.IsCircuitOpen);
+    }
 
-        // Step 3: Continue marking as unhealthy until threshold is reached
-        await _sut.MarkUnhealthyAsync(url, "Failed again during half-open", 500);
+    // ---------- EnsureFailingSinceAsync ----------
 
-        // After second failure, should have 2 consecutive failures
-        Assert.NotNull(savedState);
-        Assert.Equal(2, savedState.ConsecutiveFailures);
-        Assert.Null(savedState.BlockedUntil); // Still not blocked yet
-
-        await _sut.MarkUnhealthyAsync(url, "Failed third time during half-open", 500);
-
-        // Assert - Circuit should RE-OPEN after reaching threshold during HALF-OPEN
-        Assert.NotNull(savedState);
-        Assert.Equal(3, savedState.ConsecutiveFailures);
-        Assert.NotNull(savedState.BlockedUntil);
-        Assert.True(savedState.BlockedUntil > DateTime.UtcNow);
-        Assert.True(savedState.IsCircuitOpen);
+    private void SetupMarker(DateTime? failingSinceUtc)
+    {
+        var bytes = failingSinceUtc == null ? null : Encoding.UTF8.GetBytes(failingSinceUtc.Value.ToString("O"));
+        _cacheMock.Setup(c => c.GetAsync(MarkerKey, It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
     }
 
     [Fact]
-    public async Task HalfOpenState_DetectsMonitoringState_AndLogsAppropriately()
+    public async Task EnsureFailingSinceAsync_WhenMarkerAbsent_WritesMarkerWithUtcNowAndLongTtl()
     {
-        // Arrange - Simulate a state that indicates HALF-OPEN monitoring
-        // (BlockedUntil is null, but there's a recent failure)
-        var url = "https://example.com/webhook";
-        var halfOpenState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 1, // Below threshold
-            BlockedUntil = null, // Not blocked
-            FirstFailureAt = DateTime.UtcNow.AddSeconds(-10),
-            LastFailureAt = DateTime.UtcNow.AddSeconds(-5), // Recent failure
-        };
-        var serialized = JsonSerializer.Serialize(halfOpenState);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(serialized);
+        SetupMarker(null);
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(bytes);
+        await _sut.EnsureFailingSinceAsync(AbonnementId);
 
-        CircuitBreakerSubscriberHealthState? savedState = null;
-        _cacheMock
-            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>(
-                (key, value, options, ct) =>
-                    savedState = JsonSerializer.Deserialize<CircuitBreakerSubscriberHealthState>(System.Text.Encoding.UTF8.GetString(value))
-            )
-            .Returns(Task.CompletedTask);
+        _cacheMock.Verify(
+            c => c.SetAsync(MarkerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
+            Times.Once
+        );
 
-        // Act - Mark as unhealthy while in monitoring state
-        await _sut.MarkUnhealthyAsync(url, "Failed during monitoring", 500);
+        Assert.NotNull(_savedMarker);
+        var failingSince = DateTime.Parse(_savedMarker, null, DateTimeStyles.RoundtripKind);
+        Assert.True((DateTime.UtcNow - failingSince).Duration() < TimeSpan.FromMinutes(1));
+        Assert.Equal(_settings.FailingSinceMarkerExpiration, _savedMarkerOptions!.AbsoluteExpirationRelativeToNow);
+    }
 
-        // Assert - Should increment failures
-        Assert.NotNull(savedState);
-        Assert.Equal(2, savedState.ConsecutiveFailures);
+    [Fact]
+    public async Task EnsureFailingSinceAsync_WhenMarkerAlreadyExists_DoesNotRewriteIt()
+    {
+        SetupMarker(DateTime.UtcNow.AddDays(-2));
 
-        // Verify that appropriate logging occurred (optional - depends on your logging requirements)
-        _loggerMock.Verify(
-            x =>
-                x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("marked as unhealthy")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ),
-            Times.AtLeastOnce
+        await _sut.EnsureFailingSinceAsync(AbonnementId);
+
+        _cacheMock.Verify(
+            c => c.SetAsync(MarkerKey, It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
+            Times.Never
         );
     }
 
+    // ---------- ClearFailingSinceAsync ----------
+
     [Fact]
-    public async Task HalfOpenState_CompleteFlow_OpenToHalfOpenToClosedOnSuccess()
+    public async Task ClearFailingSinceAsync_RemovesMarkerKey()
     {
-        // This test simulates the complete happy path:
-        // OPEN → HALF-OPEN (on expiry) → CLOSED (on success)
+        await _sut.ClearFailingSinceAsync(AbonnementId);
 
-        var url = "https://example.com/webhook";
-
-        // Step 1: Circuit is OPEN (BlockedUntil in the future)
-        var openState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddSeconds(10), // Still blocked
-            FirstFailureAt = DateTime.UtcNow.AddMinutes(-10),
-            LastFailureAt = DateTime.UtcNow.AddMinutes(-5),
-        };
-        var serializedOpen = JsonSerializer.Serialize(openState);
-        _cacheMock
-            .Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(System.Text.Encoding.UTF8.GetBytes(serializedOpen));
-
-        var isHealthyWhileOpen = await _sut.IsHealthyAsync(url);
-        Assert.False(isHealthyWhileOpen); // Should be unhealthy (OPEN)
-
-        // Step 2: Time passes, BlockedUntil expires
-        var expiredState = new CircuitBreakerSubscriberHealthState
-        {
-            Url = url,
-            ConsecutiveFailures = 3,
-            BlockedUntil = DateTime.UtcNow.AddSeconds(-1), // Now expired
-            FirstFailureAt = DateTime.UtcNow.AddMinutes(-10),
-            LastFailureAt = DateTime.UtcNow.AddMinutes(-5),
-        };
-        var serializedExpired = JsonSerializer.Serialize(expiredState);
-        _cacheMock
-            .Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(System.Text.Encoding.UTF8.GetBytes(serializedExpired));
-        _cacheMock.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-
-        var isHealthyAfterExpiry = await _sut.IsHealthyAsync(url);
-        Assert.True(isHealthyAfterExpiry); // Should transition to HALF-OPEN and return true
-
-        // Step 3: Request succeeds - state should already be cleared (CLOSED)
-        _cacheMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-
-        // Step 4: Verify circuit is now CLOSED (no state)
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        var isHealthyAfterSuccess = await _sut.IsHealthyAsync(url);
-        Assert.True(isHealthyAfterSuccess); // Circuit is CLOSED
+        _cacheMock.Verify(c => c.RemoveAsync(MarkerKey, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

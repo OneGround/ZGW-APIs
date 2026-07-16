@@ -100,7 +100,7 @@ public class RsinValidatorTests
     [Fact]
     public void RsinChecker_With_Valid_Rsin_Should_Return_Valid_With_No_Errors()
     {
-        var actual = _validator.Validate(new RsinObject("605348157")); // ElfProef!
+        var actual = _validator.Validate(new RsinObject("999993847")); // ElfProef!
 
         Assert.True(actual.IsValid, "Validation success expected");
         Assert.Empty(actual.Errors);

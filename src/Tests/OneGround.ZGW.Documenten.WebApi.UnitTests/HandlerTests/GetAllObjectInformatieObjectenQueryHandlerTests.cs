@@ -59,6 +59,7 @@ public class GetAllObjectInformatieObjectenQueryHandlerTests
                 Id = rsinBEioId,
                 Owner = RsinB,
                 InformatieObjectType = InformatieObjectTypeX,
+                LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
                 LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
                 CatalogusId = Guid.NewGuid(),
                 CreationTime = DateTime.UtcNow,
@@ -82,6 +83,8 @@ public class GetAllObjectInformatieObjectenQueryHandlerTests
         // RSIN_A has an EIO whose LatestVersieId points to RSIN_B's versie ID.
         // (Without the owner filter the subquery resolves rsinBVersieId → finds
         // RSIN_B's openbaar versie → auth passes → OIO wrongly returned.)
+        // Set LatestVertrouwelijkheidAanduiding to a restrictive level so the denormalized
+        // check in the handler fails and the OIO is correctly excluded.
         var rsinAEioId = Guid.NewGuid();
         ctx.EnkelvoudigInformatieObjecten.Add(
             new EnkelvoudigInformatieObject
@@ -91,6 +94,7 @@ public class GetAllObjectInformatieObjectenQueryHandlerTests
                 InformatieObjectType = InformatieObjectTypeX,
                 // Deliberately point to RSIN_B's versie to expose the missing owner filter.
                 LatestEnkelvoudigInformatieObjectVersieId = rsinBVersieId,
+                LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.zeer_geheim,
                 CatalogusId = Guid.NewGuid(),
                 CreationTime = DateTime.UtcNow,
             }
@@ -184,6 +188,7 @@ public class GetAllObjectInformatieObjectenQueryHandlerTests
                     Owner = rsin,
                     InformatieObjectType = InformatieObjectTypeX,
                     LatestEnkelvoudigInformatieObjectVersieId = versieId,
+                    LatestVertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
                     CatalogusId = Guid.NewGuid(),
                     CreationTime = DateTime.UtcNow,
                 }

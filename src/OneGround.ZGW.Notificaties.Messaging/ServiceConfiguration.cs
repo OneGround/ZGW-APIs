@@ -200,6 +200,19 @@ public class ServiceConfiguration
                     RecurringJob.RemoveIfExists("expire-failed-jobs");
                 }
 
+                if (IsBlockFailingSubscriptionsScannerEnabled)
+                {
+                    RecurringJob.AddOrUpdate<BlockFailingSubscriptionsJob>(
+                        "block-failing-subscriptions",
+                        j => j.BlockFailingSubscriptionsAsync(null),
+                        _hangfireConfiguration.BlockFailingSubscriptionsScanCron
+                    );
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists("block-failing-subscriptions");
+                }
+
                 o.UseConsole();
             }
         );
@@ -226,6 +239,10 @@ public class ServiceConfiguration
     private bool IsExpireFailedJobsScannerEnabled =>
         !string.IsNullOrWhiteSpace(_hangfireConfiguration.ExpireFailedJobsScanAt)
         && !DisabledValues.Contains(_hangfireConfiguration.ExpireFailedJobsScanAt.Trim());
+
+    private bool IsBlockFailingSubscriptionsScannerEnabled =>
+        !string.IsNullOrWhiteSpace(_hangfireConfiguration.BlockFailingSubscriptionsScanCron)
+        && !DisabledValues.Contains(_hangfireConfiguration.BlockFailingSubscriptionsScanCron.Trim());
 
     private static readonly HashSet<string> DisabledValues = new(StringComparer.OrdinalIgnoreCase) { "never", "disabled", "n/a" };
 

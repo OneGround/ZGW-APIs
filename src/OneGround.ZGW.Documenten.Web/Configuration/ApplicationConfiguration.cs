@@ -1,4 +1,4 @@
-﻿using OneGround.ZGW.Common.Web.Configuration;
+using OneGround.ZGW.Common.Web.Configuration;
 
 namespace OneGround.ZGW.Documenten.Web.Configuration;
 
@@ -13,5 +13,6 @@ public class ApplicationConfiguration
     public string DefaultDocumentenService { get; set; }
     public int UploadLargeDocumentChunkSizeMB { get; set; } = 128;
     public bool DocumentJobPrioritizationAtDownload { get; set; }
+    public bool EnkelvoudigInformatieObjectenCursorPaging { get; set; }
     public ExpandSettings ExpandSettings { get; set; } = new();
 }

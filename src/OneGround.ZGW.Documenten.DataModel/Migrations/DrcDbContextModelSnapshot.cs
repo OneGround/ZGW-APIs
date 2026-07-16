@@ -459,19 +459,22 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InformatieObjectType");
-
                     b.HasIndex("LatestEnkelvoudigInformatieObjectVersieId")
                         .IsUnique();
 
-                    b.HasIndex("Owner");
-
                     b.HasIndex("Owner", "Id")
-                        .HasDatabaseName("IX_eio_owner_id_incl_type_latest");
+                        .HasDatabaseName("t3b_IX_eio_owner_id_incl_type_latest_vha");
 
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Owner", "Id"), new[] { "InformatieObjectType", "LatestEnkelvoudigInformatieObjectVersieId" });
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Owner", "Id"), new[] { "InformatieObjectType", "LatestVertrouwelijkheidAanduiding" });
 
-                    b.HasIndex("Owner", "InformatieObjectType", "LatestEnkelvoudigInformatieObjectVersieId");
+                    b.HasIndex("Owner", "InformatieObjectType", "LatestVertrouwelijkheidAanduiding")
+                        .HasDatabaseName("t3b_IX_eio_owner_iot_latest_vha");
+
+                    b.HasIndex("Owner", "CreationTime", "Id")
+                        .IsDescending(false, true, false)
+                        .HasDatabaseName("t3b_IX_eio_owner_creationtime_id_incl_type_vha");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Owner", "CreationTime", "Id"), new[] { "InformatieObjectType", "LatestVertrouwelijkheidAanduiding" });
 
                     b.ToTable("enkelvoudiginformatieobjecten");
                 });
@@ -665,10 +668,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
 
                     b.HasIndex("Owner", "Inhoud", "Vertrouwelijkheidaanduiding")
                         .IsDescending(false, false, true);
-
-                    b.HasIndex("Owner", "Vertrouwelijkheidaanduiding", "Id");
-
-                    b.HasIndex("Vertrouwelijkheidaanduiding", "Id", "Owner");
 
                     b.HasIndex("Owner", "EnkelvoudigInformatieObjectId", "Versie", "Vertrouwelijkheidaanduiding")
                         .IsDescending(false, false, true, false);

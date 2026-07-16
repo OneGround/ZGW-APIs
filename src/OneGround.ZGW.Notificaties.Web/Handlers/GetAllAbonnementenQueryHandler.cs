@@ -39,6 +39,7 @@ class GetAllAbonnementenQueryHandler : ZGWBaseHandler, IRequestHandler<GetAllAbo
         var result = await _context
             .Abonnementen.AsNoTracking()
             .Where(rsinFilter)
+            .Where(a => !a.Blocked)
             .Include(a => a.AbonnementKanalen)
                 .ThenInclude(a => a.Kanaal)
             .Include(a => a.AbonnementKanalen)

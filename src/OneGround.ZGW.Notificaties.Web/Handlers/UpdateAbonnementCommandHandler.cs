@@ -44,6 +44,7 @@ class UpdateAbonnementCommandHandler : ZGWBaseHandler, IRequestHandler<UpdateAbo
 
         var abonnement = await _context
             .Abonnementen.Where(rsinFilter)
+            .Where(a => !a.Blocked)
             .Include(a => a.AbonnementKanalen)
             .SingleOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
 
