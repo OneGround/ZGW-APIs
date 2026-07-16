@@ -10,13 +10,27 @@ namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions
 public static class MapsterServiceCollectionExtensions
 {
     /// <summary>
-    /// Nullable-enum string conversion (see <see cref="NullableEnumMapsterRegistration.RegisterNullableEnumRule"/>) is
-    /// registered globally here — it applies to every Nullable&lt;enum&gt; in every assembly automatically, with no
-    /// per-service registration needed. <paramref name="additionalAssemblies"/> is only relevant to
-    /// <c>IRegister</c> discovery (<c>config.Scan</c>) below, not to enum handling.
+    /// Registers the Mapster mapping seam (a scanned <see cref="TypeAdapterConfig"/> plus a scoped
+    /// <c>MapsterMapper.IMapper</c>) for a service. Opt-in per service: when <paramref name="enable"/> is
+    /// <c>false</c> (the default) nothing is registered and the service keeps using AutoMapper only, so a
+    /// service adopts Mapster by explicitly enabling it. Nullable-enum string conversion (see
+    /// <see cref="NullableEnumMapsterRegistration.RegisterNullableEnumRule"/>) is registered globally here — it
+    /// applies to every Nullable&lt;enum&gt; in every assembly automatically, with no per-service registration
+    /// needed. <paramref name="additionalAssemblies"/> is only relevant to <c>IRegister</c> discovery
+    /// (<c>config.Scan</c>) below, not to enum handling.
     /// </summary>
-    public static IServiceCollection AddZgwMapster(this IServiceCollection services, Assembly callingAssembly, params Assembly[] additionalAssemblies)
+    public static IServiceCollection AddZgwMapster(
+        this IServiceCollection services,
+        Assembly callingAssembly,
+        bool enable = false,
+        params Assembly[] additionalAssemblies
+    )
     {
+        if (!enable)
+        {
+            return services;
+        }
+
         var commonWebAssembly = typeof(MapsterServiceCollectionExtensions).Assembly;
         var assemblies = new[] { callingAssembly, commonWebAssembly }.Concat(additionalAssemblies).Distinct().ToArray();
 

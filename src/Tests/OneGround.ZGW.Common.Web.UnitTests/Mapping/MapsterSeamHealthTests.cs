@@ -30,7 +30,7 @@ public class MapsterSeamHealthTests
     public void AddZgwMapster_configuration_compiles_without_error()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
 
         var config = provider.GetRequiredService<TypeAdapterConfig>();
@@ -44,7 +44,7 @@ public class MapsterSeamHealthTests
     public void Deeply_nested_acyclic_graph_maps_without_stack_overflow()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -76,7 +76,7 @@ public class MapsterSeamHealthTests
     public void Cyclic_self_referencing_graph_terminates_without_crashing()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -130,7 +130,7 @@ public class MapsterSeamHealthTests
     public void Enum_to_string_conversion_produces_the_name_not_the_numeric_value()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -195,7 +195,7 @@ public class MapsterSeamHealthTests
     public void Null_source_collection_maps_to_empty_not_null()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -230,7 +230,7 @@ public class MapsterSeamHealthTests
     public void Nullable_enum_conversion_requires_no_assembly_registration()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Xunit.Assert).Assembly); // deliberately unrelated assembly
+        services.AddZgwMapster(typeof(Xunit.Assert).Assembly, enable: true); // deliberately unrelated assembly
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -268,7 +268,7 @@ public class MapsterSeamHealthTests
     public void Non_nullable_enum_conversion_is_unaffected_by_the_nullable_enum_rule()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -300,7 +300,7 @@ public class MapsterSeamHealthTests
     public void MapToTarget_onto_existing_object_maps_empty_string_to_null_not_zero_value()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -335,7 +335,7 @@ public class MapsterSeamHealthTests
     public void Member_names_differing_only_by_case_still_map()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
@@ -378,7 +378,7 @@ public class MapsterSeamHealthTests
         var uriService = new Mock<IEntityUriService>();
         uriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => $"https://example.test/{e.Url}");
         services.AddSingleton(uriService.Object);
-        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
