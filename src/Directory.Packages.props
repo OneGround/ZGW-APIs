@@ -17,6 +17,8 @@
     <PackageVersion Include="Hangfire.Console.Extensions" Version="2.1.0" />
     <PackageVersion Include="Hangfire.Core" Version="1.8.23" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
+    <PackageVersion Include="Mapster" Version="10.0.10" />
+    <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.10" />
     <PackageVersion Include="MassTransit" Version="8.4.1" />
     <PackageVersion Include="MassTransit.Hangfire" Version="8.4.1" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.4.1" />
