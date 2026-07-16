@@ -495,7 +495,26 @@ class UpdateZaakTypeCommandHandler
 
             if (besluitTypenWithinGeldigheid.Count == 0)
             {
-                _logger.LogInformation("Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend.", index, besluitType);
+                _logger.LogInformation(
+                    "Waarschuwing: besluittypen.{index}.omschrijving. BesluitType {besluitType} is onbekend. Relatie wordt vastgelegd als soft-reference.",
+                    index,
+                    besluitType
+                );
+
+                // Note: No matching besluittype (yet) in this catalog; persist the relation as a soft reference on omschrijving.
+                //   The BesluitType navigation resolves later (elsewhere) once a matching besluittype exists within geldigheid.
+                besluitTypen.AddRangeUnique(
+                    [
+                        new ZaakTypeBesluitType
+                        {
+                            ZaakType = zaakType,
+                            BesluitTypeOmschrijving = besluitType,
+                            Owner = zaakType.Owner,
+                        },
+                    ],
+                    (x, y) => x.BesluitTypeOmschrijving == y.BesluitTypeOmschrijving
+                );
+
                 continue;
             }
 
