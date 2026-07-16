@@ -30,7 +30,7 @@ public class RlMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(accessor.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
