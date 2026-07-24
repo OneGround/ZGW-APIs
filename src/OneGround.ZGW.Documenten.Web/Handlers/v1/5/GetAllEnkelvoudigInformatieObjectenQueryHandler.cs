@@ -123,7 +123,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 ? "on"
                 : "off";
 
-        var cmd = enableSort == "on" ? "SET LOCAL enable_sort = on;" : "SET LOCAL enable_sort = off;";
+        var cmd = $"SET LOCAL enable_sort = {enableSort};";
 
         // SET LOCAL requires an active transaction. Settings revert automatically when
         // the transaction is disposed — safe for pooled connections. Must be set before Phase 1
