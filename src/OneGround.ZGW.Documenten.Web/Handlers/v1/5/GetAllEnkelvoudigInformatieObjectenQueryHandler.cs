@@ -119,9 +119,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         var filterModel = request.GetAllEnkelvoudigInformatieObjectenFilter;
 
         var enableSort =
-            !string.IsNullOrEmpty(filterModel.Identificatie)
-            || (filterModel.Trefwoorden_In?.Any() ?? false)
-            || (filterModel.Uuid_In?.Any() ?? false)
+            !string.IsNullOrEmpty(filterModel.Identificatie) || (filterModel.Trefwoorden_In?.Any() ?? false) || (filterModel.Uuid_In?.Any() ?? false)
                 ? "on"
                 : "off";
 
@@ -130,18 +128,19 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // SET LOCAL requires an active transaction. Settings revert automatically when
         // the transaction is disposed — safe for pooled connections. Must be set before Phase 1
         // runs, since that's the query whose plan (sort vs. sorted-index scan) this controls.
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        List<Guid> pageIds;
+        await using (var transaction = await _context.Database.BeginTransactionAsync(cancellationToken))
+        {
+            await _context.Database.ExecuteSqlRawAsync(cmd, cancellationToken);
 
-        await _context.Database.ExecuteSqlRawAsync(cmd, cancellationToken);
-
-        // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
-        // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
-        // with early termination, instead of materializing all matching rows.
-
-        var pageIds =
-            _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
-                ? await GetAnchorPagedResult(request, query, cancellationToken)
-                : await GetOffsetPagedResult(request, query, cancellationToken);
+            // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
+            // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
+            // with early termination, instead of materializing all matching rows.
+            pageIds =
+                _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
+                    ? await GetAnchorPagedResult(request, query, cancellationToken)
+                    : await GetOffsetPagedResult(request, query, cancellationToken);
+        }
 
         // Phase 2: Fetch complete data for only the matched IDs (typically 100 PK lookups).
         var pagedResult =
