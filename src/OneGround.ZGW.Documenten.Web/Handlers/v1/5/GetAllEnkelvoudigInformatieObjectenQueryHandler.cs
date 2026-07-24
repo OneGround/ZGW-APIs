@@ -115,6 +115,26 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             totalCount = CountTimeoutSentinel;
         }
 
+        // Default 'enable_sort=off' but for some filters disabling sort will drop performance significantly
+        string enableSort =
+            !string.IsNullOrEmpty(request.GetAllEnkelvoudigInformatieObjectenFilter.Identificatie)
+            || (
+                request.GetAllEnkelvoudigInformatieObjectenFilter.Trefwoorden_In != null
+                && request.GetAllEnkelvoudigInformatieObjectenFilter.Trefwoorden_In.Any()
+            )
+            || request.GetAllEnkelvoudigInformatieObjectenFilter.Uuid_In != null && request.GetAllEnkelvoudigInformatieObjectenFilter.Uuid_In.Any()
+                ? "on"
+                : "off";
+
+        var cmd = $"SET LOCAL enable_sort = {enableSort};";
+
+        // SET LOCAL requires an active transaction. Settings revert automatically when
+        // the transaction is disposed — safe for pooled connections. Must be set before Phase 1
+        // runs, since that's the query whose plan (sort vs. sorted-index scan) this controls.
+        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlRawAsync(cmd, cancellationToken);
+
         // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
         // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
         // with early termination, instead of materializing all matching rows.
