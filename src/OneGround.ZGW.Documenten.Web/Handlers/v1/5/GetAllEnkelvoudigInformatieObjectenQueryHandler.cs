@@ -116,22 +116,21 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         }
 
         // Default 'enable_sort=off' but for some filters disabling sort will drop performance significantly
-        string enableSort =
-            !string.IsNullOrEmpty(request.GetAllEnkelvoudigInformatieObjectenFilter.Identificatie)
-            || (
-                request.GetAllEnkelvoudigInformatieObjectenFilter.Trefwoorden_In != null
-                && request.GetAllEnkelvoudigInformatieObjectenFilter.Trefwoorden_In.Any()
-            )
-            || request.GetAllEnkelvoudigInformatieObjectenFilter.Uuid_In != null && request.GetAllEnkelvoudigInformatieObjectenFilter.Uuid_In.Any()
+        var filterModel = request.GetAllEnkelvoudigInformatieObjectenFilter;
+
+        var enableSort =
+            !string.IsNullOrEmpty(filterModel.Identificatie)
+            || (filterModel.Trefwoorden_In?.Any() ?? false)
+            || (filterModel.Uuid_In?.Any() ?? false)
                 ? "on"
                 : "off";
 
-        var cmd = $"SET LOCAL enable_sort = {enableSort};";
+        var cmd = enableSort == "on" ? "SET LOCAL enable_sort = on;" : "SET LOCAL enable_sort = off;";
 
         // SET LOCAL requires an active transaction. Settings revert automatically when
         // the transaction is disposed — safe for pooled connections. Must be set before Phase 1
         // runs, since that's the query whose plan (sort vs. sorted-index scan) this controls.
-        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
         await _context.Database.ExecuteSqlRawAsync(cmd, cancellationToken);
 
