@@ -115,14 +115,32 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
             totalCount = CountTimeoutSentinel;
         }
 
-        // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
-        // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
-        // with early termination, instead of materializing all matching rows.
+        // Default 'enable_sort=off' but for some filters disabling sort will drop performance significantly
+        var filterModel = request.GetAllEnkelvoudigInformatieObjectenFilter;
 
-        var pageIds =
-            _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
-                ? await GetAnchorPagedResult(request, query, cancellationToken)
-                : await GetOffsetPagedResult(request, query, cancellationToken);
+        var enableSort =
+            !string.IsNullOrEmpty(filterModel.Identificatie) || (filterModel.Trefwoorden_In?.Any() ?? false) || (filterModel.Uuid_In?.Any() ?? false)
+                ? "on"
+                : "off";
+
+        var cmd = $"SET LOCAL enable_sort = {enableSort};";
+
+        // SET LOCAL requires an active transaction. Settings revert automatically when
+        // the transaction is disposed — safe for pooled connections. Must be set before Phase 1
+        // runs, since that's the query whose plan (sort vs. sorted-index scan) this controls.
+        List<Guid> pageIds;
+        await using (var transaction = await _context.Database.BeginTransactionAsync(cancellationToken))
+        {
+            await _context.Database.ExecuteSqlRawAsync(cmd, cancellationToken);
+
+            // Phase 1: Get page IDs using a narrow SELECT so the planner uses the sorted
+            // (owner, creationtime, id) covering index (t3b_IX_eio_owner_creationtime_id_incl_type_vha)
+            // with early termination, instead of materializing all matching rows.
+            pageIds =
+                _configuration.GetValue<bool?>("Application:EnkelvoudigInformatieObjectenCursorPaging") ?? true
+                    ? await GetAnchorPagedResult(request, query, cancellationToken)
+                    : await GetOffsetPagedResult(request, query, cancellationToken);
+        }
 
         // Phase 2: Fetch complete data for only the matched IDs (typically 100 PK lookups).
         var pagedResult =

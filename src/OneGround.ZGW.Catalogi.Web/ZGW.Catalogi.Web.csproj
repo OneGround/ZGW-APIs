@@ -5,6 +5,14 @@
     <RootNamespace>OneGround.ZGW.Catalogi.Web</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>OneGround.ZGW.Catalogi.WebApi.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
   </ItemGroup>
   <ItemGroup>
