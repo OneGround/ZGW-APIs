@@ -10,6 +10,6 @@ public abstract class ApplicatieDto
     [JsonProperty("label", Order = 3)]
     public string Label { get; set; }
 
-    [JsonProperty("heeftAlleAutorisaties", Order = 5)]
+    [JsonProperty("heeftAlleAutorisaties", Order = 4)]
     public bool HeeftAlleAutorisaties { get; set; }
 }
