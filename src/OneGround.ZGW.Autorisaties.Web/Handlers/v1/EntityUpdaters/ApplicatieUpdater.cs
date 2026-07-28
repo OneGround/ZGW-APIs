@@ -1,7 +1,7 @@
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Common.Web;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers.EntityUpdaters;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1.EntityUpdaters;
 
 public class ApplicatieUpdater : IEntityUpdater<Applicatie>
 {
