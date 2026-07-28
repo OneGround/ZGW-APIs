@@ -1,4 +1,4 @@
-﻿namespace OneGround.ZGW.Autorisaties.Web.Contracts;
+namespace OneGround.ZGW.Autorisaties.Web.Contracts.v1;
 
 public class Operations
 {

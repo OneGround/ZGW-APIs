@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using FluentValidation.TestHelper;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
-using OneGround.ZGW.Autorisaties.Web.Validators;
+using OneGround.ZGW.Autorisaties.Web.Validators.v1;
 using OneGround.ZGW.Common.DataModel;
 using Xunit;
 
