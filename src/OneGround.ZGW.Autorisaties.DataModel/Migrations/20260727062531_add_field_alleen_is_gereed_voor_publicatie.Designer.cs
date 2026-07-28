@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneGround.ZGW.Autorisaties.DataModel;
@@ -11,9 +12,11 @@ using OneGround.ZGW.Autorisaties.DataModel;
 namespace OneGround.ZGW.Autorisaties.DataModel.Migrations
 {
     [DbContext(typeof(AcDbContext))]
-    partial class AcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727062531_add_field_alleen_is_gereed_voor_publicatie")]
+    partial class add_field_alleen_is_gereed_voor_publicatie
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

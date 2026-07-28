@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Asp.Versioning;
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
@@ -36,13 +38,9 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected string BaseUrl => $"{Request.Scheme}://{Request.Host}";
 
-    protected bool IsApiVersionRequested(string version)
+    protected bool IsApiVersionRequested(ApiVersion version)
     {
-        var apiVersionHeader = HttpContext.Request.Headers.SingleOrDefault(h =>
-            string.Equals(h.Key, "Api-Version", StringComparison.OrdinalIgnoreCase)
-        );
-
-        return apiVersionHeader.Value == version;
+        return HttpContext.GetRequestedApiVersion() >= version;
     }
 
     protected int? TryGetSridFromContentCrsHeader()

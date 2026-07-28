@@ -52,7 +52,7 @@ public class Startup
         services.AddZGWApi(
             "Autorisaties",
             Configuration,
-            Api.LatestVersion_1_0,
+            Api.LatestVersion_1_1,
             c =>
             {
                 c.MvcOptions = (o) =>

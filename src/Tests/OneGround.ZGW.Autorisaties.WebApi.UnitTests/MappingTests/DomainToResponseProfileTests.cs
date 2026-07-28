@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Linq;
+using Asp.Versioning;
 using AutoFixture;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Moq;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Responses;
@@ -18,6 +21,7 @@ public class DomainToResponseProfileTests
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly Mock<IHttpContextAccessor> _mockedHttpContextAccessor = new Mock<IHttpContextAccessor>();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
@@ -30,6 +34,7 @@ public class DomainToResponseProfileTests
         configuration.AssertConfigurationIsValid();
 
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+        SetRequestedApiVersion(new ApiVersion(1, 1));
 
         _mapper = configuration.CreateMapper(t =>
         {
@@ -37,8 +42,26 @@ public class DomainToResponseProfileTests
             {
                 return new UrlResolver(_mockedUriService.Object);
             }
+            if (t == typeof(ApplyApiVersionRestrictionsAction))
+            {
+                return new ApplyApiVersionRestrictionsAction(_mockedHttpContextAccessor.Object);
+            }
             throw new NotImplementedException($"Mapper is missing the service: {t})");
         });
+    }
+
+    private void SetRequestedApiVersion(ApiVersion apiVersion)
+    {
+        var apiVersionFeature = new Mock<IApiVersioningFeature>();
+        apiVersionFeature.Setup(f => f.RequestedApiVersion).Returns(apiVersion);
+
+        var featureCollection = new Mock<IFeatureCollection>();
+        featureCollection.Setup(f => f.Get<IApiVersioningFeature>()).Returns(apiVersionFeature.Object);
+
+        var context = new Mock<HttpContext>();
+        context.Setup(c => c.Features).Returns(featureCollection.Object);
+
+        _mockedHttpContextAccessor.Setup(a => a.HttpContext).Returns(context.Object);
     }
 
     [Fact]
@@ -51,6 +74,28 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.HeeftAlleAutorisaties, result.HeeftAlleAutorisaties);
         Assert.Equal(value.Label, result.Label);
         Assert.Equal(value.Url, result.Url);
+    }
+
+    [Fact]
+    public void Applicatie_Maps_To_ApplicatieResponseDto_With_AlleenIsGereedVoorPublicatie_When_ApiVersion_1_1()
+    {
+        SetRequestedApiVersion(new ApiVersion(1, 1));
+
+        var value = _fixture.Create<Applicatie>();
+        var result = _mapper.Map<ApplicatieResponseDto>(value);
+
+        Assert.Equal(value.AlleenIsGereedVoorPublicatie, result.AlleenIsGereedVoorPublicatie);
+    }
+
+    [Fact]
+    public void Applicatie_Maps_To_ApplicatieResponseDto_Without_AlleenIsGereedVoorPublicatie_When_ApiVersion_1_0()
+    {
+        SetRequestedApiVersion(new ApiVersion(1, 0));
+
+        var value = _fixture.Create<Applicatie>();
+        var result = _mapper.Map<ApplicatieResponseDto>(value);
+
+        Assert.Null(result.AlleenIsGereedVoorPublicatie);
     }
 
     [Fact]

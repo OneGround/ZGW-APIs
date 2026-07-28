@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -151,7 +152,7 @@ public class BesluitTypeController : ZGWControllerBase
             {
                 GetAllBesluitTypenFilter = filter,
                 Pagination = pagination,
-                SupportsDatumGeldigheid = IsApiVersionRequested("1.2"),
+                SupportsDatumGeldigheid = IsApiVersionRequested(new ApiVersion(1, 2)),
             }
         );
 

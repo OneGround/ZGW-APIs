@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,7 @@ namespace OneGround.ZGW.Autorisaties.Web.Controllers.v1;
 [Consumes("application/json")]
 [Produces("application/json")]
 [ZgwApiVersion(Api.LatestVersion_1_0)]
+[ZgwApiVersion(Api.LatestVersion_1_1)]
 public class ApplicatiesController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
@@ -178,7 +180,9 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie applicatie = _mapper.Map<Applicatie>(applicatieRequest);
 
-        var result = await _mediator.Send(new CreateApplicatieCommand() { Applicatie = applicatie });
+        var result = await _mediator.Send(
+            new CreateApplicatieCommand() { Applicatie = applicatie, Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M }
+        );
 
         if (result.Status == CommandStatus.ValidationError)
         {
@@ -208,7 +212,14 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie applicatie = _mapper.Map<Applicatie>(request);
 
-        var result = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = applicatie });
+        var result = await _mediator.Send(
+            new UpdateApplicatieCommand()
+            {
+                Id = id,
+                Applicatie = applicatie,
+                Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M,
+            }
+        );
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -260,7 +271,14 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie mergedApplicatie = _mapper.Map<Applicatie>(mergedApplicatieRequest);
 
-        var resultUpd = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = mergedApplicatie });
+        var resultUpd = await _mediator.Send(
+            new UpdateApplicatieCommand()
+            {
+                Id = id,
+                Applicatie = mergedApplicatie,
+                Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M,
+            }
+        );
 
         if (resultUpd.Status == CommandStatus.ValidationError)
         {
