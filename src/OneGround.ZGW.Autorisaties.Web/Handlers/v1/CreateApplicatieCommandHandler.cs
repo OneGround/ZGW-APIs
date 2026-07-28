@@ -13,7 +13,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 
 class CreateApplicatieCommandHandler
     : AutorisatiesBaseHandler<CreateApplicatieCommandHandler>,

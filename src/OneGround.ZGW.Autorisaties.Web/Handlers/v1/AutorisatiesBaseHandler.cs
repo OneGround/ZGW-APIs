@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 
 public abstract class AutorisatiesBaseHandler<T> : ZGWBaseHandler
 {

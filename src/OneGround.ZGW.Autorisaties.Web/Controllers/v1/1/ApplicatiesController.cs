@@ -17,7 +17,7 @@ using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.Authorization;
 using OneGround.ZGW.Autorisaties.Web.Configuration;
 using OneGround.ZGW.Autorisaties.Web.Contracts.v1;
-using OneGround.ZGW.Autorisaties.Web.Handlers;
+using OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 using OneGround.ZGW.Autorisaties.Web.Models;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
