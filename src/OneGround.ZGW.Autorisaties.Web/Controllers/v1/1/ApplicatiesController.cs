@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -10,13 +11,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
-using OneGround.ZGW.Autorisaties.Contracts.v1.Responses;
+using OneGround.ZGW.Autorisaties.Contracts.v1._1.Requests;
+using OneGround.ZGW.Autorisaties.Contracts.v1._1.Responses;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.Authorization;
 using OneGround.ZGW.Autorisaties.Web.Configuration;
 using OneGround.ZGW.Autorisaties.Web.Contracts.v1;
-using OneGround.ZGW.Autorisaties.Web.Contracts.v1.Requests.Queries;
 using OneGround.ZGW.Autorisaties.Web.Handlers;
 using OneGround.ZGW.Autorisaties.Web.Models;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -29,13 +29,13 @@ using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace OneGround.ZGW.Autorisaties.Web.Controllers.v1;
+namespace OneGround.ZGW.Autorisaties.Web.Controllers.v1._1;
 
 [ApiController]
 [Authorize]
 [Consumes("application/json")]
 [Produces("application/json")]
-[ZgwApiVersion(Api.LatestVersion_1_0)]
+[ZgwApiVersion(Api.LatestVersion_1_1)]
 public class ApplicatiesController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
@@ -70,8 +70,11 @@ public class ApplicatiesController : ZGWControllerBase
     [HttpGet(ApiRoutes.Applicaties.GetAll, Name = Operations.Applicaties.List)]
     [Scope(AuthorizationScopes.Autorisaties.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ApplicatieResponseDto>))]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllApplicatiesQueryParameters>))]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllApplicatiesQueryParameters queryParameters, int page = 1)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Contracts.v1.Requests.Queries.GetAllApplicatiesQueryParameters>))]
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] Contracts.v1.Requests.Queries.GetAllApplicatiesQueryParameters queryParameters,
+        int page = 1
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
@@ -178,7 +181,9 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie applicatie = _mapper.Map<Applicatie>(applicatieRequest);
 
-        var result = await _mediator.Send(new CreateApplicatieCommand() { Applicatie = applicatie });
+        var result = await _mediator.Send(
+            new CreateApplicatieCommand() { Applicatie = applicatie, Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M }
+        );
 
         if (result.Status == CommandStatus.ValidationError)
         {
@@ -208,7 +213,14 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie applicatie = _mapper.Map<Applicatie>(request);
 
-        var result = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = applicatie });
+        var result = await _mediator.Send(
+            new UpdateApplicatieCommand()
+            {
+                Id = id,
+                Applicatie = applicatie,
+                Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M,
+            }
+        );
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -260,7 +272,14 @@ public class ApplicatiesController : ZGWControllerBase
 
         Applicatie mergedApplicatie = _mapper.Map<Applicatie>(mergedApplicatieRequest);
 
-        var resultUpd = await _mediator.Send(new UpdateApplicatieCommand() { Id = id, Applicatie = mergedApplicatie });
+        var resultUpd = await _mediator.Send(
+            new UpdateApplicatieCommand()
+            {
+                Id = id,
+                Applicatie = mergedApplicatie,
+                Version = IsApiVersionRequested(new ApiVersion(1, 1)) ? 1.1M : 1.0M,
+            }
+        );
 
         if (resultUpd.Status == CommandStatus.ValidationError)
         {

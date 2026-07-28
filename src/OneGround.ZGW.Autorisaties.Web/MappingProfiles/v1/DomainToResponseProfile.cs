@@ -13,8 +13,7 @@ public class DomainToResponseProfile : Profile
     {
         CreateMap<Applicatie, ApplicatieResponseDto>()
             .ForMember(dest => dest.Url, opt => opt.MapFrom<UrlResolver>())
-            .ForMember(dest => dest.ClientIds, opt => opt.MapFrom(src => src.ClientIds.Select(client => client.ClientId)))
-            .AfterMap<ApplyApiVersionRestrictionsAction>();
+            .ForMember(dest => dest.ClientIds, opt => opt.MapFrom(src => src.ClientIds.Select(client => client.ClientId)));
 
         CreateMap<Autorisatie, AutorisatieResponseDto>()
             .ForMember(dest => dest.ComponentWeergave, opt => opt.MapFrom(src => GetComponentWeergave(src.Component)));
