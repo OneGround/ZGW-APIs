@@ -186,6 +186,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZGW.Documenten.Messaging.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZGW.Common.DataProtection.DataModel", "OneGround.ZGW.Common.DataProtection.DataModel\ZGW.Common.DataProtection.DataModel.csproj", "{1F309918-E433-45C6-A917-BA526924C943}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZGW.Referentielijsten.WebApi.UnitTests", "Tests\OneGround.ZGW.Referentielijsten.WebApi.UnitTests\ZGW.Referentielijsten.WebApi.UnitTests.csproj", "{4F19DA03-9DE2-49AD-BEFB-E443F1216193}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1024,6 +1026,18 @@ Global
 		{1F309918-E433-45C6-A917-BA526924C943}.Release|x64.Build.0 = Release|Any CPU
 		{1F309918-E433-45C6-A917-BA526924C943}.Release|x86.ActiveCfg = Release|Any CPU
 		{1F309918-E433-45C6-A917-BA526924C943}.Release|x86.Build.0 = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|x64.Build.0 = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Debug|x86.Build.0 = Debug|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|x64.ActiveCfg = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|x64.Build.0 = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|x86.ActiveCfg = Release|Any CPU
+		{4F19DA03-9DE2-49AD-BEFB-E443F1216193}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
