@@ -40,6 +40,10 @@ public class Applicatie : OwnedEntity, IAuditableEntity, IUrlEntity
     [Column("heeft_alle_autorisaties")]
     public bool HeeftAlleAutorisaties { get; set; }
 
+    [Required]
+    [Column("alleen_is_gereed_voor_publicatie")]
+    public bool AlleenIsGereedVoorPublicatie { get; set; }
+
     public List<ApplicatieClient> ClientIds { get; set; }
 
     public List<Autorisatie> Autorisaties { get; set; }

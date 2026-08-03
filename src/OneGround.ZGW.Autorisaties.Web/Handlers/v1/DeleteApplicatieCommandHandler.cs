@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +14,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 
 class DeleteApplicatieCommandHandler
     : AutorisatiesBaseHandler<DeleteApplicatieCommandHandler>,

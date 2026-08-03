@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -18,7 +18,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 
 class UpdateApplicatieCommandHandler
     : AutorisatiesBaseHandler<UpdateApplicatieCommandHandler>,
@@ -78,7 +78,7 @@ class UpdateApplicatieCommandHandler
             .Distinct()
             .ToList();
 
-        _entityUpdater.Update(request.Applicatie, applicatie);
+        _entityUpdater.Update(request.Applicatie, applicatie, request.Version);
 
         await _cacheInvalidator.InvalidateAsync(CacheEntity.Applicatie, clientIdsForInvalidation);
 
@@ -96,4 +96,5 @@ class UpdateApplicatieCommand : IRequest<CommandResult<Applicatie>>
 {
     public Guid Id { get; set; }
     public Applicatie Applicatie { get; set; }
+    public decimal Version { get; set; } = 1;
 }

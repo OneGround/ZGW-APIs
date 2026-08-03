@@ -9,7 +9,7 @@ using OneGround.ZGW.Autorisaties.Common.BusinessRules;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.Autorisaties.Web.Extensions;
-using OneGround.ZGW.Autorisaties.Web.Handlers.EntityUpdaters;
+using OneGround.ZGW.Autorisaties.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Autorisaties.Web.Services;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -52,7 +52,7 @@ public class Startup
         services.AddZGWApi(
             "Autorisaties",
             Configuration,
-            Api.LatestVersion_1_0,
+            Api.LatestVersion_1_1,
             c =>
             {
                 c.MvcOptions = (o) =>

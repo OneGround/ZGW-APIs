@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -13,7 +13,7 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Autorisaties.Web.Handlers;
+namespace OneGround.ZGW.Autorisaties.Web.Handlers.v1;
 
 class CreateApplicatieCommandHandler
     : AutorisatiesBaseHandler<CreateApplicatieCommandHandler>,
@@ -51,6 +51,11 @@ class CreateApplicatieCommandHandler
 
         applicatie.Owner = _rsin;
 
+        if (request.Version < 1.1M)
+        {
+            applicatie.AlleenIsGereedVoorPublicatie = false;
+        }
+
         applicatie.Autorisaties.ForEach(a => a.Owner = _rsin);
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -66,4 +71,5 @@ class CreateApplicatieCommandHandler
 class CreateApplicatieCommand : IRequest<CommandResult<Applicatie>>
 {
     public Applicatie Applicatie { get; set; }
+    public decimal Version { get; set; } = 1;
 }

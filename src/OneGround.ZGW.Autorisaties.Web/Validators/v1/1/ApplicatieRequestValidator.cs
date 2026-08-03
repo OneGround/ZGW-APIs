@@ -2,19 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
-using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
+using OneGround.ZGW.Autorisaties.Contracts.v1._1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Validations;
 
-namespace OneGround.ZGW.Autorisaties.Web.Validators;
+namespace OneGround.ZGW.Autorisaties.Web.Validators.v1._1;
 
 public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
 {
     public ApplicatieRequestValidator()
     {
         CascadeRuleFor(r => r.Label).NotNull().NotEmpty().MaximumLength(100);
+
+        CascadeRuleForEach(r => r.ClientIds)
+            .ChildRules(validator =>
+            {
+                validator.CascadeRuleFor(v => v).NotNull().NotEmpty().MaximumLength(50);
+            });
+
         CascadeRuleForEach(r => r.Autorisaties)
             .ChildRules(validator =>
             {
@@ -39,7 +46,10 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
             );
     }
 
-    private static void ValidateAccessLevel(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
+    private static void ValidateAccessLevel(
+        IEnumerable<Autorisaties.Contracts.v1.Requests.AutorisatieRequestDto> autorisaties,
+        ValidationContext<ApplicatieRequestDto> validatorCtx
+    )
     {
         if (autorisaties == null)
         {
@@ -87,7 +97,10 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
         }
     }
 
-    private static void ValidateScopesDefined(IEnumerable<AutorisatieRequestDto> autorisaties, ValidationContext<ApplicatieRequestDto> validatorCtx)
+    private static void ValidateScopesDefined(
+        IEnumerable<Autorisaties.Contracts.v1.Requests.AutorisatieRequestDto> autorisaties,
+        ValidationContext<ApplicatieRequestDto> validatorCtx
+    )
     {
         if (autorisaties == null)
         {
@@ -111,7 +124,7 @@ public class ApplicatieRequestValidator : ZGWValidator<ApplicatieRequestDto>
     }
 
     private static void ValidateOnUniqueComponentsAndScopes(
-        IEnumerable<AutorisatieRequestDto> autorisaties,
+        IEnumerable<Autorisaties.Contracts.v1.Requests.AutorisatieRequestDto> autorisaties,
         ValidationContext<ApplicatieRequestDto> validatorCtx
     )
     {
