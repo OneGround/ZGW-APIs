@@ -22,7 +22,7 @@ public class BrcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
