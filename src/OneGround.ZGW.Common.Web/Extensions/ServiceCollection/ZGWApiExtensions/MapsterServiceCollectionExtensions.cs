@@ -43,11 +43,10 @@ public static class MapsterServiceCollectionExtensions
         // navigation-property loop). AutoMapper's parallel path in this seam has no equivalent
         // guard and remains exposed to the same class of risk — this only protects the Mapster
         // side. At this depth, Mapster returns a default value instead of recursing further,
-        // rather than crashing the process with an uncatchable StackOverflowException. 200 is not
-        // derived from any real domain-graph measurement — Phase 0 has no real profiles yet — it
-        // is chosen only to clear the current synthetic 100-deep health test
-        // (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow) with
-        // headroom. Phase 1 should revisit this value once real mapping depths are known.
+        // rather than crashing the process with an uncatchable StackOverflowException.
+        // 200 is not derived from any real domain-graph measurement — it was chosen to clear the
+        // synthetic 100-deep health test (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow)
+        // with headroom. Now that services map real graphs, revisit this value against measured depths.
         config.Default.MaxDepth(200);
 
         // Parity with AutoMapper's default (AllowNullCollections = false): a null source collection
