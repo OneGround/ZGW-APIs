@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 
@@ -12,7 +12,7 @@ public class DeltaBasedAuditTrailWithImporter : DeltaBasedAuditTrail, IDeltaBase
 {
     public DeltaBasedAuditTrailWithImporter(
         IDbContextWithAuditTrail context,
-        IMapper mapper,
+        IZgwMapper mapper,
         IHttpContextAccessor httpContextAccessor,
         IEntityUriService uriService
     )
