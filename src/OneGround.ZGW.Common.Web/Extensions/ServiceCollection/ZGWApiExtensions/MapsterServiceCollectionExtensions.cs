@@ -3,6 +3,8 @@ using System.Reflection;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
@@ -79,6 +81,11 @@ public static class MapsterServiceCollectionExtensions
 
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
+
+        // Replaces the AutoMapper-backed default registered by AddAutoMapper. Relies on AddZGWApi
+        // calling AddAutoMapper first; if those two calls were ever reordered this Replace would be
+        // overwritten and a migrated service would silently fall back to AutoMapper.
+        services.Replace(ServiceDescriptor.Scoped<IZgwMapper, MapsterZgwMapper>());
 
         return services;
     }
