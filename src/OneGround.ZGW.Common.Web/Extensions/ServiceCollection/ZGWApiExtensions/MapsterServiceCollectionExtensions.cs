@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
+using OneGround.ZGW.Common.Web.Services;
 
 namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 
@@ -86,6 +87,10 @@ public static class MapsterServiceCollectionExtensions
         // calling AddAutoMapper first; if those two calls were ever reordered this Replace would be
         // overwritten and a migrated service would silently fall back to AutoMapper.
         services.Replace(ServiceDescriptor.Scoped<IZgwMapper, MapsterZgwMapper>());
+
+        // Registered only when Mapster is enabled, never unconditionally: a service without registers
+        // must fail to resolve this rather than silently get a merger backed by an empty config.
+        services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
 
         return services;
     }

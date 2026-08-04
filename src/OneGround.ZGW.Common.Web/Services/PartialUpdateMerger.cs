@@ -29,6 +29,9 @@ internal sealed class PartialUpdateMerger
         return objectRequest;
     }
 
+    // A PATCH containing only eindeGeldigheid is common enough (closing off validity without touching
+    // anything else) to warrant its own fast path: it updates that one field directly on the entity and
+    // reports handled, letting the caller skip mapping/merging the whole request DTO for a single field.
     public static bool TryMergeValidity(IValidityEntity entity, object partialObjectRequest)
     {
         var objectRequest = partialObjectRequest as JObject;
@@ -46,6 +49,11 @@ internal sealed class PartialUpdateMerger
         return false;
     }
 
+    // MergeArrayHandling.Replace: a PATCHed array is the caller's full intended array, not entries to
+    // append. PropertyNameComparison.OrdinalIgnoreCase: the request DTO's PascalCase properties must
+    // still match the incoming payload's camelCase JSON keys. MergeNullValueHandling.Merge: a JSON
+    // `null` in the patch is an explicit instruction to clear that field, so it must overwrite the
+    // existing value rather than be skipped as "no value provided".
     public TRequest Merge<TRequest>(TRequest existingObjectRequest, JObject partialObjectRequest)
     {
         var joExistingObjectRequest = JObject.FromObject(existingObjectRequest, _jsonSerializer);
