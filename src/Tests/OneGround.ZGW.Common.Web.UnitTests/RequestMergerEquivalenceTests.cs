@@ -41,7 +41,7 @@ public class RequestMergerEquivalenceTests
         _mapsterMerger = new ZgwRequestMerger(new MapsterMapper.Mapper(mapsterConfig));
     }
 
-    // A fresh JObject per merge, so neither call can be affected by the other mutating shared state.
+    // One instance per call, for clarity — PartialUpdateMerger.Merge never mutates the JObject it's given.
     private JObject Patch() => JObject.FromObject(new { naam = "gewijzigd" }, _serializer);
 
     private static string Serialize(object value) => JsonConvert.SerializeObject(value, new ZGWJsonSerializerSettings());

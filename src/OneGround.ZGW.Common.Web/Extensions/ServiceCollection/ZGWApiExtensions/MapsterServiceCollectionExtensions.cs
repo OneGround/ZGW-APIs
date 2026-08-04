@@ -88,8 +88,8 @@ public static class MapsterServiceCollectionExtensions
         // overwritten and a migrated service would silently fall back to AutoMapper.
         services.Replace(ServiceDescriptor.Scoped<IZgwMapper, MapsterZgwMapper>());
 
-        // Registered only when Mapster is enabled, never unconditionally: a service without registers
-        // must fail to resolve this rather than silently get a merger backed by an empty config.
+        // Registered only when Mapster is enabled, never unconditionally: a service that hasn't
+        // enabled Mapster must fail to resolve this, not silently get a merger backed by an empty config.
         services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
 
         return services;
