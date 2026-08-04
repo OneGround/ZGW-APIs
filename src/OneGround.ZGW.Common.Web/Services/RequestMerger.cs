@@ -1,14 +1,12 @@
 using System;
 using AutoMapper;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Common.Web.Services;
 
 public class RequestMerger : IRequestMerger
 {
-    private readonly JsonSerializer _jsonSerializer = new ZGWJsonSerializer();
+    private readonly PartialUpdateMerger _merger = new PartialUpdateMerger();
     private readonly IMapper _mapper;
 
     public RequestMerger(IMapper mapper)
@@ -16,22 +14,8 @@ public class RequestMerger : IRequestMerger
         _mapper = mapper;
     }
 
-    public bool TryMergeValidity(IValidityEntity entity, object partialObjectRequest)
-    {
-        var objectRequest = partialObjectRequest as JObject;
-        if (objectRequest?.Count == 1)
-        {
-            var token = objectRequest.SelectToken("eindeGeldigheid");
-            if (token != null)
-            {
-                var date = token.ToObject<DateTime?>(); //Newtonsoft fails to cast to DateOnly
-                entity.EindeGeldigheid = date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
-                return true;
-            }
-        }
-
-        return false;
-    }
+    public bool TryMergeValidity(IValidityEntity entity, object partialObjectRequest) =>
+        PartialUpdateMerger.TryMergeValidity(entity, partialObjectRequest);
 
     public TRequest MergePartialUpdateToObjectRequest<TRequest, TEntity>(
         TEntity existingObject,
@@ -40,10 +24,7 @@ public class RequestMerger : IRequestMerger
     )
         where TEntity : IBaseEntity
     {
-        if (partialObjectRequest is not JObject objectRequest)
-        {
-            throw new InvalidOperationException($"{partialObjectRequest} is not JObject");
-        }
+        var objectRequest = PartialUpdateMerger.AsJObject(partialObjectRequest);
 
         TRequest existingObjectRequest;
         if (opts == null)
@@ -51,20 +32,6 @@ public class RequestMerger : IRequestMerger
         else
             existingObjectRequest = _mapper.Map<TEntity, TRequest>(existingObject, opts);
 
-        // Apply JSON merge
-        var joExistingObjectRequest = JObject.FromObject(existingObjectRequest, _jsonSerializer);
-        joExistingObjectRequest.Merge(
-            objectRequest,
-            new JsonMergeSettings
-            {
-                MergeArrayHandling = MergeArrayHandling.Replace,
-                PropertyNameComparison = StringComparison.OrdinalIgnoreCase,
-                MergeNullValueHandling = MergeNullValueHandling.Merge,
-            }
-        );
-
-        TRequest mergedObjectRequest = joExistingObjectRequest.ToObject<TRequest>(_jsonSerializer);
-
-        return mergedObjectRequest;
+        return _merger.Merge(existingObjectRequest, objectRequest);
     }
 }
