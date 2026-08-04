@@ -82,6 +82,10 @@ public class BrcMapperContractTests : IDisposable
 
         Assert.Equal(besluit.Identificatie, dto.Identificatie);
         Assert.Equal(besluit.Url, dto.Url);
+        // Besluit.Datum is a DateOnly but BesluitResponseDto.Datum is a string, so this can only pass
+        // if the register's explicit .Map(dest => dest.Datum, ...) ran (a type mismatch defeats Mapster's
+        // same-name convention fallback, unlike Url above which happens to convention-map to the same value).
+        Assert.Equal(besluit.Datum.ToString("yyyy-MM-dd"), dto.Datum);
     }
 
     [Fact]

@@ -55,7 +55,7 @@ public class BesluitenController : ZGWControllerBase
         IMediator mediator,
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
