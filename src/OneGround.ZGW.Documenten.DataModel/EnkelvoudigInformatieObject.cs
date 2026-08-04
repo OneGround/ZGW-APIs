@@ -43,6 +43,12 @@ public class EnkelvoudigInformatieObject : OwnedEntity, IAuditableEntity, IUrlEn
     [Column("locked")]
     public bool Locked { get; set; }
 
+    [Column("isgereedvoorpublicatie")]
+    public bool? IsGereedVoorPublicatie { get; set; }
+
+    [Column("tonenaaninitiator")]
+    public bool TonenAanInitiator { get; set; }
+
     [Column("lock")]
     public string Lock { get; set; }
 
