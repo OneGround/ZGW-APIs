@@ -13,7 +13,7 @@ using OneGround.ZGW.Documenten.DataModel;
 namespace OneGround.ZGW.Documenten.DataModel.Migrations
 {
     [DbContext(typeof(DrcDbContext))]
-    [Migration("20260804090646_add_columns_for_v1_7")]
+    [Migration("20260804123457_add_columns_for_v1_7")]
     partial class add_columns_for_v1_7
     {
         /// <inheritdoc />
@@ -419,10 +419,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("informatieobjecttype");
 
-                    b.Property<bool?>("IsGereedVoorPublicatie")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isgereedvoorpublicatie");
-
                     b.Property<Guid?>("LatestEnkelvoudigInformatieObjectVersieId")
                         .HasColumnType("uuid")
                         .HasColumnName("latest_enkelvoudiginformatieobjectversie_id");
@@ -463,10 +459,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
-
-                    b.Property<bool>("TonenAanInitiator")
-                        .HasColumnType("boolean")
-                        .HasColumnName("tonenaaninitiator");
 
                     b.HasKey("Id");
 
@@ -573,6 +565,10 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("integriteit_waarde");
 
+                    b.Property<bool?>("IsGereedVoorPublicatie")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_gereed_voor_publicatie");
+
                     b.Property<string>("Link")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -631,6 +627,10 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("titel");
+
+                    b.Property<bool>("TonenAanInitiator")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tonen_aan_initiator");
 
                     b.Property<List<string>>("Trefwoorden")
                         .HasColumnType("text[]")

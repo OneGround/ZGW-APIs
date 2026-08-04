@@ -416,10 +416,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("informatieobjecttype");
 
-                    b.Property<bool?>("IsGereedVoorPublicatie")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isgereedvoorpublicatie");
-
                     b.Property<Guid?>("LatestEnkelvoudigInformatieObjectVersieId")
                         .HasColumnType("uuid")
                         .HasColumnName("latest_enkelvoudiginformatieobjectversie_id");
@@ -460,10 +456,6 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
-
-                    b.Property<bool>("TonenAanInitiator")
-                        .HasColumnType("boolean")
-                        .HasColumnName("tonenaaninitiator");
 
                     b.HasKey("Id");
 
@@ -570,6 +562,10 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("integriteit_waarde");
 
+                    b.Property<bool?>("IsGereedVoorPublicatie")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_gereed_voor_publicatie");
+
                     b.Property<string>("Link")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -628,6 +624,10 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("titel");
+
+                    b.Property<bool>("TonenAanInitiator")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tonen_aan_initiator");
 
                     b.Property<List<string>>("Trefwoorden")
                         .HasColumnType("text[]")

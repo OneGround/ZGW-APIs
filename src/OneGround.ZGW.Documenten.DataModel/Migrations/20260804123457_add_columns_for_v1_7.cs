@@ -10,11 +10,16 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(name: "isgereedvoorpublicatie", table: "enkelvoudiginformatieobjecten", type: "boolean", nullable: true);
+            migrationBuilder.AddColumn<bool>(
+                name: "is_gereed_voor_publicatie",
+                table: "enkelvoudiginformatieobjectversies",
+                type: "boolean",
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<bool>(
-                name: "tonenaaninitiator",
-                table: "enkelvoudiginformatieobjecten",
+                name: "tonen_aan_initiator",
+                table: "enkelvoudiginformatieobjectversies",
                 type: "boolean",
                 nullable: false,
                 defaultValue: false
@@ -24,9 +29,9 @@ namespace OneGround.ZGW.Documenten.DataModel.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(name: "isgereedvoorpublicatie", table: "enkelvoudiginformatieobjecten");
+            migrationBuilder.DropColumn(name: "is_gereed_voor_publicatie", table: "enkelvoudiginformatieobjectversies");
 
-            migrationBuilder.DropColumn(name: "tonenaaninitiator", table: "enkelvoudiginformatieobjecten");
+            migrationBuilder.DropColumn(name: "tonen_aan_initiator", table: "enkelvoudiginformatieobjectversies");
         }
     }
 }

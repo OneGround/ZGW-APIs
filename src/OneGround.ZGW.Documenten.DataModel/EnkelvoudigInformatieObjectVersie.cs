@@ -128,6 +128,12 @@ public class EnkelvoudigInformatieObjectVersie : OwnedEntity, IAuditableEntity, 
     [Column("inhoud_is_vervallen")]
     public bool InhoudIsVervallen { get; set; }
 
+    [Column("is_gereed_voor_publicatie")]
+    public bool? IsGereedVoorPublicatie { get; set; }
+
+    [Column("tonen_aan_initiator")]
+    public bool TonenAanInitiator { get; set; }
+
     [Column("enkelvoudiginformatieobject_id")]
     public Guid EnkelvoudigInformatieObjectId { get; set; }
 
