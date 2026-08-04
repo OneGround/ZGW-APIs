@@ -17,15 +17,15 @@ using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests : IDisposable
+public class DomainToResponseRegisterTests : IDisposable
 {
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    private readonly MappingTestFixture _fixture = new MappingTestFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
-    public DomainToResponseProfileTests()
+    public DomainToResponseRegisterTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);

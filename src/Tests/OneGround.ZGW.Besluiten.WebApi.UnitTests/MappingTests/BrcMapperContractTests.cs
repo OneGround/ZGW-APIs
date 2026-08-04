@@ -37,7 +37,7 @@ namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 /// </summary>
 public class BrcMapperContractTests : IDisposable
 {
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    private readonly MappingTestFixture _fixture = new MappingTestFixture();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _autoMapper;

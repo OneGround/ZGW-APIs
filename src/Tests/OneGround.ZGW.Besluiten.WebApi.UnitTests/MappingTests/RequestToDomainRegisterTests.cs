@@ -11,12 +11,12 @@ using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainRegisterTests
 {
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    private readonly MappingTestFixture _fixture = new MappingTestFixture();
     private readonly IMapper _mapper;
 
-    public RequestToDomainProfileTests()
+    public RequestToDomainRegisterTests()
     {
         var config = new TypeAdapterConfig();
         // string -> Nullable<enum> (BesluitRequestDto.VervalReden -> Besluit.VervalReden) relies on the
