@@ -74,13 +74,16 @@ public class BrcMapperContractTests : IDisposable
     public void AuditTrail_can_map_Besluit_to_BesluitResponseDto()
     {
         // The exact call AuditTrailServiceBase.SetNew<TDto>/SetOld<TDto> makes, for the TDto used by
-        // CreateBesluitCommandHandler and UpdateBesluitCommandHandler. Asserting a resolved Url proves
-        // MapsterUrlResolver still reaches IEntityUriService through DI.
+        // CreateBesluitCommandHandler and UpdateBesluitCommandHandler.
         var besluit = _fixture.Create<Besluit>();
 
         var dto = _zgwMapper.Map<BesluitResponseDto>(besluit);
 
         Assert.Equal(besluit.Identificatie, dto.Identificatie);
+        // Url still copies through. This class's mocked IEntityUriService is set up as a passthrough
+        // (Returns<IUrlEntity>(e => e.Url)), so this cannot distinguish MapsterUrlResolver reaching DI
+        // from Mapster's own same-name convention fallback — the DI-wiring proof lives in
+        // BrcMapsterWiringTests, whose mock returns a literal that isn't a copy of the source's Url.
         Assert.Equal(besluit.Url, dto.Url);
         // Besluit.Datum is a DateOnly but BesluitResponseDto.Datum is a string, so this can only pass
         // if the register's explicit .Map(dest => dest.Datum, ...) ran (a type mismatch defeats Mapster's

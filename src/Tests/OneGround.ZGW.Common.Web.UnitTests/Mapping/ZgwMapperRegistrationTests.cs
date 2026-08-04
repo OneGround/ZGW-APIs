@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 using OneGround.ZGW.Common.Web.Mapping;
+using OneGround.ZGW.Common.Web.Services;
 using Xunit;
 
 namespace OneGround.ZGW.Common.Web.UnitTests.Mapping;
@@ -34,6 +35,11 @@ public class ZgwMapperRegistrationTests
         using var scope = provider.CreateScope();
 
         Assert.IsType<AutoMapperZgwMapper>(scope.ServiceProvider.GetRequiredService<IZgwMapper>());
+
+        // AddZgwMapster only registers IZgwRequestMerger when Mapster is enabled. A service that
+        // hasn't opted in must fail to resolve it, not silently get a merger backed by an empty
+        // config (see the comment above the registration in MapsterServiceCollectionExtensions).
+        Assert.Null(scope.ServiceProvider.GetService<IZgwRequestMerger>());
     }
 
     [Fact]

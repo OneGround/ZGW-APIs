@@ -409,9 +409,8 @@ public class MapsterSeamHealthTests
         public string Weergave { get; set; }
     }
 
-    // AuditTrailServiceBase.SetOld/SetNew pass the entity as IBaseEntity. A later step in this
-    // migration routes the audit trail through Mapster, at which point the entire audit trail will
-    // depend on Mapster resolving the map from source.GetType(), not the declared type. If it
+    // AuditTrailServiceBase.SetOld/SetNew pass the entity as IBaseEntity, so the entire audit trail
+    // depends on Mapster resolving the map from source.GetType(), not the declared type. If it
     // resolved on IBaseEntity there would be no registered map and Weergave would come back null,
     // which is why this asserts the custom-mapped member rather than just "not null".
     [Fact]
