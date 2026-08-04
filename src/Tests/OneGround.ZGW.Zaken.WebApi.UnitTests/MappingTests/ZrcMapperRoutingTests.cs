@@ -7,11 +7,15 @@ using Xunit;
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// ZRC has not adopted Mapster, so its audit trail, PATCH merge and 9 AutoMapper-backed expanders must
-/// keep resolving the AutoMapper-backed adapter. Mapster does not throw on a missing map — it
-/// convention-maps — so enabling it here without writing registers would silently persist wrong audit
-/// records instead of failing. This test is that tripwire, and should be replaced by real per-map
-/// coverage when ZRC migrates.
+/// ZRC has not adopted Mapster, so its audit trail and PATCH merge must keep resolving the
+/// AutoMapper-backed adapter. Mapster does not throw on a missing map — it convention-maps — so enabling
+/// it here without writing registers would silently persist wrong audit records instead of failing.
+/// This test is that tripwire, and should be replaced by real per-map coverage when ZRC migrates.
+///
+/// Note: ZRC's expanders inject AutoMapper's IMapper directly (unconditionally registered by
+/// AddAutoMapper) and never resolve IZgwMapper, so this test does not cover them — they would need
+/// their own migration to Mapster, the same way BRC's expander was switched directly to
+/// MapsterMapper.IMapper.
 /// </summary>
 public class ZrcMapperRoutingTests
 {
