@@ -12,12 +12,12 @@ using Xunit;
 
 namespace OneGround.ZGW.Notificaties.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainRegisterTests
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly IMapper _mapper;
 
-    public RequestToDomainProfileTests()
+    public RequestToDomainRegisterTests()
     {
         var config = new TypeAdapterConfig();
         // The seam's global nullable-enum rule lives in AddZgwMapster, not in the register; this test
@@ -90,5 +90,6 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Aanmaakdatum, result.AanmaakDatum.ToString("yyyy-MM-ddTHH:mm:ssZ"));
         Assert.Equal(value.Kenmerken.Count, result.Kenmerken.Count);
         Assert.Equal(value.Kenmerken.Select(k => k.Key), result.Kenmerken.Select(k => k.Key));
+        Assert.Equal(value.Kenmerken.Select(k => k.Value), result.Kenmerken.Select(k => k.Value));
     }
 }

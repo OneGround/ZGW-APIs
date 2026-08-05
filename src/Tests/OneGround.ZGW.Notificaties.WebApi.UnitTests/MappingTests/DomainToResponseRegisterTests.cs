@@ -15,7 +15,7 @@ using Xunit;
 
 namespace OneGround.ZGW.Notificaties.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests : IDisposable
+public class DomainToResponseRegisterTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
@@ -23,7 +23,7 @@ public class DomainToResponseProfileTests : IDisposable
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
-    public DomainToResponseProfileTests()
+    public DomainToResponseRegisterTests()
     {
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
