@@ -22,7 +22,7 @@ public class NrcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -33,9 +33,8 @@ public class NrcMapsterWiringTests
         // Kanaal.Url is a computed, read-only property (`/kanaal/{Id}`) that Mapster's default
         // convention would otherwise copy by name; the mocked literal below is distinguishable from
         // that value, so a same-name convention copy can't satisfy the assertion — this only passes
-        // if MapsterUrlResolver actually ran through DI via config.Scan discovery. Matches a bug the
-        // AC migration's own wiring test found and fixed: a mock that echoes the source's own value
-        // is a false positive.
+        // if MapsterUrlResolver actually ran through DI via config.Scan discovery. A mock that echoed
+        // the source's own value would be a false positive.
         Assert.Equal("https://example.test/resolved-via-di", result.Url);
         mockedUriService.Verify(s => s.GetUri(It.IsAny<IUrlEntity>()), Times.AtLeastOnce());
     }
