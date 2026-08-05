@@ -1,15 +1,14 @@
-using System;
-using AutoMapper;
+using MapsterMapper;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Common.Web.Services;
 
-public class RequestMerger : IRequestMerger
+public class ZgwRequestMerger : IZgwRequestMerger
 {
     private readonly PartialUpdateMerger _merger = new PartialUpdateMerger();
     private readonly IMapper _mapper;
 
-    public RequestMerger(IMapper mapper)
+    public ZgwRequestMerger(IMapper mapper)
     {
         _mapper = mapper;
     }
@@ -17,20 +16,12 @@ public class RequestMerger : IRequestMerger
     public bool TryMergeValidity(IValidityEntity entity, object partialObjectRequest) =>
         PartialUpdateMerger.TryMergeValidity(entity, partialObjectRequest);
 
-    public TRequest MergePartialUpdateToObjectRequest<TRequest, TEntity>(
-        TEntity existingObject,
-        object partialObjectRequest,
-        Action<IMappingOperationOptions<TEntity, TRequest>> opts = null
-    )
+    public TRequest MergePartialUpdateToObjectRequest<TRequest, TEntity>(TEntity existingObject, object partialObjectRequest)
         where TEntity : IBaseEntity
     {
         var objectRequest = PartialUpdateMerger.AsJObject(partialObjectRequest);
 
-        TRequest existingObjectRequest;
-        if (opts == null)
-            existingObjectRequest = _mapper.Map<TRequest>(existingObject);
-        else
-            existingObjectRequest = _mapper.Map<TEntity, TRequest>(existingObject, opts);
+        var existingObjectRequest = _mapper.Map<TRequest>(existingObject);
 
         return _merger.Merge(existingObjectRequest, objectRequest);
     }

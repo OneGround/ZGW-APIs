@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mapster;
@@ -394,5 +395,37 @@ public class MapsterSeamHealthTests
         var result = mapper.Map<UrlsProbeDto>(src);
 
         Assert.Equal(new[] { "https://example.test/a", "https://example.test/b" }, result.Items);
+    }
+
+    private sealed class InterfaceTypedEntity : IBaseEntity
+    {
+        public Guid Id { get; set; }
+        public string Naam { get; set; }
+    }
+
+    private sealed class InterfaceTypedEntityDto
+    {
+        public string Naam { get; set; }
+        public string Weergave { get; set; }
+    }
+
+    // AuditTrailServiceBase.SetOld/SetNew pass the entity as IBaseEntity, so the entire audit trail
+    // depends on Mapster resolving the map from source.GetType(), not the declared type. If it
+    // resolved on IBaseEntity there would be no registered map and Weergave would come back null,
+    // which is why this asserts the custom-mapped member rather than just "not null".
+    [Fact]
+    public void Map_of_an_interface_typed_source_resolves_on_the_runtime_type()
+    {
+        var config = new TypeAdapterConfig();
+        config.NewConfig<InterfaceTypedEntity, InterfaceTypedEntityDto>().Map(dest => dest.Weergave, src => "van-de-concrete-map");
+        config.Compile();
+        var mapper = new Mapper(config);
+
+        IBaseEntity entity = new InterfaceTypedEntity { Id = Guid.NewGuid(), Naam = "naam" };
+
+        var result = mapper.Map<InterfaceTypedEntityDto>(entity);
+
+        Assert.Equal("van-de-concrete-map", result.Weergave);
+        Assert.Equal("naam", result.Naam);
     }
 }

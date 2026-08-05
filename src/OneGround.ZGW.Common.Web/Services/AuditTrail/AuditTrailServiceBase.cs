@@ -4,11 +4,11 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
+using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -21,7 +21,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
     public const string AuditMaskingEnabled = "AuditMaskingEnabled";
 
     protected readonly IDbContextWithAuditTrail _context;
-    protected readonly IMapper _mapper;
+    protected readonly IZgwMapper _mapper;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly IEntityUriService _uriService;
 
@@ -32,7 +32,7 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
 
     public AuditTrailServiceBase(
         IDbContextWithAuditTrail context,
-        IMapper mapper,
+        IZgwMapper mapper,
         IHttpContextAccessor httpContextAccessor,
         IEntityUriService uriService
     )

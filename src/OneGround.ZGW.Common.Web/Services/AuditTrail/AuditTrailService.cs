@@ -4,10 +4,10 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -16,7 +16,12 @@ namespace OneGround.ZGW.Common.Web.Services.AuditTrail;
 
 public class AuditTrailService : AuditTrailServiceBase
 {
-    public AuditTrailService(IDbContextWithAuditTrail context, IMapper mapper, IHttpContextAccessor httpContextAccessor, IEntityUriService uriService)
+    public AuditTrailService(
+        IDbContextWithAuditTrail context,
+        IZgwMapper mapper,
+        IHttpContextAccessor httpContextAccessor,
+        IEntityUriService uriService
+    )
         : base(context, mapper, httpContextAccessor, uriService) { }
 
     protected override async Task WriteAsync(
