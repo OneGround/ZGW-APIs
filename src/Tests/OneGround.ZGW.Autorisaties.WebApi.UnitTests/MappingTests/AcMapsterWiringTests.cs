@@ -23,8 +23,9 @@ public class AcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        // callingAssembly = the AC Web assembly (where the IRegisters live).
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
+        // callingAssembly = the AC Web assembly (where the IRegisters live). enable: true mirrors
+        // Startup's ApiServiceSettings.EnableMapster — without it the seam registers nothing at all.
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -55,6 +56,39 @@ public class AcMapsterWiringTests
         // global EmptyCollectionIfNull transform) yields empty-not-null for a null source collection:
         // `applicatie.Autorisaties` is left null above, and convention-based nested mapping + the seam's
         // transform must produce an empty (non-null) list — matching AutoMapper's AllowNullCollections=false.
+        Assert.NotNull(result.Autorisaties);
+        Assert.Empty(result.Autorisaties);
+    }
+
+    [Fact]
+    public void AddZgwMapster_discovers_the_v1_1_registers_too()
+    {
+        // The v1.1 registers live in a nested namespace (MappingProfiles.v1._1) but the same assembly,
+        // so config.Scan must pick them up alongside v1's — a version folder is not a scan boundary.
+        var mockedUriService = new Mock<IEntityUriService>();
+        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns("https://example.test/resolved-via-di");
+
+        var services = new ServiceCollection();
+        services.AddSingleton(mockedUriService.Object);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var applicatie = new Applicatie
+        {
+            Id = Guid.NewGuid(),
+            Label = "test",
+            AlleenIsGereedVoorPublicatie = true,
+            ClientIds = new List<ApplicatieClient>(),
+        };
+
+        var result = mapper.Map<Contracts.v1._1.Responses.ApplicatieResponseDto>(applicatie);
+
+        Assert.Equal("https://example.test/resolved-via-di", result.Url);
+        Assert.True(result.AlleenIsGereedVoorPublicatie);
+        // Same null-collection guarantee as v1, through the real seam.
         Assert.NotNull(result.Autorisaties);
         Assert.Empty(result.Autorisaties);
     }
