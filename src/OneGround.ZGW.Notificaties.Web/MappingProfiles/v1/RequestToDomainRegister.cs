@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Mapster;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Notificaties.Contracts.v1;
@@ -25,8 +26,18 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.KanaalId)
             .Ignore(dest => dest.AbonnementId)
             .Ignore(dest => dest.Abonnement)
-            .Map(dest => dest.Filters, src => ConvertFilterValueDictionaryToList(src.Filters))
-            .AfterMapping((src, dst) => dst.Kanaal = new Kanaal { Naam = src.Naam });
+            // Ignore()+AfterMapping, not Map(): FilterValue references back to AbonnementKanaal, and
+            // mapping into that cyclic type via Map() makes the mapper try to compile a depth-guarded
+            // recursive function for it, which never terminates and crashes the process. AfterMapping
+            // runs outside that compiled pipeline, so assigning here avoids it entirely.
+            .Ignore(dest => dest.Filters)
+            .AfterMapping(
+                (src, dst) =>
+                {
+                    dst.Kanaal = new Kanaal { Naam = src.Naam };
+                    dst.Filters = ConvertFilterValueDictionaryToList(src.Filters).ToList();
+                }
+            );
 
         config
             .NewConfig<FilterValueDto, FilterValue>()

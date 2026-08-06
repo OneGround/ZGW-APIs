@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -9,6 +11,7 @@ using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Contracts.v1.Requests;
 using OneGround.ZGW.Notificaties.DataModel;
 using OneGround.ZGW.Notificaties.Web;
@@ -41,6 +44,7 @@ public class NrcMapperContractTests : IDisposable
     private readonly IServiceScope _scope;
     private readonly IZgwMapper _zgwMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IMapper _mapsterMapper;
 
     public NrcMapperContractTests()
     {
@@ -58,6 +62,7 @@ public class NrcMapperContractTests : IDisposable
         _scope = _provider.CreateScope();
         _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
         _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _mapsterMapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
     }
 
     public void Dispose()
@@ -100,5 +105,33 @@ public class NrcMapperContractTests : IDisposable
         var parameterTypes = typeof(AbonnementController).GetConstructors().Single().GetParameters().Select(p => p.ParameterType).ToArray();
 
         Assert.Contains(typeof(IZgwRequestMerger), parameterTypes);
+    }
+
+    [Fact]
+    public void AbonnementRequestDto_with_a_kanaal_maps_to_Abonnement_without_crashing()
+    {
+        // Guards against an uncatchable StackOverflowException, not a regular exception. Must resolve
+        // IMapper from the real AddZgwMapster-built provider (see constructor) - a hand-rolled
+        // TypeAdapterConfig without its settings would stay green regardless of the register.
+        var dto = new AbonnementRequestDto
+        {
+            CallbackUrl = "https://example.test/callback",
+            Auth = "the-auth",
+            Kanalen = new List<AbonnementKanaalDto>
+            {
+                new()
+                {
+                    Naam = "zaken",
+                    Filters = new Dictionary<string, string> { ["resource"] = "zaakinformatieobject" },
+                },
+            },
+        };
+
+        var result = _mapsterMapper.Map<Abonnement>(dto);
+
+        Assert.Single(result.AbonnementKanalen);
+        Assert.Equal("zaken", result.AbonnementKanalen[0].Kanaal.Naam);
+        Assert.Single(result.AbonnementKanalen[0].Filters);
+        Assert.Equal("resource", result.AbonnementKanalen[0].Filters[0].Key);
     }
 }
