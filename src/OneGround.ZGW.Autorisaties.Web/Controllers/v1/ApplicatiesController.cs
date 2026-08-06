@@ -41,6 +41,7 @@ public class ApplicatiesController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ApplicatiesController(
         ILogger<ApplicatiesController> logger,
@@ -48,6 +49,7 @@ public class ApplicatiesController : ZGWControllerBase
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
@@ -56,6 +58,7 @@ public class ApplicatiesController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -250,7 +253,7 @@ public class ApplicatiesController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        ApplicatieRequestDto mergedApplicatieRequest = _requestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDto, Applicatie>(
+        ApplicatieRequestDto mergedApplicatieRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDto, Applicatie>(
             resultGet.Result,
             partialApplicatieRequest
         );

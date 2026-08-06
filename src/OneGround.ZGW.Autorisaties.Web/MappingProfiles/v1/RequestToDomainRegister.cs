@@ -26,6 +26,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.FutureAutorisaties)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.Owner)
+            // v1's contract has no AlleenIsGereedVoorPublicatie (it arrived in v1.1), so this Ignore is
+            // documentary today — there is no source member to map from. What actually keeps a v1 request
+            // from resetting a stored v1.1 value is the version guard in ApplicatieUpdater.
+            .Ignore(dest => dest.AlleenIsGereedVoorPublicatie)
             .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => new ApplicatieClient { ClientId = client }));
 
         config
