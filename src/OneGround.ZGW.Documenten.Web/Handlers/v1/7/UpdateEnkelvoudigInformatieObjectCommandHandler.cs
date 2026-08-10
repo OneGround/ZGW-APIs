@@ -183,7 +183,7 @@ public class UpdateEnkelvoudigInformatieObjectCommandHandler
             _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
             request.ExistingEnkelvoudigInformatieObjectId,
             isPartialUpdate,
-            apiVersie: 1.5M,
+            apiVersie: 1.7M,
             errors,
             cancellationToken
         );
