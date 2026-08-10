@@ -132,7 +132,6 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // Default 'enable_sort=off' but for some filters disabling sort will drop performance significantly
         var filterModel = request.GetAllEnkelvoudigInformatieObjectenFilter;
 
-        // TODO: Handle new filters here as well (e.g. filterModel.Bronorganisatie)
         var enableSort =
             !string.IsNullOrEmpty(filterModel.Identificatie) || (filterModel.Trefwoorden_In?.Any() ?? false) || (filterModel.Uuid_In?.Any() ?? false)
                 ? "on"

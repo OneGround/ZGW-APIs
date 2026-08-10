@@ -101,7 +101,7 @@ public class CreateEnkelvoudigInformatieObjectCommandHandler
             _applicationConfiguration.IgnoreInformatieObjectTypeValidation,
             existingEnkelvoudigInformatieObjectId: null,
             isPartialUpdate: false,
-            apiVersie: 1.5M,
+            apiVersie: 1.7M,
             errors,
             cancellationToken
         );

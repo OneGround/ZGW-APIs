@@ -4,4 +4,5 @@ public enum ObjectType
 {
     zaak,
     besluit,
+    verzoek
 }
