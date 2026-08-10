@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Autorisaties.Contracts.v1.Responses;
+using OneGround.ZGW.Autorisaties.Contracts.v1._1.Responses;
 using OneGround.ZGW.Common.ServiceAgent;
 
 namespace OneGround.ZGW.Autorisaties.ServiceAgent;

@@ -84,7 +84,7 @@ class CreateVerzendingCommandHandler
             return new CommandResult<Verzending>(null, CommandStatus.Forbidden);
         }
 
-        _verzendingBusinessRuleService.Validate(informatieObject, request.Verzending, errors);
+        _verzendingBusinessRuleService.Validate(informatieObject, request.Verzending, request.Version, errors);
 
         if (errors.Count != 0)
         {
@@ -119,4 +119,5 @@ class CreateVerzendingCommand : IRequest<CommandResult<Verzending>>
 {
     public Verzending Verzending { get; internal set; }
     public string InformatieObjectUrl { get; internal set; }
+    public decimal Version { get; internal set; }
 }

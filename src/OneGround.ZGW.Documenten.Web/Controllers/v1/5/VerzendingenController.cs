@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,7 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 [ApiController]
 [Authorize]
 [ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class VerzendingenController : ZGWControllerBase
@@ -248,7 +250,12 @@ public class VerzendingenController : ZGWControllerBase
         var verzending = _mapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
-            new CreateVerzendingCommand { Verzending = verzending, InformatieObjectUrl = verzendingRequest.InformatieObject },
+            new CreateVerzendingCommand
+            {
+                Verzending = verzending,
+                InformatieObjectUrl = verzendingRequest.InformatieObject,
+                Version = IsApiVersionRequested(new ApiVersion(1, 7)) ? 1.7M : 1.5M,
+            },
             cancellationToken
         );
 
@@ -295,6 +302,7 @@ public class VerzendingenController : ZGWControllerBase
             {
                 Id = id,
                 InformatieObjectUrl = verzendingRequest.InformatieObject,
+                Version = IsApiVersionRequested(new ApiVersion(1, 7)) ? 1.7M : 1.5M,
                 Verzending = verzending, // Note: Indicates that the versie should be fully replaced in the command handler
                 PartialObject = null,
             },
@@ -348,6 +356,7 @@ public class VerzendingenController : ZGWControllerBase
             {
                 Id = id,
                 InformatieObjectUrl = GetValueFromPartial<string>(partialVerzendingRequest, "informatieObject"),
+                Version = IsApiVersionRequested(new ApiVersion(1, 7)) ? 1.7M : 1.5M,
                 Verzending = null,
                 PartialObject = partialVerzendingRequest, // Note: Indicates that the versie should be merged in the command handler
             },
