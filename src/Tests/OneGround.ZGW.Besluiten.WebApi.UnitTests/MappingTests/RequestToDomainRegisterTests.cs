@@ -1,35 +1,31 @@
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Besluiten.Contracts.v1.Queries;
 using OneGround.ZGW.Besluiten.Contracts.v1.Requests;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.MappingProfiles.v1;
 using OneGround.ZGW.Besluiten.Web.Models.v1;
-using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
 
 namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainRegisterTests
 {
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    private readonly MappingTestFixture _fixture = new MappingTestFixture();
     private readonly IMapper _mapper;
 
-    public RequestToDomainProfileTests()
+    public RequestToDomainRegisterTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        var config = new TypeAdapterConfig();
+        // string -> Nullable<enum> (BesluitRequestDto.VervalReden -> Besluit.VervalReden) relies on the
+        // seam's global nullable-enum rule, which lives in AddZgwMapster, not the register; this test
+        // builds config directly, so register it here too for production parity.
+        config.RegisterNullableEnumRule();
+        new RequestToDomainRegister().Register(config);
+        config.Compile();
+        _mapper = new Mapper(config);
     }
 
     [Fact]
@@ -74,6 +70,30 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.PublicatieDatum, result.PublicatieDatum.Value.ToString("yyyy-MM-dd"));
         Assert.Equal(value.VerzendDatum, result.VerzendDatum.Value.ToString("yyyy-MM-dd"));
         Assert.Equal(value.UiterlijkeReactieDatum, result.UiterlijkeReactieDatum.Value.ToString("yyyy-MM-dd"));
+    }
+
+    [Fact]
+    public void BesluitRequestDto_Maps_EmptyVervalReden_To_Null_Not_ZeroValueEnumMember()
+    {
+        _fixture.Customize<BesluitRequestDto>(c =>
+            c.With(p => p.VervalReden, string.Empty)
+                .With(p => p.Datum, "2020-12-17")
+                .With(p => p.IngangsDatum, "2020-12-18")
+                .With(p => p.VervalDatum, "2020-12-19")
+                .With(p => p.PublicatieDatum, "2020-12-20")
+                .With(p => p.VerzendDatum, "2020-12-21")
+                .With(p => p.UiterlijkeReactieDatum, "2020-12-22")
+        );
+
+        var value = _fixture.Create<BesluitRequestDto>();
+
+        var result = _mapper.Map<Besluit>(value);
+
+        // Guards against Mapster's default string->enum handling, which silently substitutes the
+        // enum's zero-value member (VervalReden.tijdelijk) for an empty/unrecognized string instead
+        // of mapping to null. BesluitRequestDto.VervalReden defaults to "" (it's optional on the
+        // request), so an omitted VervalReden must map to null, not tijdelijk.
+        Assert.Null(result.VervalReden);
     }
 
     [Fact]
