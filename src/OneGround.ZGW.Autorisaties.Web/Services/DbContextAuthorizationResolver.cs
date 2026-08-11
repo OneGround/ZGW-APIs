@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +31,7 @@ public class DbContextAuthorizationResolver : IAuthorizationResolver
         {
             Label = applicatie.Label,
             HasAllAuthorizations = applicatie.HeeftAlleAutorisaties,
+            AlleenIsGereedVoorPublicatie = applicatie.AlleenIsGereedVoorPublicatie,
             Authorizations = applicatie
                 .Autorisaties.Where(a => a.Component.ToString().Equals(component, StringComparison.OrdinalIgnoreCase))
                 .Where(a => a.Scopes.Any(s => scopes.Contains(s)))

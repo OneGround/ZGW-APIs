@@ -498,7 +498,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Download)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
-    [Produces("application/octet-stream")]
+    [Produces("application/octet-stream", "application/json")]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,

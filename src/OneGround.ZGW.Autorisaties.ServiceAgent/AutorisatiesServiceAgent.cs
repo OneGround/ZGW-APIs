@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Autorisaties.Contracts.v1.Responses;
+using OneGround.ZGW.Autorisaties.Contracts.v1._1.Responses;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.ServiceAgent;

@@ -410,7 +410,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Download)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [Produces("application/octet-stream")]
+    [Produces("application/octet-stream", "application/json")]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] Documenten.Contracts.v1.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,

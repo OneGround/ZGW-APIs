@@ -6,7 +6,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using Xunit;
 
-namespace OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1._4;
+namespace OneGround.ZGW.Documenten.WebApi.UnitTests.BusinessRulesTests.v1._5;
 
 public class VerzendingBusinessRuleTests
 {
@@ -26,7 +26,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.True(actual);
         Assert.Empty(errors);
@@ -42,7 +42,7 @@ public class VerzendingBusinessRuleTests
         var svc = new VerzendingBusinessRuleService();
 
         var errors = new List<ValidationError>();
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "correspondentieAdres");
@@ -66,7 +66,7 @@ public class VerzendingBusinessRuleTests
         var svc = new VerzendingBusinessRuleService();
 
         var errors = new List<ValidationError>();
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "correspondentieAdres");
@@ -88,7 +88,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.True(actual);
         Assert.Empty(errors);
@@ -110,7 +110,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.True(actual);
         Assert.Empty(errors);
@@ -133,7 +133,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "ontvangstdatum" && e.Code == ErrorCode.MustBeEmpty);
@@ -156,7 +156,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "verzenddatum" && e.Code == ErrorCode.MustBeEmpty);
@@ -173,10 +173,27 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "verzenddatum" && e.Code == ErrorCode.Required);
+    }
+
+    [Fact]
+    public void Add_With_Geadresseerde_Without_Verzenddatum_Should_Succeed_In_Versie_1_7()
+    {
+        var informatieobject = new EnkelvoudigInformatieObject();
+
+        var verzending = new Verzending { AardRelatie = AardRelatie.geadresseerde, MijnOverheid = true };
+
+        var svc = new VerzendingBusinessRuleService();
+
+        var errors = new List<ValidationError>();
+
+        var actual = svc.Validate(informatieobject, verzending, 1.7M, errors);
+
+        Assert.True(actual);
+        Assert.Empty(errors);
     }
 
     [Fact]
@@ -190,7 +207,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "ontvangstdatum" && e.Code == ErrorCode.Required);
@@ -228,7 +245,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "nonFieldErrors" && e.Code == ErrorCode.Invalid);
@@ -266,7 +283,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, verzending, errors);
+        var actual = svc.Validate(informatieobject, verzending, 1.5M, errors);
 
         Assert.True(actual);
         Assert.Empty(errors);
@@ -312,7 +329,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(informatieobject, existingVerzending: verzending, existingVerzendingId, errors);
+        var actual = svc.Validate(informatieobject, existingVerzending: verzending, existingVerzendingId, 1.5M, errors);
 
         Assert.False(actual);
         Assert.Contains(errors, e => e.Name == "nonFieldErrors" && e.Code == ErrorCode.Invalid);
@@ -376,7 +393,7 @@ public class VerzendingBusinessRuleTests
 
         var errors = new List<ValidationError>();
 
-        var actual = svc.Validate(anotherInformatieobject, existingVerzending: verzending, existingVerzendingId, errors);
+        var actual = svc.Validate(anotherInformatieobject, existingVerzending: verzending, existingVerzendingId, 1.5M, errors);
 
         Assert.True(actual);
         Assert.Empty(errors);

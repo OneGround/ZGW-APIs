@@ -27,6 +27,7 @@ public sealed class AutorisatiesServiceAgentAuthorizationResolver : IAuthorizati
         return new AuthorizedApplication
         {
             Label = application.Label,
+            AlleenIsGereedVoorPublicatie = application.AlleenIsGereedVoorPublicatie,
             HasAllAuthorizations = application.HeeftAlleAutorisaties,
             Authorizations = application
                 .Autorisaties.Where(a => a.Component.Equals(component, StringComparison.OrdinalIgnoreCase))
