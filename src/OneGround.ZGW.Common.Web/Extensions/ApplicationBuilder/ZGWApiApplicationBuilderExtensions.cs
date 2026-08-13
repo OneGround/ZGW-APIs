@@ -16,6 +16,8 @@ public static class ZGWApiApplicationBuilderExtensions
         Action<IApplicationBuilder> registerMiddleware = null
     )
     {
+        app.UseZgwSecurityHeaders();
+
         app.UseSerilogRequestLogging(options =>
         {
             options.MessageTemplate = "HTTP {RequestScheme}://{RequestHost}{RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
