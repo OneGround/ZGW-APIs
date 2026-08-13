@@ -50,7 +50,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IValidatorService _validatorService;
 
     //private readonly IObjectExpander<EnkelvoudigInformatieObjectGetResponseDto> _expander; // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
     private readonly ApplicationConfiguration _applicationConfiguration;
@@ -62,14 +61,12 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
-        IErrorResponseBuilder errorResponseBuilder,
-        IValidatorService validatorService /*
+        IErrorResponseBuilder errorResponseBuilder /*
         IExpanderFactory expanderFactory*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
         //_expander = expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
@@ -676,6 +673,51 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             },
             cancellationToken
         );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        if (result.Status == CommandStatus.Conflict)
+        {
+            return _errorResponseBuilder.Conflict(result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Verwijder een (ENKELVOUDIG) INFORMATIEOBJECT.
+    /// Verwijder een(ENKELVOUDIG) INFORMATIEOBJECT en alle bijbehorende versies, samen met alle gerelateerde resources binnen deze API.
+    /// Dit is alleen mogelijk als er geen OBJECTINFORMATIEOBJECTen relateerd zijn aan het (ENKELVOUDIG) INFORMATIEOBJECT.
+    /// </summary>
+    /// <response code="204">No content</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpDelete(Contracts.v1.ApiRoutes.EnkelvoudigInformatieObjecten.Delete, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Delete)]
+    [Scope(AuthorizationScopes.Documenten.Delete)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
+
+        var result = await _mediator.Send(new DeleteEnkelvoudigInformatieObjectCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

@@ -51,7 +51,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1;
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
     public EnkelvoudigInformatieObjectenController(
@@ -67,7 +66,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
@@ -591,7 +589,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
-    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);

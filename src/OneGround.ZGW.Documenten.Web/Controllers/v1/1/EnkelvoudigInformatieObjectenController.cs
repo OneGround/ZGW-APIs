@@ -48,7 +48,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
     public EnkelvoudigInformatieObjectenController(
@@ -64,7 +63,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 

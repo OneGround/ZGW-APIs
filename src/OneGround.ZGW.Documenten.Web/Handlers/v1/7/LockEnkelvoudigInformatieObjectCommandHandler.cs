@@ -73,9 +73,21 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
             async (token) =>
             {
                 // First, try to acquire lock on the EnkelvoudigInformatieObject
-                var _enkelvoudigInformatieObject = await _context
+                IQueryable<EnkelvoudigInformatieObject> enkelvoudigInformatieObjectQuery = _context
                     .EnkelvoudigInformatieObjecten.LockForUpdate(_context, c => c.Id, [request.Id])
-                    .Where(rsinFilter)
+                    .Where(rsinFilter);
+
+                bool alleenIsGereedVoorPublicatie = _authorizationContext.Authorization.AlleenIsGereedVoorPublicatie;
+                if (alleenIsGereedVoorPublicatie)
+                {
+                    // Filter out versions that are not ready for publication
+                    enkelvoudigInformatieObjectQuery = enkelvoudigInformatieObjectQuery.Where(v =>
+                        v.LatestEnkelvoudigInformatieObjectVersie.IsGereedVoorPublicatie.HasValue
+                        && alleenIsGereedVoorPublicatie == v.LatestEnkelvoudigInformatieObjectVersie.IsGereedVoorPublicatie
+                    );
+                }
+
+                var _enkelvoudigInformatieObject = await enkelvoudigInformatieObjectQuery
                     .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
                         .ThenInclude(v => v.BestandsDelen) // Note: Important here to keep audittrail consistent with the actual locked/unlocked state of the document (see handling of incompleted multi-part documents in the code below)
                     .SingleOrDefaultAsync(e => e.Id == request.Id, token);
@@ -84,7 +96,17 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
                 if (_enkelvoudigInformatieObject == null)
                 {
                     // The object might be locked OR not exist - check if it exists without lock
-                    var exists = await _context.EnkelvoudigInformatieObjecten.Where(rsinFilter).AnyAsync(e => e.Id == request.Id, token);
+                    IQueryable<EnkelvoudigInformatieObject> existsQuery = _context.EnkelvoudigInformatieObjecten.Where(rsinFilter);
+
+                    if (alleenIsGereedVoorPublicatie)
+                    {
+                        existsQuery = existsQuery.Where(v =>
+                            v.LatestEnkelvoudigInformatieObjectVersie.IsGereedVoorPublicatie.HasValue
+                            && alleenIsGereedVoorPublicatie == v.LatestEnkelvoudigInformatieObjectVersie.IsGereedVoorPublicatie
+                        );
+                    }
+
+                    var exists = await existsQuery.AnyAsync(e => e.Id == request.Id, token);
 
                     if (!exists)
                     {
