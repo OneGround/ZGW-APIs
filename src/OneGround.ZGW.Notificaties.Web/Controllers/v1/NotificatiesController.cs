@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -32,14 +31,20 @@ namespace OneGround.ZGW.Notificaties.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class NotificatiesController : ZGWControllerBase
 {
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+
     public NotificatiesController(
         ILogger<NotificatiesController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+    {
+        _mapsterMapper = mapsterMapper;
+    }
 
     /// <summary>
     /// Publiceer een notificatie.
@@ -57,7 +62,7 @@ public class NotificatiesController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(NotificeerAsync), notificatieRequest);
 
-        var notificatie = _mapper.Map<Notificatie>(notificatieRequest);
+        var notificatie = _mapsterMapper.Map<Notificatie>(notificatieRequest);
 
         var result = await _mediator.Send(new QueueNotificatieCommand { Notificatie = notificatie });
 
