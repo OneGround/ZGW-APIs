@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -31,18 +30,24 @@ namespace OneGround.ZGW.Notificaties.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class AbonnementController : ZGWControllerBase
 {
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
     private readonly IValidatorService _validatorService;
 
     public AbonnementController(
         ILogger<AbonnementController> logger,
         IMediator mediator,
-        IMapper mapper,
-        IRequestMerger requestMerger,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _validatorService = validatorService;
     }
 
@@ -62,7 +67,7 @@ public class AbonnementController : ZGWControllerBase
 
         var result = await _mediator.Send(new GetAllAbonnementenQuery());
 
-        var abonnementenResponse = _mapper.Map<IReadOnlyList<AbonnementResponseDto>>(result.Result);
+        var abonnementenResponse = _mapsterMapper.Map<IReadOnlyList<AbonnementResponseDto>>(result.Result);
 
         return Ok(abonnementenResponse);
     }
@@ -89,7 +94,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var abonnementResponse = _mapper.Map<AbonnementResponseDto>(result.Result);
+        var abonnementResponse = _mapsterMapper.Map<AbonnementResponseDto>(result.Result);
 
         return Ok(abonnementResponse);
     }
@@ -109,7 +114,7 @@ public class AbonnementController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(CreateAsync), abonnementRequest);
 
-        Abonnement abonnement = _mapper.Map<Abonnement>(abonnementRequest);
+        Abonnement abonnement = _mapsterMapper.Map<Abonnement>(abonnementRequest);
 
         var result = await _mediator.Send(new CreateAbonnementCommand { Abonnement = abonnement });
 
@@ -118,7 +123,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var abonnementResponse = _mapper.Map<AbonnementResponseDto>(result.Result);
+        var abonnementResponse = _mapsterMapper.Map<AbonnementResponseDto>(result.Result);
 
         return Created(abonnementResponse.Url, abonnementResponse);
     }
@@ -139,7 +144,7 @@ public class AbonnementController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), abonnementRequest, id);
 
-        Abonnement abonnement = _mapper.Map<Abonnement>(abonnementRequest);
+        Abonnement abonnement = _mapsterMapper.Map<Abonnement>(abonnementRequest);
 
         var result = await _mediator.Send(new UpdateAbonnementCommand { Abonnement = abonnement, Id = id });
 
@@ -153,7 +158,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var abonnementResponse = _mapper.Map<AbonnementResponseDto>(result.Result);
+        var abonnementResponse = _mapsterMapper.Map<AbonnementResponseDto>(result.Result);
 
         return Ok(abonnementResponse);
     }
@@ -181,7 +186,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        AbonnementRequestDto mergedAbonnementRequest = _requestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(
+        AbonnementRequestDto mergedAbonnementRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(
             resultGet.Result,
             partialAbonnementRequest
         );
@@ -191,7 +196,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        Abonnement mergedAbonnement = _mapper.Map<Abonnement>(mergedAbonnementRequest);
+        Abonnement mergedAbonnement = _mapsterMapper.Map<Abonnement>(mergedAbonnementRequest);
 
         var resultUpd = await _mediator.Send(new UpdateAbonnementCommand { Abonnement = mergedAbonnement, Id = id });
 
@@ -200,7 +205,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var abonnementResponse = _mapper.Map<AbonnementResponseDto>(resultUpd.Result);
+        var abonnementResponse = _mapsterMapper.Map<AbonnementResponseDto>(resultUpd.Result);
 
         return Ok(abonnementResponse);
     }
