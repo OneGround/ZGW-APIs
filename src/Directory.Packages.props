@@ -6,7 +6,7 @@
     <PackageVersion Include="Asp.Versioning.Mvc" Version="6.4.1" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="6.4.0" />
     <PackageVersion Include="AutoMapper" Version="14.0.0" />
-    <PackageVersion Include="CSharpier.MsBuild" Version="1.2.6" />
+    <PackageVersion Include="CSharpier.MsBuild" Version="1.3.0" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="Dapper" Version="2.1.72" />
     <PackageVersion Include="Duende.AspNetCore.Authentication.OAuth2Introspection" Version="6.3.0" />
