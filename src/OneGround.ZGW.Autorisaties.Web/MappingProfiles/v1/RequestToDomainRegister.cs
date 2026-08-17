@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Mapster;
 using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
@@ -30,7 +31,13 @@ public class RequestToDomainRegister : IRegister
             // documentary today — there is no source member to map from. What actually keeps a v1 request
             // from resetting a stored v1.1 value is the version guard in ApplicatieUpdater.
             .Ignore(dest => dest.AlleenIsGereedVoorPublicatie)
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => new ApplicatieClient { ClientId = client }));
+            // Ignore()+AfterMapping, never Map(). Map() breaks twice over: ApplicatieClient navigates back
+            // to Applicatie, and mapping into that cyclic type overflows the stack while the plan is being
+            // COMPILED; and the mapper does not null-guard a method call inside a Map() lambda, so a null
+            // ClientIds throws where AutoMapper produced an empty collection. Cutting only the cycle still
+            // compiles and still looks green — it silently restores the second failure.
+            .Ignore(dest => dest.ClientIds)
+            .AfterMapping((src, dst) => dst.ClientIds = ConvertClientIdsToApplicatieClients(src.ClientIds).ToList());
 
         config
             .NewConfig<AutorisatieRequestDto, Autorisatie>()
@@ -38,5 +45,19 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Applicatie)
             .Ignore(dest => dest.ApplicatieId)
             .Ignore(dest => dest.Owner);
+    }
+
+    // Null in, empty list out: what the AutoMapper mapping this replaced produced.
+    private static IEnumerable<ApplicatieClient> ConvertClientIdsToApplicatieClients(IEnumerable<string> clientIds)
+    {
+        if (clientIds == null)
+        {
+            yield break;
+        }
+
+        foreach (var clientId in clientIds)
+        {
+            yield return new ApplicatieClient { ClientId = clientId };
+        }
     }
 }

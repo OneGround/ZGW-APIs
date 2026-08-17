@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
@@ -17,15 +18,13 @@ using ApplicatieRequestDtoV11 = OneGround.ZGW.Autorisaties.Contracts.v1._1.Reque
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// Guards the mapping contracts AC depends on OUTSIDE its controllers' own <c>Map</c> calls: the PATCH
-/// merge via <see cref="IZgwRequestMerger"/>, for both contract versions. The per-register tests in this
-/// folder build an isolated TypeAdapterConfig and cannot see this path — they stayed green while the
-/// v1 PATCH merge was resolving an AutoMapper map that had already been deleted.
+/// The PATCH merge via <see cref="IZgwRequestMerger"/> — the one mapping contract AC depends on outside
+/// its controllers. own Map calls. The per-register tests build an isolated config and cannot see it;
+/// they stayed green while this path resolved an AutoMapper map that had already been deleted.
 /// </summary>
 /// <remarks>
-/// AC sets <c>RegisterSharedAudittrailHandlers = false</c> and has no expanders, so the merger is the
-/// only such consumer today. Mapster convention-maps instead of throwing on a missing map, so a dropped
-/// register here would produce a quietly wrong PATCH result rather than an exception.
+/// A dropped register here is silent: Mapster convention-maps instead of throwing, so the PATCH result
+/// comes back quietly wrong rather than as an exception.
 /// </remarks>
 public class AcMapperContractTests : IDisposable
 {
@@ -61,9 +60,8 @@ public class AcMapperContractTests : IDisposable
     [Fact]
     public void AC_resolves_the_Mapster_backed_mapper()
     {
-        // If this ever regresses to the AutoMapper adapter, AC has no profiles left and every shared
-        // consumer would map against an empty configuration — so assert the routing directly rather
-        // than inferring it from a successful map.
+        // AC has no AutoMapper profiles left, so a regression to that adapter would map every shared
+        // consumer against an empty configuration. Asserted directly, not inferred from a working map.
         Assert.IsType<MapsterZgwMapper>(_zgwMapper);
     }
 
@@ -75,11 +73,12 @@ public class AcMapperContractTests : IDisposable
 
         var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV1, Applicatie>(existing, patch);
 
-        // The patched field comes from the JObject; the untouched fields can only come from the existing
-        // entity having been mapped in first, which is the step that needs the register.
+        // The untouched fields can only come from the existing entity having been mapped in first —
+        // the step that needs the register.
         Assert.Equal("gewijzigd label", merged.Label);
         Assert.Equal(existing.HeeftAlleAutorisaties, merged.HeeftAlleAutorisaties);
         Assert.Equal(["client-a"], merged.ClientIds);
+        AssertAutorisatiesSurvivedTheMerge(merged.Autorisaties);
     }
 
     [Fact]
@@ -95,6 +94,20 @@ public class AcMapperContractTests : IDisposable
         Assert.Equal(["client-a"], merged.ClientIds);
         // A PATCH that does not mention the v1.1-only field must not silently reset it.
         Assert.True(merged.AlleenIsGereedVoorPublicatie);
+        // v1.1 reuses v1's AUTORISATIE request DTO, so this resolves through v1's register.
+        AssertAutorisatiesSurvivedTheMerge(merged.Autorisaties);
+    }
+
+    /// <summary>
+    /// A PATCH that never mentions autorisaties still round-trips them through the request DTO. If that
+    /// nested mapping is dropped they come back empty and the update handler removes every authorization
+    /// the application had, answering 200.
+    /// </summary>
+    private static void AssertAutorisatiesSurvivedTheMerge(List<AutorisatieRequestDto> autorisaties)
+    {
+        var autorisatie = Assert.Single(autorisaties);
+        Assert.Equal(Component.zrc.ToString(), autorisatie.Component);
+        Assert.Equal(["zaken.lezen"], autorisatie.Scopes);
     }
 
     private static Applicatie ExistingApplicatie() =>

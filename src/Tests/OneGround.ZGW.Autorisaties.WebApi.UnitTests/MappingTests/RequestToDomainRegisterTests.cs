@@ -14,17 +14,15 @@ using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainRegisterTests
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly IMapper _mapper;
 
-    public RequestToDomainProfileTests()
+    public RequestToDomainRegisterTests()
     {
         var config = new TypeAdapterConfig();
-        // The real seam (AddZgwMapster) registers the global nullable-enum rule once, before any
-        // IRegister.Register runs. This test builds its config directly from RequestToDomainRegister
-        // without going through AddZgwMapster, so the rule must be added explicitly here too.
+        // Added by hand because this config skips AddZgwMapster, which registers the rule centrally.
         config.RegisterNullableEnumRule();
         new RequestToDomainRegister().Register(config);
         config.Compile();
@@ -59,6 +57,28 @@ public class RequestToDomainProfileTests
         Assert.Null(result.Owner);
     }
 
+    // The test above drops Autorisaties to isolate the APPLICATIE members, so the nested collection needs
+    // its own case. Proves the rule is wired, not that it survives the seam — AcMapsterWiringTests does that.
+    [Fact]
+    public void ApplicatieRequestDto_Maps_Nested_Autorisaties()
+    {
+        _fixture.Customize<AutorisatieRequestDto>(c =>
+            c.With(p => p.Component, Component.zrc.ToString())
+                .With(p => p.MaxVertrouwelijkheidaanduiding, VertrouwelijkheidAanduiding.geheim.ToString())
+        );
+        _fixture.Customize<ApplicatieRequestDto>(c => c.With(p => p.ClientIds, ["id1"]));
+
+        var value = _fixture.Create<ApplicatieRequestDto>();
+        var result = _mapper.Map<Applicatie>(value);
+
+        Assert.NotEmpty(value.Autorisaties);
+        Assert.Equal(value.Autorisaties.Count, result.Autorisaties.Count);
+        Assert.Equal(Component.zrc, result.Autorisaties[0].Component);
+        Assert.Equal(VertrouwelijkheidAanduiding.geheim, result.Autorisaties[0].MaxVertrouwelijkheidaanduiding);
+        // Owner is Ignored on the nested map too — handlers set it from the authenticated context.
+        Assert.Null(result.Autorisaties[0].Owner);
+    }
+
     [Fact]
     public void AutorisatieRequestDto_Maps_To_Autorisatie()
     {
@@ -77,10 +97,8 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.MaxVertrouwelijkheidaanduiding, result.MaxVertrouwelijkheidaanduiding.ToString());
     }
 
-    // Guards the global nullable-enum rule (registered via config.RegisterNullableEnumRule() in this
-    // test's constructor, mirroring what AddZgwMapster does centrally for the real seam) — if that
-    // rule is ever missing, this silently regresses to VertrouwelijkheidAanduiding.openbaar, not a
-    // visible failure.
+    // Without the global nullable-enum rule this silently yields VertrouwelijkheidAanduiding.openbaar
+    // rather than failing.
     [Fact]
     public void Empty_MaxVertrouwelijkheidaanduiding_Maps_To_Null()
     {

@@ -15,9 +15,8 @@ using RequestToDomainRegisterV1 = OneGround.ZGW.Autorisaties.Web.MappingProfiles
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The v1.1 counterpart of <see cref="RequestToDomainProfileTests"/>. v1.1's APPLICATIE request carries
-/// <c>AlleenIsGereedVoorPublicatie</c> and reuses v1's AUTORISATIE request DTO, so v1's register is added
-/// to the same config — mirroring the single scanned config the real seam builds.
+/// The v1.1 counterpart of <see cref="RequestToDomainRegisterTests"/>. v1.1 reuses v1.s AUTORISATIE
+/// request DTO, so v1.s register goes into the same config, as the real seam.s single scanned config does.
 /// </summary>
 public class RequestToDomainRegisterV11Tests
 {
@@ -27,9 +26,7 @@ public class RequestToDomainRegisterV11Tests
     public RequestToDomainRegisterV11Tests()
     {
         var config = new TypeAdapterConfig();
-        // The real seam (AddZgwMapster) registers the global nullable-enum rule once, before any
-        // IRegister.Register runs. This test builds its config directly from the registers, so the rule
-        // must be added explicitly here too.
+        // Added by hand because this config skips AddZgwMapster, which registers the rule centrally.
         config.RegisterNullableEnumRule();
         new RequestToDomainRegisterV1().Register(config);
         new RequestToDomainRegister().Register(config);
@@ -72,8 +69,7 @@ public class RequestToDomainRegisterV11Tests
 
         Assert.NotEmpty(value.Autorisaties);
         Assert.Equal(value.Autorisaties.Count, result.Autorisaties.Count);
-        // v1.1 reuses v1's AutorisatieRequestDto, so the nested string->enum conversions can only work if
-        // convention-based nested mapping picked up v1's AutorisatieRequestDto -> Autorisatie rule.
+        // These conversions only work if the nested mapping picked up v1.s AUTORISATIE rule.
         Assert.Equal(Component.zrc, result.Autorisaties[0].Component);
         Assert.Equal(VertrouwelijkheidAanduiding.geheim, result.Autorisaties[0].MaxVertrouwelijkheidaanduiding);
         // Owner is Ignored on the nested map too — handlers set it from the authenticated context.

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Mapster;
 using OneGround.ZGW.Autorisaties.Contracts.v1._1.Requests;
@@ -18,10 +19,27 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.FutureAutorisaties)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.Owner)
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => new ApplicatieClient { ClientId = client }));
+            // Ignore()+AfterMapping, never Map() — see v1's register. Separate NewConfig, so it needs its
+            // own AfterMapping.
+            .Ignore(dest => dest.ClientIds)
+            .AfterMapping((src, dst) => dst.ClientIds = ConvertClientIdsToApplicatieClients(src.ClientIds).ToList());
         // dest.AlleenIsGereedVoorPublicatie needs no rule: same name, same type. Whether it is actually
         // applied to the stored entity is decided by version in ApplicatieUpdater, not here.
         // dest.Autorisaties is convention-mapped through v1's AutorisatieRequestDto -> Autorisatie rule
         // (v1.1 reuses that request DTO); no v1.1-specific AUTORISATIE map exists.
+    }
+
+    // Null in, empty list out — see v1's register.
+    private static IEnumerable<ApplicatieClient> ConvertClientIdsToApplicatieClients(IEnumerable<string> clientIds)
+    {
+        if (clientIds == null)
+        {
+            yield break;
+        }
+
+        foreach (var clientId in clientIds)
+        {
+            yield return new ApplicatieClient { ClientId = clientId };
+        }
     }
 }

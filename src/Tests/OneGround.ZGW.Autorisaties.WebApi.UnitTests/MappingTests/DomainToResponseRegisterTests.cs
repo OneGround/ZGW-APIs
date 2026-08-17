@@ -15,7 +15,7 @@ using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests : IDisposable
+public class DomainToResponseRegisterTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
@@ -23,7 +23,7 @@ public class DomainToResponseProfileTests : IDisposable
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
 
-    public DomainToResponseProfileTests()
+    public DomainToResponseRegisterTests()
     {
         _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
 
@@ -31,12 +31,8 @@ public class DomainToResponseProfileTests : IDisposable
         new DomainToResponseRegister().Register(config);
         config.Compile();
 
-        // MapsterUrlResolver reads IEntityUriService from MapContext, which ServiceMapper populates
-        // from the DI container — so the mapper must be a ServiceMapper with the mock registered.
-        // The provider/scope must stay alive for the lifetime of this test class: MapsterUrlResolver
-        // resolves IEntityUriService lazily via MapContext at Map()-call time (inside each [Fact]),
-        // not eagerly here in the constructor — disposing them here throws ObjectDisposedException
-        // once a [Fact] runs.
+        // Must be a ServiceMapper: the URL resolver pulls IEntityUriService from MapContext. The
+        // provider/scope outlive the constructor because it resolves lazily at Map()-call time.
         var services = new ServiceCollection();
         services.AddSingleton(_mockedUriService.Object);
         services.AddSingleton(config);
@@ -120,8 +116,7 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.NotNull(result.Autorisaties);
         Assert.Single(result.Autorisaties);
         Assert.Equal(Component.zrc.ToString(), result.Autorisaties[0].Component);
-        // ComponentWeergave is a computed field from the nested Autorisatie->AutorisatieResponseDto rule;
-        // it is only populated if convention-based nested mapping used the local config (not GlobalSettings).
+        // Only populated if the nested mapping used the local config rather than GlobalSettings.
         Assert.Equal("Zaakregistratiecomponent", result.Autorisaties[0].ComponentWeergave);
     }
 }

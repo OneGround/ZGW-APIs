@@ -18,10 +18,8 @@ using DomainToResponseRegisterV1 = OneGround.ZGW.Autorisaties.Web.MappingProfile
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The v1.1 counterpart of <see cref="DomainToResponseProfileTests"/>. v1.1 adds
-/// <c>AlleenIsGereedVoorPublicatie</c> to the APPLICATIE contract and reuses v1's AUTORISATIE DTOs, so
-/// both registers go into one config here — exactly like the real seam, where <c>config.Scan</c> collects
-/// every register in the Web assembly into a single <see cref="TypeAdapterConfig"/>.
+/// The v1.1 counterpart of <see cref="DomainToResponseRegisterTests"/>. v1.1 reuses v1.s AUTORISATIE
+/// DTOs, so both registers go into one config here, as the real seam.s single scanned config does.
 /// </summary>
 public class DomainToResponseRegisterV11Tests : IDisposable
 {
@@ -40,9 +38,7 @@ public class DomainToResponseRegisterV11Tests : IDisposable
         new DomainToResponseRegister().Register(config);
         config.Compile();
 
-        // MapsterUrlResolver reads IEntityUriService from MapContext, which only ServiceMapper populates
-        // from the DI container. The provider/scope must outlive the constructor: the resolver resolves
-        // lazily at Map()-call time inside each [Fact].
+        // Must be a ServiceMapper, and the provider/scope must outlive the constructor — see v1.s tests.
         var services = new ServiceCollection();
         services.AddSingleton(_mockedUriService.Object);
         services.AddSingleton(config);
@@ -69,9 +65,7 @@ public class DomainToResponseRegisterV11Tests : IDisposable
         Assert.Equal(value.HeeftAlleAutorisaties, result.HeeftAlleAutorisaties);
         Assert.Equal(value.AlleenIsGereedVoorPublicatie, result.AlleenIsGereedVoorPublicatie);
         Assert.Equal(value.Label, result.Label);
-        // The mock returns a literal unrelated to Applicatie.Url's own computed value, so this only
-        // passes if MapsterUrlResolver actually reached IEntityUriService through DI — a same-name
-        // convention copy would have yielded the entity's own $"/applicaties/{Id}".
+        // The mock.s literal is unrelated to Applicatie.Url, so a same-name convention copy would fail this.
         Assert.Equal("https://example.test/resolved-via-di", result.Url);
     }
 
@@ -110,8 +104,7 @@ public class DomainToResponseRegisterV11Tests : IDisposable
         Assert.NotNull(result.Autorisaties);
         Assert.Single(result.Autorisaties);
         Assert.Equal(Component.zrc.ToString(), result.Autorisaties[0].Component);
-        // v1.1 declares no AUTORISATIE map of its own — it reuses v1's DTO. ComponentWeergave is only
-        // populated if convention-based nested mapping found v1's Autorisatie rule in the shared config.
+        // v1.1 declares no AUTORISATIE map: this only passes if the nested mapping found v1.s rule.
         Assert.Equal("Zaakregistratiecomponent", result.Autorisaties[0].ComponentWeergave);
     }
 }
