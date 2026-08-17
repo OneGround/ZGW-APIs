@@ -51,7 +51,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IValidatorService _validatorService;
     private readonly IObjectExpander<EnkelvoudigInformatieObjectGetResponseDto> _expander;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
@@ -69,7 +68,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _expander = expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
     }
@@ -498,7 +496,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Download)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
-    [Produces("application/octet-stream")]
+    [Produces("application/octet-stream", "application/json")]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,

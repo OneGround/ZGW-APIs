@@ -72,6 +72,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.Ignore())
             .ForMember(dest => dest.Trefwoorden, opt => opt.Ignore())
             .ForMember(dest => dest.InhoudIsVervallen, opt => opt.Ignore())
+            .ForMember(dest => dest.IsGereedVoorPublicatie, opt => opt.Ignore())
+            .ForMember(dest => dest.TonenAanInitiator, opt => opt.Ignore())
             .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore())
             .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
 
@@ -135,6 +137,8 @@ public class RequestToDomainProfile : Profile
             .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Owner, opt => opt.Ignore())
             .ForMember(dest => dest.Verschijningsvorm, opt => opt.Ignore())
+            .ForMember(dest => dest.IsGereedVoorPublicatie, opt => opt.Ignore())
+            .ForMember(dest => dest.TonenAanInitiator, opt => opt.Ignore())
             .ForMember(dest => dest.Trefwoorden, opt => opt.Ignore())
             .ForMember(dest => dest.InhoudIsVervallen, opt => opt.Ignore())
             .ForMember(dest => dest.LatestInformatieObject, opt => opt.Ignore())

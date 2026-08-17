@@ -70,7 +70,7 @@ public class Startup
         services.AddZGWApi(
             "Documenten",
             Configuration,
-            Api.LatestVersion_1_5,
+            Api.LatestVersion_1_5, // TODO: If implemented all then we should set to 1.7
             c =>
             {
                 c.MvcOptions = (o) =>
@@ -180,7 +180,7 @@ public class Startup
         services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HttpLoggingFilter>());
 
         // Register the query parameter validation filters globally
-        services.AddQueryParameterValidations();
+        services.AddQueryAndSearchParameterValidations();
     }
 
     public static void Configure(WebApplication app, IWebHostEnvironment env)

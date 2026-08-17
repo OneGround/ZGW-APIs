@@ -122,7 +122,7 @@ class UpdateVerzendingCommandHandler
             return new CommandResult<Verzending>(null, CommandStatus.Forbidden);
         }
 
-        _verzendingBusinessRuleService.Validate(existingVerzending.InformatieObject, verzending, request.Id, errors);
+        _verzendingBusinessRuleService.Validate(existingVerzending.InformatieObject, verzending, request.Id, request.Version, errors);
 
         if (errors.Count != 0)
         {
@@ -165,6 +165,7 @@ class UpdateVerzendingCommand : IRequest<CommandResult<Verzending>>
 {
     public Guid Id { get; internal set; }
     public string InformatieObjectUrl { get; internal set; }
+    public decimal Version { get; internal set; }
     public Verzending Verzending { get; internal set; } // For PUT endpoint, contains the full update sent by the client
     public dynamic PartialObject { get; internal set; } // For PATCH endpoint, contains the partial update sent by the client
 }

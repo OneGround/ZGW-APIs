@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace OneGround.ZGW.Common.Web.Authorization;
 
@@ -23,4 +23,9 @@ public class AuthorizedApplication
     /// Gets rsin value which application is authorized for.
     /// </summary>
     public string Rsin { get; set; }
+
+    /// <summary>
+    /// Flag indicating 'Only Ready for publication'.
+    /// </summary>
+    public bool AlleenIsGereedVoorPublicatie { get; set; }
 }

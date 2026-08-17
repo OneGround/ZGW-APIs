@@ -14,11 +14,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
-using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
+using OneGround.ZGW.Common.Web.Expands;
+using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
@@ -26,31 +27,31 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
-using OneGround.ZGW.Documenten.Contracts.v1.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1.Requests;
-using OneGround.ZGW.Documenten.Contracts.v1.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Configuration;
-using OneGround.ZGW.Documenten.Web.Contracts.v1;
-using OneGround.ZGW.Documenten.Web.Handlers.v1;
-using OneGround.ZGW.Documenten.Web.Models.v1;
+using OneGround.ZGW.Documenten.Web.Handlers.v1._7;
+using OneGround.ZGW.Documenten.Web.Models.v1._7;
 using Swashbuckle.AspNetCore.Annotations;
 
-//
-// Bron DRC API: https://documenten-api.vng.cloud/api/v1/schema/
+// DRC large files: https://vng-realisatie.github.io/gemma-zaken/ontwikkelaars/handleidingen-en-tutorials/large-files
 
-namespace OneGround.ZGW.Documenten.Web.Controllers.v1;
+namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 
 [ApiController]
 [Authorize]
-[ZgwApiVersion(Api.LatestVersion_1_0)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
+
+    //private readonly IObjectExpander<EnkelvoudigInformatieObjectGetResponseDto> _expander; // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
     private readonly ApplicationConfiguration _applicationConfiguration;
 
     public EnkelvoudigInformatieObjectenController(
@@ -60,13 +61,15 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
-        IErrorResponseBuilder errorResponseBuilder,
-        IValidatorService validatorService
+        IErrorResponseBuilder errorResponseBuilder /*
+        IExpanderFactory expanderFactory*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
+        // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+        //_expander = expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
     }
 
     //
@@ -81,9 +84,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Operations.EnkelvoudigInformatieObjecten.List)]
+    [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseExpandedDto>))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllEnkelvoudigInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
         [FromQuery] GetAllEnkelvoudigInformatieObjectenQueryParameters queryParameters,
@@ -108,10 +112,16 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
 
+        var expandLookup = ExpandLookup(queryParameters.Expand);
+
+        var enkelvoudigInformatieObjectenWithOptionalExpand = enkelvoudigInformatieObjectenResponse
+        //.Select(e => _expander.ResolveAsync(expandLookup, e).Result) // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+        .ToList();
+
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,
             pagination,
-            enkelvoudigInformatieObjectenResponse,
+            enkelvoudigInformatieObjectenWithOptionalExpand,
             result.Result.Count
         );
 
@@ -137,24 +147,27 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <summary>
     /// Een specifieke ENKELVOUDIGEINFORMATIEOBJECT opvragen.
     /// </summary>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Operations.EnkelvoudigInformatieObjecten.Read)]
+    [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseExpandedDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ETagFilter]
+    [Expand]
     public async Task<IActionResult> GetAsync(
         Guid id,
-        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
-        var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
+        var filter = _mapper.Map<Models.v1.GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
@@ -171,7 +184,12 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
+        var enkelvoudigInformatieObject = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
+
+        var expandLookup = ExpandLookup(queryParameters.Expand);
+
+        // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+        //var enkelvoudigInformatieObjectWithOptionalExpand = await _expander.ResolveAsync(expandLookup, enkelvoudigInformatieObject);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -185,7 +203,101 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             cancellationToken
         );
 
-        return Ok(enkelvoudigInformatieObjectResponse);
+        return Ok( /*enkelvoudigInformatieObjectWithOptionalExpand*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+            enkelvoudigInformatieObject
+        );
+    }
+
+    /// <summary>
+    /// De headers voor een specifiek(e) ENKELVOUDIG INFORMATIE OBJECT opvragen.
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="304">Not Modified</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpHead(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.ReadHead)]
+    [Scope(AuthorizationScopes.Documenten.Read)]
+    [ETagFilter]
+    [Expand]
+    public Task<IActionResult> HeadAsync(
+        Guid id,
+        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        CancellationToken cancellationToken
+    )
+    {
+        return GetAsync(id, queryParameters, cancellationToken);
+    }
+
+    //
+    // HTTP POST http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/_zoek
+
+    /// <summary>
+    /// Voer een zoekopdracht uit op (ENKELVOUDIG) INFORMATIEOBJECTen.
+    /// </summary>
+    /// <remarks>
+    /// Zoeken/filteren gaat normaal via de list operatie, deze is echter niet geschikt voor zoekopdrachten met UUIDs.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Search, Name = Contracts.v1._5.Operations.EnkelvoudigInformatieObjecten.Search)]
+    [Scope(AuthorizationScopes.Documenten.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseExpandedDto>))]
+    [Expand]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<EnkelvoudigInformatieObjectSearchRequestDto>))]
+    public async Task<IActionResult> SearchAsync(
+        [FromBody] EnkelvoudigInformatieObjectSearchRequestDto enkelvoudiginformatieobjectSearchRequest,
+        int page = 1,
+        CancellationToken cancellationToken = default
+    )
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Page}", nameof(SearchAsync), enkelvoudiginformatieobjectSearchRequest, page);
+
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
+        var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(enkelvoudiginformatieobjectSearchRequest);
+
+        var result = await _mediator.Send(
+            new GetAllEnkelvoudigInformatieObjectenQuery { GetAllEnkelvoudigInformatieObjectenFilter = filter, Pagination = pagination },
+            cancellationToken
+        );
+
+        if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
+        {
+            return _errorResponseBuilder.PageNotFound();
+        }
+
+        var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
+
+        var expandLookup = ExpandLookup(enkelvoudiginformatieobjectSearchRequest.Expand);
+
+        var enkelvoudigInformatieObjectenWithOptionalExpand = enkelvoudigInformatieObjectenResponse
+        // .Select(e => _expander.ResolveAsync(expandLookup, e).Result) // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+        .ToList();
+
+        var paginationResponse = _paginationHelper.CreatePaginatedResponse(
+            pagination,
+            enkelvoudigInformatieObjectenWithOptionalExpand,
+            result.Result.Count
+        );
+
+        await _mediator.Send(
+            new LogAuditTrailGetObjectListCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.Minimal,
+                Page = pagination.Page,
+                Count = paginationResponse.Results.Count(),
+                TotalCount = paginationResponse.Count,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.DRC, Resource = "enkelvoudiginformatieobject" },
+            },
+            cancellationToken
+        );
+
+        return Ok(paginationResponse);
     }
 
     //
@@ -198,7 +310,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="403">Forbidden</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Create, Name = Operations.EnkelvoudigInformatieObjecten.Create)]
+    [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Create, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Create)]
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(EnkelvoudigInformatieObjectCreateResponseDto))]
@@ -251,7 +363,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPut(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Operations.EnkelvoudigInformatieObjecten.Update)]
+    [HttpPut(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
@@ -277,7 +389,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
 
         var result = await _mediator.Send(
-            new CreateEnkelvoudigInformatieObjectCommand
+            new UpdateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = enkelvoudigInformatieObjectVersie, // Note: Indicates that the versie should be fully replaced in the command handler
@@ -311,6 +423,9 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         return Ok(enkelvoudigInformatieObjectResponse);
     }
 
+    //
+    // HTTP PATCH http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/59bad509-840b-4cd0-82dc-cbda74a75c2b
+
     /// <summary>
     /// Werk een (ENKELVOUDIG) INFORMATIEOBJECT deels bij.
     /// </summary>
@@ -320,7 +435,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPatch(ApiRoutes.EnkelvoudigInformatieObjecten.Update, Name = Operations.EnkelvoudigInformatieObjecten.PartialUpdate)]
+    [HttpPatch(
+        Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Update,
+        Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.PartialUpdate
+    )]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
@@ -331,10 +449,11 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         CancellationToken cancellationToken
     )
     {
+        // We do log only the request not the partial update request (because can be large)
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
         var result = await _mediator.Send(
-            new CreateEnkelvoudigInformatieObjectCommand
+            new UpdateEnkelvoudigInformatieObjectCommand
             {
                 ExistingEnkelvoudigInformatieObjectId = id,
                 EnkelvoudigInformatieObjectVersie = null,
@@ -381,21 +500,27 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Operations.EnkelvoudigInformatieObjecten.Download)]
+    [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Download, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Download)]
     [Scope(AuthorizationScopes.Documenten.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [Produces("application/octet-stream", "application/json")]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
-        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(DownloadAsync), id, queryParameters);
 
-        var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
+        var filter = _mapper.Map<Models.v1.GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
         var resultGet = await _mediator.Send(
-            new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
+            new GetEnkelvoudigInformatieObjectQuery
+            {
+                Id = id,
+                GetEnkelvoudigInformatieObjectFilter = filter,
+                IgnoreNotCompletedDocuments = true,
+            },
             cancellationToken
         );
 
@@ -411,19 +536,27 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObjectVersie = resultGet.Result.LatestEnkelvoudigInformatieObjectVersie; // Note: Latest is mapped to the requested version from GetEnkelvoudigInformatieObjectQuery (so it could be a different one)
 
-        // Note: When a v1.1 multi-part document is uploaded (and not completed yet) the
-        //       download under v1 must be handled with care because inhoud field is null so an extra check is needed here!
-        //   or:
-        //       When a 1.1 mata-only document is added an retrieved by a 1.0 version
-        if (enkelvoudigInformatieObjectVersie.Inhoud == null)
+        // Note: New in v1.1: if file size = 0, i.e.EnkelvoudigInformatieObject contains only metadata without file content.The EnkelvoudigInformatieObject is created using a single request to Documenten API.
+        if (enkelvoudigInformatieObjectVersie.Bestandsomvang == 0 && enkelvoudigInformatieObjectVersie.Inhoud == null)
         {
-            return _errorResponseBuilder.NotFound();
+            if (_applicationConfiguration.DocumentJobPrioritizationAtDownload)
+            {
+                await _mediator.Send(
+                    new Handlers.v1._1.PrioritizationDocumentJobCommand
+                    {
+                        EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
+                    },
+                    cancellationToken
+                );
+            }
+            // Document meta does exists but no content
+            return NoContent(); // TODO: Unclear what to return. ZGW reference does respond with HTTP Status 500. I think 204 [NoContent] make sense here
         }
 
         var documentUrn = new DocumentUrn(enkelvoudigInformatieObjectVersie.Inhoud);
 
         var resultDwnl = await _mediator.Send(
-            new DownloadEnkelvoudigInformatieObjectQuery
+            new Handlers.v1._5.DownloadEnkelvoudigInformatieObjectQuery
             {
                 DocumentUrn = documentUrn,
                 EnkelvoudigInformatieObjectId = enkelvoudigInformatieObjectVersie.EnkelvoudigInformatieObjectId,
@@ -461,9 +594,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         return File(resultDwnl.Result, mimeType);
     }
 
-    //
-    // HTTP POST https://documenten-api.vng.cloud/api/v1/enkelvoudiginformatieobjecten/b24ee37c-00db-4108-b831-e3b420b35a09/lock
-
     /// <summary>
     /// Vergrendel een (ENKELVOUDIG) INFORMATIEOBJECT.
     /// Voert een "checkout" uit waardoor het (ENKELVOUDIG) INFORMATIEOBJECT vergrendeld wordt met een lock waarde.
@@ -475,15 +605,13 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Lock, Name = Operations.EnkelvoudigInformatieObjecten.Lock)]
+    [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Lock, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Lock)]
     [Scope(AuthorizationScopes.Documenten.Lock)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(LockResponseDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(Documenten.Contracts.v1.Responses.LockResponseDto))]
     public async Task<IActionResult> LockAsync(Guid id, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(LockAsync), id);
-
         var result = await _mediator.Send(new LockEnkelvoudigInformatieObjectCommand { Id = id, Set = true }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
@@ -506,7 +634,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Conflict(result.Errors);
         }
 
-        var response = new LockResponseDto { Lock = result.Result };
+        var response = new Documenten.Contracts.v1.Responses.LockResponseDto { Lock = result.Result };
 
         return Ok(response);
     }
@@ -525,15 +653,17 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPost(ApiRoutes.EnkelvoudigInformatieObjecten.Unlock, Name = Operations.EnkelvoudigInformatieObjecten.Unlock)]
+    [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Unlock, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Unlock)]
     [Scope(AuthorizationScopes.Documenten.Lock, AuthorizationScopes.Documenten.ForcedUnlock)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [IgnoreMissingContentType]
-    public async Task<IActionResult> UnlockAsync(Guid id, [FromBody] LockRequestDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UnlockAsync(
+        Guid id,
+        [FromBody] Documenten.Contracts.v1.Requests.LockRequestDto request,
+        CancellationToken cancellationToken
+    )
     {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromBody}", nameof(UnlockAsync), id, request);
-
         var result = await _mediator.Send(
             new LockEnkelvoudigInformatieObjectCommand
             {
@@ -567,9 +697,6 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         return NoContent();
     }
 
-    //
-    // HTTP DELETE https://documenten-api.vng.cloud/api/v1/enkelvoudiginformatieobjecten/b24ee37c-00db-4108-b831-e3b420b35a09
-
     /// <summary>
     /// Verwijder een (ENKELVOUDIG) INFORMATIEOBJECT.
     /// Verwijder een(ENKELVOUDIG) INFORMATIEOBJECT en alle bijbehorende versies, samen met alle gerelateerde resources binnen deze API.
@@ -582,13 +709,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="409">EnkelvoudigInformatieObject was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpDelete(ApiRoutes.EnkelvoudigInformatieObjecten.Delete, Name = Operations.EnkelvoudigInformatieObjecten.Delete)]
+    [HttpDelete(Contracts.v1.ApiRoutes.EnkelvoudigInformatieObjecten.Delete, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Delete)]
     [Scope(AuthorizationScopes.Documenten.Delete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
-    [ZgwApiVersion(Api.LatestVersion_1_1)]
-    [ZgwApiVersion(Api.LatestVersion_1_5)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
@@ -616,100 +740,5 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         }
 
         return NoContent();
-    }
-
-    //
-    // HTTP GET http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/59bad509-840b-4cd0-82dc-cbda74a75c2b/audittrail
-
-    /// <summary>
-    /// Alle audit trail regels behorend bij het INFORMATIEOBJECT
-    /// </summary>
-    /// <response code="401">Unauthorized</response>
-    /// <response code="403">Forbidden</response>
-    /// <response code="404">Not found</response>
-    /// <response code="429">Too Many Requests</response>
-    /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.EnkelvoudigInformatieObjectAudittrail.GetAll, Name = Operations.EnkelvoudigInformatieObjectAudittrail.List)]
-    [Scope(AuthorizationScopes.AuditTrails.Read)]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
-    [ZgwApiVersion(Api.LatestVersion_1_1)]
-    [ZgwApiVersion(Api.LatestVersion_1_5)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<AuditTrailRegelDto>))]
-    public async Task<IActionResult> GetAllAuditTrailRegelsAsync(Guid enkelvoudiginformatieobject_uuid, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug(
-            "{ControllerMethod} called with {EnkelvoudigInformatieObjectUuid}",
-            nameof(GetAllAuditTrailRegelsAsync),
-            enkelvoudiginformatieobject_uuid
-        );
-
-        var result = await _mediator.Send(
-            new GetAllEnkelvoudigInformatieObjectAuditTrailRegels { EnkelvoudigInformatieObjectId = enkelvoudiginformatieobject_uuid },
-            cancellationToken
-        );
-
-        if (result.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        if (result.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        var enkelvoudiginformatieobjectAuditTrailRegelsResponse = _mapper.Map<List<AuditTrailRegelDto>>(result.Result);
-
-        return Ok(enkelvoudiginformatieobjectAuditTrailRegelsResponse);
-    }
-
-    //
-    // HTTP GET http://documenten.user.local:5007/api/v1/enkelvoudiginformatieobjecten/59bad509-840b-4cd0-82dc-cbda74a75c2b/audittrail/782b4144-0185-4180-8b59-2ce322dad69d
-
-    /// <summary>
-    /// Een specifieke audit trail regel opvragen.
-    /// </summary>
-    /// <response code="401">Unauthorized</response>
-    /// <response code="403">Forbidden</response>
-    /// <response code="404">Not found</response>
-    /// <response code="429">Too Many Requests</response>
-    /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.EnkelvoudigInformatieObjectAudittrail.Get, Name = Operations.EnkelvoudigInformatieObjectAudittrail.Read)]
-    [Scope(AuthorizationScopes.AuditTrails.Read)]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
-    [ZgwApiVersion(Api.LatestVersion_1_1)]
-    [ZgwApiVersion(Api.LatestVersion_1_5)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(AuditTrailRegelDto))]
-    public async Task<IActionResult> GetAuditTrailRegelAsync(Guid enkelvoudiginformatieobject_uuid, Guid uuid, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug(
-            "{ControllerMethod} called with {EnkelvoudigInformatieObjectUuid}, {Uuid}",
-            nameof(GetAuditTrailRegelAsync),
-            enkelvoudiginformatieobject_uuid,
-            uuid
-        );
-
-        var result = await _mediator.Send(
-            new GetEnkelvoudigInformatieObjectAuditTrailRegel
-            {
-                EnkelvoudigInformatieObjectId = enkelvoudiginformatieobject_uuid,
-                AuditTrailRegelId = uuid,
-            },
-            cancellationToken
-        );
-
-        if (result.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (result.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        var enkelvoudiginformatieobjectAuditTrailRegelResponse = _mapper.Map<AuditTrailRegelDto>(result.Result);
-
-        return Ok(enkelvoudiginformatieobjectAuditTrailRegelResponse);
     }
 }

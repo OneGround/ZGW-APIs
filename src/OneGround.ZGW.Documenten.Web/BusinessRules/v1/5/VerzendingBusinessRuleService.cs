@@ -8,26 +8,28 @@ namespace OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 
 public interface IVerzendingBusinessRuleService
 {
-    bool Validate(EnkelvoudigInformatieObject enkelvoudiginformatieobject, Verzending verzending, List<ValidationError> errors);
+    bool Validate(EnkelvoudigInformatieObject enkelvoudiginformatieobject, Verzending verzending, decimal version, List<ValidationError> errors);
     bool Validate(
         EnkelvoudigInformatieObject enkelvoudiginformatieobject,
         Verzending existingVerzending,
         Guid? existingVerzendingId,
+        decimal version,
         List<ValidationError> errors
     );
 }
 
 public class VerzendingBusinessRuleService : IVerzendingBusinessRuleService
 {
-    public bool Validate(EnkelvoudigInformatieObject informatieobject, Verzending verzending, List<ValidationError> errors)
+    public bool Validate(EnkelvoudigInformatieObject informatieobject, Verzending verzending, decimal version, List<ValidationError> errors)
     {
-        return Validate(informatieobject, verzending, existingVerzendingId: null, errors);
+        return Validate(informatieobject, verzending, existingVerzendingId: null, version, errors);
     }
 
     public bool Validate(
         EnkelvoudigInformatieObject informatieobject,
         Verzending existingVerzending,
         Guid? existingVerzendingId,
+        decimal version,
         List<ValidationError> errors
     )
     {
@@ -82,7 +84,7 @@ public class VerzendingBusinessRuleService : IVerzendingBusinessRuleService
         }
         else if (existingVerzending.AardRelatie == AardRelatie.geadresseerde)
         {
-            if (!existingVerzending.Verzenddatum.HasValue)
+            if (!existingVerzending.Verzenddatum.HasValue && version <= 1.5M)
             {
                 errors.Add(
                     new ValidationError(
