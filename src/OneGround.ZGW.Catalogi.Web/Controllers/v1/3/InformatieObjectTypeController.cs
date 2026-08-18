@@ -39,6 +39,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public InformatieObjectTypeController(
         ILogger<InformatieObjectTypeController> logger,
@@ -46,6 +47,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -54,6 +56,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -252,7 +255,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        InformatieObjectTypeRequestDto mergedInformatieObjectTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+        InformatieObjectTypeRequestDto mergedInformatieObjectTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
             InformatieObjectTypeRequestDto,
             InformatieObjectType
         >(resultGet.Result, partialInformatieObjectTypeRequest);

@@ -41,6 +41,7 @@ public class EigenschapController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public EigenschapController(
         ILogger<EigenschapController> logger,
@@ -48,6 +49,7 @@ public class EigenschapController : ZGWControllerBase
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -56,6 +58,7 @@ public class EigenschapController : ZGWControllerBase
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -256,7 +259,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        EigenschapRequestDto mergedEigenschapRequest = _requestMerger.MergePartialUpdateToObjectRequest<EigenschapRequestDto, Eigenschap>(
+        EigenschapRequestDto mergedEigenschapRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<EigenschapRequestDto, Eigenschap>(
             resultGet.Result,
             partialEigenschapRequest
         );
