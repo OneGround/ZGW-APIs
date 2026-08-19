@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AutoFixture;
 using Mapster;
@@ -15,18 +16,15 @@ using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRule();
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
 
         _fixture.Customize<ZaakTypeInformatieObjectTypeRequestDto>(c => c.With(p => p.Richting, _fixture.Create<Richting>().ToString()));
 
@@ -39,6 +37,8 @@ public class RequestToDomainProfileTests
                 .With(p => p.ObjectType, _fixture.Create<ObjectType>().ToString())
         );
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakTypeRequestDtoMapsToZaakType()

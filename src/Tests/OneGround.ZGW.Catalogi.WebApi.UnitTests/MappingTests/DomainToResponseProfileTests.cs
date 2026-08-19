@@ -21,36 +21,18 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 public class DomainToResponseProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        var config = new TypeAdapterConfig();
-        new DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _host.Mapper;
 
         _fixture.Customize<ZaakTypeDeelZaakType>(c => c.Do(z => z.DeelZaakType = new ZaakType { Id = _fixture.Create<Guid>() }));
     }
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     [Theory]
     [InlineData(true)]
@@ -313,5 +295,54 @@ public class DomainToResponseProfileTests : IDisposable
 
         Assert.Empty(result.ZaakTypen);
         Assert.Empty(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
+    {
+        // The opposite contract to the InformatieObjectType fact above, and the reason those three
+        // folds live in .AfterMapping rather than in a plain .Map(...): ZaakTypeResponseDto declares
+        // InformatieObjectTypen/DeelZaakTypen/BesluitTypen with no initializer, so AutoMapper's
+        // PreCondition-skip left them null, and the port has to reproduce null -- not [].
+        //
+        // This only discriminates because the mapper comes from the real AddZgwMapster seam (see
+        // ZtcMapperTestHost): its EmptyCollectionIfNull transform re-coalesces a null returned from a
+        // .Map(...) lambda, so against a hand-rolled TypeAdapterConfig this fact would pass either way.
+        // Mutation-verified: moving any of the three folds out of .AfterMapping into a .Map(...) fails
+        // this test.
+        var source = new ZaakType
+        {
+            Id = _fixture.Create<Guid>(),
+            ZaakTypeInformatieObjectTypen = null,
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.Null(result.InformatieObjectTypen);
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_relations_maps_to_null_on_the_PATCH_request_dto_too()
+    {
+        // Same contract on the Entity -> RequestDto map that IZgwRequestMerger uses for PATCH: a null
+        // navigation must survive as null so the merge does not present [] as the existing value and
+        // wipe the relations the ZAAKTYPE actually has.
+        var source = new ZaakType
+        {
+            Id = _fixture.Create<Guid>(),
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeRequestDto>(source);
+
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
     }
 }

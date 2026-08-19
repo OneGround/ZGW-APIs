@@ -18,33 +18,12 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests.v1_3;
 
 public class DomainToResponseProfileTests : IDisposable
 {
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
-    public DomainToResponseProfileTests()
-    {
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+    public DomainToResponseProfileTests() => _mapper = _host.Mapper;
 
-        var config = new TypeAdapterConfig();
-        new DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-    }
-
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakTypeToZaakTypeResponseDto_maps_dates_periods_and_urls()

@@ -50,20 +50,16 @@ public class RequestToDomainRegister : IRegister
 
         config.NewConfig<BronZaaktypeDto, BronZaaktype>();
 
-        // This is the v1 GerelateerdeZaaktypeDto (Catalogi.Contracts.v1), not a v1._3 type — this file's own
-        // v1._3 Contracts namespace does not define a GerelateerdeZaaktypeDto of its own, so
-        // ZaakTypeDto.GerelateerdeZaakTypen (declared as IEnumerable<GerelateerdeZaaktypeDto>) reuses the v1 one.
-        config
-            .NewConfig<Catalogi.Contracts.v1.GerelateerdeZaaktypeDto, ZaakTypeGerelateerdeZaakType>()
-            .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.ZaakType)
-            .Ignore(dest => dest.ZaakTypeId)
-            .Ignore(dest => dest.Owner)
-            .Ignore(dest => dest.CreationTime)
-            .Ignore(dest => dest.CreatedBy)
-            .Ignore(dest => dest.ModificationTime)
-            .Ignore(dest => dest.ModifiedBy)
-            .Map(dest => dest.GerelateerdeZaakTypeIdentificatie, src => src.ZaakType);
+        // GerelateerdeZaaktypeDto -> ZaakTypeGerelateerdeZaakType is deliberately NOT registered here.
+        // ZaakTypeDto.GerelateerdeZaakTypen is declared as IEnumerable<Catalogi.Contracts.v1.GerelateerdeZaaktypeDto>
+        // — the v1._3 Contracts namespace has no GerelateerdeZaaktypeDto of its own — so this is the very
+        // same CLR type pair the v1 RequestToDomainRegister already registers, and both registers are
+        // scanned into one shared TypeAdapterConfig. Mapster's NewConfig REPLACES rather than merges
+        // (unlike AutoMapper, where duplicate CreateMaps for one TypePair accumulate onto the same
+        // TypeMap), so declaring it in both places let assembly scan order silently pick a winner and
+        // discard the other definition. The map lives in MappingProfiles/v1/RequestToDomainRegister.cs;
+        // any change there applies to v1.3 too, which is correct because the contract type is shared.
+        // ZtcMapsterWiringTests.No_register_silently_overwrites_another_registers_type_pair guards this.
 
         config
             .NewConfig<GetAllStatusTypenQueryParameters, GetAllStatusTypenFilter>()
@@ -205,12 +201,9 @@ public class RequestToDomainRegister : IRegister
 
         // This is the v1 EigenschapSpecificatieDto (Catalogi.Contracts.v1), not a v1._3 type — this file's own
         // v1._3 Contracts namespace does not define an EigenschapSpecificatieDto of its own, so
-        // EigenschapDto.Specificatie reuses the v1 one.
-        config
-            .NewConfig<Catalogi.Contracts.v1.EigenschapSpecificatieDto, EigenschapSpecificatie>()
-            .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.Owner)
-            .Ignore(dest => dest.Eigenschap);
+        // EigenschapDto.Specificatie reuses the v1 one — and therefore this map is registered once, in
+        // MappingProfiles/v1/RequestToDomainRegister.cs, not duplicated here. See the longer note on
+        // GerelateerdeZaaktypeDto above for why a duplicate NewConfig on a shared CLR type pair is unsafe.
 
         config
             .NewConfig<GetAllEigenschappenQueryParameters, GetAllEigenschappenFilter>()

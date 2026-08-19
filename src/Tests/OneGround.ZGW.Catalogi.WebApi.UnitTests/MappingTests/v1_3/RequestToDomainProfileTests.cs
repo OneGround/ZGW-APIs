@@ -13,22 +13,21 @@ using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests.v1_3;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     // Official RvIG test BSN value (elfproef-valid, never assigned to a real person/organization) -
     // reused here as a stand-in RSIN, which shares the same 9-digit elfproef structure.
     private const string TestRsin = "999993653";
 
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRule();
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakTypeRequestDtoMapsToZaakType()

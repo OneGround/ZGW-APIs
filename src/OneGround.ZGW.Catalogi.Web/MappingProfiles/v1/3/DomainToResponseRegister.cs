@@ -336,7 +336,11 @@ public class DomainToResponseRegister : IRegister
 
         config.NewConfig<OmschrijvingGeneriek, OmschrijvingGeneriekDto>();
 
-        config.NewConfig<EigenschapSpecificatie, Catalogi.Contracts.v1.EigenschapSpecificatieDto>();
+        // EigenschapSpecificatie -> Catalogi.Contracts.v1.EigenschapSpecificatieDto is registered once, in
+        // MappingProfiles/v1/DomainToResponseRegister.cs. The v1._3 Contracts namespace has no
+        // EigenschapSpecificatieDto of its own, so this is the same CLR type pair as v1's, and both
+        // registers share one TypeAdapterConfig — a second NewConfig here would replace v1's definition
+        // (or be replaced by it) depending on assembly scan order, with nothing able to detect it.
 
         config
             .NewConfig<Eigenschap, EigenschapResponseDto>()

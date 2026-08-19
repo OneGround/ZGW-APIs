@@ -9,17 +9,17 @@ using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests.v1_2;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void GetAllInformatieObjectTypenQueryParameters_Maps_To_GetAllInformatieObjectTypenFilter()
@@ -38,9 +38,10 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Omschrijving, result.Omschrijving);
         Assert.Equal(new DateOnly(2024, 3, 15), result.DatumGeldigheid);
         // Status is a non-nullable enum, so this exercises Mapster's own built-in string->enum-name
-        // conversion, not the seam's RegisterNullableEnumRule (which only matches Nullable<enum>
-        // destinations) or NameMatchingStrategy.IgnoreCase (both members are already same-named,
-        // same-case) — both are irrelevant here and neither is active in this bare TypeAdapterConfig.
+        // conversion rather than the seam's RegisterNullableEnumRule (which only matches
+        // Nullable<enum> destinations) or NameMatchingStrategy.IgnoreCase (both members are already
+        // same-named, same-case). Both are active in this config — it comes from the real
+        // AddZgwMapster seam — they are simply not what makes this assertion pass.
         Assert.Equal(ConceptStatus.definitief, result.Status);
     }
 
