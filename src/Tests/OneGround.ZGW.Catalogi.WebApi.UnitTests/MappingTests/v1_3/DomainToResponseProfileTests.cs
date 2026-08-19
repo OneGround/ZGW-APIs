@@ -63,8 +63,8 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal("P0D", result.VerlengingsTermijn);
         Assert.Equal("P5D", result.Servicenorm);
         Assert.Equal("P10D", result.Doorlooptijd);
-        Assert.Equal(catalogus.Url, result.Catalogus);
-        Assert.Equal([statusType.Url], result.StatusTypen);
+        Assert.Equal(ZtcMapperTestHost.Resolved(catalogus), result.Catalogus);
+        Assert.Equal([ZtcMapperTestHost.Resolved(statusType)], result.StatusTypen);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakTypeResponseDto>(source);
 
-        Assert.Equal([zaakObjectType.Url], result.ZaakObjectTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakObjectType)], result.ZaakObjectTypen);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class DomainToResponseProfileTests : IDisposable
         var item = Assert.Single(result.GerelateerdeZaakTypen);
         Assert.Equal(AardRelatie.vervolg.ToString(), item.AardRelatie);
         Assert.Equal("toelichting-1", item.Toelichting);
-        Assert.Equal(relatedZaakType.Url, item.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(relatedZaakType), item.ZaakType);
     }
 
     [Fact]
@@ -259,8 +259,8 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<InformatieObjectTypeResponseDto>(source);
 
-        Assert.Equal([zaakType.Url], result.ZaakTypen);
-        Assert.Equal([besluitType.Url], result.BesluitTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(besluitType)], result.BesluitTypen);
     }
 
     [Fact]
@@ -290,8 +290,8 @@ public class DomainToResponseProfileTests : IDisposable
         // EmptyWhenNull: null must render as "" not null on the response DTO.
         Assert.Equal(string.Empty, result.OmschrijvingGeneriek);
         Assert.Equal(string.Empty, result.StatusTekst);
-        Assert.Equal(zaakType.Url, result.ZaakType);
-        Assert.Equal(zaakType.Catalogus.Url, result.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType.Catalogus), result.Catalogus);
         Assert.Equal(zaakType.Identificatie, result.ZaaktypeIdentificatie);
         Assert.Null(result.Eigenschappen);
     }
@@ -319,7 +319,7 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal("P0D", result.ArchiefActieTermijn);
         Assert.Equal("P3D", result.ProcesTermijn);
         Assert.Equal(zaakType.Identificatie, result.ZaaktypeIdentificatie);
-        Assert.Equal(zaakType.Catalogus.Url, result.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType.Catalogus), result.Catalogus);
 
         // Preserved verbatim from the AutoMapper source: these two members are not a PreCondition-fold at
         // all -- they always map to an empty collection regardless of source data (not yet implemented).
@@ -377,9 +377,9 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<BesluitTypeResponseDto>(source);
 
-        Assert.Equal([zaakType.Url], result.ZaakTypen);
-        Assert.Equal([informatieObjectType.Url], result.InformatieObjectTypen);
-        Assert.Equal([resultaatType.Url], result.ResultaatTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(informatieObjectType)], result.InformatieObjectTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(resultaatType)], result.ResultaatTypen);
         Assert.Equal(["RT-omschrijving"], result.ResultaatTypenOmschrijving);
         Assert.Equal(["IOT-omschrijving"], result.VastgelegdIn);
     }
@@ -401,11 +401,11 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<CatalogusResponseDto>(source);
 
-        Assert.Equal(source.Url, result.Url);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source), result.Url);
         Assert.Equal("2019-06-07", result.BegindatumVersie);
-        Assert.Equal([zaakType.Url], result.ZaakTypen);
-        Assert.Equal([besluitType.Url], result.BesluitTypen);
-        Assert.Equal([informatieObjectType.Url], result.InformatieObjectTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(besluitType)], result.BesluitTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(informatieObjectType)], result.InformatieObjectTypen);
     }
 
     /// <summary>

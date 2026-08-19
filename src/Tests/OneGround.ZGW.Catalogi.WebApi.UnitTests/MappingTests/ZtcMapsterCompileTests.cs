@@ -67,6 +67,13 @@ public class ZtcMapsterCompileTests
     /// Each pair is compiled separately so one offender does not mask the rest — <c>config.Compile()</c>
     /// throws on the first failure, which makes a multi-member regression take several rounds to clear.
     /// </para>
+    /// <para>
+    /// Coverage limit: <c>RuleMap</c> is snapshotted before compiling, so this validates the pairs the
+    /// registers DECLARE, not ones Mapster infers for nested types on demand. Harmless for ZTC today —
+    /// measured, compiling adds no rules (55 before, 55 after), because every nested DTO is registered
+    /// explicitly — but a service that leans on convention-based nested mapping (as AC does for
+    /// <c>Autorisatie</c>) would have those pairs silently outside this gate.
+    /// </para>
     /// </remarks>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()

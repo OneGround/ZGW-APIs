@@ -37,9 +37,28 @@ internal sealed class ZtcMapperTestHost : IDisposable
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
 
+    /// <summary>
+    /// Stands in for the real service's base URI. It must NOT be empty: <c>UriService.GetUri</c> returns an
+    /// ABSOLUTE url (<c>BaseUri + BasePath + entity.Url</c>) while <c>entity.Url</c> is a relative path, and
+    /// a mock that echoes <c>e.Url</c> collapses that difference.
+    /// </summary>
+    /// <remarks>
+    /// Why that matters, measured: with an echoing mock, deleting all ten
+    /// <c>.Map(dest =&gt; dest.Url, src =&gt; MapsterUrlResolver.ResolveUrl(src))</c> rules from the v1.3
+    /// register left the entire suite green — Mapster's convention copy of the same-named <c>Url</c>
+    /// member produced a value identical to what the mock returned, so every URL assertion had zero
+    /// detection power (Risk #7 / #24) while production would have started emitting relative URLs. With
+    /// the prefix in place the same deletion fails 15 tests.
+    /// </remarks>
+    internal const string BaseUrl = "https://ztc.test";
+
+    /// <summary>The url the mocked <see cref="IEntityUriService"/> resolves an entity to. Assert against
+    /// this, never against <c>entity.Url</c> — the latter is what convention mapping produces on its own.</summary>
+    internal static string Resolved(IUrlEntity entity) => $"{BaseUrl}{entity.Url}";
+
     public ZtcMapperTestHost()
     {
-        UriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+        UriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(Resolved);
 
         var services = new ServiceCollection();
         services.AddSingleton(UriService.Object);

@@ -58,7 +58,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakTypeResponseDto>(source);
 
-        Assert.Equal(source.Url, result.Url);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source), result.Url);
         Assert.Equal(source.Identificatie, result.Identificatie);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
@@ -93,7 +93,7 @@ public class DomainToResponseProfileTests : IDisposable
         var source = _fixture.Create<ZaakType>();
         var result = _mapper.Map<ZaakTypeResponseDto>(source);
 
-        Assert.Equal(source.ZaakTypeDeelZaakTypen.Select(t => t.DeelZaakType.Url), result.DeelZaakTypen);
+        Assert.Equal(source.ZaakTypeDeelZaakTypen.Select(t => ZtcMapperTestHost.Resolved(t.DeelZaakType)), result.DeelZaakTypen);
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ResultaatTypeResponseDto>(source);
 
-        Assert.Equal(source.ZaakType.Url, result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.ZaakType), result.ZaakType);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
         Assert.Equal(source.ResultaatTypeOmschrijving, result.ResultaatTypeOmschrijving);
@@ -178,7 +178,7 @@ public class DomainToResponseProfileTests : IDisposable
         var source = _fixture.Create<ResultaatType>();
         var result = _mapper.Map<ResultaatTypeRequestDto>(source);
 
-        Assert.Equal(source.ZaakType.Url, result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.ZaakType), result.ZaakType);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.ResultaatTypeOmschrijving, result.ResultaatTypeOmschrijving);
         Assert.Equal(source.SelectieLijstKlasse, result.SelectieLijstKlasse);
@@ -218,9 +218,9 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(source.ContactpersoonBeheerNaam, result.ContactpersoonBeheerNaam);
         Assert.Equal(source.ContactpersoonBeheerTelefoonnummer, result.ContactpersoonBeheerTelefoonnummer);
 
-        Assert.Equal(source.BesluitTypes.Select(b => b.Url), result.BesluitTypen);
-        Assert.Equal(source.ZaakTypes.Select(b => b.Url), result.ZaakTypen);
-        Assert.Equal(source.InformatieObjectTypes.Select(b => b.Url), result.InformatieObjectTypen);
+        Assert.Equal(source.BesluitTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.BesluitTypen);
+        Assert.Equal(source.ZaakTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.ZaakTypen);
+        Assert.Equal(source.InformatieObjectTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.InformatieObjectTypen);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class DomainToResponseProfileTests : IDisposable
         var source = _fixture.Create<BesluitType>();
         var result = _mapper.Map<BesluitTypeResponseDto>(source);
 
-        Assert.Equal(source.Catalogus.Url, result.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.Catalogus), result.Catalogus);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
         Assert.Equal(source.BesluitCategorie, result.BesluitCategorie);
@@ -253,7 +253,10 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(source.PublicatieTekst, result.PublicatieTekst);
         Assert.Equal(source.PublicatieTermijn.ToString(), result.PublicatieTermijn);
         Assert.Equal(source.Toelichting, result.Toelichting);
-        Assert.Equal(source.BesluitTypeInformatieObjectTypen.Select(b => b.InformatieObjectType.Url), result.InformatieObjectTypen);
+        Assert.Equal(
+            source.BesluitTypeInformatieObjectTypen.Select(b => ZtcMapperTestHost.Resolved(b.InformatieObjectType)),
+            result.InformatieObjectTypen
+        );
         Assert.Equal(source.BeginGeldigheid.ToString("yyyy-MM-dd"), result.BeginGeldigheid);
         Assert.Equal(source.EindeGeldigheid.Value.ToString("yyyy-MM-dd"), result.EindeGeldigheid);
     }
@@ -273,7 +276,7 @@ public class DomainToResponseProfileTests : IDisposable
         var item = Assert.Single(result.GerelateerdeZaakTypen);
         Assert.Equal(relation.AardRelatie.ToString(), item.AardRelatie);
         Assert.Equal(relation.Toelichting, item.Toelichting);
-        Assert.Equal(gerelateerd.Url, item.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(gerelateerd), item.ZaakType);
     }
 
     [Fact]

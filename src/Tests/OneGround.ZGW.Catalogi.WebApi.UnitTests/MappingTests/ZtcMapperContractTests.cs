@@ -185,12 +185,23 @@ public class ZtcMapperContractTests : IDisposable
     /// and the base-constructor call's MemberRef is parented to ZGWControllerBase). So this fires on
     /// use, never on the injection the base class forces.
     /// </para>
+    /// <para>
+    /// Scope is the <c>Catalogi.Web</c> assembly — every ZTC controller, handler and register lives
+    /// there, and the <c>Catalogi.WebApi</c> host has no AutoMapper reference at all (verified). Add the
+    /// host assembly here if that ever stops being true.
+    /// </para>
     /// <para>Delete this fact once <c>ZGWControllerBase</c> itself drops its AutoMapper dependency.</para>
     /// </remarks>
     [Fact]
     public void No_ZTC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
     {
-        using var stream = File.OpenRead(typeof(Startup).Assembly.Location);
+        var assemblyPath = typeof(Startup).Assembly.Location;
+
+        // A single-file or in-memory host reports an empty Location; fail with that reason rather than an
+        // opaque IO error that reads like the assertion below found nothing.
+        Assert.False(string.IsNullOrEmpty(assemblyPath), "Cannot scan metadata: Catalogi.Web has no on-disk location.");
+
+        using var stream = File.OpenRead(assemblyPath);
         using var peReader = new PEReader(stream);
         var metadata = peReader.GetMetadataReader();
 
