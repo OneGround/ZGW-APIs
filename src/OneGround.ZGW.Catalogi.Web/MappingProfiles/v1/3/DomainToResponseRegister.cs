@@ -11,6 +11,16 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 
 namespace OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._3;
 
+/// <summary>
+/// Port of the v1.3 AutoMapper <c>DomainToResponseProfile</c>. Also serves the audit trail
+/// (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just the controllers.
+/// </summary>
+/// <remarks>
+/// Read the remarks on the sibling <see cref="MappingProfiles.v1.DomainToResponseRegister"/> first: the
+/// <c>PreCondition</c>-emulation rule documented there (fold to empty in a <c>.Map(...)</c> when the
+/// destination property has a <c>= []</c> initializer, otherwise assign null in <c>.AfterMapping</c>)
+/// governs this file too, and it has far more of those folds.
+/// </remarks>
 public class DomainToResponseRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
@@ -31,13 +41,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.VerlengingsTermijn, src => ProfileHelper.Fix0Period(src.VerlengingsTermijn))
             .Map(dest => dest.Servicenorm, src => ProfileHelper.Fix0Period(src.Servicenorm))
             .Map(dest => dest.Doorlooptijd, src => ProfileHelper.Fix0Period(src.Doorlooptijd))
-            // ZaakTypeResponseDto declares `public IEnumerable<string> ZaakObjectTypen { get; set; } = [];`
-            // (Contracts/v1/3/Responses/ZaakTypeResponseDto.cs:13) -- unlike every other PreCondition-folded
-            // member on this config (StatusTypen/ResultaatTypen/Eigenschappen/InformatieObjectTypen/RolTypen
-            // all have no initializer), a null navigation collection here must fold to
-            // Enumerable.Empty<string>(), not null, or the API response silently changes from
-            // "zaakobjecttypen": [] to "zaakobjecttypen": null for the normal case of a ZaakType with zero
-            // linked ZaakObjectTypen.
+            // PreCondition fold -> empty: ZaakObjectTypen is the one member on this config with a `= []`
+            // initializer, so a plain .Map is correct here. See the class remarks.
             .Map(
                 dest => dest.ZaakObjectTypen,
                 src => src.ZaakObjectTypen == null ? Enumerable.Empty<string>() : MapsterUrlResolver.ResolveUrls(src.ZaakObjectTypen)
@@ -60,19 +65,8 @@ public class DomainToResponseRegister : IRegister
                         })
                         .ToList();
 
-                    // These three folds must run here, in .AfterMapping, not in a plain .Map(...)
-                    // projection: the global EmptyCollectionIfNull destination transform (registered in
-                    // AddZgwMapster, for parity with AutoMapper's AllowNullCollections=false default)
-                    // re-coalesces ANY null returned from an explicit .Map(...) lambda into an empty
-                    // collection -- including this PreCondition-emulating null, which is supposed to
-                    // reproduce AutoMapper's real "member left completely untouched" behavior (these
-                    // three destination properties have no field initializer, so untouched means null,
-                    // not empty). .AfterMapping runs after that transform pipeline has already applied,
-                    // so a plain assignment made here is not re-coalesced. Contrast with ZaakObjectTypen
-                    // above and InformatieObjectTypeResponseDto.ZaakTypen/BesluitTypen below, whose
-                    // destination DOES have a `= []` initializer -- there, folding to
-                    // Enumerable.Empty<string>() in a plain .Map(...) is correct (and the transform
-                    // coalescing it again is harmless).
+                    // PreCondition folds -> null. No initializer on these three, and .AfterMapping is
+                    // required so EmptyCollectionIfNull cannot re-coalesce it. See the class remarks.
                     dest.InformatieObjectTypen =
                         src.ZaakTypeInformatieObjectTypen == null
                             ? null
@@ -131,10 +125,7 @@ public class DomainToResponseRegister : IRegister
                     }
                     dest.GerelateerdeZaakTypen = gerelateerdeZaakTypen;
 
-                    // See the long comment on the ZaakType->ZaakTypeResponseDto config above: these folds
-                    // must run in .AfterMapping, not a plain .Map(...), to avoid the global
-                    // EmptyCollectionIfNull destination transform re-coalescing a deliberate null (these
-                    // destination properties have no field initializer) into an empty collection.
+                    // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
                     dest.DeelZaakTypen =
                         src.ZaakTypeDeelZaakTypen == null ? null : src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct();
                     dest.BesluitTypen =
@@ -153,9 +144,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             .Ignore(dest => dest.Eigenschappen)
-            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
-            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
-            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.Eigenschappen =
@@ -178,9 +167,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.Eigenschappen)
-            // See the long comment on the ZaakType->ZaakTypeResponseDto config above: must run in
-            // .AfterMapping, not a plain .Map(...), to avoid the global EmptyCollectionIfNull transform
-            // re-coalescing a deliberate null into an empty collection.
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.Eigenschappen =
@@ -244,9 +231,7 @@ public class DomainToResponseRegister : IRegister
             // not "improve" this by wiring up real source data.
             .Map(dest => dest.InformatieObjectTypen, src => Enumerable.Empty<string>())
             .Map(dest => dest.InformatieObjectTypeOmschrijvingen, src => Enumerable.Empty<string>())
-            // BesluitTypen/BesluittypeOmschrijvingen must run in .AfterMapping, not a plain .Map(...):
-            // see the long comment on the ZaakType->ZaakTypeResponseDto config above (global
-            // EmptyCollectionIfNull transform re-coalesces a deliberate null into an empty collection).
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -272,9 +257,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.BesluitTypen)
-            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
-            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
-            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.BesluitTypen =
@@ -299,13 +282,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
-            // InformatieObjectTypeDto (v1._3) initializes ZaakTypen/BesluitTypen with `= []` in its base
-            // class (Contracts/v1/3/InformatieObjectTypeDto.cs:40,43) -- the same bug class as the v1
-            // InformatieObjectTypeResponseDto fix in the sibling DomainToResponseRegister.cs, but a
-            // different (v1._3-namespaced) DTO with its own separate `= []` base. A null navigation
-            // collection must fold to Enumerable.Empty<string>(), not null, or the API response silently
-            // changes from "zaaktypen"/"besluittypen": [] to null for the normal case of an
-            // InformatieObjectType with zero linked relations.
+            // PreCondition folds -> empty: InformatieObjectTypeDto (v1._3) initializes both with `= []` in
+            // its own base class, so a plain .Map is correct here. See the class remarks.
             .Map(
                 dest => dest.ZaakTypen,
                 src =>
@@ -336,11 +314,9 @@ public class DomainToResponseRegister : IRegister
 
         config.NewConfig<OmschrijvingGeneriek, OmschrijvingGeneriekDto>();
 
-        // EigenschapSpecificatie -> Catalogi.Contracts.v1.EigenschapSpecificatieDto is registered once, in
-        // MappingProfiles/v1/DomainToResponseRegister.cs. The v1._3 Contracts namespace has no
-        // EigenschapSpecificatieDto of its own, so this is the same CLR type pair as v1's, and both
-        // registers share one TypeAdapterConfig — a second NewConfig here would replace v1's definition
-        // (or be replaced by it) depending on assembly scan order, with nothing able to detect it.
+        // EigenschapSpecificatie -> Catalogi.Contracts.v1.EigenschapSpecificatieDto is deliberately absent:
+        // v1.3 reuses the v1 DTO, so it is the same CLR pair the v1 register owns. See the note on
+        // GerelateerdeZaaktypeDto in the sibling RequestToDomainRegister for why duplicating it is unsafe.
 
         config
             .NewConfig<Eigenschap, EigenschapResponseDto>()
@@ -379,9 +355,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
             .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
-            // These five folds must run in .AfterMapping, not a plain .Map(...): see the long comment on
-            // the ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
-            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -425,9 +399,7 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.ZaakTypen)
             .Ignore(dest => dest.InformatieObjectTypen)
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
-            // Must run in .AfterMapping, not a plain .Map(...): see the long comment on the
-            // ZaakType->ZaakTypeResponseDto config above (global EmptyCollectionIfNull transform
-            // re-coalesces a deliberate null into an empty collection when returned from .Map(...)).
+            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {

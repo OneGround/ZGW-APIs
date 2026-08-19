@@ -300,16 +300,10 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
     {
-        // The opposite contract to the InformatieObjectType fact above, and the reason those three
-        // folds live in .AfterMapping rather than in a plain .Map(...): ZaakTypeResponseDto declares
-        // InformatieObjectTypen/DeelZaakTypen/BesluitTypen with no initializer, so AutoMapper's
-        // PreCondition-skip left them null, and the port has to reproduce null -- not [].
-        //
-        // This only discriminates because the mapper comes from the real AddZgwMapster seam (see
-        // ZtcMapperTestHost): its EmptyCollectionIfNull transform re-coalesces a null returned from a
-        // .Map(...) lambda, so against a hand-rolled TypeAdapterConfig this fact would pass either way.
-        // Mutation-verified: moving any of the three folds out of .AfterMapping into a .Map(...) fails
-        // this test.
+        // The opposite contract to the InformatieObjectType fact above: these three have no initializer,
+        // so AutoMapper's PreCondition-skip left them null and the port must reproduce null, not [].
+        // Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
+        // Mutation-verified: moving any of the three folds into a plain .Map(...) fails this test.
         var source = new ZaakType
         {
             Id = _fixture.Create<Guid>(),

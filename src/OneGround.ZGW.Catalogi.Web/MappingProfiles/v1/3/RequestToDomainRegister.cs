@@ -50,16 +50,12 @@ public class RequestToDomainRegister : IRegister
 
         config.NewConfig<BronZaaktypeDto, BronZaaktype>();
 
-        // GerelateerdeZaaktypeDto -> ZaakTypeGerelateerdeZaakType is deliberately NOT registered here.
-        // ZaakTypeDto.GerelateerdeZaakTypen is declared as IEnumerable<Catalogi.Contracts.v1.GerelateerdeZaaktypeDto>
-        // — the v1._3 Contracts namespace has no GerelateerdeZaaktypeDto of its own — so this is the very
-        // same CLR type pair the v1 RequestToDomainRegister already registers, and both registers are
-        // scanned into one shared TypeAdapterConfig. Mapster's NewConfig REPLACES rather than merges
-        // (unlike AutoMapper, where duplicate CreateMaps for one TypePair accumulate onto the same
-        // TypeMap), so declaring it in both places let assembly scan order silently pick a winner and
-        // discard the other definition. The map lives in MappingProfiles/v1/RequestToDomainRegister.cs;
-        // any change there applies to v1.3 too, which is correct because the contract type is shared.
-        // ZtcMapsterWiringTests.No_register_silently_overwrites_another_registers_type_pair guards this.
+        // GerelateerdeZaaktypeDto -> ZaakTypeGerelateerdeZaakType is deliberately absent. v1.3 has no
+        // GerelateerdeZaaktypeDto of its own, so it would be the same CLR pair the v1 register owns — and
+        // Mapster's NewConfig REPLACES rather than merges (AutoMapper accumulated duplicate CreateMaps onto
+        // one TypeMap), so declaring a pair twice lets assembly scan order silently discard one definition.
+        // Declare shared-contract pairs once, in the v1 register; guarded by
+        // ZtcMapsterWiringTests.No_register_silently_overwrites_another_registers_type_pair.
 
         config
             .NewConfig<GetAllStatusTypenQueryParameters, GetAllStatusTypenFilter>()
@@ -199,11 +195,8 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.TryDateFromStringOptional(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.TryDateFromStringOptional(src.EindeObject));
 
-        // This is the v1 EigenschapSpecificatieDto (Catalogi.Contracts.v1), not a v1._3 type — this file's own
-        // v1._3 Contracts namespace does not define an EigenschapSpecificatieDto of its own, so
-        // EigenschapDto.Specificatie reuses the v1 one — and therefore this map is registered once, in
-        // MappingProfiles/v1/RequestToDomainRegister.cs, not duplicated here. See the longer note on
-        // GerelateerdeZaaktypeDto above for why a duplicate NewConfig on a shared CLR type pair is unsafe.
+        // EigenschapSpecificatieDto -> EigenschapSpecificatie is deliberately absent for the same reason:
+        // v1.3 reuses the v1 DTO, so the v1 register owns the pair. See the note above.
 
         config
             .NewConfig<GetAllEigenschappenQueryParameters, GetAllEigenschappenFilter>()

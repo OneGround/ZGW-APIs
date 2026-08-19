@@ -23,7 +23,7 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 /// <summary>
 /// The two mapping contracts ZTC depends on outside the Map calls its controllers make themselves: the
 /// audit trail (<see cref="IZgwMapper"/>) and the PATCH merge (<see cref="IZgwRequestMerger"/>). The
-/// per-register tests build an isolated <c>TypeAdapterConfig</c> and cannot see either path.
+/// register tests resolve <c>MapsterMapper.IMapper</c> directly and so exercise neither adapter.
 /// </summary>
 /// <remarks>
 /// ZTC's AutoMapper profiles are deleted, so both consumers must resolve the Mapster-backed adapters.
@@ -32,7 +32,7 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 /// adapter type is asserted directly rather than inferred from a working map, and why the controller
 /// constructors are checked by reflection - a controller left on AutoMapper's
 /// <see cref="IRequestMerger"/> keeps compiling and every mapping fact below keeps passing, because
-/// they exercise the correct path themselves.
+/// they resolve the correct merger themselves.
 /// </remarks>
 public class ZtcMapperContractTests : IDisposable
 {

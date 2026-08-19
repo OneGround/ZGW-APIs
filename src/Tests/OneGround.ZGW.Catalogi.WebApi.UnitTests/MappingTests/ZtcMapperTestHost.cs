@@ -15,23 +15,22 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 /// entity's own <c>Url</c>.
 /// </summary>
 /// <remarks>
-/// Mapping tests must not hand-roll a <c>TypeAdapterConfig</c> from a single register. The seam's
-/// global settings are what make several register decisions load-bearing, so a config without them
-/// cannot see a regression in them:
+/// Mapping tests must not hand-roll a <c>TypeAdapterConfig</c> from a single register, because the seam's
+/// global settings are what make several register decisions load-bearing:
 /// <list type="bullet">
-/// <item><c>DestinationTransform.EmptyCollectionIfNull</c> re-coalesces any null returned from a
-/// <c>.Map(...)</c> lambda, which is precisely why the PreCondition-emulating null folds have to live
-/// in <c>.AfterMapping</c>. Without the transform a test cannot tell the two apart, and moving a fold
-/// back into <c>.Map(...)</c> would silently flip that member from <c>null</c> to <c>[]</c> in every
-/// API response and audit-trail record while the suite stayed green.</item>
+/// <item><c>DestinationTransform.EmptyCollectionIfNull</c> re-coalesces any null a <c>.Map(...)</c> lambda
+/// returns, which is exactly why the PreCondition-emulating folds assign null in <c>.AfterMapping</c>
+/// instead. Without the transform a test cannot tell the two apart, so moving a fold back into
+/// <c>.Map(...)</c> would flip that member from <c>null</c> to <c>[]</c> in every response and audit
+/// record with the suite still green.</item>
 /// <item><c>NameMatchingStrategy.IgnoreCase</c> and the global nullable-enum rule change which members
 /// map at all.</item>
-/// <item>Registers are scanned together, so a test sees the same merged configuration the service
-/// resolves at runtime rather than one register in isolation.</item>
+/// <item>Registers are scanned together, so a test sees the merged configuration the service actually
+/// resolves rather than one register in isolation.</item>
 /// </list>
-/// Scoping matters: <c>MapContext</c>-based DI resolution happens lazily at <c>Map()</c>-call time, so
-/// the provider and scope are held for the lifetime of the test class and disposed in
-/// <see cref="Dispose"/> — never scoped to the constructor with <c>using</c>.
+/// The provider and scope are instance fields disposed in <see cref="Dispose"/>, never scoped to the
+/// constructor with <c>using</c>: <c>MapContext</c>-based DI resolution is lazy, happening at
+/// <c>Map()</c>-call time.
 /// </remarks>
 internal sealed class ZtcMapperTestHost : IDisposable
 {

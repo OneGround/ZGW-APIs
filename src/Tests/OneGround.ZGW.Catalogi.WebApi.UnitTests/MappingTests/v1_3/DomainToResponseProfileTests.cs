@@ -107,9 +107,9 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
     {
-        // These three PreCondition-folded members on ZaakType were audited and confirmed to have no
-        // non-null initializer on the destination DTO -- unlike ZaakObjectTypen above, a null source
-        // navigation here must fold to plain null.
+        // Unlike ZaakObjectTypen above, these three have no initializer on the destination DTO, so a null
+        // source navigation must stay null. Only discriminates because the mapper comes from the real
+        // seam — see ZtcMapperTestHost. Mutation-verified: moving a fold into a plain .Map(...) fails this.
         var source = new ZaakType
         {
             Id = Guid.NewGuid(),

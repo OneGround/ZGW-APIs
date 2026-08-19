@@ -95,9 +95,9 @@ public class RequestToDomainProfileTests : IDisposable
         var relation = Assert.Single(result.ZaakTypeGerelateerdeZaakTypen);
         Assert.Equal("https://example.test/zaaktypen/2", relation.GerelateerdeZaakTypeIdentificatie);
 
-        // The three AfterMapping resets: without them these would be null (the Ignore leaves the
-        // field at its default, and this isolated TypeAdapterConfig has none of the production
-        // EmptyCollectionIfNull destination transform registered), not an empty list.
+        // The three AfterMapping resets: without them these would be null, not an empty list. The
+        // .Ignore means Mapster never assigns the member, so the seam's EmptyCollectionIfNull transform
+        // has nothing to act on and cannot stand in for the reset — mutation-verified by deleting one.
         Assert.NotNull(result.ZaakTypeBesluitTypen);
         Assert.Empty(result.ZaakTypeBesluitTypen);
         Assert.NotNull(result.ZaakTypeDeelZaakTypen);
