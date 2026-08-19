@@ -14,7 +14,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<Applicatie, ApplicatieResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId));
+            .Map(dest => dest.ClientIds, src => src.ClientIds == null ? Enumerable.Empty<string>() : src.ClientIds.Select(client => client.ClientId));
         // dest.AlleenIsGereedVoorPublicatie (the field v1.1 adds) needs no rule: same name, same type.
         // dest.Autorisaties is intentionally NOT mapped explicitly: v1.1 reuses v1's AutorisatieResponseDto,
         // so Mapster's convention-based nested mapping resolves List<Autorisatie> through the
@@ -25,6 +25,6 @@ public class DomainToResponseRegister : IRegister
         // Note: This map is used to merge an existing APPLICATIE with the PATCH operation
         config
             .NewConfig<Applicatie, ApplicatieRequestDto>()
-            .Map(dest => dest.ClientIds, src => src.ClientIds.Select(client => client.ClientId));
+            .Map(dest => dest.ClientIds, src => src.ClientIds == null ? Enumerable.Empty<string>() : src.ClientIds.Select(client => client.ClientId));
     }
 }

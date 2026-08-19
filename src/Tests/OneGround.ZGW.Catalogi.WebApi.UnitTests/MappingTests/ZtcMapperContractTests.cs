@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -161,6 +164,63 @@ public class ZtcMapperContractTests : IDisposable
         var parameterTypes = controllerType.GetConstructors().Single().GetParameters().Select(p => p.ParameterType);
 
         Assert.Contains(typeof(IZgwRequestMerger), parameterTypes);
+    }
+
+    /// <summary>
+    /// Nothing in ZTC may CALL AutoMapper any more. The constructor fact above only proves the Mapster
+    /// merger is injected; every controller still takes <c>AutoMapper.IMapper</c> and
+    /// <see cref="IRequestMerger"/> because the shared <c>ZGWControllerBase</c> demands them, and
+    /// <c>ZGWControllerBase._mapper</c> stays visible to every ZTC controller as a protected field.
+    /// </summary>
+    /// <remarks>
+    /// Since ZTC's profiles are deleted, that field is a mapper over an EMPTY AutoMapper configuration.
+    /// A merge from a branch cut before the migration, or a paste from a service that has not migrated,
+    /// can reintroduce <c>_mapper.Map&lt;ZaakTypeResponseDto&gt;(...)</c> or
+    /// <c>_requestMerger.MergePartialUpdateToObjectRequest(...)</c>: it compiles, no mapping fact
+    /// notices (they resolve their own mapper), and it throws only when a real request hits that action.
+    /// <para>
+    /// Detected by reading the compiled assembly's MemberRef table rather than by walking IL: a call
+    /// into AutoMapper emits a MemberRef whose parent is an AutoMapper TypeRef, while merely having
+    /// <c>AutoMapper.IMapper</c> as a constructor parameter does not (that is a TypeRef in a signature,
+    /// and the base-constructor call's MemberRef is parented to ZGWControllerBase). So this fires on
+    /// use, never on the injection the base class forces.
+    /// </para>
+    /// <para>Delete this fact once <c>ZGWControllerBase</c> itself drops its AutoMapper dependency.</para>
+    /// </remarks>
+    [Fact]
+    public void No_ZTC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
+    {
+        using var stream = File.OpenRead(typeof(Startup).Assembly.Location);
+        using var peReader = new PEReader(stream);
+        var metadata = peReader.GetMetadataReader();
+
+        var calls = new List<string>();
+        foreach (var handle in metadata.MemberReferences)
+        {
+            var memberReference = metadata.GetMemberReference(handle);
+            if (memberReference.Parent.Kind != HandleKind.TypeReference)
+            {
+                continue;
+            }
+
+            var typeReference = metadata.GetTypeReference((TypeReferenceHandle)memberReference.Parent);
+            var declaringNamespace = metadata.GetString(typeReference.Namespace);
+            var declaringType = metadata.GetString(typeReference.Name);
+
+            var isAutoMapper = declaringNamespace == "AutoMapper" || declaringNamespace.StartsWith("AutoMapper.", StringComparison.Ordinal);
+            var isAutoMapperMerger = declaringType == nameof(IRequestMerger);
+            if (isAutoMapper || isAutoMapperMerger)
+            {
+                calls.Add($"{declaringNamespace}.{declaringType}.{metadata.GetString(memberReference.Name)}");
+            }
+        }
+
+        Assert.True(
+            calls.Count == 0,
+            "ZTC has no AutoMapper profiles left, so these calls run against an empty configuration and "
+                + "throw at request time. Use MapsterMapper.IMapper / IZgwRequestMerger instead:\n  "
+                + string.Join("\n  ", calls.Distinct().OrderBy(c => c))
+        );
     }
 
     /// <summary>

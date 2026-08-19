@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Web;
@@ -42,5 +45,60 @@ public class ZtcMapsterCompileTests
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
         config.Compile();
+    }
+
+    /// <summary>
+    /// Mapster's stand-in for AutoMapper's <c>AssertConfigurationIsValid()</c>: every destination member
+    /// must have a source member, an explicit <c>.Map(...)</c>, or an explicit <c>.Ignore(...)</c>.
+    /// Without it a destination property that no register mentions is silently left at its default, and
+    /// Mapster — unlike AutoMapper — never complains.
+    /// </summary>
+    /// <remarks>
+    /// This is what keeps the registers' ~250 <c>.Ignore(...)</c> calls load-bearing. They were written to
+    /// satisfy AutoMapper's assertion; the moment nothing enforces them they become decorative and rot,
+    /// and the next unmapped member reaches production as a <c>null</c> in every response body and every
+    /// audit record instead of failing here.
+    /// <para>
+    /// <c>RequireDestinationMemberSource</c> is applied to the test's own config rather than inside
+    /// <c>AddZgwMapster</c> on purpose: as a global seam setting it would throw at service startup for
+    /// every service, including those that have not migrated yet and have no registers at all.
+    /// </para>
+    /// <para>
+    /// Each pair is compiled separately so one offender does not mask the rest — <c>config.Compile()</c>
+    /// throws on the first failure, which makes a multi-member regression take several rounds to clear.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+
+        using var provider = services.BuildServiceProvider();
+        var config = provider.GetRequiredService<TypeAdapterConfig>();
+
+        config.Default.RequireDestinationMemberSource(true);
+
+        var unmapped = new List<string>();
+        foreach (var pair in config.RuleMap.Keys.OrderBy(k => k.Source.FullName).ThenBy(k => k.Destination.FullName).ToList())
+        {
+            try
+            {
+                config.Compile(pair.Source, pair.Destination);
+            }
+            catch (Exception ex)
+            {
+                // Mapster wraps the useful text (the member names) in an inner exception; the outer
+                // message only repeats the type pair.
+                unmapped.Add($"{pair.Source.FullName} -> {pair.Destination.FullName}\n    {ex.InnerException?.Message ?? ex.Message}");
+            }
+        }
+
+        Assert.True(
+            unmapped.Count == 0,
+            "These destination members have no source, no .Map(...) and no .Ignore(...). Map them, or "
+                + "add an explicit .Ignore(...) recording that leaving them at their default is intended:\n  "
+                + string.Join("\n  ", unmapped)
+        );
     }
 }

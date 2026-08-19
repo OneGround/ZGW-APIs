@@ -20,6 +20,27 @@ namespace OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._3;
 /// <c>PreCondition</c>-emulation rule documented there (fold to empty in a <c>.Map(...)</c> when the
 /// destination property has a <c>= []</c> initializer, otherwise assign null in <c>.AfterMapping</c>)
 /// governs this file too, and it has far more of those folds.
+/// <para>
+/// Every <c>.AfterMapping</c> fold here ends in <c>.ToList()</c> — keep it. AutoMapper materialized each
+/// mapped collection into a <c>List&lt;T&gt;</c>; a bare LINQ chain would instead hand the DTO a deferred
+/// query over the source entity's live navigation collection. Several ZTC update handlers <c>Clear()</c>
+/// exactly those collections after the DTO has been produced (see <c>UpdateBesluitTypeCommandHandler</c>
+/// and <c>UpdateResultaatTypeCommandHandler</c>), so a consumer that reads the DTO later would observe
+/// post-mutation data. Today's consumers all serialize immediately — <c>AuditTrailServiceBase.SetOld</c>
+/// and <c>PartialUpdateMerger.Merge</c> both do — so this is a guard against a future one, not a live
+/// bug. Note that <c>MapsterUrlResolver.ResolveUrls</c> already materializes internally; only the folds
+/// that project denormalized string fields themselves need the explicit call.
+/// </para>
+/// <para><b>The <c>src.ZaakType == null ? null : ...</c> guards on <c>dest.Catalogus</c>.</b> AutoMapper's
+/// <c>MapFrom</c> null-guards member paths automatically; Mapster only does so when the path IS the
+/// mapping value. Measured on this config: a bare <c>src.ZaakType.Identificatie</c> null-propagates to
+/// null on its own and needs no guard, but the same path passed as a METHOD ARGUMENT —
+/// <c>MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus)</c> — is not guarded and throws
+/// <c>NullReferenceException</c>. That is the whole rule: guard a member path only where it is an
+/// argument. <c>?.</c> cannot be used (a <c>.Map</c> source selector is an expression tree, and C#
+/// rejects null-conditionals there — CS8072), hence the ternary. Both shapes are pinned by
+/// <c>v1_3.DomainToResponseProfileTests.Children_of_ZaakType_with_an_unloaded_ZaakType_map_to_null_rather_than_throwing</c>.
+/// </para>
 /// </remarks>
 public class DomainToResponseRegister : IRegister
 {
@@ -127,9 +148,11 @@ public class DomainToResponseRegister : IRegister
 
                     // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
                     dest.DeelZaakTypen =
-                        src.ZaakTypeDeelZaakTypen == null ? null : src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct();
+                        src.ZaakTypeDeelZaakTypen == null
+                            ? null
+                            : src.ZaakTypeDeelZaakTypen.Select(s => s.DeelZaakTypeIdentificatie).Distinct().ToList();
                     dest.BesluitTypen =
-                        src.ZaakTypeBesluitTypen == null ? null : src.ZaakTypeBesluitTypen.Select(s => s.BesluitTypeOmschrijving).Distinct();
+                        src.ZaakTypeBesluitTypen == null ? null : src.ZaakTypeBesluitTypen.Select(s => s.BesluitTypeOmschrijving).Distinct().ToList();
                 }
             );
 
@@ -141,7 +164,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             .Ignore(dest => dest.Eigenschappen)
             // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
@@ -184,7 +207,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie);
 
         // Note: This map is used to merge an existing RolType with the PATCH operation
@@ -202,7 +225,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.ZaakType, src => MapsterUrlResolver.ResolveUrl(src.ZaakType))
             .Map(dest => dest.InformatieObjectType, src => src.InformatieObjectTypeOmschrijving)
             .Map(dest => dest.StatusType, src => MapsterUrlResolver.ResolveUrl(src.StatusType))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus));
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus));
 
         // Note: This map is used to merge an existing ZaakTypeInformatieObjectTypen with the PATCH operation
         config
@@ -217,7 +240,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.ZaakType, src => MapsterUrlResolver.ResolveUrl(src.ZaakType))
             .Map(dest => dest.ArchiefActieTermijn, src => ProfileHelper.Fix0Period(src.ArchiefActieTermijn))
             .Map(dest => dest.ProcesTermijn, src => ProfileHelper.Fix0Period(src.ProcesTermijn))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             .Map(dest => dest.BeginGeldigheid, src => ProfileHelper.StringDateFromDate(src.BeginGeldigheid))
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
@@ -244,7 +267,7 @@ public class DomainToResponseRegister : IRegister
                     dest.BesluittypeOmschrijvingen =
                         src.ResultaatTypeBesluitTypen == null
                             ? null
-                            : src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType.Omschrijving);
+                            : src.ResultaatTypeBesluitTypen.Where(b => b.BesluitType != null).Select(b => b.BesluitType.Omschrijving).ToList();
                 }
             );
 
@@ -257,13 +280,22 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.BesluitTypen)
+            // ResultaatType has no InformatieObjectTypen source member, so this stays null -- matching the
+            // AutoMapper original, which left it unmapped here even though the Response map above pins the
+            // same-named member to Enumerable.Empty<string>(). Ignored explicitly only to record that the
+            // asymmetry is deliberate; behaviour is unchanged.
+            .Ignore(dest => dest.InformatieObjectTypen)
             // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.BesluitTypen =
                         src.ResultaatTypeBesluitTypen == null
                             ? null
-                            : src.ResultaatTypeBesluitTypen.Where(z => z.BesluitType != null).Select(s => s.BesluitTypeOmschrijving).Distinct()
+                            : src
+                                .ResultaatTypeBesluitTypen.Where(z => z.BesluitType != null)
+                                .Select(s => s.BesluitTypeOmschrijving)
+                                .Distinct()
+                                .ToList()
             );
 
         config
@@ -323,7 +355,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
             .Map(dest => dest.ZaakType, src => MapsterUrlResolver.ResolveUrl(src.ZaakType))
             .Map(dest => dest.StatusType, src => MapsterUrlResolver.ResolveUrl(src.StatusType))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             .Map(dest => dest.BeginGeldigheid, src => ProfileHelper.StringDateFromDate(src.BeginGeldigheid))
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
@@ -378,14 +410,15 @@ public class DomainToResponseRegister : IRegister
                     dest.ResultaatTypenOmschrijving =
                         src.BesluitTypeResultaatTypen == null
                             ? null
-                            : src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType.Omschrijving);
+                            : src.BesluitTypeResultaatTypen.Where(b => b.ResultaatType != null).Select(b => b.ResultaatType.Omschrijving).ToList();
                     dest.VastgelegdIn =
                         src.BesluitTypeInformatieObjectTypen == null
                             ? null
                             : src
                                 .BesluitTypeInformatieObjectTypen.Where(b => b.InformatieObjectType != null)
                                 .Select(b => b.InformatieObjectType.Omschrijving)
-                                .Distinct();
+                                .Distinct()
+                                .ToList();
                 }
             );
 
@@ -406,11 +439,11 @@ public class DomainToResponseRegister : IRegister
                     dest.ZaakTypen =
                         src.BesluitTypeZaakTypen == null
                             ? null
-                            : src.BesluitTypeZaakTypen.Where(z => z.ZaakType != null).Select(s => s.ZaakTypeIdentificatie).Distinct();
+                            : src.BesluitTypeZaakTypen.Where(z => z.ZaakType != null).Select(s => s.ZaakTypeIdentificatie).Distinct().ToList();
                     dest.InformatieObjectTypen =
                         src.BesluitTypeInformatieObjectTypen == null
                             ? null
-                            : src.BesluitTypeInformatieObjectTypen.Select(s => s.InformatieObjectTypeOmschrijving).Distinct();
+                            : src.BesluitTypeInformatieObjectTypen.Select(s => s.InformatieObjectTypeOmschrijving).Distinct().ToList();
                 }
             );
 
@@ -422,8 +455,14 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
-            .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
-            .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie);
+            .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
+            .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
+            // Both stay null: the ZaakObjectType navigations that would feed them are commented out on the
+            // entity pending the VNG question below, so there is no source member. Ignored explicitly so
+            // the un-wired state is a recorded decision rather than an omission -- unignore them together
+            // with the two .Map calls below once VNG answers.
+            .Ignore(dest => dest.ResultaatTypen)
+            .Ignore(dest => dest.StatusTypen);
         // TODO: We ask VNG how the relations can be edited:
         //   https://github.com/VNG-Realisatie/gemma-zaken/issues/2501 ZTC 1.3: relatie zaakobjecttype-resultaattype en zaakobjecttype-statustype kunnen niet vastgelegd worden #2501
         //.Map(dest => dest.ResultaatTypen, src => src.ResultaatTypen == null ? null : MapsterUrlResolver.ResolveUrls(src.ResultaatTypen))

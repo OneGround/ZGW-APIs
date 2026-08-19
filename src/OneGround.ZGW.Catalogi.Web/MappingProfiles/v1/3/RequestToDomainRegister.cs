@@ -42,6 +42,7 @@ public class RequestToDomainRegister : IRegister
             .AfterMapping((_, dst) => dst.ZaakTypeDeelZaakTypen = [])
             .Ignore(dest => dest.ZaakTypeInformatieObjectTypen)
             .AfterMapping((_, dst) => dst.ZaakTypeInformatieObjectTypen = [])
+            .Ignore(dest => dest.ZaakObjectTypen)
             .Map(dest => dest.Doorlooptijd, src => PeriodPattern.NormalizingIso.Parse(src.Doorlooptijd).Value)
             .Map(dest => dest.VerlengingsTermijn, src => PeriodPattern.NormalizingIso.Parse(src.VerlengingsTermijn).Value)
             .Map(dest => dest.Servicenorm, src => PeriodPattern.NormalizingIso.Parse(src.Servicenorm).Value);
@@ -135,6 +136,7 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ZaakTypes)
             .Ignore(dest => dest.BesluitTypes)
             .Ignore(dest => dest.InformatieObjectTypes)
+            .Ignore(dest => dest.Owner)
             .Map(dest => dest.BegindatumVersie, src => ProfileHelper.TryDateFromStringOptional(src.BegindatumVersie));
 
         config
@@ -174,7 +176,9 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.DateFromStringOptional(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.DateFromStringOptional(src.EindeObject))
             .Ignore(dest => dest.Concept)
-            .Ignore(dest => dest.Owner);
+            .Ignore(dest => dest.Owner)
+            .Ignore(dest => dest.InformatieObjectTypeZaakTypen)
+            .Ignore(dest => dest.InformatieObjectTypeBesluitTypen);
 
         config.NewConfig<OmschrijvingGeneriekDto, OmschrijvingGeneriek>();
 
@@ -189,6 +193,7 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ZaakType)
             .Ignore(dest => dest.StatusTypeId)
             .Ignore(dest => dest.StatusType)
+            .Ignore(dest => dest.StatusTypeVerplichtEigenschappen)
             .Ignore(dest => dest.Owner)
             .Map(dest => dest.BeginGeldigheid, src => ProfileHelper.DateFromStringOptional(src.BeginGeldigheid))
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.DateFromStringOptional(src.EindeGeldigheid))

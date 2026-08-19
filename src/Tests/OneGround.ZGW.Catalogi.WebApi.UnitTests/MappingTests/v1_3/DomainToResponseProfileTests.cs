@@ -407,4 +407,55 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal([besluitType.Url], result.BesluitTypen);
         Assert.Equal([informatieObjectType.Url], result.InformatieObjectTypen);
     }
+
+    /// <summary>
+    /// Risk #20 regression. AutoMapper's <c>MapFrom</c> auto-null-guards a member path
+    /// (<c>src.A.B</c>); a Mapster <c>.Map</c> lambda does not, so an unguarded port throws
+    /// <see cref="NullReferenceException"/> exactly where AutoMapper quietly produced null. Every v1.3
+    /// child-of-ZaakType response map reads <c>src.ZaakType.Catalogus</c> and
+    /// <c>src.ZaakType.Identificatie</c>.
+    /// </summary>
+    /// <remarks>
+    /// Every handler that maps these DTOs currently does <c>.Include(x =&gt; x.ZaakType.Catalogus)</c>, so
+    /// the null branch is unreachable today — which is precisely why it needs a test and not a comment:
+    /// under AutoMapper a handler that forgot the Include produced nulls, under Mapster the same omission
+    /// is a 500. Note <c>?.</c> cannot be used in the fix — <c>.Map</c> source selectors compile to
+    /// expression trees and C# rejects null-conditionals there (CS8072) — so the guard is an explicit
+    /// ternary.
+    /// <para>
+    /// The two shapes behave differently and this fact covers both, which is why it asserts on
+    /// <c>Catalogus</c> AND <c>ZaaktypeIdentificatie</c>. Measured: dropping a <c>Catalogus</c> guard
+    /// (the path is a METHOD ARGUMENT to <c>ResolveUrl</c>) makes this throw; <c>ZaaktypeIdentificatie</c>
+    /// carries no guard at all because a bare member path null-propagates on its own — the assertion is
+    /// here to catch that behaviour changing, not to cover a ternary.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Children_of_ZaakType_with_an_unloaded_ZaakType_map_to_null_rather_than_throwing()
+    {
+        var statusType = _mapper.Map<StatusTypeResponseDto>(new StatusType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(statusType.Catalogus);
+        Assert.Null(statusType.ZaaktypeIdentificatie);
+
+        var rolType = _mapper.Map<RolTypeResponseDto>(new RolType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(rolType.Catalogus);
+        Assert.Null(rolType.ZaaktypeIdentificatie);
+
+        var resultaatType = _mapper.Map<ResultaatTypeResponseDto>(new ResultaatType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(resultaatType.Catalogus);
+        Assert.Null(resultaatType.ZaaktypeIdentificatie);
+
+        var eigenschap = _mapper.Map<EigenschapResponseDto>(new Eigenschap { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(eigenschap.Catalogus);
+        Assert.Null(eigenschap.ZaaktypeIdentificatie);
+
+        var zaakObjectType = _mapper.Map<ZaakObjectTypeResponseDto>(new ZaakObjectType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(zaakObjectType.Catalogus);
+        Assert.Null(zaakObjectType.ZaaktypeIdentificatie);
+
+        var zaakTypeInformatieObjectType = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(
+            new ZaakTypeInformatieObjectType { Id = Guid.NewGuid(), ZaakType = null }
+        );
+        Assert.Null(zaakTypeInformatieObjectType.Catalogus);
+    }
 }
