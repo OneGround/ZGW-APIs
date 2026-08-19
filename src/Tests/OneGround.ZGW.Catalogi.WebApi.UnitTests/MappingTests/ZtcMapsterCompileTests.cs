@@ -27,8 +27,11 @@ public class ZtcMapsterCompileTests
     /// the bad path — which is why it is worth keeping even though other tests map these same types.
     /// </para>
     /// <para>
-    /// A failure here reports as a crashed/aborted run that takes the rest of the project's tests with
-    /// it, not as a failed assertion. That is correct — do not read an abort here as flakiness.
+    /// Failure never looks like a failed assertion, and it has two shapes: a cycle reached through a DTO
+    /// member overflows the stack and kills the host, taking the rest of the project's tests with it,
+    /// while a cycle between two entities hangs the compiler instead and reads as a CI timeout. Both are
+    /// real failures — neither is flakiness. Mutation check: register a self-referential entity pair and
+    /// this stops returning.
     /// </para>
     /// </remarks>
     [Fact]
@@ -43,6 +46,11 @@ public class ZtcMapsterCompileTests
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
+
+        // Non-vacuity guard: Compile() over an empty RuleMap is a no-op that passes, so a broken
+        // config.Scan (wrong assembly, renamed register base type) would turn this gate green rather
+        // than red — the one failure mode Compile() alone cannot see.
+        Assert.NotEmpty(config.RuleMap);
 
         config.Compile();
     }
@@ -74,6 +82,7 @@ public class ZtcMapsterCompileTests
     /// explicitly — but a service that leans on convention-based nested mapping (as AC does for
     /// <c>Autorisatie</c>) would have those pairs silently outside this gate.
     /// </para>
+    /// <para>Mutation check: delete any one <c>.Ignore(...)</c> and this fails, naming the member.</para>
     /// </remarks>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()

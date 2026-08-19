@@ -47,8 +47,8 @@ internal sealed class ZtcMapperTestHost : IDisposable
     /// <c>.Map(dest =&gt; dest.Url, src =&gt; MapsterUrlResolver.ResolveUrl(src))</c> rules from the v1.3
     /// register left the entire suite green — Mapster's convention copy of the same-named <c>Url</c>
     /// member produced a value identical to what the mock returned, so every URL assertion had zero
-    /// detection power (Risk #7 / #24) while production would have started emitting relative URLs. With
-    /// the prefix in place the same deletion fails 15 tests.
+    /// detection power while production would have started emitting relative URLs. With the prefix in
+    /// place the same deletion fails 15 tests.
     /// </remarks>
     internal const string BaseUrl = "https://ztc.test";
 

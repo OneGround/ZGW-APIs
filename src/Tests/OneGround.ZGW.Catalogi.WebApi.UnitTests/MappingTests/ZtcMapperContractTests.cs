@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -49,8 +50,14 @@ public class ZtcMapperContractTests : IDisposable
 
     public ZtcMapperContractTests()
     {
+        // Prefixing, never echoing: the real UriService.GetUri returns an ABSOLUTE url while
+        // entity.Url is a relative path, and a mock that echoes e.Url collapses that difference --
+        // Mapster's convention copy of the same-named Url member then satisfies every URL assertion
+        // below on its own. This class asserted `existing.Url == dto.Url` against an echoing mock, which
+        // is a false positive the sibling register tests had already been corrected for. Shares
+        // ZtcMapperTestHost's prefix so there is one definition of "resolved" across the suite.
         var mockedUriService = new Mock<IEntityUriService>();
-        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
+        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(ZtcMapperTestHost.Resolved);
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
@@ -89,9 +96,14 @@ public class ZtcMapperContractTests : IDisposable
 
         var dto = _zgwMapper.Map<ZaakTypeResponseDtoV1>(existing);
 
-        Assert.Equal(existing.Url, dto.Url);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing), dto.Url);
         Assert.Equal("ZAAKTYPE-001", dto.Identificatie);
-        Assert.Equal(existing.Catalogus.Url, dto.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing.Catalogus), dto.Catalogus);
+        // The reliable discriminator is a type or format mismatch, not a name difference: DateOnly on
+        // the entity, string on the DTO. Convention copy cannot satisfy it at all, so unlike a
+        // same-name string member it fails the moment the register's StringDateFromDate rule goes
+        // missing.
+        Assert.Equal("2026-01-01", dto.BeginGeldigheid);
         AssertGerelateerdeZaakTypenSurvived(dto.GerelateerdeZaakTypen.Select(g => (g.AardRelatie, g.Toelichting, g.ZaakType)));
     }
 
@@ -102,9 +114,10 @@ public class ZtcMapperContractTests : IDisposable
 
         var dto = _zgwMapper.Map<ZaakTypeResponseDtoV13>(existing);
 
-        Assert.Equal(existing.Url, dto.Url);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing), dto.Url);
         Assert.Equal("ZAAKTYPE-001", dto.Identificatie);
-        Assert.Equal(existing.Catalogus.Url, dto.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing.Catalogus), dto.Catalogus);
+        Assert.Equal("2026-01-01", dto.BeginGeldigheid);
         AssertGerelateerdeZaakTypenSurvived(dto.GerelateerdeZaakTypen.Select(g => (g.AardRelatie, g.Toelichting, g.ZaakType)));
     }
 
@@ -120,7 +133,8 @@ public class ZtcMapperContractTests : IDisposable
         // the step that needs the register.
         Assert.Equal("gewijzigde omschrijving", merged.Omschrijving);
         Assert.Equal("ZAAKTYPE-001", merged.Identificatie);
-        Assert.Equal(existing.Catalogus.Url, merged.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing.Catalogus), merged.Catalogus);
+        Assert.Equal("2026-01-01", merged.BeginGeldigheid);
         AssertGerelateerdeZaakTypenSurvived(merged.GerelateerdeZaakTypen.Select(g => (g.AardRelatie, g.Toelichting, g.ZaakType)));
         AssertRelationUrlsSurvived(merged.DeelZaakTypen, merged.BesluitTypen, existing);
     }
@@ -135,7 +149,8 @@ public class ZtcMapperContractTests : IDisposable
 
         Assert.Equal("gewijzigde omschrijving", merged.Omschrijving);
         Assert.Equal("ZAAKTYPE-001", merged.Identificatie);
-        Assert.Equal(existing.Catalogus.Url, merged.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(existing.Catalogus), merged.Catalogus);
+        Assert.Equal("2026-01-01", merged.BeginGeldigheid);
         // A PATCH that does not mention a v1.3-only field must not silently reset it.
         Assert.Equal("Team Vergunningen", merged.Verantwoordelijke);
 
@@ -149,6 +164,148 @@ public class ZtcMapperContractTests : IDisposable
         Assert.Equal(["ZAAKTYPE-DEEL"], merged.DeelZaakTypen);
         Assert.Equal(["besluittype-omschrijving"], merged.BesluitTypen);
     }
+
+    /// <summary>
+    /// Every entity → response-DTO pair the registers declare, mapped through <see cref="IZgwMapper"/> —
+    /// the adapter <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. The two ZaakType facts above
+    /// cover one DTO name out of the ten ZTC hands the audit trail across two API versions from 61
+    /// files; this covers all of them, and is discovered from the real <c>AddZgwMapster</c> config so no
+    /// list goes stale when a version gains a type.
+    /// </summary>
+    /// <remarks>
+    /// The assertion is that the URL is ABSOLUTE, which is what gives it teeth: every one of these DTOs
+    /// has a same-named <c>Url</c> string that Mapster convention-copies from the entity's own RELATIVE
+    /// <c>Url</c>, so <c>dto.Url == entity.Url</c> passes without the register's
+    /// <c>MapsterUrlResolver.ResolveUrl</c> rule ever running. Comparing against the mock's prefixed
+    /// value fails the moment that rule is dropped — for every pair at once, not just ZaakType.
+    /// <para>
+    /// The source entity is built bare (<c>Id</c> plus empty collections) rather than by AutoFixture.
+    /// Empty collections are required because several registers' <c>.AfterMapping</c> folds iterate a
+    /// navigation with no null guard — deliberately, matching the AutoMapper originals — and a bare
+    /// entity is deterministic, so unlike a fixture-driven fact this cannot be defeated by generated
+    /// data that happens to miss a path.
+    /// </para>
+    /// <para>
+    /// Mutation check: delete any one <c>.Map(dest =&gt; dest.Url, ...)</c> rule and this fails for that
+    /// pair, with no other fact in the suite noticing — which is the coverage it adds.
+    /// </para>
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(EntityToResponseDtoPairs))]
+    public void AuditTrail_resolves_an_absolute_url_for_every_declared_response_dto(Type entityType, Type responseDtoType)
+    {
+        var entity = (IUrlEntity)BareEntity(entityType);
+
+        var dto = MapThroughZgwMapper(responseDtoType, entity);
+
+        Assert.Equal(ZtcMapperTestHost.Resolved(entity), (string)responseDtoType.GetProperty("Url")!.GetValue(dto));
+    }
+
+    /// <summary>
+    /// Every entity → request-DTO pair the registers declare, run through the real
+    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check: the
+    /// values are pinned by the register tests, whereas the failure this catches is the one that shipped
+    /// on 17 controllers before commit d288c53 — a merge resolved against a mapper that has no map for
+    /// the pair, which throws at request time while every register-level fact stays green.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately does not assert on mapped values. With a bare entity every navigation is null, so
+    /// the url-shaped members are legitimately null and there is nothing for a value assertion to
+    /// discriminate; inventing one here would be decorative. What it does prove for all pairs at once is
+    /// that <c>IZgwRequestMerger</c> resolves, that the pair has a real map behind it, and that the
+    /// <c>.AfterMapping</c> folds survive an entity with nothing loaded.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(EntityToRequestDtoPairs))]
+    public void RequestMerger_merges_an_empty_patch_for_every_declared_request_dto(Type entityType, Type requestDtoType)
+    {
+        var entity = BareEntity(entityType);
+
+        var merged = MergeEmptyPatch(requestDtoType, entityType, entity);
+
+        Assert.NotNull(merged);
+        Assert.IsType(requestDtoType, merged);
+    }
+
+    public static TheoryData<Type, Type> EntityToResponseDtoPairs() => DeclaredPairsEndingIn("ResponseDto", requireUrlOnDestination: true);
+
+    public static TheoryData<Type, Type> EntityToRequestDtoPairs() => DeclaredPairsEndingIn("RequestDto", requireUrlOnDestination: false);
+
+    /// <summary>
+    /// Reads the pairs out of the config <c>AddZgwMapster</c> actually builds. A hand-rolled
+    /// <c>TypeAdapterConfig</c> would not do — it is the scanned, merged config that decides which
+    /// definition of a pair survives, and that is the one the service resolves.
+    /// </summary>
+    private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        var config = provider.GetRequiredService<TypeAdapterConfig>();
+
+        var data = new TheoryData<Type, Type>();
+        var pairs = config
+            .RuleMap.Keys.Where(k =>
+                typeof(IBaseEntity).IsAssignableFrom(k.Source)
+                && k.Destination.Name.EndsWith(destinationSuffix, StringComparison.Ordinal)
+                && (!requireUrlOnDestination || (typeof(IUrlEntity).IsAssignableFrom(k.Source) && k.Destination.GetProperty("Url") != null))
+            )
+            .OrderBy(k => k.Source.FullName)
+            .ThenBy(k => k.Destination.FullName);
+
+        foreach (var pair in pairs)
+        {
+            data.Add(pair.Source, pair.Destination);
+        }
+
+        // Guards the discovery itself: a filter that matched nothing would make the facts above vacuous
+        // rather than failing. ZTC declares 10 response pairs and 8 request pairs per API version.
+        Assert.NotEmpty(data);
+
+        return data;
+    }
+
+    /// <summary>
+    /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty.
+    /// The empty collections are load-bearing, not tidiness: the <c>GerelateerdeZaakTypen</c>
+    /// <c>.AfterMapping</c> folds iterate their navigation unguarded (as the AutoMapper
+    /// <c>IMappingAction</c>s they replace did), so a null there is a NullReferenceException.
+    /// </summary>
+    private static object BareEntity(Type entityType)
+    {
+        var entity = Activator.CreateInstance(entityType);
+
+        foreach (var property in entityType.GetProperties().Where(p => p.CanWrite && p.CanRead))
+        {
+            if (property.Name == nameof(IBaseEntity.Id) && property.PropertyType == typeof(Guid))
+            {
+                property.SetValue(entity, Guid.NewGuid());
+                continue;
+            }
+
+            if (!property.PropertyType.IsGenericType)
+            {
+                continue;
+            }
+
+            var definition = property.PropertyType.GetGenericTypeDefinition();
+            if (definition == typeof(List<>) || definition == typeof(ICollection<>) || definition == typeof(IList<>))
+            {
+                property.SetValue(entity, Activator.CreateInstance(typeof(List<>).MakeGenericType(property.PropertyType.GetGenericArguments()[0])));
+            }
+        }
+
+        return entity;
+    }
+
+    private object MapThroughZgwMapper(Type destinationType, object source) =>
+        typeof(IZgwMapper).GetMethod(nameof(IZgwMapper.Map))!.MakeGenericMethod(destinationType).Invoke(_zgwMapper, [source]);
+
+    private object MergeEmptyPatch(Type requestDtoType, Type entityType, object entity) =>
+        typeof(IZgwRequestMerger)
+            .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
+            .MakeGenericMethod(requestDtoType, entityType)
+            .Invoke(_zgwRequestMerger, [entity, new JObject()]);
 
     /// <summary>
     /// Every ZTC controller that runs a PATCH must take <see cref="IZgwRequestMerger"/>, not only the
@@ -189,6 +346,10 @@ public class ZtcMapperContractTests : IDisposable
     /// Scope is the <c>Catalogi.Web</c> assembly — every ZTC controller, handler and register lives
     /// there, and the <c>Catalogi.WebApi</c> host has no AutoMapper reference at all (verified). Add the
     /// host assembly here if that ever stops being true.
+    /// </para>
+    /// <para>
+    /// Mutation check: switch one <c>_mapsterMapper.Map&lt;T&gt;</c> call back to <c>_mapper.Map&lt;T&gt;</c>
+    /// and this fails; the constructor parameter every controller still declares does not trigger it.
     /// </para>
     /// <para>Delete this fact once <c>ZGWControllerBase</c> itself drops its AutoMapper dependency.</para>
     /// </remarks>
@@ -272,13 +433,13 @@ public class ZtcMapperContractTests : IDisposable
         var item = Assert.Single(gerelateerdeZaakTypen);
         Assert.Equal(AardRelatie.vervolg.ToString(), item.AardRelatie);
         Assert.Equal("volgt op de aanvraag", item.Toelichting);
-        Assert.Equal($"/zaaktypen/{GerelateerdZaakTypeId}", item.ZaakType);
+        Assert.Equal($"{ZtcMapperTestHost.BaseUrl}/zaaktypen/{GerelateerdZaakTypeId}", item.ZaakType);
     }
 
     private static void AssertRelationUrlsSurvived(IEnumerable<string> deelZaakTypen, IEnumerable<string> besluitTypen, ZaakType existing)
     {
-        Assert.Equal([$"/zaaktypen/{DeelZaakTypeId}"], deelZaakTypen);
-        Assert.Equal([existing.ZaakTypeBesluitTypen.Single().BesluitType.Url], besluitTypen);
+        Assert.Equal([$"{ZtcMapperTestHost.BaseUrl}/zaaktypen/{DeelZaakTypeId}"], deelZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(existing.ZaakTypeBesluitTypen.Single().BesluitType)], besluitTypen);
     }
 
     private static ZaakType ExistingZaakType() =>

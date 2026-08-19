@@ -409,7 +409,7 @@ public class DomainToResponseProfileTests : IDisposable
     }
 
     /// <summary>
-    /// Risk #20 regression. AutoMapper's <c>MapFrom</c> auto-null-guards a member path
+    /// AutoMapper's <c>MapFrom</c> auto-null-guards a member path
     /// (<c>src.A.B</c>); a Mapster <c>.Map</c> lambda does not, so an unguarded port throws
     /// <see cref="NullReferenceException"/> exactly where AutoMapper quietly produced null. Every v1.3
     /// child-of-ZaakType response map reads <c>src.ZaakType.Catalogus</c> and

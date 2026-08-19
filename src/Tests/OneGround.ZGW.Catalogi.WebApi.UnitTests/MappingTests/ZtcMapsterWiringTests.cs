@@ -49,6 +49,47 @@ public class ZtcMapsterWiringTests
     }
 
     /// <summary>
+    /// The shape every <c>GetAllAsync</c> uses — <c>Map&lt;List&lt;TResponseDto&gt;&gt;(pageResult)</c> —
+    /// which no other fact in the suite exercises: all the rest map a single object.
+    /// </summary>
+    /// <remarks>
+    /// Worth its own fact because the collection root differs from the single-object root in two ways
+    /// this migration depends on. <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c>, which exists
+    /// only on the <c>ServiceMapper</c> path, from inside per-element <c>.AfterMapping</c> blocks; and
+    /// <c>DestinationTransform.EmptyCollectionIfNull</c> applies to the root as well as to members. A
+    /// regression that breaks only the collection root — a plain <c>Mapper</c> substituted for
+    /// <c>ServiceMapper</c>, say — would otherwise leave the whole suite green while all 18 ZTC list
+    /// endpoints return 500s or relative URLs.
+    /// <para>
+    /// Asserts per-element URL resolution rather than just the element count: the count survives a
+    /// broken resolver, the resolved URL does not.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void A_collection_root_resolves_urls_for_every_element()
+    {
+        var mockedUriService = new Mock<IEntityUriService>();
+        mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => $"https://example.test{e.Url}");
+
+        var services = new ServiceCollection();
+        services.AddSingleton(mockedUriService.Object);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var first = new ZaakType { Id = Guid.NewGuid(), ZaakTypeGerelateerdeZaakTypen = [] };
+        var second = new ZaakType { Id = Guid.NewGuid(), ZaakTypeGerelateerdeZaakTypen = [] };
+
+        var result = mapper.Map<List<ZaakTypeResponseDto>>(new List<ZaakType> { first, second });
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal($"https://example.test{first.Url}", result[0].Url);
+        Assert.Equal($"https://example.test{second.Url}", result[1].Url);
+    }
+
+    /// <summary>
     /// Every register's type pairs must survive into the shared config. <c>AddZgwMapster</c> scans all
     /// of ZTC's registers into ONE <see cref="TypeAdapterConfig"/>, and Mapster's <c>NewConfig</c>
     /// REPLACES an existing pair rather than merging into it — unlike AutoMapper, where duplicate
