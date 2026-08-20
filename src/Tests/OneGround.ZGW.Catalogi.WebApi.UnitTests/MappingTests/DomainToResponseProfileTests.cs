@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NodaTime;
 using OneGround.ZGW.Catalogi.Contracts.v1;
@@ -10,55 +12,27 @@ using OneGround.ZGW.Catalogi.Contracts.v1.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1;
-using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests
+public class DomainToResponseProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(UrlResolver))
-            {
-                return new UrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlResolver))
-            {
-                return new MemberUrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlsResolver))
-            {
-                return new MemberUrlsResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MapGerelateerdeZaakTypenResponse))
-            {
-                return new MapGerelateerdeZaakTypenResponse(_mockedUriService.Object);
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
+        _mapper = _host.Mapper;
 
         _fixture.Customize<ZaakTypeDeelZaakType>(c => c.Do(z => z.DeelZaakType = new ZaakType { Id = _fixture.Create<Guid>() }));
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Theory]
     [InlineData(true)]
@@ -84,7 +58,7 @@ public class DomainToResponseProfileTests
 
         var result = _mapper.Map<ZaakTypeResponseDto>(source);
 
-        Assert.Equal(source.Url, result.Url);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source), result.Url);
         Assert.Equal(source.Identificatie, result.Identificatie);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
@@ -119,7 +93,7 @@ public class DomainToResponseProfileTests
         var source = _fixture.Create<ZaakType>();
         var result = _mapper.Map<ZaakTypeResponseDto>(source);
 
-        Assert.Equal(source.ZaakTypeDeelZaakTypen.Select(t => t.DeelZaakType.Url), result.DeelZaakTypen);
+        Assert.Equal(source.ZaakTypeDeelZaakTypen.Select(t => ZtcMapperTestHost.Resolved(t.DeelZaakType)), result.DeelZaakTypen);
     }
 
     [Fact]
@@ -174,7 +148,7 @@ public class DomainToResponseProfileTests
 
         var result = _mapper.Map<ResultaatTypeResponseDto>(source);
 
-        Assert.Equal(source.ZaakType.Url, result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.ZaakType), result.ZaakType);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
         Assert.Equal(source.ResultaatTypeOmschrijving, result.ResultaatTypeOmschrijving);
@@ -204,7 +178,7 @@ public class DomainToResponseProfileTests
         var source = _fixture.Create<ResultaatType>();
         var result = _mapper.Map<ResultaatTypeRequestDto>(source);
 
-        Assert.Equal(source.ZaakType.Url, result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.ZaakType), result.ZaakType);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.ResultaatTypeOmschrijving, result.ResultaatTypeOmschrijving);
         Assert.Equal(source.SelectieLijstKlasse, result.SelectieLijstKlasse);
@@ -244,9 +218,9 @@ public class DomainToResponseProfileTests
         Assert.Equal(source.ContactpersoonBeheerNaam, result.ContactpersoonBeheerNaam);
         Assert.Equal(source.ContactpersoonBeheerTelefoonnummer, result.ContactpersoonBeheerTelefoonnummer);
 
-        Assert.Equal(source.BesluitTypes.Select(b => b.Url), result.BesluitTypen);
-        Assert.Equal(source.ZaakTypes.Select(b => b.Url), result.ZaakTypen);
-        Assert.Equal(source.InformatieObjectTypes.Select(b => b.Url), result.InformatieObjectTypen);
+        Assert.Equal(source.BesluitTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.BesluitTypen);
+        Assert.Equal(source.ZaakTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.ZaakTypen);
+        Assert.Equal(source.InformatieObjectTypes.Select(b => ZtcMapperTestHost.Resolved(b)), result.InformatieObjectTypen);
     }
 
     [Fact]
@@ -270,7 +244,7 @@ public class DomainToResponseProfileTests
         var source = _fixture.Create<BesluitType>();
         var result = _mapper.Map<BesluitTypeResponseDto>(source);
 
-        Assert.Equal(source.Catalogus.Url, result.Catalogus);
+        Assert.Equal(ZtcMapperTestHost.Resolved(source.Catalogus), result.Catalogus);
         Assert.Equal(source.Omschrijving, result.Omschrijving);
         Assert.Equal(source.OmschrijvingGeneriek, result.OmschrijvingGeneriek);
         Assert.Equal(source.BesluitCategorie, result.BesluitCategorie);
@@ -279,8 +253,87 @@ public class DomainToResponseProfileTests
         Assert.Equal(source.PublicatieTekst, result.PublicatieTekst);
         Assert.Equal(source.PublicatieTermijn.ToString(), result.PublicatieTermijn);
         Assert.Equal(source.Toelichting, result.Toelichting);
-        Assert.Equal(source.BesluitTypeInformatieObjectTypen.Select(b => b.InformatieObjectType.Url), result.InformatieObjectTypen);
+        Assert.Equal(
+            source.BesluitTypeInformatieObjectTypen.Select(b => ZtcMapperTestHost.Resolved(b.InformatieObjectType)),
+            result.InformatieObjectTypen
+        );
         Assert.Equal(source.BeginGeldigheid.ToString("yyyy-MM-dd"), result.BeginGeldigheid);
         Assert.Equal(source.EindeGeldigheid.Value.ToString("yyyy-MM-dd"), result.EindeGeldigheid);
+    }
+
+    [Fact]
+    public void ZaakType_with_GerelateerdeZaakTypen_Maps_GerelateerdeZaakTypen_via_AfterMapping()
+    {
+        // ZaakType.Url is a computed, get-only property ($"/zaaktypen/{Id}"), so it cannot be set via
+        // object initializer -- only Id is set here and Url is asserted against its computed value.
+        var gerelateerd = new ZaakType { Id = _fixture.Create<Guid>() };
+        var relation = _fixture.Build<ZaakTypeGerelateerdeZaakType>().With(r => r.GerelateerdeZaakType, gerelateerd).Create();
+        var source = _fixture.Build<ZaakType>().With(z => z.ZaakTypeGerelateerdeZaakTypen, [relation]).Create();
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.NotNull(result.GerelateerdeZaakTypen);
+        var item = Assert.Single(result.GerelateerdeZaakTypen);
+        Assert.Equal(relation.AardRelatie.ToString(), item.AardRelatie);
+        Assert.Equal(relation.Toelichting, item.Toelichting);
+        Assert.Equal(ZtcMapperTestHost.Resolved(gerelateerd), item.ZaakType);
+    }
+
+    [Fact]
+    public void InformatieObjectType_with_no_ZaakType_or_BesluitType_relations_Maps_to_empty_collections_not_null()
+    {
+        // These two are initialized `= []` on the DTO, so the fold must produce empty, not null. An
+        // InformatieObjectType with no linked types is the common case, not an edge case.
+        var source = _fixture
+            .Build<InformatieObjectType>()
+            .Without(i => i.InformatieObjectTypeZaakTypen)
+            .Without(i => i.InformatieObjectTypeBesluitTypen)
+            .Create();
+
+        var result = _mapper.Map<InformatieObjectTypeResponseDto>(source);
+
+        Assert.Empty(result.ZaakTypen);
+        Assert.Empty(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
+    {
+        // The opposite contract to the fact above: these three have no initializer, so they must stay
+        // null. Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
+        var source = new ZaakType
+        {
+            Id = _fixture.Create<Guid>(),
+            ZaakTypeInformatieObjectTypen = null,
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.Null(result.InformatieObjectTypen);
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_relations_maps_to_null_on_the_PATCH_request_dto_too()
+    {
+        // Same contract on the Entity -> RequestDto map that IZgwRequestMerger uses for PATCH: a null
+        // navigation must survive as null so the merge does not present [] as the existing value and
+        // wipe the relations the ZAAKTYPE actually has.
+        var source = new ZaakType
+        {
+            Id = _fixture.Create<Guid>(),
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeRequestDto>(source);
+
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
     }
 }

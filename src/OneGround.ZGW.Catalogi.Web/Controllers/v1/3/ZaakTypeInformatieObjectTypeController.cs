@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -40,12 +39,16 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakTypeInformatieObjectTypeController(
         ILogger<ZaakTypeInformatieObjectTypeController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -53,6 +56,8 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
@@ -74,8 +79,10 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakTypeInformatieObjectTypenPageSize));
-        var filter = _mapper.Map<GetAllZaakTypeInformatieObjectTypenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(
+            new PaginationQuery(page, _applicationConfiguration.ZaakTypeInformatieObjectTypenPageSize)
+        );
+        var filter = _mapsterMapper.Map<GetAllZaakTypeInformatieObjectTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakTypeInformatieObjectTypenQuery { GetAllZaakTypenFilter = filter, Pagination = pagination });
 
@@ -84,7 +91,9 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var getAllZaakTypeInformatieObjectTypenQueryResponse = _mapper.Map<List<ZaakTypeInformatieObjectTypeResponseDto>>(result.Result.PageResult);
+        var getAllZaakTypeInformatieObjectTypenQueryResponse = _mapsterMapper.Map<List<ZaakTypeInformatieObjectTypeResponseDto>>(
+            result.Result.PageResult
+        );
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,
@@ -118,7 +127,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var zaaktypeResponse = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
+        var zaaktypeResponse = _mapsterMapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
 
         return Ok(zaaktypeResponse);
     }
@@ -139,7 +148,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakTypeInformatieObjectTypeRequest);
 
-        var zaakTypeInformatieObjectType = _mapper.Map<ZaakTypeInformatieObjectType>(zaakTypeInformatieObjectTypeRequest);
+        var zaakTypeInformatieObjectType = _mapsterMapper.Map<ZaakTypeInformatieObjectType>(zaakTypeInformatieObjectTypeRequest);
 
         var result = await _mediator.Send(
             new CreateZaakTypeInformatieObjectTypenCommand
@@ -160,7 +169,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -181,7 +190,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(GetAllAsync), request, id);
 
-        var zaakTypeInformatieObjectType = _mapper.Map<ZaakTypeInformatieObjectType>(request);
+        var zaakTypeInformatieObjectType = _mapsterMapper.Map<ZaakTypeInformatieObjectType>(request);
 
         var result = await _mediator.Send(
             new UpdateZaakTypeInformatieObjectTypeCommand()
@@ -205,7 +214,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var statusTypeResponse = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
+        var statusTypeResponse = _mapsterMapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(result.Result);
 
         return Ok(statusTypeResponse);
     }
@@ -233,7 +242,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        ZaakTypeInformatieObjectTypeRequestDto mergedZaakTypeInformatieObjectTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+        ZaakTypeInformatieObjectTypeRequestDto mergedZaakTypeInformatieObjectTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
             ZaakTypeInformatieObjectTypeRequestDto,
             ZaakTypeInformatieObjectType
         >(resultGet.Result, partialZaakTypeInformatieObjectTypeRequest);
@@ -243,7 +252,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakTypeInformatieObjectType mergedZaakTypeInformatieObjectType = _mapper.Map<ZaakTypeInformatieObjectType>(
+        ZaakTypeInformatieObjectType mergedZaakTypeInformatieObjectType = _mapsterMapper.Map<ZaakTypeInformatieObjectType>(
             mergedZaakTypeInformatieObjectTypeRequest
         );
 
@@ -269,7 +278,7 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var zaakTypeInformatieObjectTypeResponseDto = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(resultUpd.Result);
+        var zaakTypeInformatieObjectTypeResponseDto = _mapsterMapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(resultUpd.Result);
 
         return Ok(zaakTypeInformatieObjectTypeResponseDto);
     }
