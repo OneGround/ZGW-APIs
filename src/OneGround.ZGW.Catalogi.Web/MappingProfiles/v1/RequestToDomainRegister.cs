@@ -48,9 +48,18 @@ public class RequestToDomainRegister : IRegister
             .AfterMapping((_, dst) => dst.ZaakTypeBesluitTypen = [])
             .Ignore(dest => dest.ZaakTypeDeelZaakTypen)
             .AfterMapping((_, dst) => dst.ZaakTypeDeelZaakTypen = [])
-            .Map(dest => dest.Doorlooptijd, src => PeriodPattern.NormalizingIso.Parse(src.Doorlooptijd).Value)
-            .Map(dest => dest.VerlengingsTermijn, src => PeriodPattern.NormalizingIso.Parse(src.VerlengingsTermijn).Value)
-            .Map(dest => dest.Servicenorm, src => PeriodPattern.NormalizingIso.Parse(src.Servicenorm).Value);
+            .Map(
+                dest => dest.Doorlooptijd,
+                src => string.IsNullOrWhiteSpace(src.Doorlooptijd) ? null : PeriodPattern.NormalizingIso.Parse(src.Doorlooptijd).Value
+            )
+            .Map(
+                dest => dest.VerlengingsTermijn,
+                src => string.IsNullOrWhiteSpace(src.VerlengingsTermijn) ? null : PeriodPattern.NormalizingIso.Parse(src.VerlengingsTermijn).Value
+            )
+            .Map(
+                dest => dest.Servicenorm,
+                src => string.IsNullOrWhiteSpace(src.Servicenorm) ? null : PeriodPattern.NormalizingIso.Parse(src.Servicenorm).Value
+            );
 
         config
             .NewConfig<GerelateerdeZaaktypeDto, ZaakTypeGerelateerdeZaakType>()
@@ -167,14 +176,20 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.IndicatieSpecifiek)
             .Ignore(dest => dest.ProcesTermijn)
             .Ignore(dest => dest.ResultaatTypeBesluitTypen)
-            .Map(dest => dest.ArchiefActieTermijn, src => PeriodPattern.NormalizingIso.Parse(src.ArchiefActieTermijn).Value);
+            .Map(
+                dest => dest.ArchiefActieTermijn,
+                src => string.IsNullOrWhiteSpace(src.ArchiefActieTermijn) ? null : PeriodPattern.NormalizingIso.Parse(src.ArchiefActieTermijn).Value
+            );
 
         config
             .NewConfig<BronDatumArchiefProcedureDto, BronDatumArchiefProcedure>()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.ResultaatType)
             .Ignore(dest => dest.Owner)
-            .Map(dest => dest.ProcesTermijn, src => PeriodPattern.NormalizingIso.Parse(src.ProcesTermijn).Value);
+            .Map(
+                dest => dest.ProcesTermijn,
+                src => string.IsNullOrWhiteSpace(src.ProcesTermijn) ? null : PeriodPattern.NormalizingIso.Parse(src.ProcesTermijn).Value
+            );
 
         config.NewConfig<GetAllResultaatTypenQueryParameters, GetAllResultaatTypenFilter>();
 
@@ -253,8 +268,14 @@ public class RequestToDomainRegister : IRegister
             .AfterMapping((_, dst) => dst.BesluitTypeZaakTypen = [])
             .Ignore(dest => dest.BesluitTypeInformatieObjectTypen)
             .AfterMapping((_, dst) => dst.BesluitTypeInformatieObjectTypen = [])
-            .Map(dest => dest.ReactieTermijn, src => PeriodPattern.NormalizingIso.Parse(src.ReactieTermijn).Value)
-            .Map(dest => dest.PublicatieTermijn, src => PeriodPattern.NormalizingIso.Parse(src.PublicatieTermijn).Value);
+            .Map(
+                dest => dest.ReactieTermijn,
+                src => string.IsNullOrWhiteSpace(src.ReactieTermijn) ? null : PeriodPattern.NormalizingIso.Parse(src.ReactieTermijn).Value
+            )
+            .Map(
+                dest => dest.PublicatieTermijn,
+                src => string.IsNullOrWhiteSpace(src.PublicatieTermijn) ? null : PeriodPattern.NormalizingIso.Parse(src.PublicatieTermijn).Value
+            );
 
         config
             .NewConfig<GetAllBesluitTypenQueryParameters, GetAllBesluitTypenFilter>()

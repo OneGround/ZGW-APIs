@@ -643,4 +643,48 @@ public class RequestToDomainProfileTests : IDisposable
 
         Assert.Null(result.BeginObject);
     }
+
+    [Fact]
+    public void Optional_Period_fields_left_unset_map_to_null_rather_than_throwing()
+    {
+        // Mapster does not null-guard a member passed as a METHOD ARGUMENT inside a .Map(...) lambda, so an
+        // omitted optional ISO-8601 duration reached PeriodPattern.Parse(null) and threw ArgumentNullException
+        // out of NodaTime -- surfacing as a 500 where the business rules expect a validation 400. Every raw
+        // PeriodPattern parse in this register is guarded; this pins all of them.
+        var zaakType = _mapper.Map<ZaakType>(new ZaakTypeRequestDto { BeginGeldigheid = "2020-11-12", VersieDatum = "2020-11-12" });
+        Assert.Null(zaakType.Doorlooptijd);
+        Assert.Null(zaakType.VerlengingsTermijn);
+        Assert.Null(zaakType.Servicenorm);
+
+        var statusType = _mapper.Map<StatusType>(new StatusTypeRequestDto());
+        Assert.Null(statusType.Doorlooptijd);
+
+        var resultaatType = _mapper.Map<ResultaatType>(new ResultaatTypeRequestDto());
+        Assert.Null(resultaatType.ArchiefActieTermijn);
+        Assert.Null(resultaatType.ProcesTermijn);
+
+        var besluitType = _mapper.Map<BesluitType>(new BesluitTypeRequestDto { BeginGeldigheid = "2020-11-12" });
+        Assert.Null(besluitType.ReactieTermijn);
+        Assert.Null(besluitType.PublicatieTermijn);
+    }
+
+    [Fact]
+    public void Blank_Period_fields_map_to_null_rather_than_throwing()
+    {
+        // Blank is treated as absent, matching how every ProfileHelper date/period helper in this codebase
+        // handles blank input. Guarding only on null would leave "" reaching the parser, which throws
+        // UnparsableValueException -> 500 where validation should answer 400.
+        var zaakType = _mapper.Map<ZaakType>(
+            new ZaakTypeRequestDto
+            {
+                BeginGeldigheid = "2020-11-12",
+                VersieDatum = "2020-11-12",
+                Doorlooptijd = "",
+                Servicenorm = "   ",
+            }
+        );
+
+        Assert.Null(zaakType.Doorlooptijd);
+        Assert.Null(zaakType.Servicenorm);
+    }
 }
