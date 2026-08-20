@@ -8,14 +8,11 @@ using OneGround.ZGW.Common.Web.Mapping.Mapster;
 namespace OneGround.ZGW.Autorisaties.Web.MappingProfiles.v1;
 
 /// <remarks>
-/// The <c>src.ClientIds == null ? ...</c> guards are the read-side half of the rule the sibling
-/// <see cref="MappingProfiles.v1.RequestToDomainRegister"/> already documents: Mapster does not
-/// null-guard a member used inside a method call in a <c>.Map(...)</c> lambda, so a null
-/// <c>ClientIds</c> makes <c>.Select(...)</c> throw <c>ArgumentNullException</c> where AutoMapper
-/// produced an empty collection (measured against the real <c>AddZgwMapster</c> config, both mappers).
-/// The write side needed <c>.Ignore()</c>+<c>.AfterMapping</c> because <c>ApplicatieClient</c> also
-/// closes a type cycle; there is no cycle here, so a folded <c>.Map(...)</c> is enough — and the fold
-/// must yield empty, not null, to match the AutoMapper baseline.
+/// The <c>src.ClientIds == null ? ...</c> guards must stay, and must yield empty rather than null: a
+/// null navigation otherwise makes <c>.Select(...)</c> throw. The sibling
+/// <see cref="MappingProfiles.v1.RequestToDomainRegister"/> solves the same problem with
+/// <c>.Ignore()</c>+<c>.AfterMapping</c> because its destination also closes a type cycle; there is no
+/// cycle on this side, so a folded <c>.Map(...)</c> is enough.
 /// </remarks>
 public class DomainToResponseRegister : IRegister
 {

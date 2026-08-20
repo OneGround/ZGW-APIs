@@ -183,18 +183,10 @@ public class AcMapsterWiringTests
     }
 
     /// <summary>
-    /// The read-side counterpart to the write-side guard <c>RequestToDomainRegister</c> already carries:
-    /// Mapster does not null-guard a member used inside a method call in a <c>.Map(...)</c> lambda, so
-    /// <c>src.ClientIds.Select(...)</c> throws <c>ArgumentNullException</c> on a null navigation where
-    /// AutoMapper produced an empty collection.
+    /// A null <c>ClientIds</c> must map to an empty collection, not throw out of <c>.Select(...)</c>.
+    /// Unreachable today — every handler that maps these DTOs <c>.Include</c>s the navigation — which is
+    /// why it needs pinning: a forgotten Include is a 500 rather than an empty array.
     /// </summary>
-    /// <remarks>
-    /// Latent rather than reachable today — every handler that maps these DTOs does
-    /// <c>.Include(z =&gt; z.ClientIds)</c>, and the request-side <c>.AfterMapping</c> always assigns a
-    /// list — but AutoMapper turned a forgotten Include into an empty array and Mapster turns it into a
-    /// 500, so the branch needs pinning rather than a comment. Empty, not null, is the AutoMapper
-    /// baseline (measured against both mappers). Mutation check: drop a fold and this throws.
-    /// </remarks>
     [Fact]
     public void Applicatie_with_an_unloaded_ClientIds_maps_to_an_empty_collection_rather_than_throwing()
     {
