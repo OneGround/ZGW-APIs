@@ -30,13 +30,11 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 /// register tests resolve <c>MapsterMapper.IMapper</c> directly and so exercise neither adapter.
 /// </summary>
 /// <remarks>
-/// ZTC's AutoMapper profiles are deleted, so both consumers must resolve the Mapster-backed adapters.
 /// A regression here is silent, not loud: Mapster convention-maps instead of throwing, so an audit
-/// record or a PATCH result comes back quietly wrong rather than as an exception. That is why the
-/// adapter type is asserted directly rather than inferred from a working map, and why the controller
-/// constructors are checked by reflection - a controller left on AutoMapper's
-/// <see cref="IRequestMerger"/> keeps compiling and every mapping fact below keeps passing, because
-/// they resolve the correct merger themselves.
+/// record or a PATCH result comes back quietly wrong. Hence the adapter type is asserted directly rather
+/// than inferred from a working map, and the controller constructors are checked by reflection — a
+/// controller left on the AutoMapper merger keeps compiling and every mapping fact here keeps passing,
+/// because they resolve the correct merger themselves.
 /// </remarks>
 public class ZtcMapperContractTests : IDisposable
 {
@@ -50,12 +48,8 @@ public class ZtcMapperContractTests : IDisposable
 
     public ZtcMapperContractTests()
     {
-        // Prefixing, never echoing: the real UriService.GetUri returns an ABSOLUTE url while
-        // entity.Url is a relative path, and a mock that echoes e.Url collapses that difference --
-        // Mapster's convention copy of the same-named Url member then satisfies every URL assertion
-        // below on its own. This class asserted `existing.Url == dto.Url` against an echoing mock, which
-        // is a false positive the sibling register tests had already been corrected for. Shares
-        // ZtcMapperTestHost's prefix so there is one definition of "resolved" across the suite.
+        // Prefixing, never echoing -- see ZtcMapperTestHost.BaseUrl. Shares that prefix so there is one
+        // definition of "resolved" across the suite.
         var mockedUriService = new Mock<IEntityUriService>();
         mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(ZtcMapperTestHost.Resolved);
 
@@ -89,9 +83,6 @@ public class ZtcMapperContractTests : IDisposable
     [Fact]
     public void AuditTrail_maps_an_existing_ZaakType_to_its_v1_response_dto()
     {
-        // AuditTrailServiceBase.SetOld/SetNew go through IZgwMapper with exactly these DTOs, and every
-        // mutating ZTC endpoint writes an audit record that way, so a dropped register turns every
-        // POST/PUT/PATCH/DELETE audit entry into a convention-mapped approximation.
         var existing = ExistingZaakType();
 
         var dto = _zgwMapper.Map<ZaakTypeResponseDtoV1>(existing);
@@ -99,10 +90,8 @@ public class ZtcMapperContractTests : IDisposable
         Assert.Equal(ZtcMapperTestHost.Resolved(existing), dto.Url);
         Assert.Equal("ZAAKTYPE-001", dto.Identificatie);
         Assert.Equal(ZtcMapperTestHost.Resolved(existing.Catalogus), dto.Catalogus);
-        // The reliable discriminator is a type or format mismatch, not a name difference: DateOnly on
-        // the entity, string on the DTO. Convention copy cannot satisfy it at all, so unlike a
-        // same-name string member it fails the moment the register's StringDateFromDate rule goes
-        // missing.
+        // DateOnly on the entity, string on the DTO: a type mismatch convention copy cannot satisfy,
+        // unlike the same-named string members above.
         Assert.Equal("2026-01-01", dto.BeginGeldigheid);
         AssertGerelateerdeZaakTypenSurvived(dto.GerelateerdeZaakTypen.Select(g => (g.AardRelatie, g.Toelichting, g.ZaakType)));
     }
@@ -166,30 +155,12 @@ public class ZtcMapperContractTests : IDisposable
     }
 
     /// <summary>
-    /// Every entity → response-DTO pair the registers declare, mapped through <see cref="IZgwMapper"/> —
-    /// the adapter <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. The two ZaakType facts above
-    /// cover one DTO name out of the ten ZTC hands the audit trail across two API versions from 61
-    /// files; this covers all of them, and is discovered from the real <c>AddZgwMapster</c> config so no
-    /// list goes stale when a version gains a type.
+    /// Every entity → response-DTO pair the registers declare, mapped through the adapter
+    /// <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. Asserting the URL is ABSOLUTE is what
+    /// gives it teeth: these DTOs all have a same-named <c>Url</c> that Mapster convention-copies from
+    /// the entity's relative one, so <c>dto.Url == entity.Url</c> would pass with the register's
+    /// resolver rule deleted.
     /// </summary>
-    /// <remarks>
-    /// The assertion is that the URL is ABSOLUTE, which is what gives it teeth: every one of these DTOs
-    /// has a same-named <c>Url</c> string that Mapster convention-copies from the entity's own RELATIVE
-    /// <c>Url</c>, so <c>dto.Url == entity.Url</c> passes without the register's
-    /// <c>MapsterUrlResolver.ResolveUrl</c> rule ever running. Comparing against the mock's prefixed
-    /// value fails the moment that rule is dropped — for every pair at once, not just ZaakType.
-    /// <para>
-    /// The source entity is built bare (<c>Id</c> plus empty collections) rather than by AutoFixture.
-    /// Empty collections are required because several registers' <c>.AfterMapping</c> folds iterate a
-    /// navigation with no null guard — deliberately, matching the AutoMapper originals — and a bare
-    /// entity is deterministic, so unlike a fixture-driven fact this cannot be defeated by generated
-    /// data that happens to miss a path.
-    /// </para>
-    /// <para>
-    /// Mutation check: delete any one <c>.Map(dest =&gt; dest.Url, ...)</c> rule and this fails for that
-    /// pair, with no other fact in the suite noticing — which is the coverage it adds.
-    /// </para>
-    /// </remarks>
     [Theory]
     [MemberData(nameof(EntityToResponseDtoPairs))]
     public void AuditTrail_resolves_an_absolute_url_for_every_declared_response_dto(Type entityType, Type responseDtoType)
@@ -203,18 +174,10 @@ public class ZtcMapperContractTests : IDisposable
 
     /// <summary>
     /// Every entity → request-DTO pair the registers declare, run through the real
-    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check: the
-    /// values are pinned by the register tests, whereas the failure this catches is the one that shipped
-    /// on 17 controllers before commit d288c53 — a merge resolved against a mapper that has no map for
-    /// the pair, which throws at request time while every register-level fact stays green.
+    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
+    /// values are pinned by the register tests; this catches a merge resolved against a mapper that has
+    /// no map for the pair, which throws at request time while every register-level fact stays green.
     /// </summary>
-    /// <remarks>
-    /// Deliberately does not assert on mapped values. With a bare entity every navigation is null, so
-    /// the url-shaped members are legitimately null and there is nothing for a value assertion to
-    /// discriminate; inventing one here would be decorative. What it does prove for all pairs at once is
-    /// that <c>IZgwRequestMerger</c> resolves, that the pair has a real map behind it, and that the
-    /// <c>.AfterMapping</c> folds survive an entity with nothing loaded.
-    /// </remarks>
     [Theory]
     [MemberData(nameof(EntityToRequestDtoPairs))]
     public void RequestMerger_merges_an_empty_patch_for_every_declared_request_dto(Type entityType, Type requestDtoType)
@@ -232,9 +195,8 @@ public class ZtcMapperContractTests : IDisposable
     public static TheoryData<Type, Type> EntityToRequestDtoPairs() => DeclaredPairsEndingIn("RequestDto", requireUrlOnDestination: false);
 
     /// <summary>
-    /// Reads the pairs out of the config <c>AddZgwMapster</c> actually builds. A hand-rolled
-    /// <c>TypeAdapterConfig</c> would not do — it is the scanned, merged config that decides which
-    /// definition of a pair survives, and that is the one the service resolves.
+    /// Reads the pairs out of the config <c>AddZgwMapster</c> actually builds — the scanned, merged one
+    /// that decides which definition of a pair survives.
     /// </summary>
     private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
     {
@@ -258,18 +220,16 @@ public class ZtcMapperContractTests : IDisposable
             data.Add(pair.Source, pair.Destination);
         }
 
-        // Guards the discovery itself: a filter that matched nothing would make the facts above vacuous
-        // rather than failing. ZTC declares 10 response pairs and 8 request pairs per API version.
+        // A filter that matched nothing would make the facts above vacuous rather than failing.
         Assert.NotEmpty(data);
 
         return data;
     }
 
     /// <summary>
-    /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty.
-    /// The empty collections are load-bearing, not tidiness: the <c>GerelateerdeZaakTypen</c>
-    /// <c>.AfterMapping</c> folds iterate their navigation unguarded (as the AutoMapper
-    /// <c>IMappingAction</c>s they replace did), so a null there is a NullReferenceException.
+    /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty. The
+    /// empty collections are load-bearing: the <c>GerelateerdeZaakTypen</c> <c>.AfterMapping</c> folds
+    /// iterate their navigation unguarded, so a null there is a NullReferenceException.
     /// </summary>
     private static object BareEntity(Type entityType)
     {
@@ -330,28 +290,12 @@ public class ZtcMapperContractTests : IDisposable
     /// <c>ZGWControllerBase._mapper</c> stays visible to every ZTC controller as a protected field.
     /// </summary>
     /// <remarks>
-    /// Since ZTC's profiles are deleted, that field is a mapper over an EMPTY AutoMapper configuration.
-    /// A merge from a branch cut before the migration, or a paste from a service that has not migrated,
-    /// can reintroduce <c>_mapper.Map&lt;ZaakTypeResponseDto&gt;(...)</c> or
-    /// <c>_requestMerger.MergePartialUpdateToObjectRequest(...)</c>: it compiles, no mapping fact
-    /// notices (they resolve their own mapper), and it throws only when a real request hits that action.
-    /// <para>
-    /// Detected by reading the compiled assembly's MemberRef table rather than by walking IL: a call
-    /// into AutoMapper emits a MemberRef whose parent is an AutoMapper TypeRef, while merely having
-    /// <c>AutoMapper.IMapper</c> as a constructor parameter does not (that is a TypeRef in a signature,
-    /// and the base-constructor call's MemberRef is parented to ZGWControllerBase). So this fires on
-    /// use, never on the injection the base class forces.
-    /// </para>
-    /// <para>
-    /// Scope is the <c>Catalogi.Web</c> assembly — every ZTC controller, handler and register lives
-    /// there, and the <c>Catalogi.WebApi</c> host has no AutoMapper reference at all (verified). Add the
-    /// host assembly here if that ever stops being true.
-    /// </para>
-    /// <para>
-    /// Mutation check: switch one <c>_mapsterMapper.Map&lt;T&gt;</c> call back to <c>_mapper.Map&lt;T&gt;</c>
-    /// and this fails; the constructor parameter every controller still declares does not trigger it.
-    /// </para>
-    /// <para>Delete this fact once <c>ZGWControllerBase</c> itself drops its AutoMapper dependency.</para>
+    /// That field is a mapper over an EMPTY AutoMapper configuration, so a merge from an older branch can
+    /// reintroduce <c>_mapper.Map&lt;T&gt;(...)</c>: it compiles, no mapping fact notices, and it throws
+    /// only when a real request hits that action. Reading the MemberRef table rather than walking IL is
+    /// what makes this fire on <b>use</b> and not on the constructor parameter the base class forces.
+    /// Scope is <c>Catalogi.Web</c>; add the host assembly if it ever gains an AutoMapper reference.
+    /// Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
     /// </remarks>
     [Fact]
     public void No_ZTC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()

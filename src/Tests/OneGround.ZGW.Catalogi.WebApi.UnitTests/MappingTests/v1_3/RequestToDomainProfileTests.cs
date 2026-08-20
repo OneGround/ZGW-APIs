@@ -647,10 +647,8 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void Optional_Period_fields_left_unset_map_to_null_rather_than_throwing()
     {
-        // Mapster does not null-guard a member passed as a METHOD ARGUMENT inside a .Map(...) lambda, so an
-        // omitted optional ISO-8601 duration reached PeriodPattern.Parse(null) and threw ArgumentNullException
-        // out of NodaTime -- surfacing as a 500 where the business rules expect a validation 400. Every raw
-        // PeriodPattern parse in this register is guarded; this pins all of them.
+        // An omitted optional duration used to reach PeriodPattern.Parse(null) and throw out of NodaTime
+        // -- a 500 where validation should answer 400. Pins every raw parse in this register.
         var zaakType = _mapper.Map<ZaakType>(new ZaakTypeRequestDto { BeginGeldigheid = "2020-11-12", VersieDatum = "2020-11-12" });
         Assert.Null(zaakType.Doorlooptijd);
         Assert.Null(zaakType.VerlengingsTermijn);

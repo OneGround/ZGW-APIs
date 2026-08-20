@@ -11,23 +11,13 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// Builds an <see cref="IMapper"/> the way <c>Startup</c> does — <c>AddZgwMapster</c> with Mapster
-/// enabled, scanning the whole Web assembly — with <see cref="IEntityUriService"/> mocked to echo the
-/// entity's own <c>Url</c>.
+/// enabled, scanning the whole Web assembly — with <see cref="IEntityUriService"/> mocked. Mapping tests
+/// take their mapper from here rather than hand-rolling a <c>TypeAdapterConfig</c> from one register:
+/// the seam's global settings are what make several register decisions load-bearing, above all
+/// <c>EmptyCollectionIfNull</c>, without which a test cannot tell an <c>.AfterMapping</c> null fold from
+/// a <c>.Map(...)</c> one.
 /// </summary>
 /// <remarks>
-/// Mapping tests must not hand-roll a <c>TypeAdapterConfig</c> from a single register, because the seam's
-/// global settings are what make several register decisions load-bearing:
-/// <list type="bullet">
-/// <item><c>DestinationTransform.EmptyCollectionIfNull</c> re-coalesces any null a <c>.Map(...)</c> lambda
-/// returns, which is exactly why the PreCondition-emulating folds assign null in <c>.AfterMapping</c>
-/// instead. Without the transform a test cannot tell the two apart, so moving a fold back into
-/// <c>.Map(...)</c> would flip that member from <c>null</c> to <c>[]</c> in every response and audit
-/// record with the suite still green.</item>
-/// <item><c>NameMatchingStrategy.IgnoreCase</c> and the global nullable-enum rule change which members
-/// map at all.</item>
-/// <item>Registers are scanned together, so a test sees the merged configuration the service actually
-/// resolves rather than one register in isolation.</item>
-/// </list>
 /// The provider and scope are instance fields disposed in <see cref="Dispose"/>, never scoped to the
 /// constructor with <c>using</c>: <c>MapContext</c>-based DI resolution is lazy, happening at
 /// <c>Map()</c>-call time.
@@ -38,18 +28,11 @@ internal sealed class ZtcMapperTestHost : IDisposable
     private readonly IServiceScope _scope;
 
     /// <summary>
-    /// Stands in for the real service's base URI. It must NOT be empty: <c>UriService.GetUri</c> returns an
-    /// ABSOLUTE url (<c>BaseUri + BasePath + entity.Url</c>) while <c>entity.Url</c> is a relative path, and
-    /// a mock that echoes <c>e.Url</c> collapses that difference.
+    /// Stands in for the real service's base URI. It must NOT be empty: the real <c>GetUri</c> returns an
+    /// absolute url while <c>entity.Url</c> is relative, and a mock that echoes <c>e.Url</c> collapses
+    /// that difference — every URL assertion then passes on Mapster's convention copy alone, with the
+    /// register's resolver rules deleted.
     /// </summary>
-    /// <remarks>
-    /// Why that matters, measured: with an echoing mock, deleting all ten
-    /// <c>.Map(dest =&gt; dest.Url, src =&gt; MapsterUrlResolver.ResolveUrl(src))</c> rules from the v1.3
-    /// register left the entire suite green — Mapster's convention copy of the same-named <c>Url</c>
-    /// member produced a value identical to what the mock returned, so every URL assertion had zero
-    /// detection power while production would have started emitting relative URLs. With the prefix in
-    /// place the same deletion fails 15 tests.
-    /// </remarks>
     internal const string BaseUrl = "https://ztc.test";
 
     /// <summary>The url the mocked <see cref="IEntityUriService"/> resolves an entity to. Assert against

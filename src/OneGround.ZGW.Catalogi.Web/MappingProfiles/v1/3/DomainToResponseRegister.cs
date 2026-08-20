@@ -12,35 +12,23 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._3;
 
 /// <summary>
-/// Port of the v1.3 AutoMapper <c>DomainToResponseProfile</c>. Also serves the audit trail
-/// (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just the controllers.
+/// Serves the audit trail (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just
+/// the controllers.
 /// </summary>
 /// <remarks>
-/// Read the remarks on the sibling <see cref="MappingProfiles.v1.DomainToResponseRegister"/> first: the
-/// <c>PreCondition</c>-emulation rule documented there (fold to empty in a <c>.Map(...)</c> when the
-/// destination property has a <c>= []</c> initializer, otherwise assign null in <c>.AfterMapping</c>)
-/// governs this file too, and it has far more of those folds.
-/// <para>
-/// Every <c>.AfterMapping</c> fold here ends in <c>.ToList()</c> — keep it. AutoMapper materialized each
-/// mapped collection into a <c>List&lt;T&gt;</c>; a bare LINQ chain would instead hand the DTO a deferred
-/// query over the source entity's live navigation collection. Several ZTC update handlers <c>Clear()</c>
-/// exactly those collections after the DTO has been produced (see <c>UpdateBesluitTypeCommandHandler</c>
-/// and <c>UpdateResultaatTypeCommandHandler</c>), so a consumer that reads the DTO later would observe
-/// post-mutation data. Today's consumers all serialize immediately — <c>AuditTrailServiceBase.SetOld</c>
-/// and <c>PartialUpdateMerger.Merge</c> both do — so this is a guard against a future one, not a live
-/// bug. Note that <c>MapsterUrlResolver.ResolveUrls</c> already materializes internally; only the folds
-/// that project denormalized string fields themselves need the explicit call.
-/// </para>
-/// <para><b>The <c>src.ZaakType == null ? null : ...</c> guards on <c>dest.Catalogus</c>.</b> AutoMapper's
-/// <c>MapFrom</c> null-guards member paths automatically; Mapster only does so when the path IS the
-/// mapping value. Measured on this config: a bare <c>src.ZaakType.Identificatie</c> null-propagates to
-/// null on its own and needs no guard, but the same path passed as a METHOD ARGUMENT —
-/// <c>MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus)</c> — is not guarded and throws
-/// <c>NullReferenceException</c>. That is the whole rule: guard a member path only where it is an
-/// argument. <c>?.</c> cannot be used (a <c>.Map</c> source selector is an expression tree, and C#
-/// rejects null-conditionals there — CS8072), hence the ternary. Both shapes are pinned by
-/// <c>v1_3.DomainToResponseProfileTests.Children_of_ZaakType_with_an_unloaded_ZaakType_map_to_null_rather_than_throwing</c>.
-/// </para>
+/// Three rules govern this file; the first is documented on the sibling
+/// <see cref="MappingProfiles.v1.DomainToResponseRegister"/> and this file has far more of those folds.
+/// <list type="bullet">
+/// <item>Empty-vs-null on a folded collection member — see the sibling register.</item>
+/// <item>Every <c>.AfterMapping</c> fold ends in <c>.ToList()</c>: keep it. A bare LINQ chain hands the
+/// DTO a deferred query over the source's live navigation collection, and some update handlers
+/// <c>Clear()</c> those collections after the DTO exists. <c>ResolveUrls</c> already materializes;
+/// only folds projecting denormalized string fields need the explicit call.</item>
+/// <item><c>src.ZaakType == null ? null : ...</c> on <c>dest.Catalogus</c>: a member path is guarded
+/// only where it is a METHOD ARGUMENT. A bare <c>src.ZaakType.Identificatie</c> null-propagates on its
+/// own; <c>ResolveUrl(src.ZaakType.Catalogus)</c> does not. <c>?.</c> is CS8072 in an expression tree,
+/// hence the ternary.</item>
+/// </list>
 /// </remarks>
 public class DomainToResponseRegister : IRegister
 {
@@ -62,8 +50,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.VerlengingsTermijn, src => ProfileHelper.Fix0Period(src.VerlengingsTermijn))
             .Map(dest => dest.Servicenorm, src => ProfileHelper.Fix0Period(src.Servicenorm))
             .Map(dest => dest.Doorlooptijd, src => ProfileHelper.Fix0Period(src.Doorlooptijd))
-            // PreCondition fold -> empty: ZaakObjectTypen is the one member on this config with a `= []`
-            // initializer, so a plain .Map is correct here. See the class remarks.
+            // Fold -> empty: ZaakObjectTypen is the one member here with a `= []` initializer.
             .Map(
                 dest => dest.ZaakObjectTypen,
                 src => src.ZaakObjectTypen == null ? Enumerable.Empty<string>() : MapsterUrlResolver.ResolveUrls(src.ZaakObjectTypen)
@@ -86,8 +73,7 @@ public class DomainToResponseRegister : IRegister
                         })
                         .ToList();
 
-                    // PreCondition folds -> null. No initializer on these three, and .AfterMapping is
-                    // required so EmptyCollectionIfNull cannot re-coalesce it. See the class remarks.
+                    // Must stay in .AfterMapping to survive as null -- see the class remarks.
                     dest.InformatieObjectTypen =
                         src.ZaakTypeInformatieObjectTypen == null
                             ? null
@@ -122,12 +108,8 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.GerelateerdeZaakTypen)
             .Ignore(dest => dest.DeelZaakTypen)
             .Ignore(dest => dest.BesluitTypen)
-            // Note: unlike MapGerelateerdeZaakTypenResponse above, this port of MapMergedGerelateerdeZaakTypen
-            // needs no IEntityUriService/URL lookup -- it uses the already-denormalized
-            // GerelateerdeZaakTypeIdentificatie string field directly -- and, critically, does NOT filter out
-            // entries with a null GerelateerdeZaakType navigation (no .Where(...), unlike the Response version
-            // above): it iterates every item in src.ZaakTypeGerelateerdeZaakTypen unconditionally, matching the
-            // original AutoMapper IMappingAction body exactly.
+            // Deliberately does NOT filter out entries with a null GerelateerdeZaakType, unlike the
+            // response map above: this one reads the denormalized identificatie, not a URL.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -146,7 +128,7 @@ public class DomainToResponseRegister : IRegister
                     }
                     dest.GerelateerdeZaakTypen = gerelateerdeZaakTypen;
 
-                    // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+                    // Must stay in .AfterMapping to survive as null -- see the class remarks.
                     dest.DeelZaakTypen =
                         src.ZaakTypeDeelZaakTypen == null
                             ? null
@@ -167,7 +149,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             .Ignore(dest => dest.Eigenschappen)
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.Eigenschappen =
@@ -190,7 +172,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.Eigenschappen)
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.Eigenschappen =
@@ -248,13 +230,11 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.BesluitTypen)
             .Ignore(dest => dest.BesluittypeOmschrijvingen)
-            // Note: preserved verbatim from the AutoMapper source -- these two members are not a
-            // PreCondition-fold at all. The original always maps them to a bare Enumerable.Empty<string>(),
-            // unconditionally and regardless of source data (presumably a not-yet-implemented feature) -- do
-            // not "improve" this by wiring up real source data.
+            // Always empty regardless of source data, as before -- not a fold. Do not "improve" this by
+            // wiring up real source data.
             .Map(dest => dest.InformatieObjectTypen, src => Enumerable.Empty<string>())
             .Map(dest => dest.InformatieObjectTypeOmschrijvingen, src => Enumerable.Empty<string>())
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -280,12 +260,10 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Ignore(dest => dest.BesluitTypen)
-            // ResultaatType has no InformatieObjectTypen source member, so this stays null -- matching the
-            // AutoMapper original, which left it unmapped here even though the Response map above pins the
-            // same-named member to Enumerable.Empty<string>(). Ignored explicitly only to record that the
-            // asymmetry is deliberate; behaviour is unchanged.
+            // No source member, so this stays null -- the asymmetry with the response map above, which
+            // pins the same-named member to empty, is deliberate and pre-existing.
             .Ignore(dest => dest.InformatieObjectTypen)
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                     dest.BesluitTypen =
@@ -314,8 +292,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
-            // PreCondition folds -> empty: InformatieObjectTypeDto (v1._3) initializes both with `= []` in
-            // its own base class, so a plain .Map is correct here. See the class remarks.
+            // Fold -> empty: the v1._3 DTO initializes both with `= []` in its base class.
             .Map(
                 dest => dest.ZaakTypen,
                 src =>
@@ -346,9 +323,8 @@ public class DomainToResponseRegister : IRegister
 
         config.NewConfig<OmschrijvingGeneriek, OmschrijvingGeneriekDto>();
 
-        // EigenschapSpecificatie -> Catalogi.Contracts.v1.EigenschapSpecificatieDto is deliberately absent:
-        // v1.3 reuses the v1 DTO, so it is the same CLR pair the v1 register owns. See the note on
-        // GerelateerdeZaaktypeDto in the sibling RequestToDomainRegister for why duplicating it is unsafe.
+        // EigenschapSpecificatie -> v1.EigenschapSpecificatieDto is absent on purpose: v1.3 reuses the v1
+        // DTO, so it is the same CLR pair the v1 register already owns. Declaring it twice would replace it.
 
         config
             .NewConfig<Eigenschap, EigenschapResponseDto>()
@@ -387,7 +363,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
             .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -432,7 +408,7 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.ZaakTypen)
             .Ignore(dest => dest.InformatieObjectTypen)
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -457,10 +433,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject))
             .Map(dest => dest.Catalogus, src => src.ZaakType == null ? null : MapsterUrlResolver.ResolveUrl(src.ZaakType.Catalogus))
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
-            // Both stay null: the ZaakObjectType navigations that would feed them are commented out on the
-            // entity pending the VNG question below, so there is no source member. Ignored explicitly so
-            // the un-wired state is a recorded decision rather than an omission -- unignore them together
-            // with the two .Map calls below once VNG answers.
+            // No source member yet -- the feeding navigations are commented out on the entity pending
+            // the VNG question below. Unignore together with the two .Map calls once answered.
             .Ignore(dest => dest.ResultaatTypen)
             .Ignore(dest => dest.StatusTypen);
         // TODO: We ask VNG how the relations can be edited:

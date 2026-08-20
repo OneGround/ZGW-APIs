@@ -50,21 +50,11 @@ public class ZtcMapsterWiringTests
 
     /// <summary>
     /// The shape every <c>GetAllAsync</c> uses — <c>Map&lt;List&lt;TResponseDto&gt;&gt;(pageResult)</c> —
-    /// which no other fact in the suite exercises: all the rest map a single object.
+    /// which no other fact in the suite exercises. It differs from a single-object root in that
+    /// <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c>, only present on the
+    /// <c>ServiceMapper</c> path, from inside per-element <c>.AfterMapping</c> blocks. Asserts
+    /// per-element URLs, not just the count: the count survives a broken resolver.
     /// </summary>
-    /// <remarks>
-    /// Worth its own fact because the collection root differs from the single-object root in two ways
-    /// this migration depends on. <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c>, which exists
-    /// only on the <c>ServiceMapper</c> path, from inside per-element <c>.AfterMapping</c> blocks; and
-    /// <c>DestinationTransform.EmptyCollectionIfNull</c> applies to the root as well as to members. A
-    /// regression that breaks only the collection root — a plain <c>Mapper</c> substituted for
-    /// <c>ServiceMapper</c>, say — would otherwise leave the whole suite green while all 18 ZTC list
-    /// endpoints return 500s or relative URLs.
-    /// <para>
-    /// Asserts per-element URL resolution rather than just the element count: the count survives a
-    /// broken resolver, the resolved URL does not.
-    /// </para>
-    /// </remarks>
     [Fact]
     public void A_collection_root_resolves_urls_for_every_element()
     {
@@ -96,12 +86,9 @@ public class ZtcMapsterWiringTests
     /// <c>CreateMap</c> calls for one TypePair accumulate onto the same TypeMap.
     /// </summary>
     /// <remarks>
-    /// Two registers declaring the same CLR pair is easy to do by accident because the v1.3 contracts
-    /// reuse several <c>Contracts.v1</c> DTOs (GerelateerdeZaaktypeDto, EigenschapSpecificatieDto), so
-    /// the two declarations look version-specific in source while resolving to identical types.
-    /// Assembly scan order then decides which definition wins and which is silently discarded, and no
-    /// per-register test can see it: each builds its own isolated config and therefore exercises a
-    /// definition that may not be the one the service resolves at runtime.
+    /// Easy to do by accident because the v1.3 contracts reuse several <c>Contracts.v1</c> DTOs, so two
+    /// declarations look version-specific in source while resolving to identical types. Scan order then
+    /// picks a winner silently, and no per-register test can see it.
     /// </remarks>
     [Fact]
     public void No_register_silently_overwrites_another_registers_type_pair()

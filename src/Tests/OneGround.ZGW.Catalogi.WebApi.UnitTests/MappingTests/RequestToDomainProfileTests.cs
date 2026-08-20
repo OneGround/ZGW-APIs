@@ -310,8 +310,7 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void Optional_Period_fields_left_unset_map_to_null_rather_than_throwing()
     {
-        // See the v1_3 sibling test: Mapster does not null-guard a member passed as a method argument in a
-        // .Map(...) lambda, so an omitted optional duration threw ArgumentNullException out of NodaTime.
+        // See the v1_3 sibling test.
         var zaakType = _mapper.Map<ZaakType>(new ZaakTypeRequestDto { BeginGeldigheid = "2020-11-12", VersieDatum = "2020-11-12" });
         Assert.Null(zaakType.Doorlooptijd);
         Assert.Null(zaakType.VerlengingsTermijn);

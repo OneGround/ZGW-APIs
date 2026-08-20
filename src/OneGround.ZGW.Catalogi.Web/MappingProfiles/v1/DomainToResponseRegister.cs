@@ -11,29 +11,23 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.MappingProfiles.v1;
 
 /// <summary>
-/// Port of the v1 AutoMapper <c>DomainToResponseProfile</c>. Also serves the audit trail
-/// (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just the controllers.
+/// Serves the audit trail (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just
+/// the controllers.
 /// </summary>
 /// <remarks>
-/// <para><b>Emulating AutoMapper's <c>PreCondition</c> — the one rule to know before editing.</b>
-/// AutoMapper skipped the whole member assignment when a <c>PreCondition</c> was false, leaving the
-/// destination at whatever its field initializer gave it. Mapster has no equivalent, so each of those
-/// members folds its null-check into the projection, and the fold has to reproduce the right default:
-/// </para>
+/// <b>The one rule to know before editing a collection member.</b> Where the original had a
+/// <c>PreCondition</c>, the null-check is folded into the projection, and the fold must reproduce the
+/// right default — so check the destination property's own initializer first:
 /// <list type="bullet">
-/// <item>Destination property HAS a <c>= []</c> initializer → fold to <c>Enumerable.Empty&lt;string&gt;()</c>
-/// in a plain <c>.Map(...)</c>. (e.g. <c>InformatieObjectTypeResponseDto.ZaakTypen/BesluitTypen</c>.)</item>
-/// <item>Destination property has NO initializer → must produce <c>null</c>, and the assignment must live
-/// in <c>.AfterMapping</c>, never in a <c>.Map(...)</c> lambda. <c>AddZgwMapster</c> registers
-/// <c>DestinationTransform.EmptyCollectionIfNull</c> globally (for parity with AutoMapper's
-/// <c>AllowNullCollections = false</c>), and it re-coalesces ANY null a <c>.Map(...)</c> lambda returns
-/// into an empty collection — including the deliberate one. <c>.AfterMapping</c> runs after that
-/// transform pipeline, so a plain assignment there survives as null.</item>
+/// <item>HAS a <c>= []</c> initializer → fold to <c>Enumerable.Empty&lt;string&gt;()</c> in a plain
+/// <c>.Map(...)</c>.</item>
+/// <item>NO initializer → must produce <c>null</c>, and the assignment must live in
+/// <c>.AfterMapping</c>, never in a <c>.Map(...)</c> lambda: the seam's global
+/// <c>EmptyCollectionIfNull</c> transform re-coalesces any null a <c>.Map(...)</c> returns, including a
+/// deliberate one. <c>.AfterMapping</c> runs after that transform.</item>
 /// </list>
-/// <para>Check the destination property's own initializer before adding or moving a fold; getting it
-/// wrong silently changes a JSON response from <c>[]</c> to <c>null</c> or back, and changes every audit
-/// record with it. Guarded by the <c>*_maps_to_null</c> facts in the mapping tests, which only
-/// discriminate because they run on the real seam config — see <c>ZtcMapperTestHost</c>.</para>
+/// Getting it wrong silently flips a JSON response between <c>[]</c> and <c>null</c>, and every audit
+/// record with it.
 /// </remarks>
 public class DomainToResponseRegister : IRegister
 {
@@ -71,8 +65,7 @@ public class DomainToResponseRegister : IRegister
                         })
                         .ToList();
 
-                    // PreCondition folds -> null. No initializer on these three, and .AfterMapping is
-                    // required so EmptyCollectionIfNull cannot re-coalesce it. See the class remarks.
+                    // Must stay in .AfterMapping to survive as null -- see the class remarks.
                     dest.InformatieObjectTypen =
                         src.ZaakTypeInformatieObjectTypen == null
                             ? null
@@ -118,7 +111,7 @@ public class DomainToResponseRegister : IRegister
                         })
                         .ToList();
 
-                    // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+                    // Must stay in .AfterMapping to survive as null -- see the class remarks.
                     dest.DeelZaakTypen =
                         src.ZaakTypeDeelZaakTypen == null
                             ? null
@@ -190,8 +183,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.BeginGeldigheid, src => ProfileHelper.StringDateFromDate(src.BeginGeldigheid))
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
-            // PreCondition folds -> empty: InformatieObjectTypeDto initializes both with `= []`, so a
-            // plain .Map is correct here. See the class remarks.
+            // Fold -> empty: InformatieObjectTypeDto initializes both with `= []`.
             .Map(
                 dest => dest.ZaakTypen,
                 src =>
@@ -237,7 +229,7 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
             .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
-            // PreCondition folds -> null; no initializer, so .AfterMapping. See the class remarks.
+            // Must stay in .AfterMapping to survive as null -- see the class remarks.
             .AfterMapping(
                 (src, dest) =>
                 {

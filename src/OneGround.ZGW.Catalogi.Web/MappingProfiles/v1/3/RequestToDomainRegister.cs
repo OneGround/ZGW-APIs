@@ -43,6 +43,9 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ZaakTypeInformatieObjectTypen)
             .AfterMapping((_, dst) => dst.ZaakTypeInformatieObjectTypen = [])
             .Ignore(dest => dest.ZaakObjectTypen)
+            // Every raw PeriodPattern parse in this file is guarded. NULL -> null matches the previous
+            // mapper; BLANK -> null is a deliberate change (it used to throw) and is safe because
+            // IsDuration rejects "" on the request DTO.
             .Map(
                 dest => dest.Doorlooptijd,
                 src => string.IsNullOrWhiteSpace(src.Doorlooptijd) ? null : PeriodPattern.NormalizingIso.Parse(src.Doorlooptijd).Value

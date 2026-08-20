@@ -282,12 +282,8 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void InformatieObjectType_with_no_ZaakType_or_BesluitType_relations_Maps_to_empty_collections_not_null()
     {
-        // InformatieObjectTypeDto.ZaakTypen/.BesluitTypen are initialized with `= []` in the base
-        // class. AutoMapper's PreCondition (skip-the-whole-member-assignment-if-false) left those
-        // initializers in place when the source navigation collection was null. The folded Mapster
-        // .Map(...) always runs, so it must explicitly produce Enumerable.Empty<string>() (not null)
-        // in the null branch to preserve that "[]", not "null", contract -- InformatieObjectType with
-        // zero linked ZaakTypen/BesluitTypen is the normal/common case (not an edge case).
+        // These two are initialized `= []` on the DTO, so the fold must produce empty, not null. An
+        // InformatieObjectType with no linked types is the common case, not an edge case.
         var source = _fixture
             .Build<InformatieObjectType>()
             .Without(i => i.InformatieObjectTypeZaakTypen)
@@ -303,10 +299,8 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
     {
-        // The opposite contract to the InformatieObjectType fact above: these three have no initializer,
-        // so AutoMapper's PreCondition-skip left them null and the port must reproduce null, not [].
-        // Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
-        // Mutation-verified: moving any of the three folds into a plain .Map(...) fails this test.
+        // The opposite contract to the fact above: these three have no initializer, so they must stay
+        // null. Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
         var source = new ZaakType
         {
             Id = _fixture.Create<Guid>(),

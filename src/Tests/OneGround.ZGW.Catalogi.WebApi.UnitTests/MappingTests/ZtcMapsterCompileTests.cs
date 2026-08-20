@@ -12,44 +12,21 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 public class ZtcMapsterCompileTests
 {
     /// <summary>
-    /// Compiles every registered type pair up front. A register whose mapped member (or collection
-    /// element) type navigates back to its owning entity makes Mapster emit a recursive function it can
-    /// never finish building, overflowing the stack — uncatchable, and it kills the process instead of
-    /// failing a request, so it has to be caught here rather than at runtime.
+    /// Compiles every registered type pair up front, so a register that makes Mapster emit an
+    /// endlessly-recursive mapping function fails here instead of at runtime. Failure is an aborted host
+    /// or a hung run, never a failed assertion — treat either as real, not as flakiness.
     /// </summary>
-    /// <remarks>
-    /// ZTC is the most exposed service in the repo: StatusType, RolType, ResultaatType, Eigenschap,
-    /// ZaakObjectType and ZaakTypeInformatieObjectType all point back at their owning ZaakType, and the
-    /// ZaakTypeDeelZaakType / ZaakTypeGerelateerdeZaakType join entities close a ZaakType-to-ZaakType
-    /// cycle directly.
-    /// <para>
-    /// Needs no input data, so unlike a mapping fact it cannot be defeated by fixture values that miss
-    /// the bad path — which is why it is worth keeping even though other tests map these same types.
-    /// </para>
-    /// <para>
-    /// Failure never looks like a failed assertion, and it has two shapes: a cycle reached through a DTO
-    /// member overflows the stack and kills the host, taking the rest of the project's tests with it,
-    /// while a cycle between two entities hangs the compiler instead and reads as a CI timeout. Both are
-    /// real failures — neither is flakiness. Mutation check: register a self-referential entity pair and
-    /// this stops returning.
-    /// </para>
-    /// </remarks>
     [Fact]
     public void AddZgwMapster_config_compiles_every_registered_type_pair()
     {
         var services = new ServiceCollection();
-
-        // Startup's assembly, and nothing else: Compile() only builds the mapping plans, so DI-backed
-        // resolvers are never invoked. A hand-rolled TypeAdapterConfig would not do — it omits the global
-        // settings that trigger the failure.
         services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
-        // Non-vacuity guard: Compile() over an empty RuleMap is a no-op that passes, so a broken
-        // config.Scan (wrong assembly, renamed register base type) would turn this gate green rather
-        // than red — the one failure mode Compile() alone cannot see.
+        // Compile() over an empty RuleMap passes, so without this a broken config.Scan would turn the
+        // gate green rather than red.
         Assert.NotEmpty(config.RuleMap);
 
         config.Compile();
@@ -57,33 +34,9 @@ public class ZtcMapsterCompileTests
 
     /// <summary>
     /// Mapster's stand-in for AutoMapper's <c>AssertConfigurationIsValid()</c>: every destination member
-    /// must have a source member, an explicit <c>.Map(...)</c>, or an explicit <c>.Ignore(...)</c>.
-    /// Without it a destination property that no register mentions is silently left at its default, and
-    /// Mapster — unlike AutoMapper — never complains.
+    /// needs a source member, an explicit <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is
+    /// what keeps the registers' <c>.Ignore(...)</c> calls load-bearing rather than decorative.
     /// </summary>
-    /// <remarks>
-    /// This is what keeps the registers' ~250 <c>.Ignore(...)</c> calls load-bearing. They were written to
-    /// satisfy AutoMapper's assertion; the moment nothing enforces them they become decorative and rot,
-    /// and the next unmapped member reaches production as a <c>null</c> in every response body and every
-    /// audit record instead of failing here.
-    /// <para>
-    /// <c>RequireDestinationMemberSource</c> is applied to the test's own config rather than inside
-    /// <c>AddZgwMapster</c> on purpose: as a global seam setting it would throw at service startup for
-    /// every service, including those that have not migrated yet and have no registers at all.
-    /// </para>
-    /// <para>
-    /// Each pair is compiled separately so one offender does not mask the rest — <c>config.Compile()</c>
-    /// throws on the first failure, which makes a multi-member regression take several rounds to clear.
-    /// </para>
-    /// <para>
-    /// Coverage limit: <c>RuleMap</c> is snapshotted before compiling, so this validates the pairs the
-    /// registers DECLARE, not ones Mapster infers for nested types on demand. Harmless for ZTC today —
-    /// measured, compiling adds no rules (55 before, 55 after), because every nested DTO is registered
-    /// explicitly — but a service that leans on convention-based nested mapping (as AC does for
-    /// <c>Autorisatie</c>) would have those pairs silently outside this gate.
-    /// </para>
-    /// <para>Mutation check: delete any one <c>.Ignore(...)</c> and this fails, naming the member.</para>
-    /// </remarks>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
     {
@@ -93,9 +46,14 @@ public class ZtcMapsterCompileTests
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
+        // On the test's own config, never inside AddZgwMapster: as a global seam setting this would throw
+        // at startup for every service that has not migrated and has no registers at all.
         config.Default.RequireDestinationMemberSource(true);
 
         var unmapped = new List<string>();
+
+        // Per pair rather than one config.Compile(), which throws on the first failure and would make a
+        // multi-member regression take several rounds to clear.
         foreach (var pair in config.RuleMap.Keys.OrderBy(k => k.Source.FullName).ThenBy(k => k.Destination.FullName).ToList())
         {
             try
@@ -104,8 +62,7 @@ public class ZtcMapsterCompileTests
             }
             catch (Exception ex)
             {
-                // Mapster wraps the useful text (the member names) in an inner exception; the outer
-                // message only repeats the type pair.
+                // Mapster puts the member names in the inner exception; the outer one only repeats the pair.
                 unmapped.Add($"{pair.Source.FullName} -> {pair.Destination.FullName}\n    {ex.InnerException?.Message ?? ex.Message}");
             }
         }

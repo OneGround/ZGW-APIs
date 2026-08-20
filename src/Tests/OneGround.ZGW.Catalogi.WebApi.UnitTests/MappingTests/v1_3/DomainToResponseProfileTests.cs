@@ -70,11 +70,8 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_ZaakObjectTypen_maps_to_empty_collection_not_null()
     {
-        // Regression test for the fold documented in DomainToResponseRegister.cs: ZaakTypeResponseDto
-        // declares `ZaakObjectTypen { get; set; } = [];`, so a null source navigation must map to
-        // Enumerable.Empty<string>(), not null. Verified by deliberately reverting the fold in the
-        // register to plain `null` and re-running this test: it fails (Assert.NotNull/Assert.Empty
-        // both fail against a null collection), confirming this test actually discriminates.
+        // ZaakTypeResponseDto declares `ZaakObjectTypen = []`, so a null source navigation must fold to
+        // empty, not null.
         var source = new ZaakType
         {
             Id = Guid.NewGuid(),
@@ -107,9 +104,8 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
     {
-        // Unlike ZaakObjectTypen above, these three have no initializer on the destination DTO, so a null
-        // source navigation must stay null. Only discriminates because the mapper comes from the real
-        // seam — see ZtcMapperTestHost. Mutation-verified: moving a fold into a plain .Map(...) fails this.
+        // Unlike ZaakObjectTypen above, these three have no initializer, so a null source navigation must
+        // stay null. Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
         var source = new ZaakType
         {
             Id = Guid.NewGuid(),
@@ -156,12 +152,9 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_GerelateerdeZaakTypen_maps_to_RequestDto_without_filtering_null_navigation()
     {
-        // MapMergedGerelateerdeZaakTypen (unlike MapGerelateerdeZaakTypenResponse above) operates on the
-        // already-denormalized GerelateerdeZaakTypeIdentificatie string and does NOT filter out entries
-        // whose GerelateerdeZaakType navigation is null -- it iterates every source item unconditionally.
-        // Both relations below must appear in the result; if someone mistakenly copied the Response
-        // version's null-navigation filter onto this map, the second relation would be dropped and this
-        // test would fail.
+        // This map iterates every source item unconditionally, unlike the response map which filters out
+        // null navigations. Both relations below must survive; copying that filter here would drop the
+        // second one.
         var relationWithNavigation = new ZaakTypeGerelateerdeZaakType
         {
             AardRelatie = AardRelatie.vervolg,
@@ -227,9 +220,7 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void InformatieObjectType_with_no_relations_maps_to_empty_collections_not_null()
     {
-        // Regression test: InformatieObjectTypeResponseDto (via its InformatieObjectTypeDto base) declares
-        // `ZaakTypen`/`BesluitTypen` with `= []`. Verified by deliberately reverting both folds in the
-        // register to plain `null` and re-running this test: it fails, confirming this test discriminates.
+        // The DTO declares both with `= []`, so both folds must produce empty, not null.
         var source = new InformatieObjectType
         {
             Id = Guid.NewGuid(),
@@ -321,17 +312,13 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(zaakType.Identificatie, result.ZaaktypeIdentificatie);
         Assert.Equal(ZtcMapperTestHost.Resolved(zaakType.Catalogus), result.Catalogus);
 
-        // Preserved verbatim from the AutoMapper source: these two members are not a PreCondition-fold at
-        // all -- they always map to an empty collection regardless of source data (not yet implemented).
+        // Not a fold: these two always map to an empty collection regardless of source data.
         Assert.NotNull(result.InformatieObjectTypen);
         Assert.Empty(result.InformatieObjectTypen);
         Assert.NotNull(result.InformatieObjectTypeOmschrijvingen);
         Assert.Empty(result.InformatieObjectTypeOmschrijvingen);
 
-        // BesluitTypen/BesluittypeOmschrijvingen are genuine PreCondition-folds and were audited to have
-        // no non-null destination initializer -- a null source navigation must fold to plain null, not
-        // Enumerable.Empty<string>() (that fallback is scoped to only ZaakObjectTypen and
-        // InformatieObjectTypeResponseDto.ZaakTypen/BesluitTypen).
+        // These two, by contrast, have no destination initializer, so they fold to null.
         Assert.Null(result.BesluitTypen);
         Assert.Null(result.BesluittypeOmschrijvingen);
     }
