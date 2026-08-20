@@ -311,9 +311,8 @@ public class ZtcMapperContractTests : IDisposable
         var metadata = peReader.GetMetadataReader();
 
         var calls = new List<string>();
-        foreach (var handle in metadata.MemberReferences)
+        foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
         {
-            var memberReference = metadata.GetMemberReference(handle);
             if (memberReference.Parent.Kind != HandleKind.TypeReference)
             {
                 continue;

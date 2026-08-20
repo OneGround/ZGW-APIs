@@ -60,7 +60,7 @@ public class ZtcMapsterCompileTests
             {
                 config.Compile(pair.Source, pair.Destination);
             }
-            catch (Exception ex)
+            catch (CompileException ex)
             {
                 // Mapster puts the member names in the inner exception; the outer one only repeats the pair.
                 unmapped.Add($"{pair.Source.FullName} -> {pair.Destination.FullName}\n    {ex.InnerException?.Message ?? ex.Message}");
