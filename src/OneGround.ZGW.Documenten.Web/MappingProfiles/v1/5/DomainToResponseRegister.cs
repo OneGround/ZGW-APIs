@@ -40,6 +40,9 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.Integriteit)
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
+            // Set below in MapLatestVersieToGetResponse's AfterMapping, invisible to Mapster's static analysis.
+            .Ignore(dest => dest.BestandsDelen)
+            .Ignore(dest => dest.InhoudIsVervallen)
             .AfterMapping((src, dest) => MapLatestVersieToGetResponse(src, dest, MapContext.Current.GetService<IEntityUriService>()));
 
         config
@@ -100,6 +103,11 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.Ondertekening)
             .Ignore(dest => dest.Integriteit)
             .Ignore(dest => dest.Lock) // Note: Don't merge the lock value because we have to validate the value from request and not the one in the database after the merge)
+            // Set below in MapLatestVersieToUpdateRequest's AfterMapping, invisible to Mapster's static analysis.
+            .Ignore(dest => dest.Bestandsomvang)
+            .Ignore(dest => dest.Verschijningsvorm)
+            .Ignore(dest => dest.InhoudIsVervallen)
+            .Ignore(dest => dest.Trefwoorden)
             .AfterMapping((src, dest) => MapLatestVersieToUpdateRequest(src, dest));
 
         config

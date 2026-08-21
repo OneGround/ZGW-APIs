@@ -1,21 +1,15 @@
 using System;
 using System.Globalization;
 using AutoFixture;
-using Mapster;
 using MapsterMapper;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
-using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.Web.MappingProfiles.v1;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
@@ -27,9 +21,7 @@ public class DomainToResponseProfileTests : IDisposable
     private const string TestBronorganisatie = "999993653";
 
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
@@ -37,26 +29,10 @@ public class DomainToResponseProfileTests : IDisposable
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
         _fixture.Register<DateTime>(() => DateTime.UtcNow);
 
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        var config = new TypeAdapterConfig();
-        new DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _host.Mapper;
     }
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_via_AfterMapping_with_DI_resolved_Inhoud()
@@ -105,14 +81,14 @@ public class DomainToResponseProfileTests : IDisposable
         latestVersion.InformatieObject = value;
         latestVersion.LatestInformatieObject = value;
 
-        // Pin a mock return value for THIS specific version instance, distinguishable from the default
-        // e.Url convention-based stub configured in the constructor: this proves MapLatestVersieToGetResponse
-        // actually calls uriService.GetUri(latestVersion), not that Inhoud coincidentally matches latestVersion.Url.
-        _mockedUriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
+        // Pin a mock return value for THIS specific version instance, distinguishable from the host's
+        // default prefixing stub: this proves MapLatestVersieToGetResponse actually calls
+        // uriService.GetUri(latestVersion), not that Inhoud coincidentally matches a resolved Url.
+        _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(latestVersion.Versie, result.Versie);
         Assert.Equal(latestVersion.Bronorganisatie, result.Bronorganisatie);
         Assert.Equal(latestVersion.Identificatie, result.Identificatie);
@@ -243,7 +219,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(value);
 
-        Assert.Equal(informatieObject.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), result.Url);
         Assert.Equal(value.CreatieDatum.Value.ToString("yyyy-MM-dd"), result.CreatieDatum);
         Assert.Equal(value.OntvangstDatum.Value.ToString("yyyy-MM-dd"), result.OntvangstDatum);
         Assert.Equal(
@@ -260,7 +236,7 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.Integriteit_Waarde, result.Integriteit.Waarde);
         Assert.Equal(informatieObject.IndicatieGebruiksrecht, result.IndicatieGebruiksrecht);
         Assert.Equal(informatieObject.Locked, result.Locked);
-        Assert.Equal(value.Url, result.Inhoud);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Inhoud);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
     }
 
@@ -288,7 +264,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(value);
 
-        Assert.Equal(informatieObject.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), result.Url);
         Assert.Equal(informatieObject.Lock, result.Lock);
         Assert.Equal(informatieObject.Locked, result.Locked);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
@@ -305,10 +281,10 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ObjectInformatieObjectResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Object, result.Object);
         Assert.Equal(value.ObjectType.ToString(), result.ObjectType);
-        Assert.Equal(value.InformatieObject.Url, result.InformatieObject);
+        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
     }
 
     [Fact]
@@ -318,8 +294,8 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<GebruiksRechtResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
-        Assert.Equal(value.InformatieObject.Url, result.InformatieObject);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
         Assert.Equal(value.OmschrijvingVoorwaarden, result.OmschrijvingVoorwaarden);
         Assert.Equal(value.Startdatum.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture), result.Startdatum);
         Assert.Equal(value.Einddatum.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Einddatum);
@@ -332,7 +308,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<GebruiksRechtRequestDto>(value);
 
-        Assert.Equal(value.InformatieObject.Url, result.InformatieObject);
+        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
         Assert.Equal(value.OmschrijvingVoorwaarden, result.OmschrijvingVoorwaarden);
         Assert.Equal(value.Startdatum.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture), result.Startdatum);
         Assert.Equal(value.Einddatum.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Einddatum);

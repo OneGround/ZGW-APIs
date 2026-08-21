@@ -1,34 +1,28 @@
 using System;
 using AutoFixture;
-using Mapster;
 using MapsterMapper;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Documenten.Contracts.v1;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
 using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_1;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        // The seam's global nullable-enum rule lives in AddZgwMapster, not in the register; this test
-        // builds config directly, so register it here too for parity with production.
-        config.RegisterNullableEnumRule();
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     private static EnkelvoudigInformatieObjectCreateRequestDto CreateRequestDto()
     {

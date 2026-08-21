@@ -79,6 +79,9 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
+            // Only introduced in the v1.7 contracts (not present on this DTO) -- no source to map from.
+            .Ignore(dest => dest.IsGereedVoorPublicatie)
+            .Ignore(dest => dest.TonenAanInitiator)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(
@@ -146,6 +149,9 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
+            // Only introduced in the v1.7 contracts (not present on this DTO) -- no source to map from.
+            .Ignore(dest => dest.IsGereedVoorPublicatie)
+            .Ignore(dest => dest.TonenAanInitiator)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(

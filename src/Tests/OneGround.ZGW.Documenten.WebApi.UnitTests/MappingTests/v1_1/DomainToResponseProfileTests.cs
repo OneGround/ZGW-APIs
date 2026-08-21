@@ -1,16 +1,11 @@
 using System;
 using System.Globalization;
-using Mapster;
 using MapsterMapper;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
+using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_1;
@@ -21,33 +16,15 @@ public class DomainToResponseProfileTests : IDisposable
     // Bronorganisatie -- never assigned to a real person or organisation.
     private const string TestBronorganisatie = "999993653";
 
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        var config = new TypeAdapterConfig();
-        new DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _host.Mapper;
     }
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     private static EnkelvoudigInformatieObjectVersie CreateVersion()
     {
@@ -102,14 +79,14 @@ public class DomainToResponseProfileTests : IDisposable
         latestVersion.InformatieObject = value;
         latestVersion.LatestInformatieObject = value;
 
-        // Pin a mock return value for THIS specific version instance, distinguishable from the default
-        // e.Url convention-based stub configured in the constructor: this proves MapLatestVersieToGetResponse
-        // actually calls uriService.GetUri(latestVersion), not that Inhoud coincidentally matches latestVersion.Url.
-        _mockedUriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
+        // Pin a mock return value for THIS specific version instance, distinguishable from the host's
+        // default prefixing stub: this proves MapLatestVersieToGetResponse actually calls
+        // uriService.GetUri(latestVersion), not that Inhoud coincidentally matches a resolved Url.
+        _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(latestVersion.Versie, result.Versie);
         Assert.Equal(latestVersion.Bronorganisatie, result.Bronorganisatie);
         Assert.Equal(latestVersion.Identificatie, result.Identificatie);
@@ -188,7 +165,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         // Even though the uriService would happily resolve a URL for this version, BestandsDelen
         // being present must force Inhoud to null.
-        _mockedUriService.Setup(s => s.GetUri(latestVersion)).Returns("SHOULD-NOT-BE-USED");
+        _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("SHOULD-NOT-BE-USED");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
 
@@ -318,7 +295,7 @@ public class DomainToResponseProfileTests : IDisposable
             ];
         }
 
-        _mockedUriService.Setup(s => s.GetUri(value)).Returns("MOCKED-CREATE-INHOUD-URL");
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("MOCKED-CREATE-INHOUD-URL");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(value);
 
@@ -335,7 +312,7 @@ public class DomainToResponseProfileTests : IDisposable
             Assert.Equal("MOCKED-CREATE-INHOUD-URL", result.Inhoud);
         }
 
-        Assert.Equal(informatieObject.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), result.Url);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
     }
 
@@ -370,7 +347,7 @@ public class DomainToResponseProfileTests : IDisposable
             },
         ];
 
-        _mockedUriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(value);
 
@@ -400,11 +377,11 @@ public class DomainToResponseProfileTests : IDisposable
             InformatieObject = informatieObject,
         };
 
-        _mockedUriService.Setup(s => s.GetUri(value)).Returns("MOCKED-UPDATE-INHOUD-URL");
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("MOCKED-UPDATE-INHOUD-URL");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(value);
 
-        Assert.Equal(informatieObject.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), result.Url);
         Assert.Equal(informatieObject.Lock, result.Lock);
         Assert.Equal(informatieObject.Locked, result.Locked);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
@@ -436,7 +413,7 @@ public class DomainToResponseProfileTests : IDisposable
             InformatieObject = informatieObject,
         };
 
-        _mockedUriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(value);
 
@@ -464,7 +441,7 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<BestandsDeelResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Volgnummer, result.Volgnummer);
         Assert.Equal(value.Omvang, result.Omvang);
         Assert.Equal(value.Voltooid, result.Voltooid);

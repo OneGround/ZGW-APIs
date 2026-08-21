@@ -30,6 +30,11 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.LatestEnkelvoudigInformatieObjectVersieId)
             .Ignore(dest => dest.LatestEnkelvoudigInformatieObjectVersie)
             .Ignore(dest => dest.LatestVertrouwelijkheidAanduiding)
+            // Not present on this request DTO -- set/managed elsewhere, not via this mapping.
+            .Ignore(dest => dest.Verzendingen)
+            .Ignore(dest => dest.CatalogusId)
+            .Ignore(dest => dest.LegacyAuditTrail)
+            .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.RowVersion);
 
         config
@@ -70,6 +75,19 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
+            // Not present on this request DTO (v1.5-and-later concepts) -- set/managed elsewhere.
+            .Ignore(dest => dest.CreationTime)
+            .Ignore(dest => dest.ModificationTime)
+            .Ignore(dest => dest.CreatedBy)
+            .Ignore(dest => dest.ModifiedBy)
+            .Ignore(dest => dest.Verschijningsvorm)
+            .Ignore(dest => dest.Trefwoorden)
+            .Ignore(dest => dest.InhoudIsVervallen)
+            .Ignore(dest => dest.IsGereedVoorPublicatie)
+            .Ignore(dest => dest.TonenAanInitiator)
+            .Ignore(dest => dest.BestandsDelen)
+            .Ignore(dest => dest.MultiPartDocumentId)
+            .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(
@@ -96,6 +114,11 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.LatestEnkelvoudigInformatieObjectVersieId)
             .Ignore(dest => dest.LatestEnkelvoudigInformatieObjectVersie)
             .Ignore(dest => dest.LatestVertrouwelijkheidAanduiding)
+            // Not present on this request DTO -- set/managed elsewhere, not via this mapping.
+            .Ignore(dest => dest.Verzendingen)
+            .Ignore(dest => dest.CatalogusId)
+            .Ignore(dest => dest.LegacyAuditTrail)
+            .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.RowVersion);
 
         config
@@ -130,6 +153,19 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
+            // Not present on this request DTO (v1.5-and-later concepts) -- set/managed elsewhere.
+            .Ignore(dest => dest.CreationTime)
+            .Ignore(dest => dest.ModificationTime)
+            .Ignore(dest => dest.CreatedBy)
+            .Ignore(dest => dest.ModifiedBy)
+            .Ignore(dest => dest.Verschijningsvorm)
+            .Ignore(dest => dest.Trefwoorden)
+            .Ignore(dest => dest.InhoudIsVervallen)
+            .Ignore(dest => dest.IsGereedVoorPublicatie)
+            .Ignore(dest => dest.TonenAanInitiator)
+            .Ignore(dest => dest.BestandsDelen)
+            .Ignore(dest => dest.MultiPartDocumentId)
+            .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(

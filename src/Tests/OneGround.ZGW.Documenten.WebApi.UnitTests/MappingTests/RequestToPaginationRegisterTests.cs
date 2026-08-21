@@ -1,5 +1,4 @@
 using System;
-using Mapster;
 using MapsterMapper;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Models;
@@ -10,18 +9,17 @@ using QueryV15 = OneGround.ZGW.Documenten.Contracts.v1._5.Queries.GetEnkelvoudig
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
-public class RequestToPaginationRegisterTests
+public class RequestToPaginationRegisterTests : IDisposable
 {
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToPaginationRegisterTests()
     {
-        var config = new TypeAdapterConfig();
-        new OneGround.ZGW.Documenten.Web.MappingProfiles.v1.RequestToPaginationRegister().Register(config);
-        new OneGround.ZGW.Documenten.Web.MappingProfiles.v1._5.RequestToPaginationRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void PaginationQuery_Maps_To_PaginationFilter()
