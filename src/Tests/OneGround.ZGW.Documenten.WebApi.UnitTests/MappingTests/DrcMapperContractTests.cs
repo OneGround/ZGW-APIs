@@ -97,6 +97,11 @@ public class DrcMapperContractTests : IDisposable
         var metadata = peReader.GetMetadataReader();
 
         var calls = new List<string>();
+
+        // Every other guard in this suite asserts its own input is non-empty; a metadata table with no
+        // member references would make the loop below pass while inspecting nothing.
+        Assert.NotEmpty(metadata.MemberReferences);
+
         foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
         {
             if (memberReference.Parent.Kind != HandleKind.TypeReference)

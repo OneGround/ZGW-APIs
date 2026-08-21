@@ -12,7 +12,10 @@ public class RequestToDomainRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<GetAllEnkelvoudigInformatieObjectenQueryParameters, Models.v1.GetAllEnkelvoudigInformatieObjectenFilter>();
+        // GetAllEnkelvoudigInformatieObjectenQueryParameters -> Models.v1.GetAllEnkelvoudigInformatieObjectenFilter is
+        // declared once, by v1's RequestToDomainRegister: v1.1 has no version-specific query or filter type for this
+        // endpoint, so redeclaring the identical pair here only risked Mapster's NewConfig silently deciding scan
+        // order between two copies of the same bare convention map.
 
         // Create new initial EnkelvoudigInformatieObject: versie 1
         config
