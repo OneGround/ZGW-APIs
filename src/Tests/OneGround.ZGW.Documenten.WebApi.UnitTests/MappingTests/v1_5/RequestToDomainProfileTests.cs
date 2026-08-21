@@ -176,16 +176,15 @@ public class RequestToDomainProfileTests : IDisposable
     // ------------------------------------------------------------------------------------------
     // Deliberate-breakage exercise for the null-preservation ports (logical-correctness check only).
     //
-    // Note on what this specific test CAN and CANNOT prove: this suite builds a bare
-    // `TypeAdapterConfig()` (see constructor above), which has NO `EmptyCollectionIfNull` destination
-    // transform registered (that transform is only wired up in production via `AddZgwMapster`). So
-    // even a naive `.Map(dest => dest.Trefwoorden_In, src => src.Trefwoorden == null ? null : ...)`
-    // fold would correctly yield null here - this test cannot demonstrate the transform silently
-    // coalescing null to `[]`. What it DOES prove is that the `.AfterMapping` assignment (and not some
-    // other code path) is what is actually responsible for producing the null - i.e. it is exercising
-    // the right lever. The DEFINITIVE proof that `.AfterMapping` (rather than a plain `.Map` fold) is
-    // REQUIRED under the real `EmptyCollectionIfNull` transform is deferred to the orchestrator's
-    // later A/B parity task, which wires the real `AddZgwMapster` seam config.
+    // Note on what this specific test proves: `_mapper` comes from `DrcMapperTestHost`, i.e. the real
+    // `AddZgwMapster` seam config, so `realResult` below is produced with the live
+    // `EmptyCollectionIfNull` destination transform active. `brokenConfig` is a separate, deliberately
+    // bare `TypeAdapterConfig()` with no such transform, built only as the contrasting case: it uses a
+    // plain `.Map(dest => dest.Trefwoorden_In, src => src.Trefwoorden == null ? null : ...)` fold (no
+    // `.AfterMapping`) for the query-parameters case. Both configs agreeing on null confirms the null
+    // produced by the real register is coming from its `.AfterMapping` assignment, and not from some
+    // other code path -- e.g. `ProfileHelper.ArrayFromString` itself already returning null for a null
+    // input, which would make the `.AfterMapping` redundant.
     // ------------------------------------------------------------------------------------------
 
     [Fact]
@@ -212,10 +211,11 @@ public class RequestToDomainProfileTests : IDisposable
         var brokenResult = brokenMapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);
         var realResult = _mapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);
 
-        // Assert: under a bare config (no EmptyCollectionIfNull transform active), the plain-.Map fold
-        // ALSO produces null here - this is the documented limitation above. Both configs agree in
-        // this bare-config test; the real config's behavior when the production transform IS active
-        // is proven separately by the later A/B parity task.
+        // Assert: brokenConfig has no EmptyCollectionIfNull transform, so its plain-.Map fold produces
+        // null here on that config's own bare terms. realResult comes from the real seam config, where
+        // the transform IS active; it agreeing with brokenResult confirms the null seen there is coming
+        // from the real register's .AfterMapping assignment, not from ProfileHelper.ArrayFromString or
+        // some other path.
         Assert.Null(brokenResult.Trefwoorden_In);
         Assert.Null(realResult.Trefwoorden_In);
     }
