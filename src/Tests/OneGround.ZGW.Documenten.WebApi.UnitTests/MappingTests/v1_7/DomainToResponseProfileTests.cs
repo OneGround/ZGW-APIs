@@ -191,21 +191,16 @@ public class DomainToResponseProfileTests : IDisposable
     /// assigns.
     /// </summary>
     /// <remarks>
-    /// This fact exists because neither Mapster gate can see these members. Every one of them is
-    /// <c>.Ignore(...)</c>'d on the register's config -- which is what satisfies the completeness gate --
-    /// and then assigned inside an <c>.AfterMapping</c> the compile gate never looks into. Deleting an
-    /// assignment from that body therefore leaves both gates and the rest of the suite green. The A/B
-    /// parity harness would have caught it, but it cannot outlive the AutoMapper profiles it compares
-    /// against, so this fact is the durable replacement. Every value is deliberately non-default so a
-    /// dropped or wrong-source assignment cannot pass by coincidence.
+    /// Exists because neither Mapster gate can see these members: each is <c>.Ignore(...)</c>'d for the
+    /// completeness gate, then assigned inside an <c>.AfterMapping</c> the compile gate never inspects, so
+    /// dropping an assignment there leaves both gates -- and the rest of the suite -- green. Every value is
+    /// deliberately non-default so a dropped or wrong-source assignment can't pass by coincidence.
     ///
-    /// Two members -- InformatieObjectType and Locked -- are read from
-    /// <c>latestVersion.LatestInformatieObject</c>, which in any valid graph IS the root entity the map
-    /// runs on, and are NOT <c>.Ignore(...)</c>'d, so Mapster's convention copy from the root and the
-    /// after-mapping assignment necessarily agree. For those two this fact pins the value, not the
-    /// source; splitting them would take a model-invalid fixture. IndicatieGebruiksrecht reads from the
-    /// same place but IS <c>.Ignore(...)</c>'d, so there is no convention copy behind it and dropping its
-    /// assignment does fail this fact.
+    /// InformatieObjectType and Locked are read from <c>latestVersion.LatestInformatieObject</c>, which in
+    /// any valid graph IS the root entity, and are NOT <c>.Ignore(...)</c>'d -- so Mapster's convention
+    /// copy and the after-mapping assignment necessarily agree, and this fact pins the value rather than
+    /// the source. IndicatieGebruiksrecht reads from the same place but IS <c>.Ignore(...)</c>'d, so there
+    /// is no convention copy behind it, and dropping its assignment does fail this fact.
     /// </remarks>
     [Fact]
     public void A_get_response_carries_every_member_the_after_mapping_assigns()

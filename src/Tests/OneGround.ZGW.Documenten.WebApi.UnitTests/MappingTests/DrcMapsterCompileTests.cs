@@ -11,17 +11,7 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
 public class DrcMapsterCompileTests
 {
-    /// <summary>
-    /// Compiles every registered type pair up front, so a register that makes Mapster emit an
-    /// endlessly-recursive mapping function fails here instead of at runtime. Failure is an aborted host
-    /// or a hung run, never a failed assertion — treat either as real, not as flakiness.
-    /// </summary>
-    /// <remarks>
-    /// DRC is the service where this matters most: <c>EnkelvoudigInformatieObject</c> and
-    /// <c>EnkelvoudigInformatieObjectVersie</c> navigate back to each other, so any register that
-    /// assigns <c>InformatieObject</c> through a mapped member pulls that cycle into the type graph
-    /// Mapster's compiler expands. Assigning it in <c>.AfterMapping</c> keeps it out.
-    /// </remarks>
+    // Failure here is a hung run or an aborted host, not a failed assertion -- treat either as real, not as flakiness.
     [Fact]
     public void AddZgwMapster_config_compiles_every_registered_type_pair()
     {
@@ -31,20 +21,16 @@ public class DrcMapsterCompileTests
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
-        // Compile() over an empty RuleMap passes, so without this a broken config.Scan would turn the
-        // gate green rather than red.
+        // An empty RuleMap would still Compile() cleanly -- this guard makes a broken config.Scan fail loudly instead.
         Assert.NotEmpty(config.RuleMap);
 
         config.Compile();
     }
 
     /// <summary>
-    /// Mapster's stand-in for AutoMapper's <c>AssertConfigurationIsValid()</c>: every destination member
-    /// needs a source member, an explicit <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is
-    /// what keeps the registers' <c>.Ignore(...)</c> calls load-bearing rather than decorative. This walks
-    /// <c>config.RuleMap</c>, so it only covers type pairs that have an explicit <c>NewConfig</c> entry --
-    /// a pair mapped purely by Mapster's bare convention (no register ever calls <c>NewConfig</c> for it)
-    /// has no <c>RuleMap</c> entry and is invisible to this gate.
+    /// Mapster's analogue of AutoMapper's <c>AssertConfigurationIsValid()</c>: every destination member needs a
+    /// source, a <c>.Map(...)</c> or an <c>.Ignore(...)</c>. Only covers pairs with an explicit <c>NewConfig</c>
+    /// entry -- a pair mapped purely by Mapster's bare convention has no <c>RuleMap</c> entry and is invisible here.
     /// </summary>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
@@ -55,14 +41,14 @@ public class DrcMapsterCompileTests
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
-        // On the test's own config, never inside AddZgwMapster: as a global seam setting this would throw
-        // at startup for every service that has not migrated and has no registers at all.
+        // Set here, not inside AddZgwMapster: as a global seam setting this would throw at startup for
+        // every service that hasn't migrated and has no registers at all.
         config.Default.RequireDestinationMemberSource(true);
 
         var unmapped = new List<string>();
 
-        // Per pair rather than one config.Compile(), which throws on the first failure and would make a
-        // multi-member regression take several rounds to clear.
+        // Compiled per pair rather than via one config.Compile(), which throws on the first failure and would
+        // make a multi-member regression take several rounds to clear.
         foreach (var pair in config.RuleMap.Keys.OrderBy(k => k.Source.FullName).ThenBy(k => k.Destination.FullName).ToList())
         {
             try

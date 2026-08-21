@@ -10,17 +10,14 @@ using OneGround.ZGW.Documenten.Web;
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// Builds an <see cref="IMapper"/> the way <c>Startup</c> does — <c>AddZgwMapster</c> with Mapster
-/// enabled, scanning the whole Web assembly — with <see cref="IEntityUriService"/> mocked. Mapping tests
-/// take their mapper from here rather than hand-rolling a <c>TypeAdapterConfig</c> from one register:
-/// the seam's global settings are what make several register decisions load-bearing, above all
-/// <c>EmptyCollectionIfNull</c>, without which a test cannot tell an <c>.AfterMapping</c> null fold from
-/// a <c>.Map(...)</c> one.
+/// Builds an <see cref="IMapper"/> using the real <c>AddZgwMapster</c> seam (full assembly scan, Mapster
+/// enabled) with <see cref="IEntityUriService"/> mocked. Mapping tests take their mapper from here rather
+/// than a hand-rolled <c>TypeAdapterConfig</c>, because global settings like <c>EmptyCollectionIfNull</c>
+/// are needed to tell an <c>.AfterMapping</c> null fold from a <c>.Map(...)</c> one.
 /// </summary>
 /// <remarks>
-/// The provider and scope are instance fields disposed in <see cref="Dispose"/>, never scoped to the
-/// constructor with <c>using</c>: <c>MapContext</c>-based DI resolution is lazy, happening at
-/// <c>Map()</c>-call time.
+/// The provider and scope are disposed in <see cref="Dispose"/> rather than scoped to the constructor with
+/// <c>using</c>, because <c>MapContext</c>-based DI resolution is lazy and happens at <c>Map()</c>-call time.
 /// </remarks>
 internal sealed class DrcMapperTestHost : IDisposable
 {
@@ -28,15 +25,12 @@ internal sealed class DrcMapperTestHost : IDisposable
     private readonly IServiceScope _scope;
 
     /// <summary>
-    /// Stands in for the real service's base URI. It must NOT be empty: the real <c>GetUri</c> returns an
-    /// absolute url while <c>entity.Url</c> is relative, and a mock that echoes <c>e.Url</c> collapses
-    /// that difference — every URL assertion then passes on Mapster's convention copy alone, with the
-    /// register's resolver rules deleted.
+    /// Stands in for the real service's base URI. Must be absolute, not empty: a mock that echoed
+    /// <c>entity.Url</c> would let every URL assertion pass on Mapster's same-name convention copy alone.
     /// </summary>
     internal const string BaseUrl = "https://drc.test";
 
-    /// <summary>The url the mocked <see cref="IEntityUriService"/> resolves an entity to. Assert against
-    /// this, never against <c>entity.Url</c> — the latter is what convention mapping produces on its own.</summary>
+    /// <summary>The url the mocked <see cref="IEntityUriService"/> resolves an entity to -- assert against this, not <c>entity.Url</c>.</summary>
     internal static string Resolved(IUrlEntity entity) => $"{BaseUrl}{entity.Url}";
 
     public DrcMapperTestHost()

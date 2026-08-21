@@ -94,7 +94,7 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.IndicatieGebruiksrecht)
             .Ignore(dest => dest.Ondertekening)
             .Ignore(dest => dest.Integriteit)
-            .Ignore(dest => dest.Lock) // Note: Don't merge the lock value because we have to validate the value from request and not the one in the database after the merge)
+            .Ignore(dest => dest.Lock) // Don't merge Lock: the request's own value must be validated, not the one already in the database.
             // Set below in MapLatestVersieToUpdateRequest's AfterMapping, invisible to Mapster's static analysis.
             .Ignore(dest => dest.Bestandsomvang)
             .AfterMapping((src, dest) => MapLatestVersieToUpdateRequest(src, dest));
@@ -112,7 +112,6 @@ public class DomainToResponseRegister : IRegister
         IEntityUriService uriService
     )
     {
-        // Note: For update-request-mapping we get always get the latest version
         var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
 
         dest.Versie = latestVersion.Versie;
@@ -170,7 +169,7 @@ public class DomainToResponseRegister : IRegister
         IEntityUriService uriService
     )
     {
-        if ((string.IsNullOrEmpty(src.Inhoud) && src.Bestandsomvang == 0) || src.BestandsDelen.Count != 0) // Note: New in v1.1
+        if ((string.IsNullOrEmpty(src.Inhoud) && src.Bestandsomvang == 0) || src.BestandsDelen.Count != 0) // Suppress the download link while a chunked upload is incomplete.
             dest.Inhoud = null;
         else
             dest.Inhoud = uriService.GetUri(src);
@@ -179,7 +178,6 @@ public class DomainToResponseRegister : IRegister
     // Ported verbatim from v1.1's MapLatestEnkelvoudigInformatieObjectVersieRequest.Process(...). No DI dependency.
     private static void MapLatestVersieToUpdateRequest(EnkelvoudigInformatieObject src, EnkelvoudigInformatieObjectUpdateRequestDto dest)
     {
-        // Note: For update-request-mapping we get always get the latest version
         var latestVersion = src.LatestEnkelvoudigInformatieObjectVersie;
 
         dest.Bronorganisatie = latestVersion.Bronorganisatie;
@@ -203,7 +201,6 @@ public class DomainToResponseRegister : IRegister
         dest.InformatieObjectType = latestVersion.LatestInformatieObject.InformatieObjectType;
         dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
 
-        // Note: Don't merge the lock value because we have to validate the value from request and not the one in the database after the merge)
-        //   (meaning don't: dest.Lock = latestVersion.LatestInformatieObject.Lock)
+        // Lock is deliberately not set here -- the request's own value must be validated, not the one already stored.
     }
 }

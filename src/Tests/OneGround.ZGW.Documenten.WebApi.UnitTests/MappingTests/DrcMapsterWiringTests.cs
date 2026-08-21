@@ -43,21 +43,18 @@ public class DrcMapsterWiringTests
 
         var result = mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(source);
 
-        // The mocked literal is distinguishable from any same-name convention copy of the source's own
-        // Url, so this only passes if DomainToResponseRegister was discovered by config.Scan AND both
-        // MapsterUrlResolver.ResolveUrl (for Url) and the .AfterMapping port's
-        // MapContext.Current.GetService<IEntityUriService>() (for Inhoud) resolved through DI.
+        // The mocked literal can't be confused with a same-name convention copy of the source's own Url, so this
+        // only passes if both MapsterUrlResolver.ResolveUrl (Url) and the .AfterMapping port's DI-resolved
+        // IEntityUriService (Inhoud) actually ran through DI.
         Assert.Equal("https://example.test/resolved-via-di", result.Url);
         Assert.Equal("https://example.test/resolved-via-di", result.Inhoud);
         mockedUriService.Verify(s => s.GetUri(It.IsAny<IUrlEntity>()), Times.AtLeastOnce());
     }
 
     /// <summary>
-    /// The shape every <c>GetAllAsync</c> uses — <c>Map&lt;List&lt;TResponseDto&gt;&gt;(pageResult)</c> —
-    /// which no other fact in the suite exercises. It differs from a single-object root in that
-    /// <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c>, only present on the
-    /// <c>ServiceMapper</c> path, from inside per-element <c>.AfterMapping</c> blocks. Asserts
-    /// per-element URLs, not just the count: the count survives a broken resolver.
+    /// Covers the collection-root shape every <c>GetAllAsync</c> uses (<c>Map&lt;List&lt;TResponseDto&gt;&gt;</c>),
+    /// where <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c> from inside per-element
+    /// <c>.AfterMapping</c> blocks. Asserts per-element URLs, not just the count -- the count alone survives a broken resolver.
     /// </summary>
     [Fact]
     public void A_collection_root_resolves_urls_for_every_element()
@@ -75,22 +72,17 @@ public class DrcMapsterWiringTests
     }
 
     /// <summary>
-    /// Every register's type pairs must survive into the shared config. <c>AddZgwMapster</c> scans all
-    /// of DRC's registers into ONE <see cref="TypeAdapterConfig"/>, and Mapster's <c>NewConfig</c>
-    /// REPLACES an existing pair rather than merging into it — unlike AutoMapper, where duplicate
-    /// <c>CreateMap</c> calls for one TypePair accumulate onto the same TypeMap.
+    /// <c>AddZgwMapster</c> scans all of DRC's registers into ONE <see cref="TypeAdapterConfig"/>, and Mapster's
+    /// <c>NewConfig</c> REPLACES an existing pair rather than merging into it (unlike AutoMapper's <c>CreateMap</c>,
+    /// which accumulates). Easy to trigger by accident: several versions share <c>Models.v1</c> destination types,
+    /// so two declarations can look version-specific while resolving to the same pair, and scan order then
+    /// silently picks a winner that no per-register test can see.
     /// </summary>
-    /// <remarks>
-    /// Easy to do by accident here because four API versions share several <c>Models.v1</c> destination
-    /// types, so two declarations look version-specific in source while resolving to identical types.
-    /// Scan order then picks a winner silently, and no per-register test can see it.
-    /// </remarks>
     [Fact]
     public void No_register_silently_overwrites_another_registers_type_pair()
     {
-        // Matches the assembly set AddZgwMapster itself scans (commonWebAssembly is currently free of
-        // IRegister implementations, so this is not expected to add any types today, but a hand-rolled
-        // scan here must not silently fall behind the production seam's set).
+        // Matches the assembly set AddZgwMapster itself scans, so a hand-rolled scan here can't silently
+        // fall behind the production seam's set.
         var commonWebAssembly = typeof(MapsterServiceCollectionExtensions).Assembly;
         var registerTypes = new[] { typeof(Startup).Assembly, commonWebAssembly }
             .Distinct()
@@ -100,10 +92,7 @@ public class DrcMapsterWiringTests
             .ToList();
         Assert.NotEmpty(registerTypes);
 
-        // Builds one isolated TypeAdapterConfig per register and records which register first claimed
-        // each type pair. A pair claimed by more than one register is a collision: Mapster's NewConfig
-        // replaces rather than merges, so the merged production config would silently keep only the
-        // last-scanned register's mapping for that pair.
+        // Records which register first claims each type pair; a pair claimed by more than one is a collision.
         var owners = new Dictionary<string, string>();
         var duplicates = new List<string>();
         foreach (var registerType in registerTypes)

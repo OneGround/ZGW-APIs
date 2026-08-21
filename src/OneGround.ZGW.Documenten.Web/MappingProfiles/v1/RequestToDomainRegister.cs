@@ -37,25 +37,15 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
-            // EnkelvoudigInformatieObjectVersie.InformatieObject/LatestInformatieObject form a cyclic EF
-            // navigation graph back through EnkelvoudigInformatieObject. Assigning InformatieObject via a
-            // mapped member (.Map) pulls EnkelvoudigInformatieObject into the destination type graph
-            // Mapster's compiler analyzes, and under the global MaxDepth(200) it exhaustively expands that
-            // cycle -> an effectively-unbounded compile-time blowup. Assigning it in .AfterMapping instead
-            // (which runs outside the compiled member-mapping pipeline, the same way the
-            // empty-collection transform is bypassed) keeps EnkelvoudigInformatieObject out of the
-            // analyzed graph entirely: no recursion, no per-config MaxDepth tuning, and robust to future
-            // model cycles.
-            // LatestInformatieObject stays .Ignore()'d below for the same reason (it's never assigned).
+            // InformatieObject is assigned in .AfterMapping, not .Map: a mapped member would pull the cyclic
+            // EnkelvoudigInformatieObject/EnkelvoudigInformatieObjectVersie graph into Mapster's compiler and hang the build.
+            // LatestInformatieObject is .Ignore()'d below for the same reason.
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
-            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
-            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
-            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
-            // here. Guard explicitly to match AutoMapper's original behavior (?. isn't usable here -- the
-            // .Map source selector compiles to an Expression<Func<>>, and C# forbids ?. in expression trees).
+            // Ondertekening/Integriteit are optional on the wire; Mapster's .Map lambdas don't null-guard member
+            // paths the way AutoMapper's MapFrom did, and ?. can't be used because .Map compiles to an expression tree.
             .Map(
                 dest => dest.Ondertekening_Datum,
                 src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
@@ -65,9 +55,12 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? null : src.Integriteit.Algoritme)
             .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
             .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
+            // Versie, EnkelvoudigInformatieObjectId, Verschijningsvorm, Trefwoorden and InhoudIsVervallen aren't on this DTO.
             .Ignore(dest => dest.Versie)
             .Map(dest => dest.Taal, src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
+            // BeginRegistratie, CreationTime, CreatedBy, ModificationTime, ModifiedBy and Owner are set by entity hooks.
             .Ignore(dest => dest.BeginRegistratie)
+            // Bestandsomvang, BestandsDelen and MultiPartDocumentId are upload state, not part of the request payload.
             .Ignore(dest => dest.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
             .Ignore(dest => dest.BestandsDelen)
@@ -80,9 +73,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
-            // Only introduced in the v1.7 contracts (not present on this DTO) -- no source to map from.
+            // v1.7-only fields; not present on this DTO.
             .Ignore(dest => dest.IsGereedVoorPublicatie)
             .Ignore(dest => dest.TonenAanInitiator)
+            // Cyclic navigation member (same risk as InformatieObject above) and the RowVersion concurrency token.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(
@@ -117,16 +111,14 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectUpdateRequestDto, EnkelvoudigInformatieObjectVersie>()
-            // See the matching comment on the CreateRequestDto->Versie config above: InformatieObject is
-            // assigned in .AfterMapping (not .Map) to keep EnkelvoudigInformatieObject out of the cyclic
-            // type graph Mapster's compiler analyzes under the global MaxDepth(200).
+            // Same cyclic-graph reasoning as the CreateRequestDto config above: InformatieObject is assigned
+            // in .AfterMapping, not .Map, to keep EnkelvoudigInformatieObject out of Mapster's compiled graph.
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
             .Ignore(dest => dest.InformatieObject)
-            // See the matching comment on the CreateRequestDto config above: Ondertekening/Integriteit
-            // are optional, so member-path access must be null-guarded explicitly for Mapster.
+            // Same null-guard reasoning as the CreateRequestDto config above: Ondertekening/Integriteit are optional.
             .Map(
                 dest => dest.Ondertekening_Datum,
                 src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
@@ -135,6 +127,7 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Integriteit_Algoritme, src => src.Integriteit == null ? null : src.Integriteit.Algoritme)
             .Map(dest => dest.Integriteit_Datum, src => ProfileHelper.DateFromStringOptional(src.Integriteit == null ? null : src.Integriteit.Datum))
             .Map(dest => dest.Integriteit_Waarde, src => src.Integriteit == null ? null : src.Integriteit.Waarde)
+            // Same "not on this DTO" / entity-hook / upload-state grouping as the CreateRequestDto config above.
             .Ignore(dest => dest.Versie)
             .Map(dest => dest.Taal, src => ProfileHelper.Convert2letterTo3Letter(src.Taal, ProfileHelper.Taal2letterTo3LetterMap))
             .Ignore(dest => dest.BeginRegistratie)
@@ -150,9 +143,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
-            // Only introduced in the v1.7 contracts (not present on this DTO) -- no source to map from.
+            // v1.7-only fields; not present on this DTO.
             .Ignore(dest => dest.IsGereedVoorPublicatie)
             .Ignore(dest => dest.TonenAanInitiator)
+            // Cyclic navigation member and the RowVersion concurrency token.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(

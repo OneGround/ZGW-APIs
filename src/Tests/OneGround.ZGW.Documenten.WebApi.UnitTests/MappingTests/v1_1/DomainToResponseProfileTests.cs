@@ -124,9 +124,8 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_Inhoud_Is_Null_When_BestandsDelen_Present()
     {
-        // Covers the v1.1-specific branch inside MapLatestEnkelvoudigInformatieObjectVersieResponse:
-        // "Note: New in v1.1" style guard -- when BestandsDelen.Count != 0, Inhoud must be null
-        // regardless of what the (mocked) uriService would otherwise return.
+        // When BestandsDelen.Count != 0, Inhoud must be null regardless of what the (mocked) uriService
+        // would otherwise return -- a chunked upload in progress must not expose a download link.
         var latestVersion = CreateVersion();
 
         var value = new EnkelvoudigInformatieObject

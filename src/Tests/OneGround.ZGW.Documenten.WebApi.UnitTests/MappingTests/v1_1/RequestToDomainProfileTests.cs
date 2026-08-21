@@ -136,11 +136,9 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
     {
-        // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- a real request
-        // omitting them must not NullReferenceException on the member-path access inside the register
-        // (found via a genuine regression: AutoMapper's MapFrom auto-null-guards these paths, Mapster's
-        // .Map lambdas do not). AlgoritmeFromString itself throws on a null argument by design, so the
-        // register must skip calling it entirely rather than merely null-guard its argument.
+        // Ondertekening/Integriteit are optional on the wire; the register's Mapster .Map lambdas don't
+        // null-guard member-path access the way AutoMapper's MapFrom did. AlgoritmeFromString itself
+        // throws on a null argument by design, so the register must skip calling it entirely.
         var value = CreateRequestDto();
         value.Ondertekening = null;
         value.Integriteit = null;

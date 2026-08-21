@@ -107,10 +107,9 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
     {
-        // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- a real request
-        // omitting them must not NullReferenceException on the member-path access inside the register
-        // (found via a genuine regression: AutoMapper's MapFrom auto-null-guards these paths, Mapster's
-        // .Map lambdas do not).
+        // Ondertekening/Integriteit are optional on the wire; the register's Mapster .Map lambdas don't
+        // null-guard member-path access the way AutoMapper's MapFrom did, so a request omitting them must
+        // not throw a NullReferenceException here.
         _fixture.Customize<EnkelvoudigInformatieObjectCreateRequestDto>(c =>
             c.With(p => p.Identificatie, "DOC-2020-0000002")
                 .With(p => p.Bronorganisatie, "999990561")

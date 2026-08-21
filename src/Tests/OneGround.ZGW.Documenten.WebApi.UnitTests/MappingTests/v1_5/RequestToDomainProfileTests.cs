@@ -170,27 +170,12 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Null(result.Identificatie);
     }
 
-    // ------------------------------------------------------------------------------------------
-    // Deliberate-breakage exercise for the null-preservation ports (logical-correctness check only).
-    //
-    // Note on what this specific test proves: `_mapper` comes from `DrcMapperTestHost`, i.e. the real
-    // `AddZgwMapster` seam config, so `realResult` below is produced with the live
-    // `EmptyCollectionIfNull` destination transform active. `brokenConfig` is a separate, deliberately
-    // bare `TypeAdapterConfig()` with no such transform, built only as the contrasting case: it uses a
-    // plain `.Map(dest => dest.Trefwoorden_In, src => src.Trefwoorden == null ? null : ...)` fold (no
-    // `.AfterMapping`) for the query-parameters case. Both configs agreeing on null confirms the null
-    // produced by the real register is coming from its `.AfterMapping` assignment, and not from some
-    // other code path -- e.g. `ProfileHelper.ArrayFromString` itself already returning null for a null
-    // input, which would make the `.AfterMapping` redundant.
-    // ------------------------------------------------------------------------------------------
-
     [Fact]
     public void Trefwoorden_In_Null_Preservation_Is_Driven_By_AfterMapping_Not_Some_Other_Path()
     {
-        // Setup: register a SECOND, deliberately-broken config using a plain .Map fold (no
-        // .AfterMapping) for the query-parameters case, to confirm the null result in the main config
-        // is coming from .AfterMapping and not, say, from ProfileHelper.ArrayFromString itself already
-        // returning null for a null input (which would make the .AfterMapping redundant).
+        // A second, deliberately bare config with a plain .Map fold and no .AfterMapping, to confirm the
+        // real config's null result comes from its .AfterMapping and not from, say,
+        // ProfileHelper.ArrayFromString itself already returning null for a null input.
         var brokenConfig = new TypeAdapterConfig();
         brokenConfig.RegisterNullableEnumRule();
         brokenConfig
@@ -208,11 +193,8 @@ public class RequestToDomainProfileTests : IDisposable
         var brokenResult = brokenMapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);
         var realResult = _mapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);
 
-        // Assert: brokenConfig has no EmptyCollectionIfNull transform, so its plain-.Map fold produces
-        // null here on that config's own bare terms. realResult comes from the real seam config, where
-        // the transform IS active; it agreeing with brokenResult confirms the null seen there is coming
-        // from the real register's .AfterMapping assignment, not from ProfileHelper.ArrayFromString or
-        // some other path.
+        // brokenResult null on its own bare terms (no EmptyCollectionIfNull transform); realResult
+        // agreeing confirms its null comes from the real register's .AfterMapping, not another path.
         Assert.Null(brokenResult.Trefwoorden_In);
         Assert.Null(realResult.Trefwoorden_In);
     }
@@ -263,11 +245,9 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
     {
-        // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- a real request
-        // omitting them must not NullReferenceException on the member-path access inside the register
-        // (found via a genuine regression: AutoMapper's MapFrom auto-null-guards these paths, Mapster's
-        // .Map lambdas do not). AlgoritmeFromString itself throws on a null argument by design, so the
-        // register must skip calling it entirely rather than merely null-guard its argument.
+        // Ondertekening/Integriteit are optional on the wire; the register's Mapster .Map lambdas don't
+        // null-guard member-path access the way AutoMapper's MapFrom did. AlgoritmeFromString itself
+        // throws on a null argument by design, so the register must skip calling it entirely.
         var value = CreateRequestDto();
         value.Ondertekening = null;
         value.Integriteit = null;

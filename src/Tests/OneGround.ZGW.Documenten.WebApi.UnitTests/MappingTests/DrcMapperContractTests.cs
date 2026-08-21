@@ -20,16 +20,12 @@ using Xunit;
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The mapping contracts DRC depends on OUTSIDE the Map calls its controllers make: the audit trail via
-/// <see cref="IZgwMapper"/>, the PATCH merge via <see cref="IZgwRequestMerger"/>, and the expander. The
-/// per-register tests build their own mapper and exercise none of these paths — they passed while all
-/// three were broken.
-/// </summary>
-/// <remarks>
-/// A regression here is silent, not loud: Mapster convention-maps instead of throwing, so an audit
-/// record or a PATCH result comes back quietly wrong rather than erroring. Hence the adapter type is
+/// Covers the mapping contracts DRC depends on OUTSIDE the Map calls its controllers make: the audit trail
+/// via <see cref="IZgwMapper"/> and the PATCH merge via <see cref="IZgwRequestMerger"/>. The per-register
+/// tests build their own mapper and exercise neither path -- they passed while both were broken. A
+/// regression here is silent (Mapster convention-maps instead of throwing), so the adapter type is
 /// asserted directly rather than inferred from a working map.
-/// </remarks>
+/// </summary>
 public class DrcMapperContractTests : IDisposable
 {
     private readonly ServiceProvider _provider;
@@ -72,17 +68,12 @@ public class DrcMapperContractTests : IDisposable
     }
 
     /// <summary>
-    /// Nothing in DRC may CALL AutoMapper any more. Every controller still TAKES
-    /// <c>AutoMapper.IMapper</c> because the shared <c>ZGWControllerBase</c> demands it, and
-    /// <c>ZGWControllerBase._mapper</c> stays visible to every DRC controller as a protected field.
+    /// Nothing in DRC may CALL AutoMapper any more, even though every controller still TAKES
+    /// <c>AutoMapper.IMapper</c> (the shared <c>ZGWControllerBase</c> demands it, keeping it visible as a
+    /// protected field a merge could reintroduce a call through). That field has no DRC profiles left, so
+    /// such a call compiles and only throws at request time. Scanning the MemberRef table (rather than
+    /// walking IL) is what makes this fire on <b>use</b>, not on the constructor parameter the base class forces.
     /// </summary>
-    /// <remarks>
-    /// That field is a mapper over a configuration with no DRC profiles in it, so a merge from an older
-    /// branch can reintroduce <c>_mapper.Map&lt;T&gt;(...)</c>: it compiles, no mapping fact notices, and
-    /// it throws only when a real request hits that action. Reading the MemberRef table rather than
-    /// walking IL is what makes this fire on <b>use</b> and not on the constructor parameter the base
-    /// class forces. Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
-    /// </remarks>
     [Fact]
     public void No_DRC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
     {
@@ -98,8 +89,7 @@ public class DrcMapperContractTests : IDisposable
 
         var calls = new List<string>();
 
-        // Every other guard in this suite asserts its own input is non-empty; a metadata table with no
-        // member references would make the loop below pass while inspecting nothing.
+        // A metadata table with no member references would make the loop below pass while inspecting nothing.
         Assert.NotEmpty(metadata.MemberReferences);
 
         foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
@@ -131,21 +121,16 @@ public class DrcMapperContractTests : IDisposable
 
     /// <summary>
     /// Every entity → response-DTO pair the registers declare, mapped through the adapter
-    /// <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. Asserting the URL is ABSOLUTE is what
-    /// gives it teeth: these DTOs all have a same-named <c>Url</c> that Mapster convention-copies from
-    /// the entity's relative one, so an assertion satisfied by the entity's own <c>Url</c> would pass
-    /// with the register's resolver rule deleted. Discovered rather than listed, so v1.7's DTOs — the
-    /// ones the audit trail was silently convention-mapping — are covered without anyone extending a
-    /// list.
+    /// <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. Asserts the URL is ABSOLUTE rather than
+    /// equal to a fixed value, because these DTOs all have a same-named <c>Url</c> that Mapster
+    /// convention-copies from the entity's own relative one; only the absolute prefix is something a
+    /// convention copy cannot produce. Pairs are discovered via reflection, not listed, so newly added
+    /// DTOs are covered without anyone extending a list.
     /// </summary>
     /// <remarks>
-    /// Absoluteness, not equality to <c>Resolved(entity)</c>: for an
-    /// <see cref="EnkelvoudigInformatieObjectVersie"/> source every register deliberately resolves the
-    /// PARENT document's url (<c>ResolveUrl(src.InformatieObject)</c>), matching what the AutoMapper
-    /// profiles this migration replaced used to do, because a document's canonical url is the object's
-    /// and not the versie's download link.
-    /// Only the <see cref="DrcMapperTestHost.BaseUrl"/> prefix is common to every pair, and it is also
-    /// the whole of what a convention copy cannot produce — <c>IUrlEntity.Url</c> is relative.
+    /// For an <see cref="EnkelvoudigInformatieObjectVersie"/> source, every register deliberately resolves
+    /// the PARENT document's url (<c>ResolveUrl(src.InformatieObject)</c>), not the versie's own -- a
+    /// document's canonical url is the object's, not the versie's download link.
     /// </remarks>
     [Theory]
     [MemberData(nameof(EntityToResponseDtoPairs))]
@@ -162,9 +147,9 @@ public class DrcMapperContractTests : IDisposable
 
     /// <summary>
     /// Every entity → request-DTO pair the registers declare, run through the real
-    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
-    /// values are pinned by the register tests; this catches a merge resolved against a mapper that has
-    /// no map for the pair, which throws at request time while every register-level fact stays green.
+    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check (values
+    /// are pinned by the register tests) -- it catches a merge resolved against a mapper with no map for
+    /// the pair, which would throw at request time while every register-level fact stays green.
     /// </summary>
     [Theory]
     [MemberData(nameof(EntityToRequestDtoPairs))]
@@ -174,24 +159,17 @@ public class DrcMapperContractTests : IDisposable
 
         var merged = MergeEmptyPatch(requestDtoType, entityType, entity);
 
-        // Both asserts below cannot fail by construction (the reflected generic method's return type IS
-        // requestDtoType, and Mapster never returns null for a non-null source): the absence of a throw
-        // IS the assertion, and that is exactly the regression this fact guards against.
+        // These two asserts can't fail by construction -- the absence of a throw IS the assertion this fact guards.
         Assert.NotNull(merged);
         Assert.IsType(requestDtoType, merged);
     }
 
     /// <summary>
-    /// A value-level PATCH fact for the shared merger both document mergers delegate to: the patched
-    /// field comes from the JObject, while the untouched one can only come from the existing entity
-    /// having been mapped in first — the step that needs the register.
+    /// A value-level PATCH fact for the shared merger: the patched field comes from the JObject, while the
+    /// untouched one (<c>InformatieObject</c>) can only come from the existing entity having been mapped in
+    /// first via the register's <c>MapsterUrlResolver</c> rule -- it's the one member that can't convention-map,
+    /// since the entity side is an <see cref="EnkelvoudigInformatieObject"/> but the DTO side is a resolved url string.
     /// </summary>
-    /// <remarks>
-    /// <c>InformatieObject</c> is the untouched assertion because it is the only member of
-    /// <c>GebruiksRechtRequestDto</c> that cannot convention-map: the entity member is an
-    /// <see cref="EnkelvoudigInformatieObject"/> while the DTO member is a resolved absolute url string,
-    /// so the value can only appear if the register's <c>MapsterUrlResolver</c> rule ran.
-    /// </remarks>
     [Fact]
     public void RequestMerger_merges_a_PATCH_onto_an_existing_gebruiksrecht()
     {
@@ -216,10 +194,7 @@ public class DrcMapperContractTests : IDisposable
 
     public static TheoryData<Type, Type> EntityToRequestDtoPairs() => DeclaredPairsEndingIn("RequestDto", requireUrlOnDestination: false);
 
-    /// <summary>
-    /// Reads the pairs out of the config <c>AddZgwMapster</c> actually builds — the scanned, merged one
-    /// that decides which definition of a pair survives.
-    /// </summary>
+    /// <summary>Reads the pairs out of the scanned, merged config <c>AddZgwMapster</c> actually builds.</summary>
     private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
     {
         var services = new ServiceCollection();
@@ -249,10 +224,9 @@ public class DrcMapperContractTests : IDisposable
     }
 
     /// <summary>
-    /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty. The
-    /// empty collections are defensive for entity types without a collection initialiser: the ported
-    /// after-mapping blocks iterate BestandsDelen unguarded, so a null there is a NullReferenceException
-    /// rather than a mapping failure.
+    /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty --
+    /// needed because the ported after-mapping blocks iterate <c>BestandsDelen</c> unguarded, so a null
+    /// there is a NullReferenceException rather than a mapping failure.
     /// </summary>
     private static object BareEntity(Type entityType)
     {
@@ -285,10 +259,8 @@ public class DrcMapperContractTests : IDisposable
 
     /// <summary>
     /// Completes the one DRC relation no entity is ever persisted without: the document ↔ versie pair.
-    /// Both halves' registers dereference the other half unguarded — and
-    /// <c>EnkelvoudigInformatieObjectVersie.Url</c> throws <see cref="NullReferenceException"/> outright
-    /// with neither navigation set — so a genuinely bare instance of either type fails on its own
-    /// invariants rather than on anything these facts are about.
+    /// Without it, <c>EnkelvoudigInformatieObjectVersie.Url</c> throws <see cref="NullReferenceException"/>
+    /// on its own invariants, before the mapping logic these facts are about ever runs.
     /// </summary>
     private static void LinkRequiredNavigations(object entity)
     {

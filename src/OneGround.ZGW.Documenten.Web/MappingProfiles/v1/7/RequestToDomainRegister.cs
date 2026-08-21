@@ -67,27 +67,17 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<EnkelvoudigInformatieObjectCreateRequestDto, EnkelvoudigInformatieObjectVersie>()
-            // EnkelvoudigInformatieObjectVersie.InformatieObject/LatestInformatieObject form a cyclic EF
-            // navigation graph back through EnkelvoudigInformatieObject. Assigning InformatieObject via a
-            // mapped member (.Map) pulls EnkelvoudigInformatieObject into the destination type graph
-            // Mapster's compiler analyzes, and under the global MaxDepth(200) it exhaustively expands that
-            // cycle -> an effectively-unbounded compile-time blowup. Assigning it in .AfterMapping instead
-            // (which runs outside the compiled member-mapping pipeline, the same way the
-            // empty-collection transform is bypassed) keeps EnkelvoudigInformatieObject out of the
-            // analyzed graph entirely: no recursion, no per-config MaxDepth tuning, and robust to future
-            // model cycles. LatestInformatieObject stays .Ignore()'d below for the same reason (it's never assigned).
+            // InformatieObject is assigned in .AfterMapping, not .Map: a mapped member would pull the cyclic
+            // EnkelvoudigInformatieObject/EnkelvoudigInformatieObjectVersie graph into Mapster's compiler and hang the build.
+            // LatestInformatieObject is .Ignore()'d below for the same reason.
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
             .Ignore(dest => dest.InformatieObject)
-            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
-            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
-            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
-            // here. Guard explicitly (?. isn't usable -- the .Map source selector compiles to an
-            // Expression<Func<>>, and C# forbids ?. in expression trees). AlgoritmeFromString throws
-            // ArgumentNullException on a null argument by design (distinct null-vs-throw enum-parse
-            // semantics), so its whole call must be skipped, not just null-guard its argument.
+            // Ondertekening/Integriteit are optional on the wire; Mapster's .Map lambdas don't null-guard member paths
+            // the way AutoMapper's MapFrom did, and ?. can't be used because .Map compiles to an expression tree.
+            // AlgoritmeFromString throws on null by design, so its call must be skipped entirely, not just null-guarded.
             .Map(
                 dest => dest.Ondertekening_Datum,
                 src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)
@@ -157,13 +147,8 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.OntvangstDatum, src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum))
             .Map(dest => dest.VerzendDatum, src => ProfileHelper.DateFromStringOptional(src.VerzendDatum))
             .Ignore(dest => dest.InformatieObject)
-            // Ondertekening/Integriteit are optional on the wire (no [Required] attribute) -- AutoMapper's
-            // MapFrom automatically null-guards member-path expressions like `src.Ondertekening.Datum`,
-            // but Mapster's .Map lambdas do not, so a real request omitting them would NullReferenceException
-            // here. Guard explicitly (?. isn't usable -- the .Map source selector compiles to an
-            // Expression<Func<>>, and C# forbids ?. in expression trees). AlgoritmeFromString throws
-            // ArgumentNullException on a null argument by design (distinct null-vs-throw enum-parse
-            // semantics), so its whole call must be skipped, not just null-guard its argument.
+            // Same null-guard reasoning as the CreateRequestDto config above: Ondertekening/Integriteit are optional,
+            // and AlgoritmeFromString throws on null by design, so its call must be skipped entirely.
             .Map(
                 dest => dest.Ondertekening_Datum,
                 src => ProfileHelper.DateFromStringOptional(src.Ondertekening == null ? null : src.Ondertekening.Datum)

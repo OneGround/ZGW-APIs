@@ -171,18 +171,12 @@ public class RequestToDomainProfileTests : IDisposable
     }
 
     /// <summary>
-    /// Only IsGereedVoorPublicatie and TonenAanInitiator are v1/7-only contract concepts -- v1/5's request
-    /// DTO already declares InhoudIsVervallen, Trefwoorden and Verschijningsvorm too (v1/5's register even
-    /// gives the latter two an explicit identity .Map(...)). Of the five asserted below, IsGereedVoorPublicatie,
-    /// TonenAanInitiator and InhoudIsVervallen are the ones actually carried by Mapster's name/type
-    /// convention matching alone: this register declares neither an explicit .Map(...) nor .Ignore(...)
-    /// for any of those three. Trefwoorden and Verschijningsvorm get an explicit (if redundant with
-    /// convention) identity .Map(...) in this register instead; they are asserted here anyway so one fact
-    /// covers all five members v1/5 ignores or handles differently. Neither Mapster gate would catch a
-    /// later ".Ignore(dest => dest.IsGereedVoorPublicatie)" added to "harmonize" this register with
-    /// v1/5's: the completeness gate is satisfied by an .Ignore just as much as by a mapped member, and
-    /// the compile gate only checks that the config compiles. This fact is the only thing that would fail
-    /// if that happened.
+    /// Five members v1.5 handles differently: IsGereedVoorPublicatie, TonenAanInitiator and
+    /// InhoudIsVervallen carry through on Mapster's name/type convention alone (no explicit .Map or
+    /// .Ignore here), while Trefwoorden and Verschijningsvorm get an explicit identity .Map. Neither
+    /// Mapster gate would catch a later .Ignore(...) added to align this register with v1.5's -- the
+    /// completeness gate accepts an .Ignore as readily as a mapped member, and the compile gate only
+    /// checks that the config compiles. This fact is what would actually fail.
     /// </summary>
     [Fact]
     public void A_create_request_carries_the_five_members_v1_5_ignores_or_maps_explicitly()
