@@ -93,6 +93,7 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.MultiPartDocumentId)
             // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
+            // Cyclic navigation property (see header) and the Postgres xmin concurrency token -- never assigned here.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(
@@ -175,6 +176,7 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.MultiPartDocumentId)
             // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
+            // Cyclic navigation property (see header) and the Postgres xmin concurrency token -- never assigned here.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(

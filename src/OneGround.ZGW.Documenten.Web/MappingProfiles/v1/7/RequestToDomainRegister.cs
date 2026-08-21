@@ -105,14 +105,17 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
-            // Not present on this request DTO -- set/managed elsewhere, not via this mapping.
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModifiedBy)
+            // Not present on this request DTO -- upload state set by the upload handlers.
             .Ignore(dest => dest.BestandsDelen)
             .Ignore(dest => dest.MultiPartDocumentId)
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
+            // Cyclic navigation property (see header) and the Postgres xmin concurrency token -- never assigned here.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(
@@ -178,14 +181,17 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
-            // Not present on this request DTO -- set/managed elsewhere, not via this mapping.
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModifiedBy)
+            // Not present on this request DTO -- upload state set by the upload handlers.
             .Ignore(dest => dest.BestandsDelen)
             .Ignore(dest => dest.MultiPartDocumentId)
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
+            // Cyclic navigation property (see header) and the Postgres xmin concurrency token -- never assigned here.
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
             .AfterMapping(

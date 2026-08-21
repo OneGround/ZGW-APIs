@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MapsterMapper;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
@@ -38,6 +39,9 @@ public class RequestToDomainProfileTests : IDisposable
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
 
         Assert.Null(filter.Trefwoorden_In);
+        // Uuid_In is not present on these query parameters at all (only the search-request DTO has it),
+        // so it must stay null here too -- same silent-zero-rows risk class as Trefwoorden_In.
+        Assert.Null(filter.Uuid_In);
     }
 
     [Fact]
@@ -137,5 +141,67 @@ public class RequestToDomainProfileTests : IDisposable
         var versie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(request);
 
         Assert.Equal("the-lock-value", versie.InformatieObject.Lock);
+    }
+
+    /// <summary>
+    /// Same guard as the create-map fact above, for the update map's five Ondertekening/Integriteit
+    /// members. Correct by inspection is not tested: without this fact, removing any one of the update
+    /// map's null guards would fail nothing here.
+    /// </summary>
+    [Fact]
+    public void An_update_request_without_ondertekening_or_integriteit_maps_without_throwing()
+    {
+        var request = new EnkelvoudigInformatieObjectUpdateRequestDto
+        {
+            Bronorganisatie = TestBronorganisatie,
+            InformatieObjectType = "https://example.test/informatieobjecttypen/1",
+            CreatieDatum = "2026-01-15",
+            Taal = "nl",
+            Ondertekening = null,
+            Integriteit = null,
+        };
+
+        var versie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(request);
+
+        Assert.Null(versie.Ondertekening_Datum);
+        Assert.Null(versie.Ondertekening_Soort);
+        Assert.Null(versie.Integriteit_Datum);
+        Assert.Null(versie.Integriteit_Waarde);
+        Assert.Equal(new DateOnly(2026, 1, 15), versie.CreatieDatum);
+    }
+
+    /// <summary>
+    /// IsGereedVoorPublicatie, TonenAanInitiator, InhoudIsVervallen, Trefwoorden and Verschijningsvorm are
+    /// carried by Mapster's name/type convention matching rather than an explicit .Map(...) or
+    /// .Ignore(...) in the register (v1/5's request DTO lacks these fields, so the v1/5 template ignores
+    /// or omits them -- v1/7's DTO declares all five with matching names and types). Neither Mapster gate
+    /// would catch a later ".Ignore(dest => dest.IsGereedVoorPublicatie)" added to "harmonize" this
+    /// register with v1/5's: the completeness gate is satisfied by an .Ignore just as much as by a
+    /// mapped member, and the compile gate only checks that the config compiles. This fact is the only
+    /// thing that would fail if that happened -- see the register's create-map for why these five must
+    /// stay unignored.
+    /// </summary>
+    [Fact]
+    public void A_create_request_carries_the_v1_5_shaped_convention_mapped_members()
+    {
+        var request = new EnkelvoudigInformatieObjectCreateRequestDto
+        {
+            Bronorganisatie = TestBronorganisatie,
+            InformatieObjectType = "https://example.test/informatieobjecttypen/1",
+            Taal = "nl",
+            IsGereedVoorPublicatie = true,
+            TonenAanInitiator = true,
+            InhoudIsVervallen = true,
+            Trefwoorden = new List<string> { "vergunning" },
+            Verschijningsvorm = "digitaal",
+        };
+
+        var versie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(request);
+
+        Assert.True(versie.IsGereedVoorPublicatie);
+        Assert.True(versie.TonenAanInitiator);
+        Assert.True(versie.InhoudIsVervallen);
+        Assert.Equal(["vergunning"], versie.Trefwoorden);
+        Assert.Equal("digitaal", versie.Verschijningsvorm);
     }
 }
