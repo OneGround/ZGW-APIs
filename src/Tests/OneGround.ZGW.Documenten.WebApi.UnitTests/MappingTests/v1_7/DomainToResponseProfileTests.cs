@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MapsterMapper;
+using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.DataModel;
@@ -177,6 +179,231 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.True(dto.IsGereedVoorPublicatie);
         Assert.True(dto.TonenAanInitiator);
         Assert.Null(dto.Lock);
+    }
+
+    /// <summary>
+    /// Full projection of <c>MapLatestVersieToGetResponse</c>: one assertion per member that ported body
+    /// assigns.
+    /// </summary>
+    /// <remarks>
+    /// This fact exists because neither Mapster gate can see these members. Every one of them is
+    /// <c>.Ignore(...)</c>'d on the register's config -- which is what satisfies the completeness gate --
+    /// and then assigned inside an <c>.AfterMapping</c> the compile gate never looks into. Deleting an
+    /// assignment from that body therefore leaves both gates and the rest of the suite green. The A/B
+    /// parity harness would have caught it, but it cannot outlive the AutoMapper profiles it compares
+    /// against, so this fact is the durable replacement. Every value is deliberately non-default so a
+    /// dropped or wrong-source assignment cannot pass by coincidence.
+    ///
+    /// Three members -- InformatieObjectType, IndicatieGebruiksrecht and Locked -- are read from
+    /// <c>latestVersion.LatestInformatieObject</c>, which in any valid graph IS the root entity the map
+    /// runs on, so Mapster's convention copy and the after-mapping assignment necessarily agree. For
+    /// those three this fact pins the value, not the source; splitting them would take a model-invalid
+    /// fixture.
+    /// </remarks>
+    [Fact]
+    public void A_get_response_carries_every_member_the_after_mapping_assigns()
+    {
+        var informatieObject = FullyPopulatedInformatieObject();
+        var latestVersion = informatieObject.LatestEnkelvoudigInformatieObjectVersie;
+
+        var dto = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(informatieObject);
+
+        Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), dto.Url);
+        Assert.Equal(7, dto.Versie);
+        Assert.Equal(TestBronorganisatie, dto.Bronorganisatie);
+        Assert.Equal("DOCUMENT-0042", dto.Identificatie);
+        Assert.Equal(4096, dto.Bestandsomvang);
+        Assert.Equal("2026-01-15T10:30:00Z", dto.BeginRegistratie);
+        Assert.Equal("2026-01-15", dto.CreatieDatum);
+        Assert.Equal("een titel", dto.Titel);
+        Assert.Equal("zaakvertrouwelijk", dto.Vertrouwelijkheidaanduiding);
+        Assert.True(dto.IsGereedVoorPublicatie);
+        Assert.True(dto.TonenAanInitiator);
+        Assert.Equal("een auteur", dto.Auteur);
+        Assert.Equal("ter_vaststelling", dto.Status);
+        Assert.Equal("application/pdf", dto.Formaat);
+        Assert.Equal("nld", dto.Taal);
+        Assert.Equal("bestand.pdf", dto.Bestandsnaam);
+        Assert.Equal("https://example.test/link", dto.Link);
+        Assert.Equal("een beschrijving", dto.Beschrijving);
+        Assert.Equal("2026-01-16", dto.OntvangstDatum);
+        Assert.Equal("2026-01-17", dto.VerzendDatum);
+        Assert.Equal("digitaal", dto.Ondertekening.Soort);
+        Assert.Equal("2026-01-18", dto.Ondertekening.Datum);
+        Assert.Equal("sha_256", dto.Integriteit.Algoritme);
+        Assert.Equal("de-integriteitswaarde", dto.Integriteit.Waarde);
+        Assert.Equal("2026-01-19", dto.Integriteit.Datum);
+        Assert.Equal("https://example.test/informatieobjecttypen/42", dto.InformatieObjectType);
+        Assert.True(dto.IndicatieGebruiksrecht);
+        Assert.True(dto.Locked);
+        Assert.Equal("digitaal", dto.Verschijningsvorm);
+        Assert.Equal(["vergunning", "bouwtekening"], dto.Trefwoorden);
+        Assert.True(dto.InhoudIsVervallen);
+
+        // Parts are outstanding, so the download link is suppressed rather than pointing at a
+        // half-uploaded file. The parts themselves are projected in Volgnummer order -- the fixture
+        // deliberately holds them the other way round, so a lost OrderBy fails here.
+        Assert.Null(dto.Inhoud);
+        Assert.Equal([1, 2], dto.BestandsDelen.Select(d => d.Volgnummer));
+        Assert.Equal(DrcMapperTestHost.Resolved(latestVersion.BestandsDelen[1]), dto.BestandsDelen[0].Url);
+        Assert.Equal(1024, dto.BestandsDelen[0].Omvang);
+        Assert.True(dto.BestandsDelen[0].Voltooid);
+        Assert.False(dto.BestandsDelen[1].Voltooid);
+        Assert.Equal("the-lock-value", dto.BestandsDelen[0].Lock);
+    }
+
+    /// <summary>
+    /// Full projection of <c>MapLatestVersieToUpdateRequest</c>: one assertion per member that ported
+    /// body assigns, plus the member it deliberately does not.
+    /// </summary>
+    /// <remarks>
+    /// Same blind spot as the get-response fact above: every member here is <c>.Ignore(...)</c>'d for the
+    /// completeness gate and assigned inside an <c>.AfterMapping</c> the compile gate cannot see, so
+    /// without this fact a dropped assignment fails nothing. Lock is the one member the body must NOT
+    /// carry -- the request's own lock value has to be validated, not the stored one -- so asserting it
+    /// stays null is a requirement rather than an omission.
+    /// </remarks>
+    [Fact]
+    public void An_update_request_projection_carries_every_member_the_after_mapping_assigns()
+    {
+        var informatieObject = FullyPopulatedInformatieObject();
+
+        var dto = _mapper.Map<EnkelvoudigInformatieObjectUpdateRequestDto>(informatieObject);
+
+        Assert.Equal(TestBronorganisatie, dto.Bronorganisatie);
+        Assert.Equal("DOCUMENT-0042", dto.Identificatie);
+        Assert.Equal("2026-01-15", dto.CreatieDatum);
+        Assert.Equal("een titel", dto.Titel);
+        Assert.Equal("zaakvertrouwelijk", dto.Vertrouwelijkheidaanduiding);
+        Assert.True(dto.IsGereedVoorPublicatie);
+        Assert.True(dto.TonenAanInitiator);
+        Assert.Equal("een auteur", dto.Auteur);
+        Assert.Equal("ter_vaststelling", dto.Status);
+        Assert.Equal("application/pdf", dto.Formaat);
+        Assert.Equal("nld", dto.Taal);
+        Assert.Equal("bestand.pdf", dto.Bestandsnaam);
+        Assert.Equal(4096, dto.Bestandsomvang);
+        // The raw stored content, NOT a download url: this map feeds the PATCH merge, not a response.
+        Assert.Equal("de-inhoud", dto.Inhoud);
+        Assert.Equal("https://example.test/link", dto.Link);
+        Assert.Equal("een beschrijving", dto.Beschrijving);
+        Assert.Equal("2026-01-16", dto.OntvangstDatum);
+        Assert.Equal("2026-01-17", dto.VerzendDatum);
+        Assert.Equal("digitaal", dto.Ondertekening.Soort);
+        Assert.Equal("2026-01-18", dto.Ondertekening.Datum);
+        Assert.Equal("sha_256", dto.Integriteit.Algoritme);
+        Assert.Equal("de-integriteitswaarde", dto.Integriteit.Waarde);
+        Assert.Equal("2026-01-19", dto.Integriteit.Datum);
+        Assert.Equal("https://example.test/informatieobjecttypen/42", dto.InformatieObjectType);
+        Assert.True(dto.IndicatieGebruiksrecht);
+        Assert.Equal("digitaal", dto.Verschijningsvorm);
+        Assert.Equal(["vergunning", "bouwtekening"], dto.Trefwoorden);
+        Assert.True(dto.InhoudIsVervallen);
+        Assert.Null(dto.Lock);
+    }
+
+    /// <summary>
+    /// The download-link port's third disjunct (<c>src.BestandsDelen.Count != 0</c>) at its OWN call
+    /// site. The version has content and a non-zero size, so only that disjunct can suppress the link.
+    /// </summary>
+    /// <remarks>
+    /// The get-response body reaches the same outcome through a different expression, so covering it
+    /// there leaves this branch untested: losing it would hand a client a download url for an incomplete
+    /// multipart upload. Like the two facts above, the member is <c>.Ignore(...)</c>'d for the gate and
+    /// assigned only inside an <c>.AfterMapping</c>, so neither gate can catch its removal.
+    /// </remarks>
+    [Fact]
+    public void A_create_response_suppresses_the_download_link_while_parts_are_outstanding()
+    {
+        var versie = VersieFor(inhoud: "de-inhoud", bestandsomvang: 4096);
+        versie.BestandsDelen =
+        [
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 1,
+                Omvang = 4096,
+                EnkelvoudigInformatieObjectVersie = versie,
+            },
+        ];
+
+        var dto = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(versie);
+
+        Assert.Null(dto.Inhoud);
+    }
+
+    /// <summary>
+    /// A document whose latest version carries a distinctive, non-default value in every member the two
+    /// ported after-mapping bodies assign.
+    /// </summary>
+    private static EnkelvoudigInformatieObject FullyPopulatedInformatieObject()
+    {
+        var informatieObject = new EnkelvoudigInformatieObject
+        {
+            Id = Guid.NewGuid(),
+            InformatieObjectType = "https://example.test/informatieobjecttypen/42",
+            IndicatieGebruiksrecht = true,
+            Locked = true,
+            Lock = "the-lock-value",
+        };
+
+        var latestVersion = new EnkelvoudigInformatieObjectVersie
+        {
+            Id = Guid.NewGuid(),
+            Versie = 7,
+            Bronorganisatie = TestBronorganisatie,
+            Identificatie = "DOCUMENT-0042",
+            CreatieDatum = new DateOnly(2026, 1, 15),
+            Titel = "een titel",
+            Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.zaakvertrouwelijk,
+            Auteur = "een auteur",
+            Status = DataModel.Status.ter_vaststelling,
+            Formaat = "application/pdf",
+            Taal = "nld",
+            BeginRegistratie = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc),
+            Bestandsnaam = "bestand.pdf",
+            Inhoud = "de-inhoud",
+            Bestandsomvang = 4096,
+            Link = "https://example.test/link",
+            Beschrijving = "een beschrijving",
+            OntvangstDatum = new DateOnly(2026, 1, 16),
+            VerzendDatum = new DateOnly(2026, 1, 17),
+            Ondertekening_Soort = Soort.digitaal,
+            Ondertekening_Datum = new DateOnly(2026, 1, 18),
+            Integriteit_Algoritme = Algoritme.sha_256,
+            Integriteit_Waarde = "de-integriteitswaarde",
+            Integriteit_Datum = new DateOnly(2026, 1, 19),
+            Verschijningsvorm = "digitaal",
+            Trefwoorden = ["vergunning", "bouwtekening"],
+            InhoudIsVervallen = true,
+            IsGereedVoorPublicatie = true,
+            TonenAanInitiator = true,
+            LatestInformatieObject = informatieObject,
+        };
+
+        // Held in descending Volgnummer so the get-response body's OrderBy is load-bearing.
+        latestVersion.BestandsDelen =
+        [
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 2,
+                Omvang = 3072,
+                Voltooid = false,
+                EnkelvoudigInformatieObjectVersie = latestVersion,
+            },
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 1,
+                Omvang = 1024,
+                Voltooid = true,
+                EnkelvoudigInformatieObjectVersie = latestVersion,
+            },
+        ];
+
+        informatieObject.LatestEnkelvoudigInformatieObjectVersie = latestVersion;
+        return informatieObject;
     }
 
     private static EnkelvoudigInformatieObjectVersie VersieFor(string inhoud, long bestandsomvang)
