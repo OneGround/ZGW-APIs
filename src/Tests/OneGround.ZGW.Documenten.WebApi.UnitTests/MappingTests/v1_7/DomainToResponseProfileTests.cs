@@ -26,6 +26,11 @@ public class DomainToResponseProfileTests : IDisposable
 
     public void Dispose() => _host.Dispose();
 
+    /// <summary>
+    /// The DELIBERATELY SPARSE fixture: only the members a single focused fact needs, with the rest left
+    /// at their defaults and two of them parameterised. Use it for facts about one behaviour. Its
+    /// near-twin <see cref="FullyPopulatedInformatieObject"/> is the exhaustive one — do not merge them.
+    /// </summary>
     private static EnkelvoudigInformatieObject InformatieObjectWithLatestVersion(
         List<BestandsDeel> bestandsDelen = null,
         bool isGereedVoorPublicatie = true,
@@ -194,11 +199,13 @@ public class DomainToResponseProfileTests : IDisposable
     /// against, so this fact is the durable replacement. Every value is deliberately non-default so a
     /// dropped or wrong-source assignment cannot pass by coincidence.
     ///
-    /// Three members -- InformatieObjectType, IndicatieGebruiksrecht and Locked -- are read from
+    /// Two members -- InformatieObjectType and Locked -- are read from
     /// <c>latestVersion.LatestInformatieObject</c>, which in any valid graph IS the root entity the map
-    /// runs on, so Mapster's convention copy and the after-mapping assignment necessarily agree. For
-    /// those three this fact pins the value, not the source; splitting them would take a model-invalid
-    /// fixture.
+    /// runs on, and are NOT <c>.Ignore(...)</c>'d, so Mapster's convention copy from the root and the
+    /// after-mapping assignment necessarily agree. For those two this fact pins the value, not the
+    /// source; splitting them would take a model-invalid fixture. IndicatieGebruiksrecht reads from the
+    /// same place but IS <c>.Ignore(...)</c>'d, so there is no convention copy behind it and dropping its
+    /// assignment does fail this fact.
     /// </remarks>
     [Fact]
     public void A_get_response_carries_every_member_the_after_mapping_assigns()
@@ -333,8 +340,10 @@ public class DomainToResponseProfileTests : IDisposable
     }
 
     /// <summary>
-    /// A document whose latest version carries a distinctive, non-default value in every member the two
-    /// ported after-mapping bodies assign.
+    /// The EXHAUSTIVE fixture: a document whose latest version carries a distinctive, non-default value
+    /// in every member the two ported after-mapping bodies assign, so a dropped assignment cannot pass by
+    /// coincidence. Used only by the two full-projection facts. Its near-twin
+    /// <see cref="InformatieObjectWithLatestVersion"/> is the sparse one — do not merge them.
     /// </summary>
     private static EnkelvoudigInformatieObject FullyPopulatedInformatieObject()
     {

@@ -63,13 +63,15 @@ public class MapsterMappingParityTests : IDisposable
 
         // Note: AssertConfigurationIsValid() is deliberately NOT called, and adding it would turn this
         // harness red on the pre-existing profiles rather than on anything it or the registers do. It
-        // was run once to check: 8 of the 10 v1.7 pairs have destination members with no source and no
+        // was run once to check: 9 of the 10 v1.7 pairs have destination members with no source and no
         // ForMember(...Ignore()) -- Owner/CatalogusId/Verzendingen/LegacyAuditTrail on the two
         // EnkelvoudigInformatieObject maps, CreationTime/ModificationTime/CreatedBy/ModifiedBy/
         // BestandsDelen/MultiPartDocumentId/Owner on the two Versie maps, Uuid_In on the query-parameter
         // map, BestandsDelen/InhoudIsVervallen on the get response, Bestandsomvang/Verschijningsvorm/
         // InhoudIsVervallen/Trefwoorden on the update-request projection, and BestandsDelen on both
-        // Create/Update response maps. That gap is precisely what the Mapster completeness gate closes:
+        // Create/Update response maps. The search-request map is the only clean pair: all six filter
+        // members are satisfied from EnkelvoudigInformatieObjectSearchRequestDto. That gap is precisely
+        // what the Mapster completeness gate closes:
         // the registers carry an explicit .Ignore(...) for every one of them (see DrcMapsterCompileTests).
         var autoMapperConfiguration = new MapperConfiguration(c =>
         {
