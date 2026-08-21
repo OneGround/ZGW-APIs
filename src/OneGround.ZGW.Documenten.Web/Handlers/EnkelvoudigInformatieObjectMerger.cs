@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using AutoMapper;
+using MapsterMapper;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Validations;
@@ -26,9 +26,9 @@ public class EnkelvoudigInformatieObjectMergerFactory : IEnkelvoudigInformatieOb
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IRequestMerger _requestMerger;
+    private readonly IZgwRequestMerger _requestMerger;
 
-    public EnkelvoudigInformatieObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
+    public EnkelvoudigInformatieObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;
@@ -49,9 +49,9 @@ public class EnkelvoudigInformatieObjectMerger<TEnkelvoudigInformatieObjectReque
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IRequestMerger _requestMerger;
+    private readonly IZgwRequestMerger _requestMerger;
 
-    public EnkelvoudigInformatieObjectMerger(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
+    public EnkelvoudigInformatieObjectMerger(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;
