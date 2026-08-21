@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -69,6 +72,59 @@ public class DrcMapperContractTests : IDisposable
     }
 
     /// <summary>
+    /// Nothing in DRC may CALL AutoMapper any more. Every controller still TAKES
+    /// <c>AutoMapper.IMapper</c> because the shared <c>ZGWControllerBase</c> demands it, and
+    /// <c>ZGWControllerBase._mapper</c> stays visible to every DRC controller as a protected field.
+    /// </summary>
+    /// <remarks>
+    /// That field is a mapper over a configuration with no DRC profiles in it, so a merge from an older
+    /// branch can reintroduce <c>_mapper.Map&lt;T&gt;(...)</c>: it compiles, no mapping fact notices, and
+    /// it throws only when a real request hits that action. Reading the MemberRef table rather than
+    /// walking IL is what makes this fire on <b>use</b> and not on the constructor parameter the base
+    /// class forces. Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
+    /// </remarks>
+    [Fact]
+    public void No_DRC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
+    {
+        var assemblyPath = typeof(Startup).Assembly.Location;
+
+        // A single-file or in-memory host reports an empty Location; fail with that reason rather than an
+        // opaque IO error that reads like the assertion below found nothing.
+        Assert.False(string.IsNullOrEmpty(assemblyPath), "Cannot scan metadata: Documenten.Web has no on-disk location.");
+
+        using var stream = File.OpenRead(assemblyPath);
+        using var peReader = new PEReader(stream);
+        var metadata = peReader.GetMetadataReader();
+
+        var calls = new List<string>();
+        foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
+        {
+            if (memberReference.Parent.Kind != HandleKind.TypeReference)
+            {
+                continue;
+            }
+
+            var typeReference = metadata.GetTypeReference((TypeReferenceHandle)memberReference.Parent);
+            var declaringNamespace = metadata.GetString(typeReference.Namespace);
+            var declaringType = metadata.GetString(typeReference.Name);
+
+            var isAutoMapper = declaringNamespace == "AutoMapper" || declaringNamespace.StartsWith("AutoMapper.", StringComparison.Ordinal);
+            var isAutoMapperMerger = declaringType == nameof(IRequestMerger);
+            if (isAutoMapper || isAutoMapperMerger)
+            {
+                calls.Add($"{declaringNamespace}.{declaringType}.{metadata.GetString(memberReference.Name)}");
+            }
+        }
+
+        Assert.True(
+            calls.Count == 0,
+            "DRC has no AutoMapper profiles left, so these calls run against a configuration without "
+                + "them and throw at request time. Use MapsterMapper.IMapper / IZgwRequestMerger instead:\n  "
+                + string.Join("\n  ", calls.Distinct().OrderBy(c => c))
+        );
+    }
+
+    /// <summary>
     /// Every entity → response-DTO pair the registers declare, mapped through the adapter
     /// <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. Asserting the URL is ABSOLUTE is what
     /// gives it teeth: these DTOs all have a same-named <c>Url</c> that Mapster convention-copies from
@@ -89,7 +145,7 @@ public class DrcMapperContractTests : IDisposable
     [MemberData(nameof(EntityToResponseDtoPairs))]
     public void AuditTrail_resolves_an_absolute_url_for_every_declared_response_dto(Type entityType, Type responseDtoType)
     {
-        var entity = (IUrlEntity)BareEntity(entityType);
+        var entity = BareEntity(entityType);
 
         var dto = MapThroughZgwMapper(responseDtoType, entity);
 
@@ -112,6 +168,9 @@ public class DrcMapperContractTests : IDisposable
 
         var merged = MergeEmptyPatch(requestDtoType, entityType, entity);
 
+        // Both asserts below cannot fail by construction (the reflected generic method's return type IS
+        // requestDtoType, and Mapster never returns null for a non-null source): the absence of a throw
+        // IS the assertion, and that is exactly the regression this fact guards against.
         Assert.NotNull(merged);
         Assert.IsType(requestDtoType, merged);
     }
@@ -185,8 +244,9 @@ public class DrcMapperContractTests : IDisposable
 
     /// <summary>
     /// An entity with only <c>Id</c> set and every writable collection navigation initialised empty. The
-    /// empty collections are load-bearing: the ported after-mapping blocks iterate BestandsDelen
-    /// unguarded, so a null there is a NullReferenceException rather than a mapping failure.
+    /// empty collections are defensive for entity types without a collection initialiser: the ported
+    /// after-mapping blocks iterate BestandsDelen unguarded, so a null there is a NullReferenceException
+    /// rather than a mapping failure.
     /// </summary>
     private static object BareEntity(Type entityType)
     {
