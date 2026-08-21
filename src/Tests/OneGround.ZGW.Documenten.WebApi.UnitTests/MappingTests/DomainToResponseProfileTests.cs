@@ -82,7 +82,7 @@ public class DomainToResponseProfileTests : IDisposable
         latestVersion.LatestInformatieObject = value;
 
         // Pin a mock return value for THIS specific version instance, distinguishable from the host's
-        // default prefixing stub: this proves MapLatestVersieToGetResponse actually calls
+        // default prefixing stub: this proves the register's .AfterMapping actually calls
         // uriService.GetUri(latestVersion), not that Inhoud coincidentally matches a resolved Url.
         _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
 

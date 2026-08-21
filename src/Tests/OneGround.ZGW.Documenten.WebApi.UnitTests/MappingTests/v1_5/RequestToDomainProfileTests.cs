@@ -1,5 +1,4 @@
 using System;
-using AutoFixture;
 using Mapster;
 using MapsterMapper;
 using OneGround.ZGW.Common.DataModel;
@@ -9,14 +8,12 @@ using OneGround.ZGW.Documenten.Contracts.v1._5;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_5;
 
 public class RequestToDomainProfileTests : IDisposable
 {
-    private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 

@@ -6,7 +6,6 @@ using OneGround.ZGW.Documenten.Contracts.v1;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_1;

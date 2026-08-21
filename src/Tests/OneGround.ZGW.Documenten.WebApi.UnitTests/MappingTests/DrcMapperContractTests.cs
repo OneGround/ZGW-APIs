@@ -141,8 +141,9 @@ public class DrcMapperContractTests : IDisposable
     /// <remarks>
     /// Absoluteness, not equality to <c>Resolved(entity)</c>: for an
     /// <see cref="EnkelvoudigInformatieObjectVersie"/> source every register deliberately resolves the
-    /// PARENT document's url (<c>ResolveUrl(src.InformatieObject)</c>), matching the shipping AutoMapper
-    /// profiles, because a document's canonical url is the object's and not the versie's download link.
+    /// PARENT document's url (<c>ResolveUrl(src.InformatieObject)</c>), matching what the AutoMapper
+    /// profiles this migration replaced used to do, because a document's canonical url is the object's
+    /// and not the versie's download link.
     /// Only the <see cref="DrcMapperTestHost.BaseUrl"/> prefix is common to every pair, and it is also
     /// the whole of what a convention copy cannot produce — <c>IUrlEntity.Url</c> is relative.
     /// </remarks>

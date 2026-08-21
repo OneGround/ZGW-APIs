@@ -88,15 +88,22 @@ public class DrcMapsterWiringTests
     [Fact]
     public void No_register_silently_overwrites_another_registers_type_pair()
     {
-        var registerTypes = typeof(Startup)
-            .Assembly.GetTypes()
+        // Matches the assembly set AddZgwMapster itself scans (commonWebAssembly is currently free of
+        // IRegister implementations, so this is not expected to add any types today, but a hand-rolled
+        // scan here must not silently fall behind the production seam's set).
+        var commonWebAssembly = typeof(MapsterServiceCollectionExtensions).Assembly;
+        var registerTypes = new[] { typeof(Startup).Assembly, commonWebAssembly }
+            .Distinct()
+            .SelectMany(a => a.GetTypes())
             .Where(t => typeof(IRegister).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
             .OrderBy(t => t.FullName)
             .ToList();
         Assert.NotEmpty(registerTypes);
 
-        // Count each register's pairs in isolation, then compare against the merged config. Any
-        // shortfall is a pair that one register overwrote for another.
+        // Builds one isolated TypeAdapterConfig per register and records which register first claimed
+        // each type pair. A pair claimed by more than one register is a collision: Mapster's NewConfig
+        // replaces rather than merges, so the merged production config would silently keep only the
+        // last-scanned register's mapping for that pair.
         var owners = new Dictionary<string, string>();
         var duplicates = new List<string>();
         foreach (var registerType in registerTypes)

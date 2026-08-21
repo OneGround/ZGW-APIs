@@ -5,7 +5,6 @@ using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_1;
@@ -80,7 +79,7 @@ public class DomainToResponseProfileTests : IDisposable
         latestVersion.LatestInformatieObject = value;
 
         // Pin a mock return value for THIS specific version instance, distinguishable from the host's
-        // default prefixing stub: this proves MapLatestVersieToGetResponse actually calls
+        // default prefixing stub: this proves the register's .AfterMapping actually calls
         // uriService.GetUri(latestVersion), not that Inhoud coincidentally matches a resolved Url.
         _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
 

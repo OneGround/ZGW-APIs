@@ -171,18 +171,21 @@ public class RequestToDomainProfileTests : IDisposable
     }
 
     /// <summary>
-    /// IsGereedVoorPublicatie, TonenAanInitiator, InhoudIsVervallen, Trefwoorden and Verschijningsvorm are
-    /// carried by Mapster's name/type convention matching rather than an explicit .Map(...) or
-    /// .Ignore(...) in the register (v1/5's request DTO lacks these fields, so the v1/5 template ignores
-    /// or omits them -- v1/7's DTO declares all five with matching names and types). Neither Mapster gate
-    /// would catch a later ".Ignore(dest => dest.IsGereedVoorPublicatie)" added to "harmonize" this
-    /// register with v1/5's: the completeness gate is satisfied by an .Ignore just as much as by a
-    /// mapped member, and the compile gate only checks that the config compiles. This fact is the only
-    /// thing that would fail if that happened -- see the register's create-map for why these five must
-    /// stay unignored.
+    /// Only IsGereedVoorPublicatie and TonenAanInitiator are v1/7-only contract concepts -- v1/5's request
+    /// DTO already declares InhoudIsVervallen, Trefwoorden and Verschijningsvorm too (v1/5's register even
+    /// gives the latter two an explicit identity .Map(...)). Of the five asserted below, IsGereedVoorPublicatie,
+    /// TonenAanInitiator and InhoudIsVervallen are the ones actually carried by Mapster's name/type
+    /// convention matching alone: this register declares neither an explicit .Map(...) nor .Ignore(...)
+    /// for any of those three. Trefwoorden and Verschijningsvorm get an explicit (if redundant with
+    /// convention) identity .Map(...) in this register instead; they are asserted here anyway so one fact
+    /// covers all five members v1/5 ignores or handles differently. Neither Mapster gate would catch a
+    /// later ".Ignore(dest => dest.IsGereedVoorPublicatie)" added to "harmonize" this register with
+    /// v1/5's: the completeness gate is satisfied by an .Ignore just as much as by a mapped member, and
+    /// the compile gate only checks that the config compiles. This fact is the only thing that would fail
+    /// if that happened.
     /// </summary>
     [Fact]
-    public void A_create_request_carries_the_v1_5_shaped_convention_mapped_members()
+    public void A_create_request_carries_the_five_members_v1_5_ignores_or_maps_explicitly()
     {
         var request = new EnkelvoudigInformatieObjectCreateRequestDto
         {

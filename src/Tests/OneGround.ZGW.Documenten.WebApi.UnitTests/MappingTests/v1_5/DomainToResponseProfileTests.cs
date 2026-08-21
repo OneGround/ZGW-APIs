@@ -6,7 +6,6 @@ using OneGround.ZGW.Documenten.Contracts.v1._5;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_5;
@@ -84,7 +83,7 @@ public class DomainToResponseProfileTests : IDisposable
         latestVersion.LatestInformatieObject = value;
 
         // Pin a mock return value for THIS specific version instance, distinguishable from the host's
-        // default prefixing stub: this proves MapLatestVersieToGetResponse actually calls
+        // default prefixing stub: this proves the register's .AfterMapping actually calls
         // uriService.GetUri(latestVersion), not that Inhoud coincidentally matches a resolved Url.
         _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("MOCKED-INHOUD-URL");
 
@@ -134,8 +133,9 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_Inhoud_Is_Null_When_BestandsDelen_Present()
     {
-        // Covers the "Note: New in v1.1" guard, still present verbatim in v1.5's MapLatestEnkelvoudigInformatieObjectVersieResponse:
-        // when BestandsDelen.Count != 0, Inhoud must be null regardless of what the (mocked) uriService would otherwise return.
+        // Covers the "Note: New in v1.1" guard, carried into v1.5's register verbatim from the ported
+        // MapLatestEnkelvoudigInformatieObjectVersieResponse action: when BestandsDelen.Count != 0, Inhoud
+        // must be null regardless of what the (mocked) uriService would otherwise return.
         var latestVersion = CreateVersion();
 
         var value = new EnkelvoudigInformatieObject

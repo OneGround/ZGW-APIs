@@ -41,7 +41,10 @@ public class DrcMapsterCompileTests
     /// <summary>
     /// Mapster's stand-in for AutoMapper's <c>AssertConfigurationIsValid()</c>: every destination member
     /// needs a source member, an explicit <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is
-    /// what keeps the registers' <c>.Ignore(...)</c> calls load-bearing rather than decorative.
+    /// what keeps the registers' <c>.Ignore(...)</c> calls load-bearing rather than decorative. This walks
+    /// <c>config.RuleMap</c>, so it only covers type pairs that have an explicit <c>NewConfig</c> entry --
+    /// a pair mapped purely by Mapster's bare convention (no register ever calls <c>NewConfig</c> for it)
+    /// has no <c>RuleMap</c> entry and is invisible to this gate.
     /// </summary>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
