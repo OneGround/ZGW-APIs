@@ -67,9 +67,10 @@ public class RequestToDomainRegister : IRegister
             // mapped member (.Map) pulls EnkelvoudigInformatieObject into the destination type graph
             // Mapster's compiler analyzes, and under the global MaxDepth(200) it exhaustively expands that
             // cycle -> an effectively-unbounded compile-time blowup. Assigning it in .AfterMapping instead
-            // (which runs outside the compiled member-mapping pipeline -- same mechanism as the Risk #17
-            // EmptyCollectionIfNull fix) keeps EnkelvoudigInformatieObject out of the analyzed graph
-            // entirely: no recursion, no per-config MaxDepth tuning, and robust to future model cycles.
+            // (which runs outside the compiled member-mapping pipeline, the same way the
+            // empty-collection transform is bypassed) keeps EnkelvoudigInformatieObject out of the
+            // analyzed graph entirely: no recursion, no per-config MaxDepth tuning, and robust to future
+            // model cycles.
             // LatestInformatieObject stays .Ignore()'d below for the same reason (it's never assigned).
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))

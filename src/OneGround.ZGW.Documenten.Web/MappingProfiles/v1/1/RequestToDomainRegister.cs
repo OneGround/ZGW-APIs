@@ -44,9 +44,10 @@ public class RequestToDomainRegister : IRegister
             // mapped member (.Map) pulls EnkelvoudigInformatieObject into the destination type graph
             // Mapster's compiler analyzes, and under the global MaxDepth(200) it exhaustively expands that
             // cycle -> an effectively-unbounded compile-time blowup. Assigning it in .AfterMapping instead
-            // (which runs outside the compiled member-mapping pipeline -- same mechanism as the Risk #17
-            // EmptyCollectionIfNull fix) keeps EnkelvoudigInformatieObject out of the analyzed graph
-            // entirely: no recursion, no per-config MaxDepth tuning, and robust to future model cycles.
+            // (which runs outside the compiled member-mapping pipeline, the same way the
+            // empty-collection transform is bypassed) keeps EnkelvoudigInformatieObject out of the
+            // analyzed graph entirely: no recursion, no per-config MaxDepth tuning, and robust to future
+            // model cycles.
             // LatestInformatieObject stays .Ignore()'d below for the same reason (it's never assigned).
             .Ignore(dest => dest.Id)
             .Map(dest => dest.CreatieDatum, src => ProfileHelper.DateFromStringOptional(src.CreatieDatum))
@@ -75,18 +76,22 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
-            // Not present on this request DTO (v1.5-and-later concepts) -- set/managed elsewhere.
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModifiedBy)
+            // Not present on this request DTO -- later-version concepts (v1.5).
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
+            // Not present on this request DTO -- later-version concepts (v1.7).
             .Ignore(dest => dest.IsGereedVoorPublicatie)
             .Ignore(dest => dest.TonenAanInitiator)
+            // Not present on this request DTO -- upload state set by the upload handlers.
             .Ignore(dest => dest.BestandsDelen)
             .Ignore(dest => dest.MultiPartDocumentId)
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
@@ -153,18 +158,22 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.BeginRegistratie)
             .Map(dest => dest.Bestandsomvang, src => src.Bestandsomvang)
             .Ignore(dest => dest.EnkelvoudigInformatieObjectId)
-            // Not present on this request DTO (v1.5-and-later concepts) -- set/managed elsewhere.
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModifiedBy)
+            // Not present on this request DTO -- later-version concepts (v1.5).
             .Ignore(dest => dest.Verschijningsvorm)
             .Ignore(dest => dest.Trefwoorden)
             .Ignore(dest => dest.InhoudIsVervallen)
+            // Not present on this request DTO -- later-version concepts (v1.7).
             .Ignore(dest => dest.IsGereedVoorPublicatie)
             .Ignore(dest => dest.TonenAanInitiator)
+            // Not present on this request DTO -- upload state set by the upload handlers.
             .Ignore(dest => dest.BestandsDelen)
             .Ignore(dest => dest.MultiPartDocumentId)
+            // Not present on this request DTO -- audit/tenancy infrastructure set by entity hooks.
             .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.LatestInformatieObject)
             .Ignore(dest => dest.RowVersion)
