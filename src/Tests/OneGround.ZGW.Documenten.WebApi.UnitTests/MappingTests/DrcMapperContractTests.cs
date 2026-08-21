@@ -73,6 +73,8 @@ public class DrcMapperContractTests : IDisposable
     /// protected field a merge could reintroduce a call through). That field has no DRC profiles left, so
     /// such a call compiles and only throws at request time. Scanning the MemberRef table (rather than
     /// walking IL) is what makes this fire on <b>use</b>, not on the constructor parameter the base class forces.
+    /// This fact becomes obsolete once <c>ZGWControllerBase</c> no longer requires an
+    /// <c>AutoMapper.IMapper</c> constructor parameter; delete it then.
     /// </summary>
     [Fact]
     public void No_DRC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
