@@ -9,24 +9,30 @@ using Xunit;
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The merge direction a v1.5 ZAAKOBJECT PATCH uses. The controller merges the case object once through the
-/// base pair and then a second time through the pair for whichever concrete subtype the stored row is, so a
-/// member dropped on either side silently changes what a PATCH writes while every register-level fact stays
-/// green. Each subtype gets its own fact rather than one type-driven theory, so every assertion can pin that
-/// subtype's own identification fields to non-default values a wrong-source assignment cannot coincidentally
-/// reproduce.
+/// Merge-direction facts for ZAAKOBJECTen. The eight subtype facts cover the domain → per-subtype-request
+/// direction that the v1.5 registers declare; the two at the bottom cover the base pair, which is the one a
+/// live v1.5 PATCH resolves. Each subtype gets its own fact rather than one type-driven theory, so every
+/// assertion can pin that subtype's own identification fields to non-default values a wrong-source assignment
+/// cannot coincidentally reproduce.
 /// </summary>
 /// <remarks>
 /// Built on the real seam (<see cref="ZrcMapperTestHost"/>) and a real <see cref="ZgwRequestMerger"/> — never
 /// a hand-rolled <c>TypeAdapterConfig</c> and never a hand-copy of the merge logic, either of which would
 /// drift from what the controller does.
 /// <para>
-/// Recorded verdict, asserted below for all eight subtypes: the per-subtype merged request does NOT carry the
-/// zaakobjecttype discriminator. The identification entity that is the source of those eight maps has no such
-/// column — it lives on the parent case-object row only — and the PATCH path reads nothing but
-/// <c>ObjectIdentificatie</c> off the per-subtype merged request. The discriminator travels on the base pair
+/// Read the eight subtype facts as coverage of what these registers declare, NOT as coverage of the live
+/// per-subtype PATCH merge. The v1.5 ZAAKOBJECTen controller imports the v1.5 request namespace but then
+/// declares a file-level using-alias per subtype pointing at the v1 request DTOs, and an alias beats a
+/// using-directive for a simple name — so its eight per-subtype merges resolve the v1 pairs, and only its
+/// unaliased base merge uses a v1.5 type.
+/// </para>
+/// <para>
+/// Recorded verdict, asserted below for all eight subtypes: the merged per-subtype request does NOT carry the
+/// zaakobjecttype discriminator, because the identification entity that is the source of those eight maps has
+/// no such column — it lives on the parent case-object row only. The discriminator travels on the base pair
 /// instead, which <see cref="The_base_case_object_pair_carries_the_discriminator_through_a_patch_merge"/> and
-/// <see cref="A_patch_that_supplies_the_discriminator_overrides_the_stored_one"/> pin.
+/// <see cref="A_patch_that_supplies_the_discriminator_overrides_the_stored_one"/> pin, and those two are the
+/// facts that speak to what a PATCH actually writes.
 /// </para>
 /// </remarks>
 public class ZrcZaakObjectPatchMergeTests : IDisposable

@@ -408,9 +408,11 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Status)
             .Ignore(dest => dest.StatusId)
             .Ignore(dest => dest.Owner)
-            // Left at its enum default on write, exactly as the v1 config above already does for this same
-            // member and direction - only this v1.5 pair was missing the annotation. The value is produced on
-            // the read side, where the response register maps it through AardRelatieWeergaveToString.
+            // The write path leaves this at its enum default; the read side computes nothing, it just renders
+            // whatever value is stored (the response register maps it through AardRelatieWeergaveToString), so
+            // on a row written through this pair it renders that default. Pre-existing behaviour of the v1
+            // pair, which the config above already ignores for this same member and direction - only this v1.5
+            // pair was missing the annotation, and adding it changes nothing about what is written.
             .Ignore(dest => dest.AardRelatieWeergave)
             .Map(dest => dest.VernietigingsDatum, src => ProfileHelper.DateTimeFromString(src.VernietigingsDatum));
 

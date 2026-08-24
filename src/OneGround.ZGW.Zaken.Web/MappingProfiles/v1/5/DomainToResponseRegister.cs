@@ -141,13 +141,19 @@ public class DomainToResponseRegister : IRegister
             .NewConfig<AdresZaakObject, AdresZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.AdresZaakObjectDto>(config))
             // ZaakObjectType is ignored on all eight configs below for the same reason the other base-DTO
-            // members already are: the source here is the identification entity (its own table), which carries
-            // no zaakobjecttype column - that discriminator lives on the parent zaakobjecten row only. These
-            // eight maps exist solely to build the merge base for a PATCH of one subtype's ObjectIdentificatie;
-            // the PATCH path takes the discriminator from the ZaakObject -> ZaakObjectRequestDto merge above
-            // (which does map it) and reads nothing but ObjectIdentificatie off the per-subtype merged request.
-            // The equivalent v1 configs already ignore every base-DTO member except ObjectIdentificatie;
-            // ZaakObjectType is simply the member v1.5 added to that base DTO.
+            // members already are: the source is the identification entity (its own table), which carries no
+            // zaakobjecttype column - that discriminator lives on the parent zaakobjecten row only. The
+            // equivalent v1 configs already ignore every base-DTO member except ObjectIdentificatie;
+            // ZaakObjectType is simply the member the v1.5 base DTO added.
+            //
+            // These eight are the domain -> v1.5-subtype-request direction that this register declares. Note
+            // which pairs the v1.5 PATCH route actually resolves, because it is not these: the v1.5
+            // ZAAKOBJECTen controller imports this namespace but then declares a file-level using-ALIAS per
+            // subtype pointing at the v1 request DTOs, and an alias beats a using-directive for a simple name
+            // (the aliases are what disambiguates its two imports). So its eight per-subtype merges run on the
+            // v1 pairs in v1/DomainToResponseRegister, and only its unaliased base merge uses a v1.5 type.
+            // The discriminator is therefore moot on both routes: the v1 subtype request DTOs have no
+            // ZaakObjectType member at all, and on this v1.5 direction the source has no value to carry.
             .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
