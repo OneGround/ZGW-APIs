@@ -18,6 +18,22 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 public class ZrcMapsterWiringTests
 {
+    /// <summary>
+    /// The one fact that exercises register DISCOVERY and resolver DI together: a per-register unit test
+    /// builds its own <c>TypeAdapterConfig</c> and so can never see whether the service's real
+    /// <c>AddZgwMapster</c> path finds the registers, nor whether the url resolvers reach
+    /// <see cref="IEntityUriService"/> through the container.
+    /// </summary>
+    /// <remarks>
+    /// Observed failure mode: pointing the seam at an assembly that declares no register — the data model
+    /// assembly, <c>typeof(Zaak).Assembly</c> — fails on the url with
+    /// <c>Assert.Equal() Failure: Strings differ</c>, expecting
+    /// <c>"https://example.test/resolved-via-di"</c> and getting the entity's own relative
+    /// <c>"/zaken/&lt;guid&gt;"</c>. That relative value is Mapster's same-name convention copy: with no
+    /// register in scope the map still succeeds, quietly, on convention alone. Which is exactly why the mock
+    /// returns a literal no convention copy can produce — a mock echoing <c>e.Url</c> would leave this fact
+    /// green with the registers undiscovered.
+    /// </remarks>
     [Fact]
     public void AddZgwMapster_discovers_ZRC_registers_and_runs_the_url_resolvers_through_DI()
     {
@@ -51,6 +67,15 @@ public class ZrcMapsterWiringTests
     /// survives a broken resolver, and the host's mock PREFIXES the entity's relative <c>Url</c> so a
     /// same-named convention copy of that relative path fails the assertion.
     /// </summary>
+    /// <remarks>
+    /// Observed failure mode: deleting the
+    /// <c>.Map(dest =&gt; dest.Url, src =&gt; MapsterUrlResolver.ResolveUrl(src))</c> line from the
+    /// <c>Zaak -&gt; ZaakResponseDto</c> config fails on the first element with
+    /// <c>Assert.Equal() Failure: Strings differ</c> — expected <c>"https://zrc.test/zaken/&lt;guid&gt;"</c>,
+    /// actual <c>"/zaken/&lt;guid&gt;"</c>. The actual value is the entity's own relative <c>Url</c>, so the
+    /// per-element assertion is what distinguishes a resolved url from the convention copy; a count
+    /// assertion over the same result would have stayed green.
+    /// </remarks>
     [Fact]
     public void A_List_collection_root_resolves_urls_for_every_element()
     {
@@ -80,6 +105,13 @@ public class ZrcMapsterWiringTests
     /// endpoints shipped with an <c>IEnumerable</c> root and returned 500 on any non-empty result until this
     /// pair of facts surfaced it. If a future Mapster release materialises enumerable roots, this fact fails —
     /// that failure is the signal to revisit the constraint, not a reason to delete the fact.
+    /// <para>
+    /// Observed failure mode: this one needs no mutation to have been seen failing. It asserts the throw
+    /// directly, and it was written from two shipped GET endpoints that returned 500 on exactly this shape —
+    /// the fact is the reproduction. Empirically bounded while writing it: <c>List&lt;T&gt;</c>,
+    /// <c>IList&lt;T&gt;</c> and <c>ICollection&lt;T&gt;</c> destination roots all materialise eagerly inside
+    /// the mapping scope; only <c>IEnumerable&lt;T&gt;</c> defers.
+    /// </para>
     /// </remarks>
     [Fact]
     public void An_IEnumerable_collection_root_loses_the_ambient_context_and_throws()
@@ -115,6 +147,15 @@ public class ZrcMapsterWiringTests
     /// namespace, so an unqualified type name resolves to the earlier type and two declarations that read
     /// as version-specific in source are one pair. Scan order then picks a winner silently, and no
     /// per-register test can see it.
+    /// <para>
+    /// Observed failure mode: these registers really did carry duplicate declarations, and this fact named
+    /// both colliding pairs together with every owning register —
+    /// <c>NetTopologySuite.Geometries.Geometry -&gt; NetTopologySuite.Geometries.Geometry</c> (two registers)
+    /// and <c>Contracts.v1._2.ObjectTypeOverigeDefinitieDto -&gt;
+    /// DataModel.ZaakObject.ObjectTypeOverigeDefinitie</c>, which appeared TWICE because three registers
+    /// declared it (every declaration past the first counts). Run it while both definitions still exist:
+    /// once a pair is consolidated there is nothing left to observe.
+    /// </para>
     /// </remarks>
     [Fact]
     public void No_register_silently_overwrites_another_registers_type_pair()

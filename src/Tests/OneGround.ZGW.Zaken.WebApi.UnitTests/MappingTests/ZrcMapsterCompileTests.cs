@@ -43,6 +43,15 @@ public class ZrcMapsterCompileTests
     /// Measured green on this service's registers: every path that reaches a type with a navigation back
     /// to one of its own ancestors is already ignored, so the generator's walk terminates. This fact
     /// exists to keep that true as registers change.
+    /// <para>
+    /// Observed failure mode, so nobody has to re-derive it: adding an entity-to-entity pair
+    /// (<c>config.NewConfig&lt;ZaakObject, ZaakObject&gt;()</c>) to a register makes the run HANG. There is
+    /// no assertion message and no output past the test-discovery line; it was still running after seven
+    /// minutes against a clean run of about one second, and the host went down only when the run was killed.
+    /// The recursion is in Mapster's code generator while it BUILDS the expression tree, so nothing reaches
+    /// the point of throwing. A hang or an aborted host IS this gate firing — never read it as flakiness,
+    /// and never conclude the gate is unverified because no red assertion appeared.
+    /// </para>
     /// </remarks>
     [Fact]
     public void AddZgwMapster_config_compiles_every_registered_type_pair()
@@ -66,6 +75,15 @@ public class ZrcMapsterCompileTests
     /// <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is what keeps the registers'
     /// <c>.Ignore(...)</c> calls load-bearing rather than decorative.
     /// </summary>
+    /// <remarks>
+    /// Observed failure mode: removing one <c>.Ignore(dest =&gt; dest.ZaakObjectType)</c> from the
+    /// <c>BuurtZaakObject -&gt; BuurtZaakObjectRequestDto</c> config fails this fact alone, naming the pair
+    /// and the member — "The following members of destination class
+    /// OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakObject.BuurtZaakObjectRequestDto do not have a
+    /// corresponding source member mapped or ignored:ZaakObjectType". That per-member detail is why the loop
+    /// above compiles pair by pair and collects, rather than letting one <c>config.Compile()</c> throw on the
+    /// first offender and hide the rest.
+    /// </remarks>
     [Fact]
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
     {

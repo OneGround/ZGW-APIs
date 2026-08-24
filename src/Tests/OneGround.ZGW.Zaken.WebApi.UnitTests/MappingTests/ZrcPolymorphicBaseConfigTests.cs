@@ -79,6 +79,14 @@ public class ZrcPolymorphicBaseConfigTests
     /// <see cref="ZrcMapsterCompileTests.Every_registered_type_pair_maps_or_ignores_every_destination_member"/>,
     /// which would accept only the annotation this forbids. That is why those four pairs are excluded there
     /// and asserted here instead — the exclusion is safe exactly as long as this fact holds.
+    /// <para>
+    /// Observed failure mode: adding <c>.Ignore(dest =&gt; dest.Adres)</c> to the
+    /// <c>ZaakObjectRequestDto -&gt; ZaakObject</c> base config fails with the offending pair AND the
+    /// offending rule spelled out — "OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.ZaakObjectRequestDto
+    /// -&gt; OneGround.ZGW.Zaken.DataModel.ZaakObject.ZaakObject / .Ignore(dest =&gt; dest.Adres)". Naming the
+    /// rule, not just the pair, is the payoff for reading <c>RuleMap</c> structurally instead of inferring the
+    /// violation from behaviour. Reproduced independently from a clean tree with byte-identical output.
+    /// </para>
     /// </remarks>
     [Fact]
     public void The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation()
@@ -153,6 +161,14 @@ public class ZrcPolymorphicBaseConfigTests
     /// reconstructing the argument: a request typed as a concrete subtype still carries its identification
     /// object into the data model.
     /// </summary>
+    /// <remarks>
+    /// Observed failure mode: with the same single <c>.Ignore(dest =&gt; dest.Adres)</c> on the base config
+    /// this fails on <c>Assert.NotNull() Failure: Value is null</c> — the derived config's
+    /// <c>.Map(dest =&gt; dest.Adres, src =&gt; src.ObjectIdentificatie)</c> is still registered and simply
+    /// loses, with no exception and no log line. It fails on the null rather than on the pinned value because
+    /// a base ignore blanks the whole navigation; the pinned-value assertion on the line after is what would
+    /// catch a narrower regression that produced the object but dropped its contents.
+    /// </remarks>
     [Fact]
     public void A_derived_case_object_map_still_produces_its_identification()
     {

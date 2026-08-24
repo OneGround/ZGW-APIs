@@ -97,6 +97,15 @@ public class ZrcMapperContractTests : IDisposable
     /// <c>src.Url</c> as a domain data field rather than as a self-link (that pair's destination does not
     /// end in <c>ResponseDto</c> today, so the filter below excludes it, but the prefix form stays
     /// correct if it ever stops doing so).
+    /// <para>
+    /// Observed failure mode: deleting one pair's resolver rule — the
+    /// <c>.Map(dest =&gt; dest.Url, src =&gt; MapsterUrlResolver.ResolveUrl(src))</c> on
+    /// <c>ZaakEigenschap -&gt; ZaakEigenschapResponseDto</c> — fails that theory case and only that one, with
+    /// <c>Assert.StartsWith() Failure: String start does not match</c>, <c>String: "/zaken/&lt;guid&gt;"</c>,
+    /// <c>Expected start: "https://zrc.test"</c>. The relative value is the entity's own <c>Url</c>, i.e.
+    /// Mapster's same-name convention copy — the silent substitution this theory exists to catch, and the
+    /// reason the assertion is on the ABSOLUTE form rather than on the url being non-empty.
+    /// </para>
     /// </remarks>
     [Theory]
     [MemberData(nameof(EntityToResponseDtoPairs))]
@@ -256,6 +265,14 @@ public class ZrcMapperContractTests : IDisposable
     /// that parameter's type is declared in another assembly and yields a TypeRef, never a MemberRef.
     /// Scope is <c>Zaken.Web</c>; add the host assembly if it ever gains an AutoMapper reference.
     /// Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
+    /// <para>
+    /// Observed failure mode: switching a single <c>_mapsterMapper.Map&lt;ZaakResponseDto&gt;(…)</c> call to
+    /// the inherited <c>_mapper</c> field reports exactly one entry, <c>AutoMapper.IMapperBase.Map</c>, and
+    /// nothing per controller. Both halves matter: it fires on the added CALL, and it stays silent on the
+    /// inherited AutoMapper constructor parameters every controller still declares — a parameter whose type
+    /// lives in another assembly yields a TypeRef, never a MemberRef. A scan that saw those parameters would
+    /// have been red before the mutation and useless after it.
+    /// </para>
     /// </remarks>
     [Fact]
     public void No_ZRC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()

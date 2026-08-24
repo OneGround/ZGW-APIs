@@ -276,7 +276,9 @@ public class DomainToResponseRegister : IRegister
             // returns does NOT reach the caller: dest.Statussen is a collection member, so the shared
             // configuration's EmptyCollectionIfNull destination transform substitutes an empty sequence,
             // exactly as the AutoMapper baseline's AllowNullCollections=false default did for an explicitly
-            // computed null. The observable result is empty, never null - asserted in this file's own tests.
+            // computed null. The observable result is empty, never null - pinned by the
+            // ZaakRol_with_null_Zaak_ZaakStatussen_Maps_Statussen_to_empty_not_null fact, which only holds
+            // because it runs on the real AddZgwMapster configuration that carries that transform.
             .Map(
                 dest => dest.Statussen,
                 src =>

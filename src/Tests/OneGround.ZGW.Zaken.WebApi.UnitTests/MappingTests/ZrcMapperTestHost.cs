@@ -22,6 +22,17 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 /// The provider and scope are instance fields disposed in <see cref="Dispose"/>, never scoped to the
 /// constructor with <c>using</c>: <c>MapContext</c>-based DI resolution is lazy, happening at
 /// <c>Map()</c>-call time.
+/// <para>
+/// Observed failure mode — and the one gate in this suite that has none of its own, because it asserts
+/// nothing: a host is infrastructure, and it fails by making the facts built on it weaker rather than by
+/// going red. Two ways that was seen here, both worth keeping in mind before hand-rolling a config or
+/// relaxing this one. A per-class <c>TypeAdapterConfig</c> built from a single register omits the seam's
+/// global settings, and a config missing them cannot tell an <c>.AfterMapping</c> null fold from a
+/// <c>.Map(...)</c> one — the two look identical. And a <see cref="BaseUrl"/> left empty, or a mock that
+/// echoes <c>e.Url</c>, makes every url assertion in the suite pass on Mapster's convention copy alone,
+/// with the registers' resolver rules deleted. Neither shows up as a failing test; both show up as gates
+/// that stop discriminating.
+/// </para>
 /// </remarks>
 internal sealed class ZrcMapperTestHost : IDisposable
 {
