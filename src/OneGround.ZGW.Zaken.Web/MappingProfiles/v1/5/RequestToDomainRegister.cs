@@ -236,11 +236,9 @@ public class RequestToDomainRegister : IRegister
         //
         // 3. ZaakObjecten
 
-        config
-            .NewConfig<Zaken.Contracts.v1._2.ObjectTypeOverigeDefinitieDto, ObjectTypeOverigeDefinitie>()
-            .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.ZaakObjectId)
-            .Ignore(dest => dest.ZaakObject);
+        // Note: the ObjectTypeOverigeDefinitieDto -> ObjectTypeOverigeDefinitie merge-with-PATCH map is
+        // declared once on v1/RequestToDomainRegister and shared here via the scanned config - the same
+        // CLR type pair can only be declared by one register (Mapster's NewConfig replaces, not merges).
 
         config.NewConfig<AdresZaakObjectRequestDto, AdresZaakObject>().MapWith(src => CreateAdresZaakObject(src));
 

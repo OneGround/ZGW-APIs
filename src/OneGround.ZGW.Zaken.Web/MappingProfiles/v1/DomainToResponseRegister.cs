@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Mapster;
-using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common;
@@ -26,16 +25,10 @@ public class DomainToResponseRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        // NetTopologySuite's Geometry is abstract with no parameterless constructor, so Mapster can't build
-        // its usual clone expression for same-type Geometry->Geometry members (Zaak.Zaakgeometrie, mapped
-        // below on both Zaak->ZaakResponseDto and Zaak->ZaakRequestDto). AutoMapper falls back to a direct
-        // reference copy for identical source/destination types; this reproduces that. Also registered by
-        // RequestToDomainRegister (for the reverse direction) - re-registering the identical rule here is
-        // harmless (same TypePair, same behavior) and keeps this register self-sufficient for what it maps,
-        // independent of config.Scan discovery order.
-        config.NewConfig<Geometry, Geometry>().MapWith(src => src);
-
-        // Same class of problem as Geometry above: OverigeZaakObject->OverigeZaakObjectDto (further down)
+        // Same class of problem as Geometry (registered by RequestToDomainRegister, which owns the
+        // Geometry->Geometry passthrough for both directions - Mapster's NewConfig replaces rather than
+        // merges, so a same-type rule can only be declared once across all registers in this assembly):
+        // OverigeZaakObject->OverigeZaakObjectDto (further down)
         // assigns dest.OverigeData (a JToken) via JToken.Parse(...) - a same-type JToken->JToken result.
         // JToken is abstract with no accessible parameterless constructor, so Mapster's default same-type
         // clone expression fails to compile unless told to just use the value as-is.
@@ -171,13 +164,10 @@ public class DomainToResponseRegister : IRegister
         config.NewConfig<WozObject, WozObjectDto>();
         config.NewConfig<WozWaardeZaakObject, WozWaardeZaakObjectDto>();
 
-        // Note: This maps is used to merge an existing ObjectTypeOverigeDefinitie with the PATCH operation
-        config
-            .NewConfig<ObjectTypeOverigeDefinitieDto, ObjectTypeOverigeDefinitie>()
-            .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.ZaakObjectId)
-            .Ignore(dest => dest.ZaakObject);
-
+        // Note: the merge-with-PATCH map for ObjectTypeOverigeDefinitieDto -> ObjectTypeOverigeDefinitie is
+        // declared on RequestToDomainRegister. This file's DTO name is unqualified but resolves to the
+        // v1._2 type via the `using OneGround.ZGW.Zaken.Contracts.v1._2;` above, so a second declaration
+        // here would be the same CLR type pair - Mapster's NewConfig replaces rather than merges.
         config
             .NewConfig<ZaakObject, ZaakObjectRequestDto>()
             .Map(dest => dest.ObjectTypeOverigeDefinitie, src => src.ObjectTypeOverigeDefinitie) // Note: Supported in v1.2 only
