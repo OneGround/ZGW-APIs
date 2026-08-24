@@ -285,6 +285,8 @@ public class DrcMapperContractTests : IDisposable
     private object MapThroughZgwMapper(Type destinationType, object source) =>
         typeof(IZgwMapper).GetMethod(nameof(IZgwMapper.Map))!.MakeGenericMethod(destinationType).Invoke(_zgwMapper, [source]);
 
+    // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
+    // apply optional-parameter defaults - the argument array has to carry it explicitly.
     private object MergeEmptyPatch(Type requestDtoType, Type entityType, object entity) =>
         typeof(IZgwRequestMerger)
             .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!

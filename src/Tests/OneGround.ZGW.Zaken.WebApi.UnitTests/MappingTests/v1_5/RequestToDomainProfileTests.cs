@@ -22,6 +22,9 @@ public class RequestToDomainProfileTests : IDisposable
     // here as a stand-in RSIN/Bronorganisatie, which shares the same 9-digit elfproef structure.
     private const string TestRsin = "999993653";
 
+    // Official KvK test-environment number for a fictitious company (Eenmanszaak).
+    private const string TestKvkNummer = "69599084";
+
     private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
@@ -493,9 +496,9 @@ public class RequestToDomainProfileTests : IDisposable
     public void VestigingZaakRolRequestDto_Maps_To_ZaakRol_including_new_KvkNummer_field()
     {
         // Discriminates that KvKNummer (v1.5's new field) round-trips to the domain's KvkNummer despite the
-        // casing difference, via NameMatchingStrategy.IgnoreCase (see the constructor comment) - exactly like
-        // AutoMapper's case-insensitive convention in the source profile, which has no explicit ForMember for
-        // this field either.
+        // casing difference, via NameMatchingStrategy.IgnoreCase (set globally by AddZgwMapster through the
+        // shared ZrcMapperTestHost, not by this class) - exactly like AutoMapper's case-insensitive convention
+        // in the source profile, which has no explicit ForMember for this field either.
         ZaakRolRequestDto request = new VestigingZaakRolRequestDto
         {
             Zaak = "https://example.test/zaken/1",
@@ -505,7 +508,7 @@ public class RequestToDomainProfileTests : IDisposable
             BetrokkeneIdentificatie = new OneGround.ZGW.Zaken.Contracts.v1._5.VestigingZaakRolDto
             {
                 VestigingsNummer = "VN1",
-                KvKNummer = "12345678",
+                KvKNummer = TestKvkNummer,
             },
         };
 
@@ -513,7 +516,7 @@ public class RequestToDomainProfileTests : IDisposable
 
         Assert.NotNull(result.Vestiging);
         Assert.Equal("VN1", result.Vestiging.VestigingsNummer);
-        Assert.Equal("12345678", result.Vestiging.KvkNummer);
+        Assert.Equal(TestKvkNummer, result.Vestiging.KvkNummer);
     }
 
     [Fact]

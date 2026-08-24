@@ -19,10 +19,11 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 public class ZrcMapsterWiringTests
 {
     /// <summary>
-    /// The one fact that exercises register DISCOVERY and resolver DI together: a per-register unit test
-    /// builds its own <c>TypeAdapterConfig</c> and so can never see whether the service's real
-    /// <c>AddZgwMapster</c> path finds the registers, nor whether the url resolvers reach
-    /// <see cref="IEntityUriService"/> through the container.
+    /// The only fact in this suite that varies the scanned assembly argument passed to
+    /// <c>AddZgwMapster</c>, instead of going through the shared <see cref="ZrcMapperTestHost"/>, which
+    /// always scans the same fixed assembly. That is what lets this fact detect a broken assembly scan:
+    /// pointing the call at an assembly that declares no register reproduces the failure (see the observed
+    /// failure mode below), which a host-based fact has no way to exercise.
     /// </summary>
     /// <remarks>
     /// Observed failure mode: pointing the seam at an assembly that declares no register — the data model

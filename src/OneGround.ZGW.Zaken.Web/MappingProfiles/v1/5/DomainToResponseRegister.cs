@@ -135,8 +135,9 @@ public class DomainToResponseRegister : IRegister
         // exists for these object-identity DTOs, unlike VestigingZaakRolDto). Those AdresZaakObject->
         // Zaken.Contracts.v1.AdresZaakObjectDto (etc.) nested maps are registered in the ALREADY-MERGED
         // v1/DomainToResponseRegister.cs, not here - passing `config` explicitly to Adapt keeps the nested
-        // map resolving against this shared local config (populated by config.Scan in production, and by both
-        // registers' tests explicitly) rather than Mapster's ambient TypeAdapterConfig.GlobalSettings.
+        // map resolving against this shared local config (populated by config.Scan in production and, in
+        // tests, by AddZgwMapster through the shared mapper test host) rather than Mapster's ambient
+        // TypeAdapterConfig.GlobalSettings.
         config
             .NewConfig<AdresZaakObject, AdresZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.AdresZaakObjectDto>(config))
@@ -150,8 +151,9 @@ public class DomainToResponseRegister : IRegister
             // which pairs the v1.5 PATCH route actually resolves, because it is not these: the v1.5
             // ZAAKOBJECTen controller imports this namespace but then declares a file-level using-ALIAS per
             // subtype pointing at the v1 request DTOs, and an alias beats a using-directive for a simple name
-            // (the aliases are what disambiguates its two imports). So its eight per-subtype merges run on the
-            // v1 pairs in v1/DomainToResponseRegister, and only its unaliased base merge uses a v1.5 type.
+            // (the aliases redirect those eight simple names to the v1 request DTOs). So its eight per-subtype
+            // merges run on the v1 pairs in v1/DomainToResponseRegister, and only its unaliased base merge
+            // uses a v1.5 type.
             // The discriminator is therefore moot on both routes: the v1 subtype request DTOs have no
             // ZaakObjectType member at all, and on this v1.5 direction the source has no value to carry.
             .Ignore(dest => dest.ZaakObjectType)
