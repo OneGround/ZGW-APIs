@@ -289,5 +289,5 @@ public class DrcMapperContractTests : IDisposable
         typeof(IZgwRequestMerger)
             .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
             .MakeGenericMethod(requestDtoType, entityType)
-            .Invoke(_zgwRequestMerger, [entity, new JObject()]);
+            .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
 }

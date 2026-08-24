@@ -265,7 +265,7 @@ public class ZtcMapperContractTests : IDisposable
         typeof(IZgwRequestMerger)
             .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
             .MakeGenericMethod(requestDtoType, entityType)
-            .Invoke(_zgwRequestMerger, [entity, new JObject()]);
+            .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
 
     /// <summary>
     /// Every ZTC controller that runs a PATCH must take <see cref="IZgwRequestMerger"/>, not only the
