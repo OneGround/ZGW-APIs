@@ -18,6 +18,12 @@ public class ZrcMapsterCompileTests
     /// rule for it, so ignoring the subtype navigations here silently blanks the identification object on
     /// every write through every subtype. Measured on these registers: mapping an address case object
     /// yields the identification with the base ignores absent, and null with them present.
+    /// <para>
+    /// The inverse fact —
+    /// <see cref="ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation"/>
+    /// — asserts these base configs declare no rule for a subtype navigation. That is what makes this
+    /// exclusion safe rather than a hole; the two halves only work as a pair.
+    /// </para>
     /// </summary>
     private static readonly string[] PolymorphicBasePairs =
     [
