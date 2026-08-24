@@ -204,6 +204,9 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Owner)
             .Map(dest => dest.VertrouwelijkheidAanduiding, src => MapVertrouwelijkheidAanduiding(src.Vertrouwelijkheidaanduiding))
             .Ignore(dest => dest.CatalogusId)
+            // System-managed audit-mode flag, never client-supplied: handlers only read it, as
+            // _auditTrailFactory.Create(..., zaak.LegacyAuditTrail). The v1 config above ignores it too.
+            .Ignore(dest => dest.LegacyAuditTrail)
             .Map(dest => dest.Zaaktype, src => src.Zaaktype.TrimEnd('/'));
         // Note: Betalingsindicatie/Archiefnominatie/Archiefstatus/OpdrachtgevendeOrganisatie/Processobjectaard/
         // Processobject are deliberately NOT mapped or ignored here, mirroring the source AutoMapper profile
@@ -231,6 +234,11 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.ModifiedBy)
+            // Computed on write by CreateZaakStatusCommandHandler, which resets every previous status of the
+            // zaak to false and sets the new one to true. Not a client-supplied value. (The v1.5 query-filter
+            // pair GetAllZaakStatussenQueryParameters -> GetAllZaakStatussenFilter above does map a member of
+            // this name - that is the read/filter direction and unrelated to what a write stores.)
+            .Ignore(dest => dest.IndicatieLaatstGezetteStatus)
             .Ignore(dest => dest.Owner);
 
         //
@@ -290,25 +298,99 @@ public class RequestToDomainRegister : IRegister
         // required for the derived per-object-type configs' own .Map(...) calls (further down this file) to
         // actually take effect during runtime dispatch.
 
-        config.NewConfig<AdresZaakObjectRequestDto, ZaakObject>().Map(dest => dest.Adres, src => src.ObjectIdentificatie);
+        // Note on the eight derived XxxZaakObjectRequestDto->ZaakObject configs below: each maps its own
+        // subtype navigation and ignores the seven belonging to the other subtypes, since only one is ever
+        // populated. The ignores go on the DERIVED configs, never on the ZaakObjectRequestDto->ZaakObject base
+        // config above - a base-config rule for one of these members wins over every derived config's rule for
+        // that same member, for every source type in the hierarchy, which would blank the identification object
+        // on every write through every subtype.
+        config
+            .NewConfig<AdresZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.Adres, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
-        config.NewConfig<BuurtZaakObjectRequestDto, ZaakObject>().Map(dest => dest.Buurt, src => src.ObjectIdentificatie);
+        config
+            .NewConfig<BuurtZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.Buurt, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
-        config.NewConfig<PandZaakObjectRequestDto, ZaakObject>().Map(dest => dest.Pand, src => src.ObjectIdentificatie);
+        config
+            .NewConfig<PandZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.Pand, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
         config
             .NewConfig<KadastraleOnroerendeZaakObjectRequestDto, ZaakObject>()
-            .Map(dest => dest.KadastraleOnroerendeZaak, src => src.ObjectIdentificatie);
+            .Map(dest => dest.KadastraleOnroerendeZaak, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
-        config.NewConfig<GemeenteZaakObjectRequestDto, ZaakObject>().Map(dest => dest.Gemeente, src => src.ObjectIdentificatie);
+        config
+            .NewConfig<GemeenteZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.Gemeente, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
         config
             .NewConfig<TerreinGebouwdObjectZaakObjectRequestDto, ZaakObject>()
-            .Map(dest => dest.TerreinGebouwdObject, src => src.ObjectIdentificatie);
+            .Map(dest => dest.TerreinGebouwdObject, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.Overige)
+            .Ignore(dest => dest.WozWaardeObject);
 
-        config.NewConfig<OverigeZaakObjectRequestDto, ZaakObject>().Map(dest => dest.Overige, src => src.ObjectIdentificatie);
+        config
+            .NewConfig<OverigeZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.Overige, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.WozWaardeObject);
 
-        config.NewConfig<WozWaardeZaakObjectRequestDto, ZaakObject>().Map(dest => dest.WozWaardeObject, src => src.ObjectIdentificatie);
+        config
+            .NewConfig<WozWaardeZaakObjectRequestDto, ZaakObject>()
+            .Map(dest => dest.WozWaardeObject, src => src.ObjectIdentificatie)
+            .Ignore(dest => dest.Adres)
+            .Ignore(dest => dest.Buurt)
+            .Ignore(dest => dest.Pand)
+            .Ignore(dest => dest.KadastraleOnroerendeZaak)
+            .Ignore(dest => dest.Gemeente)
+            .Ignore(dest => dest.TerreinGebouwdObject)
+            .Ignore(dest => dest.Overige);
 
         //
         // 4. ZaakInformatieObjecten
@@ -326,6 +408,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Status)
             .Ignore(dest => dest.StatusId)
             .Ignore(dest => dest.Owner)
+            // Left at its enum default on write, exactly as the v1 config above already does for this same
+            // member and direction - only this v1.5 pair was missing the annotation. The value is produced on
+            // the read side, where the response register maps it through AardRelatieWeergaveToString.
+            .Ignore(dest => dest.AardRelatieWeergave)
             .Map(dest => dest.VernietigingsDatum, src => ProfileHelper.DateTimeFromString(src.VernietigingsDatum));
 
         //
@@ -362,11 +448,26 @@ public class RequestToDomainRegister : IRegister
 
         config.NewConfig<ContactpersoonRolDto, ContactpersoonRol>().Ignore(dest => dest.Id);
 
-        config.NewConfig<NatuurlijkPersoonZaakRolRequestDto, ZaakRol>().Map(dest => dest.NatuurlijkPersoon, src => src.BetrokkeneIdentificatie);
+        // Note on the five derived XxxZaakRolRequestDto->ZaakRol configs below: each maps its own betrokkene
+        // navigation and ignores the four belonging to the other betrokkene types, since only one is ever
+        // populated. As with the case-object subtypes above, the ignores go on the DERIVED configs only - a rule
+        // for one of these members on the ZaakRolRequestDto->ZaakRol base config would win over every derived
+        // config's rule for it and blank the betrokkene on every write through every betrokkene type.
+        config
+            .NewConfig<NatuurlijkPersoonZaakRolRequestDto, ZaakRol>()
+            .Map(dest => dest.NatuurlijkPersoon, src => src.BetrokkeneIdentificatie)
+            .Ignore(dest => dest.NietNatuurlijkPersoon)
+            .Ignore(dest => dest.Vestiging)
+            .Ignore(dest => dest.Medewerker)
+            .Ignore(dest => dest.OrganisatorischeEenheid);
 
         config
             .NewConfig<NietNatuurlijkPersoonZaakRolRequestDto, ZaakRol>()
             .Map(dest => dest.NietNatuurlijkPersoon, src => src.BetrokkeneIdentificatie)
+            .Ignore(dest => dest.NatuurlijkPersoon)
+            .Ignore(dest => dest.Vestiging)
+            .Ignore(dest => dest.Medewerker)
+            .Ignore(dest => dest.OrganisatorischeEenheid)
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModificationTime)
@@ -395,6 +496,10 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<VestigingZaakRolRequestDto, ZaakRol>()
             .Map(dest => dest.Vestiging, src => src.BetrokkeneIdentificatie)
+            .Ignore(dest => dest.NatuurlijkPersoon)
+            .Ignore(dest => dest.NietNatuurlijkPersoon)
+            .Ignore(dest => dest.Medewerker)
+            .Ignore(dest => dest.OrganisatorischeEenheid)
             .Ignore(dest => dest.CreationTime)
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModificationTime)
@@ -403,9 +508,19 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<OrganisatorischeEenheidZaakRolRequestDto, ZaakRol>()
-            .Map(dest => dest.OrganisatorischeEenheid, src => src.BetrokkeneIdentificatie);
+            .Map(dest => dest.OrganisatorischeEenheid, src => src.BetrokkeneIdentificatie)
+            .Ignore(dest => dest.NatuurlijkPersoon)
+            .Ignore(dest => dest.NietNatuurlijkPersoon)
+            .Ignore(dest => dest.Vestiging)
+            .Ignore(dest => dest.Medewerker);
 
-        config.NewConfig<MedewerkerZaakRolRequestDto, ZaakRol>().Map(dest => dest.Medewerker, src => src.BetrokkeneIdentificatie);
+        config
+            .NewConfig<MedewerkerZaakRolRequestDto, ZaakRol>()
+            .Map(dest => dest.Medewerker, src => src.BetrokkeneIdentificatie)
+            .Ignore(dest => dest.NatuurlijkPersoon)
+            .Ignore(dest => dest.NietNatuurlijkPersoon)
+            .Ignore(dest => dest.Vestiging)
+            .Ignore(dest => dest.OrganisatorischeEenheid);
 
         //
         // 10. ZaakVerzoek

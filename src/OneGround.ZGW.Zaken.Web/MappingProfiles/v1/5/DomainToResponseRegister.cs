@@ -140,6 +140,15 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<AdresZaakObject, AdresZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.AdresZaakObjectDto>(config))
+            // ZaakObjectType is ignored on all eight configs below for the same reason the other base-DTO
+            // members already are: the source here is the identification entity (its own table), which carries
+            // no zaakobjecttype column - that discriminator lives on the parent zaakobjecten row only. These
+            // eight maps exist solely to build the merge base for a PATCH of one subtype's ObjectIdentificatie;
+            // the PATCH path takes the discriminator from the ZaakObject -> ZaakObjectRequestDto merge above
+            // (which does map it) and reads nothing but ObjectIdentificatie off the per-subtype merged request.
+            // The equivalent v1 configs already ignore every base-DTO member except ObjectIdentificatie;
+            // ZaakObjectType is simply the member v1.5 added to that base DTO.
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -150,6 +159,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<BuurtZaakObject, BuurtZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.BuurtZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -160,6 +170,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<GemeenteZaakObject, GemeenteZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.GemeenteZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -170,6 +181,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<KadastraleOnroerendeZaakObject, KadastraleOnroerendeZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.KadastraleOnroerendeZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -180,6 +192,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<OverigeZaakObject, OverigeZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.OverigeZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -190,6 +203,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<PandZaakObject, PandZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.PandZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -200,6 +214,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<TerreinGebouwdObjectZaakObject, TerreinGebouwdObjectZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.TerreinGebouwdObjectZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
@@ -210,6 +225,7 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<WozWaardeZaakObject, WozWaardeZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.WozWaardeZaakObjectDto>(config))
+            .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
             .Ignore(dest => dest.ObjectType)
