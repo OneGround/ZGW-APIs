@@ -28,17 +28,20 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 public class ZaakResultatenController : ZGWControllerBase
 {
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakResultatenController(
         ILogger<ZaakResultatenController> logger,
         IMediator mediator,
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;
     }
 

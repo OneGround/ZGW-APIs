@@ -39,18 +39,21 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
 {
     private readonly IValidatorService _validatorService;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakInformatieObjectenController(
         ILogger<ZaakInformatieObjectenController> logger,
         IMediator mediator,
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;
         _validatorService = validatorService;
     }
@@ -282,7 +285,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakInformatieObjectRequestDto mergedZaakInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+        ZaakInformatieObjectRequestDto mergedZaakInformatieObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
             ZaakInformatieObjectRequestDto,
             ZaakInformatieObject
         >(resultGet.Result, partialZaakInformatieObjectRequest);

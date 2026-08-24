@@ -52,13 +52,15 @@ public class ZakenController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZakenController(
         ILogger<ZakenController> logger,
         IMediator mediator,
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -66,6 +68,7 @@ public class ZakenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
@@ -409,7 +412,7 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var mergedZaakRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakRequestDto, Zaak>(resultGet.Result, partialZaakRequest);
+        var mergedZaakRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ZaakRequestDto, Zaak>(resultGet.Result, partialZaakRequest);
 
         int? srid = null;
         if (mergedZaakRequest.Zaakgeometrie != null)

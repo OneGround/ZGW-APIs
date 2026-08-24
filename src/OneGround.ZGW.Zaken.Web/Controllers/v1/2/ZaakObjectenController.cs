@@ -47,13 +47,15 @@ public class ZaakObjectenController : ZGWControllerBase
     private readonly IZaakObjectValidatorService _zaakObjectValidatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakObjectenController(
         ILogger<ZaakObjectenController> logger,
         IMediator mediator,
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IZaakObjectValidatorService zaakObjectValidatorService,
@@ -61,6 +63,7 @@ public class ZaakObjectenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _zaakObjectValidatorService = zaakObjectValidatorService;
@@ -267,13 +270,13 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakObjectRequestDto mergedZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(
+        // afterMap must run before the pre-merge serialization: ZaakObjectRequestDto conditionally serializes
+        // ObjectTypeOverigeDefinitie based on Version, so Version has to be set on the mapped request before
+        // the merger builds its merge base, or a v1.2 PATCH that omits that field would drop it.
+        ZaakObjectRequestDto mergedZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(
             resultGet.Result,
             partialZaakObjectRequest,
-            opt =>
-            {
-                opt.AfterMap((_, dest) => dest.Version = "1.2"); // To be merged v1.2 correctly tell the mapper to include additional (1.2) data
-            }
+            request => request.Version = "1.2"
         );
 
         if (!_zaakObjectValidatorService.Validate(mergedZaakObjectRequest, out var validationResult, resultGet.Result))
@@ -286,7 +289,7 @@ public class ZaakObjectenController : ZGWControllerBase
         switch (resultGet.Result.ObjectType)
         {
             case ObjectType.adres:
-                AdresZaakObjectRequestDto mergedAdresZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                AdresZaakObjectRequestDto mergedAdresZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     AdresZaakObjectRequestDto,
                     AdresZaakObject
                 >(resultGet.Result.Adres, partialZaakObjectRequest);
@@ -300,7 +303,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 break;
 
             case ObjectType.buurt:
-                BuurtZaakObjectRequestDto mergedBuurtZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                BuurtZaakObjectRequestDto mergedBuurtZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     BuurtZaakObjectRequestDto,
                     BuurtZaakObject
                 >(resultGet.Result.Buurt, partialZaakObjectRequest);
@@ -313,7 +316,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 break;
 
             case ObjectType.gemeente:
-                GemeenteZaakObjectRequestDto mergedGemeenteZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                GemeenteZaakObjectRequestDto mergedGemeenteZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     GemeenteZaakObjectRequestDto,
                     GemeenteZaakObject
                 >(resultGet.Result.Gemeente, partialZaakObjectRequest);
@@ -327,7 +330,7 @@ public class ZaakObjectenController : ZGWControllerBase
 
             case ObjectType.kadastrale_onroerende_zaak:
                 KadastraleOnroerendeZaakObjectRequestDto mergedKadastraleOnroerendeZaakObjectRequest =
-                    _requestMerger.MergePartialUpdateToObjectRequest<KadastraleOnroerendeZaakObjectRequestDto, KadastraleOnroerendeZaakObject>(
+                    _zgwRequestMerger.MergePartialUpdateToObjectRequest<KadastraleOnroerendeZaakObjectRequestDto, KadastraleOnroerendeZaakObject>(
                         resultGet.Result.KadastraleOnroerendeZaak,
                         partialZaakObjectRequest
                     );
@@ -347,7 +350,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 break;
 
             case ObjectType.overige:
-                OverigeZaakObjectRequestDto mergedOverigeZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                OverigeZaakObjectRequestDto mergedOverigeZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     OverigeZaakObjectRequestDto,
                     OverigeZaakObject
                 >(resultGet.Result.Overige, partialZaakObjectRequest);
@@ -360,7 +363,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 break;
 
             case ObjectType.pand:
-                PandZaakObjectRequestDto mergedPandZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                PandZaakObjectRequestDto mergedPandZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     PandZaakObjectRequestDto,
                     PandZaakObject
                 >(resultGet.Result.Pand, partialZaakObjectRequest);
@@ -374,7 +377,7 @@ public class ZaakObjectenController : ZGWControllerBase
 
             case ObjectType.terrein_gebouwd_object:
                 TerreinGebouwdObjectZaakObjectRequestDto mergedTerreinGebouwdObjectZaakObjectRequest =
-                    _requestMerger.MergePartialUpdateToObjectRequest<TerreinGebouwdObjectZaakObjectRequestDto, TerreinGebouwdObjectZaakObject>(
+                    _zgwRequestMerger.MergePartialUpdateToObjectRequest<TerreinGebouwdObjectZaakObjectRequestDto, TerreinGebouwdObjectZaakObject>(
                         resultGet.Result.TerreinGebouwdObject,
                         partialZaakObjectRequest
                     );
@@ -394,7 +397,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 break;
 
             case ObjectType.woz_waarde:
-                WozWaardeZaakObjectRequestDto mergedWozWaardeZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+                WozWaardeZaakObjectRequestDto mergedWozWaardeZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
                     WozWaardeZaakObjectRequestDto,
                     WozWaardeZaakObject
                 >(resultGet.Result.WozWaardeObject, partialZaakObjectRequest);
