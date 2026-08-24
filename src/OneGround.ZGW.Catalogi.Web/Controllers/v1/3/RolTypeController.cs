@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -41,12 +40,16 @@ public class RolTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public RolTypeController(
         ILogger<RolTypeController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
@@ -54,6 +57,8 @@ public class RolTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -83,7 +88,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var rolTypeResponse = _mapper.Map<RolTypeResponseDto>(result.Result);
+        var rolTypeResponse = _mapsterMapper.Map<RolTypeResponseDto>(result.Result);
 
         return Ok(rolTypeResponse);
     }
@@ -124,7 +129,7 @@ public class RolTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), rolTypeRequest);
 
-        RolType rolType = _mapper.Map<RolType>(rolTypeRequest);
+        RolType rolType = _mapsterMapper.Map<RolType>(rolTypeRequest);
 
         var result = await _mediator.Send(new CreateRolTypeCommand { RolType = rolType, ZaakTypeUrl = rolTypeRequest.ZaakType });
 
@@ -133,7 +138,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var rolTypeResponse = _mapper.Map<RolTypeResponseDto>(result.Result);
+        var rolTypeResponse = _mapsterMapper.Map<RolTypeResponseDto>(result.Result);
 
         return Created(rolTypeResponse.Url, rolTypeResponse);
     }
@@ -157,8 +162,8 @@ public class RolTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.RolTypenPageSize));
-        var filter = _mapper.Map<GetAllRolTypenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.RolTypenPageSize));
+        var filter = _mapsterMapper.Map<GetAllRolTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllRolTypenQuery { GetAllRolTypenFilter = filter, Pagination = pagination });
 
@@ -167,7 +172,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var statustypenResponse = _mapper.Map<List<RolTypeResponseDto>>(result.Result.PageResult);
+        var statustypenResponse = _mapsterMapper.Map<List<RolTypeResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
@@ -193,7 +198,7 @@ public class RolTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), resultTypeRequest, id);
 
-        RolType resultType = _mapper.Map<RolType>(resultTypeRequest);
+        RolType resultType = _mapsterMapper.Map<RolType>(resultTypeRequest);
 
         var result = await _mediator.Send(
             new UpdateRolTypeCommand
@@ -215,7 +220,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var resultTypeResponse = _mapper.Map<RolTypeResponseDto>(result.Result);
+        var resultTypeResponse = _mapsterMapper.Map<RolTypeResponseDto>(result.Result);
 
         return Ok(resultTypeResponse);
     }
@@ -246,7 +251,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        RolTypeRequestDto mergedRolTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<RolTypeRequestDto, RolType>(
+        RolTypeRequestDto mergedRolTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<RolTypeRequestDto, RolType>(
             resultGet.Result,
             partialRolTypeRequest
         );
@@ -256,7 +261,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        RolType mergedRolType = _mapper.Map<RolType>(mergedRolTypeRequest);
+        RolType mergedRolType = _mapsterMapper.Map<RolType>(mergedRolTypeRequest);
 
         var rolTypeUpdate = await _mediator.Send(
             new UpdateRolTypeCommand
@@ -273,7 +278,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(rolTypeUpdate.Errors);
         }
 
-        var response = _mapper.Map<RolTypeResponseDto>(rolTypeUpdate.Result);
+        var response = _mapsterMapper.Map<RolTypeResponseDto>(rolTypeUpdate.Result);
 
         return Ok(response);
     }

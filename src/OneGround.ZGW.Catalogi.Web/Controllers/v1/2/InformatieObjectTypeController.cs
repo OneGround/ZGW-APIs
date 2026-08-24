@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -35,11 +34,13 @@ public class InformatieObjectTypeController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public InformatieObjectTypeController(
         ILogger<InformatieObjectTypeController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
@@ -47,6 +48,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
@@ -69,8 +71,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.InformatieObjectTypenPageSize));
-        var filter = _mapper.Map<GetAllInformatieObjectTypenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.InformatieObjectTypenPageSize));
+        var filter = _mapsterMapper.Map<GetAllInformatieObjectTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllInformatieObjectTypenQuery() { GetAllInformatieObjectTypenFilter = filter, Pagination = pagination }
@@ -81,7 +83,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var informatieObjectTypenResponse = _mapper.Map<List<InformatieObjectTypeResponseDto>>(result.Result.PageResult);
+        var informatieObjectTypenResponse = _mapsterMapper.Map<List<InformatieObjectTypeResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,

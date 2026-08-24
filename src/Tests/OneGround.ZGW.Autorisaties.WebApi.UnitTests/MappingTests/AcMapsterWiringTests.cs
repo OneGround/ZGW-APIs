@@ -181,4 +181,21 @@ public class AcMapsterWiringTests
         // after this method has returned.
         return services.BuildServiceProvider().CreateScope().ServiceProvider.GetRequiredService<IMapper>();
     }
+
+    /// <summary>
+    /// A null <c>ClientIds</c> must map to an empty collection, not throw out of <c>.Select(...)</c>.
+    /// Unreachable today — every handler that maps these DTOs <c>.Include</c>s the navigation — which is
+    /// why it needs pinning: a forgotten Include is a 500 rather than an empty array.
+    /// </summary>
+    [Fact]
+    public void Applicatie_with_an_unloaded_ClientIds_maps_to_an_empty_collection_rather_than_throwing()
+    {
+        var mapper = MapperThroughTheRealSeam();
+        var source = new Applicatie { Id = Guid.NewGuid(), ClientIds = null };
+
+        Assert.Empty(mapper.Map<ApplicatieResponseDto>(source).ClientIds);
+        Assert.Empty(mapper.Map<ApplicatieRequestDto>(source).ClientIds);
+        Assert.Empty(mapper.Map<OneGround.ZGW.Autorisaties.Contracts.v1._1.Responses.ApplicatieResponseDto>(source).ClientIds);
+        Assert.Empty(mapper.Map<OneGround.ZGW.Autorisaties.Contracts.v1._1.Requests.ApplicatieRequestDto>(source).ClientIds);
+    }
 }

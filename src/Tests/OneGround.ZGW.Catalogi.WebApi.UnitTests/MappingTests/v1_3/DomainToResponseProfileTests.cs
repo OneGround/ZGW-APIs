@@ -1,0 +1,448 @@
+using System;
+using System.Linq;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using NodaTime;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
+using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._3;
+using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.DataAccess;
+using Xunit;
+
+namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests.v1_3;
+
+public class DomainToResponseProfileTests : IDisposable
+{
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
+    private readonly IMapper _mapper;
+
+    public DomainToResponseProfileTests() => _mapper = _host.Mapper;
+
+    public void Dispose() => _host.Dispose();
+
+    [Fact]
+    public void ZaakTypeToZaakTypeResponseDto_maps_dates_periods_and_urls()
+    {
+        var catalogus = new Catalogus { Id = Guid.NewGuid() };
+        var statusType = new StatusType { Id = Guid.NewGuid() };
+
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = catalogus,
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            EindeGeldigheid = new DateOnly(2020, 1, 3),
+            BeginObject = new DateOnly(2020, 1, 4),
+            EindeObject = new DateOnly(2020, 1, 5),
+            VersieDatum = new DateOnly(2020, 1, 6),
+            VerlengingsTermijn = Period.FromDays(0),
+            Servicenorm = Period.FromDays(5),
+            Doorlooptijd = Period.FromDays(10),
+            StatusTypen = [statusType],
+            RolTypen = [],
+            ResultaatTypen = [],
+            Eigenschappen = [],
+            ZaakObjectTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal("2020-01-03", result.EindeGeldigheid);
+        Assert.Equal("2020-01-04", result.BeginObject);
+        Assert.Equal("2020-01-05", result.EindeObject);
+        Assert.Equal("2020-01-06", result.VersieDatum);
+        // Fix0Period: a genuine zero-length Period must render as "P0D", not the default NodaTime
+        // ToString() representation, and non-zero periods must be preserved unchanged.
+        Assert.Equal("P0D", result.VerlengingsTermijn);
+        Assert.Equal("P5D", result.Servicenorm);
+        Assert.Equal("P10D", result.Doorlooptijd);
+        Assert.Equal(ZtcMapperTestHost.Resolved(catalogus), result.Catalogus);
+        Assert.Equal([ZtcMapperTestHost.Resolved(statusType)], result.StatusTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_ZaakObjectTypen_maps_to_empty_collection_not_null()
+    {
+        // ZaakTypeResponseDto declares `ZaakObjectTypen = []`, so a null source navigation must fold to
+        // empty, not null.
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            ZaakObjectTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.NotNull(result.ZaakObjectTypen);
+        Assert.Empty(result.ZaakObjectTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_ZaakObjectTypen_maps_to_resolved_urls()
+    {
+        var zaakObjectType = new ZaakObjectType { Id = Guid.NewGuid() };
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            ZaakObjectTypen = [zaakObjectType],
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakObjectType)], result.ZaakObjectTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_null_InformatieObjectTypen_DeelZaakTypen_BesluitTypen_maps_to_null()
+    {
+        // Unlike ZaakObjectTypen above, these three have no initializer, so a null source navigation must
+        // stay null. Only discriminates because the mapper comes from the real seam — see ZtcMapperTestHost.
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            ZaakTypeInformatieObjectTypen = null,
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.Null(result.InformatieObjectTypen);
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_with_GerelateerdeZaakTypen_maps_via_AfterMapping_and_filters_null_navigation()
+    {
+        var relatedZaakType = new ZaakType { Id = Guid.NewGuid() };
+        var relationWithNavigation = new ZaakTypeGerelateerdeZaakType
+        {
+            AardRelatie = AardRelatie.vervolg,
+            Toelichting = "toelichting-1",
+            GerelateerdeZaakType = relatedZaakType,
+        };
+        var relationWithoutNavigation = new ZaakTypeGerelateerdeZaakType
+        {
+            AardRelatie = AardRelatie.bijdrage,
+            Toelichting = "toelichting-2",
+            GerelateerdeZaakType = null,
+        };
+        var source = new ZaakType { Id = Guid.NewGuid(), ZaakTypeGerelateerdeZaakTypen = [relationWithNavigation, relationWithoutNavigation] };
+
+        var result = _mapper.Map<ZaakTypeResponseDto>(source);
+
+        Assert.NotNull(result.GerelateerdeZaakTypen);
+        var item = Assert.Single(result.GerelateerdeZaakTypen);
+        Assert.Equal(AardRelatie.vervolg.ToString(), item.AardRelatie);
+        Assert.Equal("toelichting-1", item.Toelichting);
+        Assert.Equal(ZtcMapperTestHost.Resolved(relatedZaakType), item.ZaakType);
+    }
+
+    [Fact]
+    public void ZaakType_with_GerelateerdeZaakTypen_maps_to_RequestDto_without_filtering_null_navigation()
+    {
+        // This map iterates every source item unconditionally, unlike the response map which filters out
+        // null navigations. Both relations below must survive; copying that filter here would drop the
+        // second one.
+        var relationWithNavigation = new ZaakTypeGerelateerdeZaakType
+        {
+            AardRelatie = AardRelatie.vervolg,
+            Toelichting = "toelichting-1",
+            GerelateerdeZaakType = new ZaakType { Id = Guid.NewGuid() },
+            GerelateerdeZaakTypeIdentificatie = "ZT-1",
+        };
+        var relationWithoutNavigation = new ZaakTypeGerelateerdeZaakType
+        {
+            AardRelatie = AardRelatie.bijdrage,
+            Toelichting = "toelichting-2",
+            GerelateerdeZaakType = null,
+            GerelateerdeZaakTypeIdentificatie = "ZT-2",
+        };
+        var source = new ZaakType { Id = Guid.NewGuid(), ZaakTypeGerelateerdeZaakTypen = [relationWithNavigation, relationWithoutNavigation] };
+
+        var result = _mapper.Map<ZaakTypeRequestDto>(source);
+
+        Assert.NotNull(result.GerelateerdeZaakTypen);
+        Assert.Equal(2, result.GerelateerdeZaakTypen.Count());
+        Assert.Contains(result.GerelateerdeZaakTypen, g => g.ZaakType == "ZT-1");
+        Assert.Contains(result.GerelateerdeZaakTypen, g => g.ZaakType == "ZT-2");
+    }
+
+    [Fact]
+    public void ZaakType_to_ZaakTypeRequestDto_folds_null_DeelZaakTypen_and_BesluitTypen_to_null()
+    {
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            ZaakTypeDeelZaakTypen = null,
+            ZaakTypeBesluitTypen = null,
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeRequestDto>(source);
+
+        Assert.Null(result.DeelZaakTypen);
+        Assert.Null(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void ZaakType_to_ZaakTypeRequestDto_maps_DeelZaakTypen_and_BesluitTypen_identificaties_distinct()
+    {
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            ZaakTypeDeelZaakTypen =
+            [
+                new ZaakTypeDeelZaakType { DeelZaakTypeIdentificatie = "DZT1" },
+                new ZaakTypeDeelZaakType { DeelZaakTypeIdentificatie = "DZT1" },
+            ],
+            ZaakTypeBesluitTypen = [new ZaakTypeBesluitType { BesluitTypeOmschrijving = "BT1" }],
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = _mapper.Map<ZaakTypeRequestDto>(source);
+
+        Assert.Equal(["DZT1"], result.DeelZaakTypen);
+        Assert.Equal(["BT1"], result.BesluitTypen);
+    }
+
+    [Fact]
+    public void InformatieObjectType_with_no_relations_maps_to_empty_collections_not_null()
+    {
+        // The DTO declares both with `= []`, so both folds must produce empty, not null.
+        var source = new InformatieObjectType
+        {
+            Id = Guid.NewGuid(),
+            InformatieObjectTypeZaakTypen = null,
+            InformatieObjectTypeBesluitTypen = null,
+        };
+
+        var result = _mapper.Map<InformatieObjectTypeResponseDto>(source);
+
+        Assert.NotNull(result.ZaakTypen);
+        Assert.Empty(result.ZaakTypen);
+        Assert.NotNull(result.BesluitTypen);
+        Assert.Empty(result.BesluitTypen);
+    }
+
+    [Fact]
+    public void InformatieObjectType_with_relations_maps_ZaakTypen_and_BesluitTypen_to_resolved_urls()
+    {
+        var zaakType = new ZaakType { Id = Guid.NewGuid() };
+        var besluitType = new BesluitType { Id = Guid.NewGuid() };
+        var source = new InformatieObjectType
+        {
+            Id = Guid.NewGuid(),
+            InformatieObjectTypeZaakTypen = [new ZaakTypeInformatieObjectType { ZaakType = zaakType }],
+            InformatieObjectTypeBesluitTypen = [new BesluitTypeInformatieObjectType { BesluitType = besluitType }],
+        };
+
+        var result = _mapper.Map<InformatieObjectTypeResponseDto>(source);
+
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(besluitType)], result.BesluitTypen);
+    }
+
+    [Fact]
+    public void StatusType_maps_dates_url_and_EmptyWhenNull_fields()
+    {
+        var zaakType = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Identificatie = "ZT1",
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+        };
+        var source = new StatusType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = zaakType,
+            BeginGeldigheid = new DateOnly(2021, 2, 3),
+            EindeGeldigheid = null,
+            OmschrijvingGeneriek = null,
+            StatusTekst = null,
+            StatusTypeVerplichteEigenschappen = null,
+        };
+
+        var result = _mapper.Map<StatusTypeResponseDto>(source);
+
+        Assert.Equal("2021-02-03", result.BeginGeldigheid);
+        Assert.Null(result.EindeGeldigheid);
+        // EmptyWhenNull: null must render as "" not null on the response DTO.
+        Assert.Equal(string.Empty, result.OmschrijvingGeneriek);
+        Assert.Equal(string.Empty, result.StatusTekst);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType.Catalogus), result.Catalogus);
+        Assert.Equal(zaakType.Identificatie, result.ZaaktypeIdentificatie);
+        Assert.Null(result.Eigenschappen);
+    }
+
+    [Fact]
+    public void ResultaatType_ArchiefActieTermijn_and_ProcesTermijn_Fix0Period_and_always_empty_members()
+    {
+        var zaakType = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Identificatie = "ZT1",
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+        };
+        var source = new ResultaatType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = zaakType,
+            ArchiefActieTermijn = Period.FromDays(0),
+            ProcesTermijn = Period.FromDays(3),
+            ResultaatTypeBesluitTypen = null,
+        };
+
+        var result = _mapper.Map<ResultaatTypeResponseDto>(source);
+
+        Assert.Equal("P0D", result.ArchiefActieTermijn);
+        Assert.Equal("P3D", result.ProcesTermijn);
+        Assert.Equal(zaakType.Identificatie, result.ZaaktypeIdentificatie);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType.Catalogus), result.Catalogus);
+
+        // Not a fold: these two always map to an empty collection regardless of source data.
+        Assert.NotNull(result.InformatieObjectTypen);
+        Assert.Empty(result.InformatieObjectTypen);
+        Assert.NotNull(result.InformatieObjectTypeOmschrijvingen);
+        Assert.Empty(result.InformatieObjectTypeOmschrijvingen);
+
+        // These two, by contrast, have no destination initializer, so they fold to null.
+        Assert.Null(result.BesluitTypen);
+        Assert.Null(result.BesluittypeOmschrijvingen);
+    }
+
+    [Fact]
+    public void BesluitType_ReactieTermijn_and_PublicatieTermijn_Fix0Period_and_null_relations_fold_to_null()
+    {
+        var source = new BesluitType
+        {
+            Id = Guid.NewGuid(),
+            ReactieTermijn = Period.FromDays(0),
+            PublicatieTermijn = Period.FromDays(7),
+            BesluitTypeZaakTypen = null,
+            BesluitTypeInformatieObjectTypen = null,
+            BesluitTypeResultaatTypen = null,
+        };
+
+        var result = _mapper.Map<BesluitTypeResponseDto>(source);
+
+        Assert.Equal("P0D", result.ReactieTermijn);
+        Assert.Equal("P7D", result.PublicatieTermijn);
+        // Audited as no non-null destination initializer -- null source navigations fold to plain null.
+        Assert.Null(result.ZaakTypen);
+        Assert.Null(result.InformatieObjectTypen);
+        Assert.Null(result.ResultaatTypen);
+        Assert.Null(result.ResultaatTypenOmschrijving);
+        Assert.Null(result.VastgelegdIn);
+    }
+
+    [Fact]
+    public void BesluitType_with_relations_maps_resolved_urls_and_omschrijvingen()
+    {
+        var zaakType = new ZaakType { Id = Guid.NewGuid() };
+        var informatieObjectType = new InformatieObjectType { Id = Guid.NewGuid(), Omschrijving = "IOT-omschrijving" };
+        var resultaatType = new ResultaatType { Id = Guid.NewGuid(), Omschrijving = "RT-omschrijving" };
+        var source = new BesluitType
+        {
+            Id = Guid.NewGuid(),
+            BesluitTypeZaakTypen = [new BesluitTypeZaakType { ZaakType = zaakType }],
+            BesluitTypeInformatieObjectTypen = [new BesluitTypeInformatieObjectType { InformatieObjectType = informatieObjectType }],
+            BesluitTypeResultaatTypen = [new ResultaatTypeBesluitType { ResultaatType = resultaatType }],
+        };
+
+        var result = _mapper.Map<BesluitTypeResponseDto>(source);
+
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(informatieObjectType)], result.InformatieObjectTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(resultaatType)], result.ResultaatTypen);
+        Assert.Equal(["RT-omschrijving"], result.ResultaatTypenOmschrijving);
+        Assert.Equal(["IOT-omschrijving"], result.VastgelegdIn);
+    }
+
+    [Fact]
+    public void CatalogusMapsToCatalogusResponseDto()
+    {
+        var zaakType = new ZaakType { Id = Guid.NewGuid() };
+        var besluitType = new BesluitType { Id = Guid.NewGuid() };
+        var informatieObjectType = new InformatieObjectType { Id = Guid.NewGuid() };
+        var source = new Catalogus
+        {
+            Id = Guid.NewGuid(),
+            BegindatumVersie = new DateOnly(2019, 6, 7),
+            ZaakTypes = [zaakType],
+            BesluitTypes = [besluitType],
+            InformatieObjectTypes = [informatieObjectType],
+        };
+
+        var result = _mapper.Map<CatalogusResponseDto>(source);
+
+        Assert.Equal(ZtcMapperTestHost.Resolved(source), result.Url);
+        Assert.Equal("2019-06-07", result.BegindatumVersie);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(besluitType)], result.BesluitTypen);
+        Assert.Equal([ZtcMapperTestHost.Resolved(informatieObjectType)], result.InformatieObjectTypen);
+    }
+
+    /// <summary>
+    /// AutoMapper's <c>MapFrom</c> auto-null-guards a member path
+    /// (<c>src.A.B</c>); a Mapster <c>.Map</c> lambda does not, so an unguarded port throws
+    /// <see cref="NullReferenceException"/> exactly where AutoMapper quietly produced null. Every v1.3
+    /// child-of-ZaakType response map reads <c>src.ZaakType.Catalogus</c> and
+    /// <c>src.ZaakType.Identificatie</c>.
+    /// </summary>
+    /// <remarks>
+    /// Every handler that maps these DTOs currently does <c>.Include(x =&gt; x.ZaakType.Catalogus)</c>, so
+    /// the null branch is unreachable today — which is precisely why it needs a test and not a comment:
+    /// under AutoMapper a handler that forgot the Include produced nulls, under Mapster the same omission
+    /// is a 500. Note <c>?.</c> cannot be used in the fix — <c>.Map</c> source selectors compile to
+    /// expression trees and C# rejects null-conditionals there (CS8072) — so the guard is an explicit
+    /// ternary.
+    /// <para>
+    /// The two shapes behave differently and this fact covers both, which is why it asserts on
+    /// <c>Catalogus</c> AND <c>ZaaktypeIdentificatie</c>. Measured: dropping a <c>Catalogus</c> guard
+    /// (the path is a METHOD ARGUMENT to <c>ResolveUrl</c>) makes this throw; <c>ZaaktypeIdentificatie</c>
+    /// carries no guard at all because a bare member path null-propagates on its own — the assertion is
+    /// here to catch that behaviour changing, not to cover a ternary.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Children_of_ZaakType_with_an_unloaded_ZaakType_map_to_null_rather_than_throwing()
+    {
+        var statusType = _mapper.Map<StatusTypeResponseDto>(new StatusType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(statusType.Catalogus);
+        Assert.Null(statusType.ZaaktypeIdentificatie);
+
+        var rolType = _mapper.Map<RolTypeResponseDto>(new RolType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(rolType.Catalogus);
+        Assert.Null(rolType.ZaaktypeIdentificatie);
+
+        var resultaatType = _mapper.Map<ResultaatTypeResponseDto>(new ResultaatType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(resultaatType.Catalogus);
+        Assert.Null(resultaatType.ZaaktypeIdentificatie);
+
+        var eigenschap = _mapper.Map<EigenschapResponseDto>(new Eigenschap { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(eigenschap.Catalogus);
+        Assert.Null(eigenschap.ZaaktypeIdentificatie);
+
+        var zaakObjectType = _mapper.Map<ZaakObjectTypeResponseDto>(new ZaakObjectType { Id = Guid.NewGuid(), ZaakType = null });
+        Assert.Null(zaakObjectType.Catalogus);
+        Assert.Null(zaakObjectType.ZaaktypeIdentificatie);
+
+        var zaakTypeInformatieObjectType = _mapper.Map<ZaakTypeInformatieObjectTypeResponseDto>(
+            new ZaakTypeInformatieObjectType { Id = Guid.NewGuid(), ZaakType = null }
+        );
+        Assert.Null(zaakTypeInformatieObjectType.Catalogus);
+    }
+}
