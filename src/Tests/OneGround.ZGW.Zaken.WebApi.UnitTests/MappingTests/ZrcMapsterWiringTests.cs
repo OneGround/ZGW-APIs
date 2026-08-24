@@ -44,6 +44,67 @@ public class ZrcMapsterWiringTests
     }
 
     /// <summary>
+    /// The shape every <c>GetAllAsync</c> uses — <c>Map&lt;List&lt;TResponseDto&gt;&gt;(pageResult)</c> — which
+    /// no other fact in the suite exercises. It differs from a single-object root in that
+    /// <c>MapsterUrlResolver</c> reads <c>MapContext.Current</c>, only present on the <c>ServiceMapper</c>
+    /// path, from inside per-element mapping. Asserts the per-element RESOLVED url, not the count: a count
+    /// survives a broken resolver, and the host's mock PREFIXES the entity's relative <c>Url</c> so a
+    /// same-named convention copy of that relative path fails the assertion.
+    /// </summary>
+    [Fact]
+    public void A_List_collection_root_resolves_urls_for_every_element()
+    {
+        using var host = new ZrcMapperTestHost();
+
+        var first = new Zaak { Id = Guid.NewGuid() };
+        var second = new Zaak { Id = Guid.NewGuid() };
+
+        var result = host.Mapper.Map<List<ZaakResponseDto>>(new List<Zaak> { first, second });
+
+        Assert.Equal(ZrcMapperTestHost.Resolved(first), result[0].Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(second), result[1].Url);
+    }
+
+    /// <summary>
+    /// The constraint that forces every collection root in this service to name a MATERIALISED destination
+    /// (<c>List&lt;T&gt;</c>) rather than <c>IEnumerable&lt;T&gt;</c>. An <c>IEnumerable&lt;T&gt;</c>
+    /// destination root makes Mapster return a lazy <c>Select</c> projection; the scoped mapper establishes
+    /// its ambient map context only for the duration of the <c>Map()</c> call and tears it down on return, so
+    /// the per-element rules run later — on the caller's enumeration — with no context, and every rule that
+    /// resolves a url through it throws. Materialising inside the mapping scope is what avoids that, which is
+    /// why the fact above passes and this one asserts a throw.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately asserted rather than merely commented: only a NON-EMPTY source reaches the per-element
+    /// rules, so an empty page looks perfectly healthy and no fixture returning one can catch this. Two GET
+    /// endpoints shipped with an <c>IEnumerable</c> root and returned 500 on any non-empty result until this
+    /// pair of facts surfaced it. If a future Mapster release materialises enumerable roots, this fact fails —
+    /// that failure is the signal to revisit the constraint, not a reason to delete the fact.
+    /// </remarks>
+    [Fact]
+    public void An_IEnumerable_collection_root_loses_the_ambient_context_and_throws()
+    {
+        using var host = new ZrcMapperTestHost();
+
+        var first = new ZaakBesluit { Id = Guid.NewGuid(), Besluit = "https://example.test/besluiten/1" };
+        var second = new ZaakBesluit { Id = Guid.NewGuid(), Besluit = "https://example.test/besluiten/2" };
+        var source = new List<ZaakBesluit> { first, second };
+
+        // Map() itself does NOT throw - it only builds the lazy projection. The throw lands on enumeration,
+        // which is exactly what makes this shape look healthy until real rows flow through it.
+        var lazy = host.Mapper.Map<IEnumerable<ZaakBesluitResponseDto>>(source);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => lazy.ToList());
+        Assert.Contains("ServiceAdapter", exception.Message);
+
+        // The same pair through a materialised root resolves every element, proving the pair itself is sound
+        // and the root shape is the whole difference.
+        var materialised = host.Mapper.Map<List<ZaakBesluitResponseDto>>(source);
+        Assert.Equal(ZrcMapperTestHost.Resolved(first), materialised[0].Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(second), materialised[1].Url);
+    }
+
+    /// <summary>
     /// Every register's type pairs must survive into the shared config. <c>AddZgwMapster</c> scans all of
     /// this service's registers into ONE <see cref="TypeAdapterConfig"/>, and Mapster's <c>NewConfig</c>
     /// REPLACES an existing pair rather than merging into it — unlike AutoMapper, where duplicate

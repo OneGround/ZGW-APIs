@@ -270,15 +270,13 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.IndicatieMachtiging, src => !src.IndicatieMachtiging.HasValue ? "" : src.IndicatieMachtiging.ToString())
             .Map(dest => dest.Registratiedatum, src => ProfileHelper.StringDateFromDateTime(src.Registratiedatum, true))
             // Note: Map only zaak-statussen which matches zaak-status.GezetDoor. dest.Statussen
-            // (IEnumerable<string>, confirmed to have NO field initializer, so it defaults to null) goes
-            // through a plain .Map(...), not the Risk #17 .Ignore()+.AfterMapping treatment - this is NOT a
-            // PreCondition (which bypasses AutoMapper's member assignment/null-substitution entirely); it's a
-            // MapFrom whose lambda body itself computes null via an inline ternary. See the explicit null-check
-            // below reproducing that fold. Whether AutoMapper's own real output actually differs (empty vs
-            // null) for a null ZaakStatussen is intentionally re-verified in this file's own tests and reported
-            // to the orchestrator, since an explicit MapFrom returning null still goes through AutoMapper's
-            // normal AllowNullCollections=false null-substitution for collection members - a subtlety this
-            // register's own null-check cannot itself resolve.
+            // (IEnumerable<string>, no field initializer, so it defaults to null) goes through a plain
+            // .Map(...) whose lambda body itself computes null via an inline ternary - not a PreCondition,
+            // which would bypass member assignment and null substitution entirely. The null the ternary
+            // returns does NOT reach the caller: dest.Statussen is a collection member, so the shared
+            // configuration's EmptyCollectionIfNull destination transform substitutes an empty sequence,
+            // exactly as the AutoMapper baseline's AllowNullCollections=false default did for an explicitly
+            // computed null. The observable result is empty, never null - asserted in this file's own tests.
             .Map(
                 dest => dest.Statussen,
                 src =>

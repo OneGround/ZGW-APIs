@@ -1,9 +1,7 @@
 using System;
-using Mapster;
 using MapsterMapper;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1._5;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Queries;
@@ -13,42 +11,26 @@ using OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
-using OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 using OneGround.ZGW.Zaken.Web.Models.v1._5;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests.v1_5;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     // Official RvIG test BSN value (elfproef-valid, never assigned to a real person/organization) - reused
     // here as a stand-in RSIN/Bronorganisatie, which shares the same 9-digit elfproef structure.
     private const string TestRsin = "999993653";
 
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRule();
-        // Matches AddZgwMapster's global Default.NameMatchingStrategy(IgnoreCase) - needed here because this
-        // v1.5 register deliberately leaves some members (e.g. VestigingZaakRolDto.KvKNummer -> domain
-        // KvkNummer, ZaakRequestDto.Betalingsindicatie -> domain BetalingsIndicatie) to name-convention
-        // resolution, exactly mirroring the source AutoMapper profile, which is case-insensitive by default.
-        config.Default.NameMatchingStrategy(NameMatchingStrategy.IgnoreCase);
-        // config.Scan(assemblies) in production discovers every IRegister in the Zaken.Web assembly - both the
-        // v1 and v1.5 registers - into the same TypeAdapterConfig. This v1.5 register relies on several nested
-        // type-pair configs registered by the v1 register (e.g. ZaakVerlengingDto->ZaakVerlenging,
-        // ZaakKenmerkDto->ZaakKenmerk, RelevanteAndereZaakDto->RelevanteAndereZaak,
-        // NatuurlijkPersoonZaakRolDto->NatuurlijkPersoonZaakRol, ...) because v1.5's own DTOs reuse those v1
-        // Contracts types unchanged. Registering only the v1.5 register here would leave those nested
-        // conversions to bare reflection-based convention, which cannot reproduce custom conversions like
-        // ZaakVerlengingDto.Duur (ISO-8601 duration string -> NodaTime Period).
-        new OneGround.ZGW.Zaken.Web.MappingProfiles.v1.RequestToDomainRegister().Register(config);
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void GetAllZakenQueryParameters_Maps_To_GetAllZakenFilter()
@@ -84,11 +66,16 @@ public class RequestToDomainProfileTests
     [Fact]
     public void ZaakSearchRequestDto_with_null_arrays_Maps_To_GetAllZakenFilter_with_empty_arrays()
     {
-        // Discriminates the AfterMapping ??= Array.Empty<T>() null-coalesce for Archiefnominatie__in and
-        // Uuid__in specifically (2 of the 5 ported array members). Verified by deliberate breakage: temporarily
-        // removing the corresponding .AfterMapping(...) call in RequestToDomainRegister.cs makes these two
-        // assertions fail with a NullReferenceException-free but non-empty-vs-null mismatch (Assert.Empty on a
-        // null IList throws), confirming the AfterMapping is what actually supplies the empty array.
+        // An all-five-null source is the discriminating input for the five .AfterMapping ??= Array.Empty<T>()
+        // folds on ZaakSearchRequestDto -> GetAllZakenFilter: a populated source exercises none of them. The
+        // sibling fact below covers the populated direction.
+        //
+        // Under the shared configuration those five folds turn out to be redundant, not load-bearing: the
+        // global EmptyCollectionIfNull destination transform already substitutes an empty collection for each
+        // of these IList<T> members. Verified by deliberate breakage - disabling all five .AfterMapping calls
+        // in RequestToDomainRegister leaves every assertion below passing. The folds are kept anyway (they are
+        // what makes the pair correct under a configuration without that transform), so this fact pins the
+        // OBSERVABLE contract - empty, never null - rather than which of the two mechanisms produced it.
         var source = new ZaakSearchRequestDto
         {
             Archiefnominatie__in = null,

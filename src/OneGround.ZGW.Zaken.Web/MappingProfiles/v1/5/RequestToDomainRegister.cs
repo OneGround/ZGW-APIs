@@ -104,6 +104,12 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
             .Map(dest => dest.Archiefactiedatum__gt, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__gt))
             .Map(dest => dest.Archiefactiedatum__lt, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__lt))
+            // The five .AfterMapping null folds on this pair (here and below) are redundant under the shared
+            // configuration and kept deliberately. Verified empirically by disabling all five and re-running
+            // the all-five-null fact in RequestToDomainProfileTests: the global EmptyCollectionIfNull
+            // destination transform already substitutes an empty collection for each of these IList<T>
+            // members, so the folds change nothing there. They still matter under any configuration without
+            // that transform, and removing them would be a behaviour change rather than a no-op, so they stay.
             .Map(dest => dest.Archiefnominatie__in, src => src.Archiefnominatie__in)
             .AfterMapping((_, dest) => dest.Archiefnominatie__in ??= Array.Empty<ArchiefNominatie>())
             .Map(dest => dest.Archiefstatus__in, src => src.Archiefstatus__in)

@@ -605,7 +605,14 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<IEnumerable<ZaakBesluitResponseDto>>(result.Result).ToList();
+        // The destination root must be a materialised collection, never IEnumerable<T>: an IEnumerable
+        // destination makes Mapster return a lazy Select projection, and the scoped mapper tears down its
+        // ambient map context when Map() returns - so the per-element rule that resolves this DTO's url would
+        // run after that context is gone and throw. IEnumerable<T> is the only root that defers: List<T>,
+        // IList<T> and ICollection<T> destinations are all materialised inside the mapping scope, so the
+        // IList<T> roots elsewhere in this service are unaffected. See the two collection-root facts in
+        // ZrcMapsterWiringTests.
+        var response = _mapsterMapper.Map<List<ZaakBesluitResponseDto>>(result.Result).ToList();
 
         // Note: Should this action to be recorded in audittrail?
         await _mediator.Send(
@@ -774,7 +781,9 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<IEnumerable<ZaakEigenschapResponseDto>>(result.Result).ToList();
+        // Materialised destination root, for the reason spelled out on the zaakbesluiten list above: only
+        // IEnumerable<T> defers, so List<T>/IList<T>/ICollection<T> roots are all safe here.
+        var response = _mapsterMapper.Map<List<ZaakEigenschapResponseDto>>(result.Result).ToList();
 
         // Note: Should this action to be recorded in audittrail?
         await _mediator.Send(

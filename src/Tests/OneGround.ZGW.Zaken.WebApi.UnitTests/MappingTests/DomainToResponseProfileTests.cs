@@ -3,17 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using AutoFixture;
-using Mapster;
 using MapsterMapper;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Helpers;
-using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -24,7 +19,6 @@ using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
-using OneGround.ZGW.Zaken.Web.MappingProfiles.v1;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
@@ -32,34 +26,16 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 public class DomainToResponseProfileTests : IDisposable
 {
     private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        var config = new TypeAdapterConfig();
-        new DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _host.Mapper;
     }
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakEigenschap_Maps_To_ZaakEigenschapResponseDto()
@@ -69,9 +45,9 @@ public class DomainToResponseProfileTests : IDisposable
 
         Assert.Equal(value.Eigenschap, result.Eigenschap);
         Assert.Equal(value.Waarde, result.Waarde);
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.Naam, result.Naam);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -83,11 +59,11 @@ public class DomainToResponseProfileTests : IDisposable
         var value = _fixture.Create<ZaakStatus>();
         var result = _mapper.Map<ZaakStatusResponseDto>(value);
 
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.StatusType, result.StatusType);
         Assert.Equal(value.DatumStatusGezet.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"), result.DatumStatusGezet);
         Assert.Equal(value.StatusToelichting, result.StatusToelichting);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -117,7 +93,7 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<ZaakResponseDto>(value);
 
         Assert.Equal(value.Id.ToString(), result.Uuid);
-        Assert.All(value.Deelzaken, c => Assert.Contains(c.Url, result.Deelzaken));
+        Assert.All(value.Deelzaken, c => Assert.Contains(ZrcMapperTestHost.Resolved(c), result.Deelzaken));
         Assert.Equal(value.Opschorting.Indicatie, result.Opschorting.Indicatie);
         Assert.Equal(value.Opschorting.Reden, result.Opschorting.Reden);
         Assert.Equal(value.Verlenging.Duur.ToString(), result.Verlenging.Duur);
@@ -137,9 +113,9 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.Archiefstatus.ToString(), result.Archiefstatus);
         Assert.Equal(value.BetalingsIndicatie.ToString(), result.Betalingsindicatie);
         Assert.Equal(value.VertrouwelijkheidAanduiding.ToString(), result.Vertrouwelijkheidaanduiding);
-        Assert.All(value.ZaakEigenschappen, c => Assert.Contains(c.Url, result.Eigenschappen));
-        Assert.Equal(value.ZaakStatussen.OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault().Url, result.Status);
-        Assert.Equal(value.Resultaat.Url, result.Resultaat);
+        Assert.All(value.ZaakEigenschappen, c => Assert.Contains(ZrcMapperTestHost.Resolved(c), result.Eigenschappen));
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.ZaakStatussen.OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault()), result.Status);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Resultaat), result.Resultaat);
 
         // common ZaakResponseDto and ZaakRequestDto fields
         Assert.Equal(value.Identificatie, result.Identificatie);
@@ -185,7 +161,7 @@ public class DomainToResponseProfileTests : IDisposable
         var value = _fixture.Create<Zaak>();
         var result = _mapper.Map<ZaakResponseDto>(value);
 
-        Assert.Equal(value.Hoofdzaak.Url, result.Hoofdzaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Hoofdzaak), result.Hoofdzaak);
     }
 
     [Fact]
@@ -236,8 +212,8 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakResponseDto>(zaak);
 
-        Assert.Equal(latest.Url, result.Status);
-        Assert.NotEqual(oldest.Url, result.Status);
+        Assert.Equal(ZrcMapperTestHost.Resolved(latest), result.Status);
+        Assert.NotEqual(ZrcMapperTestHost.Resolved(oldest), result.Status);
     }
 
     [Fact]
@@ -257,6 +233,11 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<RelevanteAndereZaakDto>(value);
 
         Assert.Equal(value.AardRelatie, result.AardRelatie);
+        // Intentionally NOT wrapped in ZrcMapperTestHost.Resolved(...), unlike every other Url assertion in
+        // this file. This pair is a bare NewConfig with no resolver rule, so dest.Url really is a same-name
+        // convention copy of a plain string column - the raw value is the correct expectation here. It doubles
+        // as the control proving the host's prefixing mock discriminates resolver-backed members from
+        // convention copies, rather than uniformly demanding a prefix. Do not "align" it with the others.
         Assert.Equal(value.Url, result.Url);
     }
 
@@ -268,7 +249,7 @@ public class DomainToResponseProfileTests : IDisposable
         var value = _fixture.Create<ZaakRol>();
         var result = _mapper.Map<ZaakRolResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
         Assert.Equal(value.Registratiedatum.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Registratiedatum);
         Assert.Equal(value.Omschrijving, result.Omschrijving);
@@ -386,9 +367,9 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(obj.ObjectType.ToString(), result.ObjectType);
         Assert.Equal(obj.ObjectTypeOverige, result.ObjectTypeOverige);
         Assert.Equal(obj.RelatieOmschrijving, result.RelatieOmschrijving);
-        Assert.Equal(obj.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(obj), result.Url);
         Assert.Equal(obj.Id, result.Uuid);
-        Assert.Equal(obj.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(obj.Zaak), result.Zaak);
     }
 
     [Fact]
@@ -623,9 +604,9 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.InformatieObject, result.InformatieObject);
         Assert.Equal(value.RegistratieDatum.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.RegistratieDatum);
         Assert.Equal(value.Titel, result.Titel);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal("Hoort bij, omgekeerd: kent", result.AardRelatieWeergave);
     }
 
@@ -659,7 +640,7 @@ public class DomainToResponseProfileTests : IDisposable
         var value = _fixture.Create<ZaakResultaat>();
         var result = _mapper.Map<ZaakResultaatRequestDto>(value);
 
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.ResultaatType, result.ResultaatType);
         Assert.Equal(value.Toelichting, result.Toelichting);
     }
@@ -671,7 +652,7 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<ZaakBesluitResponseDto>(value);
 
         Assert.Equal(value.Besluit, result.Besluit);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -688,6 +669,11 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.Kanaal, result.Kanaal);
         Assert.Equal(value.Onderwerp, result.Onderwerp);
         Assert.Equal(value.Toelichting, result.Toelichting);
+        // Both resolver-backed on this pair, and previously unasserted - the only resolver-backed pair in this
+        // file with no url coverage at all, which is why retargeting onto the prefixing host forced no change
+        // here and the gap stayed invisible.
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
     }
 
     [Fact]

@@ -1,23 +1,22 @@
-using Mapster;
+using System;
 using MapsterMapper;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Models;
-using OneGround.ZGW.Zaken.Web.MappingProfiles;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
-public class RequestToPaginationRegisterTests
+public class RequestToPaginationRegisterTests : IDisposable
 {
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public RequestToPaginationRegisterTests()
     {
-        var config = new TypeAdapterConfig();
-        new RequestToPaginationRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void PaginationQuery_Maps_To_PaginationFilter()

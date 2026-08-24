@@ -67,11 +67,12 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Toelichting, src => ProfileHelper.EmptyWhenNull(src.Toelichting))
             .Map(dest => dest.BetalingsindicatieWeergave, src => ProfileHelper.EmptyWhenNull(src.BetalingsindicatieWeergave))
             // Note: Betalingsindicatie/Vertrouwelijkheidaanduiding differ from their source's casing
-            // (BetalingsIndicatie/VertrouwelijkheidAanduiding) -- reproduced automatically in production
-            // only via the global NameMatchingStrategy.IgnoreCase default, which a bare TypeAdapterConfig()
-            // (as used by this register's own unit tests) doesn't have. Explicit .Map(...) calls make the
-            // register correct under both a bare test config and the real seam, mirroring the identical
-            // note on RequestToDomainRegister's ZaakRequestDto->Zaak config for the reverse direction.
+            // (BetalingsIndicatie/VertrouwelijkheidAanduiding). The shared configuration's global
+            // NameMatchingStrategy.IgnoreCase already resolves both by convention, so these two explicit
+            // .Map(...) calls are redundant but harmless: they name the same source member the convention
+            // would have picked, and keep the pair correct even under a configuration without that global
+            // default. Mirrors the identical note on RequestToDomainRegister's ZaakRequestDto->Zaak config
+            // for the reverse direction.
             .Map(dest => dest.Betalingsindicatie, src => src.BetalingsIndicatie.ToString())
             .Map(dest => dest.Vertrouwelijkheidaanduiding, src => src.VertrouwelijkheidAanduiding.ToString());
 

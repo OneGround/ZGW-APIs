@@ -1,10 +1,8 @@
 using System;
-using Mapster;
 using MapsterMapper;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -13,29 +11,27 @@ using OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
-using OneGround.ZGW.Zaken.Web.MappingProfiles.v1;
 using OneGround.ZGW.Zaken.Web.Models.v1;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     // Official RvIG test BSN value (elfproef-valid, never assigned to a real person/organization) -
     // reused here as a stand-in RSIN/Bronorganisatie/VerantwoordelijkeOrganisatie, which share the same
     // 9-digit elfproef structure.
     private const string TestRsin = "999993653";
 
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var config = new TypeAdapterConfig();
-        config.RegisterNullableEnumRule();
-        new RequestToDomainRegister().Register(config);
-        config.Compile();
-        _mapper = new Mapper(config);
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void GetAllZakenQueryParameters_Maps_To_GetAllZakenFilter()

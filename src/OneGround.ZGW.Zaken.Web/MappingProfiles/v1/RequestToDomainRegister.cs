@@ -88,16 +88,13 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.LaatsteBetaaldatum, src => ProfileHelper.DateTimeFromString(src.LaatsteBetaaldatum))
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
             // The source DTO's string-typed Vertrouwelijkheidaanduiding/Betalingsindicatie/Archiefnominatie/
-            // Archiefstatus were pure name-convention (unmapped) in the AutoMapper source. Two different reasons
-            // convention alone doesn't reproduce this under Mapster, both artifacts of these registers being unit-
-            // tested via a bare, isolated TypeAdapterConfig() (see RequestToDomainProfileTests.cs) rather than the
-            // real AddZgwMapster-wired config: (1) Vertrouwelijkheidaanduiding/Betalingsindicatie differ from their
-            // destination's casing (VertrouwelijkheidAanduiding/BetalingsIndicatie) -- reproduced automatically in
-            // production only via the global NameMatchingStrategy.IgnoreCase default (Risk #11), which a bare
-            // TypeAdapterConfig() doesn't have; (2) Archiefnominatie is a Nullable<enum> destination, reproduced
-            // automatically in production only via the global RegisterNullableEnumRule() (Risk #2), likewise absent
-            // from a bare config. Explicit .Map(...) calls make the register correct under BOTH a bare test config
-            // and the real seam, so they're kept even though production alone wouldn't have needed them.
+            // Archiefstatus were pure name-convention (unmapped) in the AutoMapper source. The shared
+            // configuration reproduces that convention on its own: NameMatchingStrategy.IgnoreCase resolves
+            // Vertrouwelijkheidaanduiding/Betalingsindicatie despite the casing difference against the domain's
+            // VertrouwelijkheidAanduiding/BetalingsIndicatie, and the global nullable-enum rule handles
+            // Archiefnominatie's Nullable<enum> destination. These four explicit .Map(...) calls are therefore
+            // redundant but harmless - each names the same source member the convention would have picked - and
+            // they keep the pair correct even under a configuration without those global defaults.
             .Map(dest => dest.VertrouwelijkheidAanduiding, src => src.Vertrouwelijkheidaanduiding)
             .Map(dest => dest.BetalingsIndicatie, src => src.Betalingsindicatie)
             .Map(dest => dest.Archiefnominatie, src => src.Archiefnominatie)

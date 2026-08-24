@@ -1,11 +1,6 @@
 using System;
 using System.Linq;
-using Mapster;
 using MapsterMapper;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses.ZaakRol;
@@ -18,40 +13,15 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests.v1_5;
 
 public class DomainToResponseProfileTests : IDisposable
 {
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
-    private readonly ServiceProvider _provider;
-    private readonly IServiceScope _scope;
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        var config = new TypeAdapterConfig();
-        // Registers BOTH the v1 and v1.5 DomainToResponseRegisters, mirroring production's config.Scan
-        // discovery of every IRegister in the assembly: several of this file's own configs (the two
-        // Shape-B ConstructUsing factories, and the 8 ObjectIdentificatie PATCH-merge maps) recursively
-        // Adapt into v1-namespaced nested DTOs (e.g. Zaken.Contracts.v1.OverigeZaakObjectDto), whose own
-        // conversion rules (e.g. the JToken.Parse conversion, or InpBsn<-InpBsnEncrypted) are registered
-        // only by the v1 register, not this one.
-        new OneGround.ZGW.Zaken.Web.MappingProfiles.v1.DomainToResponseRegister().Register(config);
-        new OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5.DomainToResponseRegister().Register(config);
-        config.Compile();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(_mockedUriService.Object);
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        _provider = services.BuildServiceProvider();
-        _scope = _provider.CreateScope();
-        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _host.Mapper;
     }
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _provider.Dispose();
-    }
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void Zaak_with_null_ZaakStatussen_Maps_Status_to_null()
@@ -60,6 +30,8 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakResponseDto>(source);
 
+        // dest.Status is a plain string (scalar), so the shared configuration's EmptyCollectionIfNull
+        // destination transform does not reach it - the register's own null fold is what produces null here.
         Assert.Null(result.Status);
     }
 
@@ -83,9 +55,10 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakResponseDto>(zaak);
 
-        // The mocked resolver echoes IUrlEntity.Url, which is unique per ZaakStatus (via Id) - so this
-        // only passes if the LATEST status (not just any) was resolved.
-        Assert.Equal(latest.Url, result.Status);
+        // The mocked resolver prefixes IUrlEntity.Url, which is unique per ZaakStatus (via Id) - so this only
+        // passes if the LATEST status (not just any) was resolved, through the resolver rather than a
+        // same-name convention copy.
+        Assert.Equal(ZrcMapperTestHost.Resolved(latest), result.Status);
     }
 
     [Fact]
@@ -108,8 +81,8 @@ public class DomainToResponseProfileTests : IDisposable
     public void ZaakObject_with_ObjectType_overige_Maps_ObjectIdentificatie_via_local_config()
     {
         // Proves the Shape-B factory's source.Overige.Adapt<Zaken.Contracts.v1.OverigeZaakObjectDto>(config)
-        // call resolved against the v1 register's own local rule (JToken.Parse(src.OverigeData)) rather
-        // than Mapster's ambient GlobalSettings, which has no knowledge of that rule.
+        // call resolved against the v1 register's own rule (JToken.Parse(src.OverigeData)) rather than
+        // Mapster's ambient GlobalSettings, which has no knowledge of that rule.
         var zaak = new Zaak { Id = Guid.NewGuid() };
         var overige = new OverigeZaakObject { Id = Guid.NewGuid(), OverigeData = "{\"key\":\"value\",\"count\":3}" };
         var source = new ZaakObject
@@ -159,8 +132,8 @@ public class DomainToResponseProfileTests : IDisposable
     public void ZaakRol_with_BetrokkeneType_natuurlijk_persoon_Maps_BetrokkeneIdentificatie_via_local_config()
     {
         // Proves the Shape-B factory's source.NatuurlijkPersoon.Adapt<Zaken.Contracts.v1.NatuurlijkPersoonZaakRolDto>(config)
-        // call resolved against the v1 register's own local rule (InpBsn <- InpBsnEncrypted, not a
-        // same-name convention match) rather than GlobalSettings.
+        // call resolved against the v1 register's own rule (InpBsn <- InpBsnEncrypted, not a same-name
+        // convention match) rather than GlobalSettings.
         var zaak = new Zaak { Id = Guid.NewGuid() };
         var natuurlijkPersoon = new NatuurlijkPersoonZaakRol
         {
@@ -185,7 +158,7 @@ public class DomainToResponseProfileTests : IDisposable
     }
 
     [Fact]
-    public void ZaakRol_with_null_Zaak_ZaakStatussen_Maps_Statussen_result()
+    public void ZaakRol_with_null_Zaak_ZaakStatussen_Maps_Statussen_to_empty_not_null()
     {
         var zaak = new Zaak { Id = Guid.NewGuid(), ZaakStatussen = null };
         var source = new ZaakRol
@@ -198,14 +171,14 @@ public class DomainToResponseProfileTests : IDisposable
 
         var result = _mapper.Map<ZaakRolResponseDto>(source);
 
-        // This test's bare TypeAdapterConfig() has no EmptyCollectionIfNull destination transform (matching
-        // every per-register unit test in this migration), so a plain .Map(...) returning null stays null
-        // here -- confirmed empirically. Production (AddZgwMapster) DOES register that transform, so this
-        // result is NOT necessarily what production actually returns; whether real AutoMapper's own
-        // AllowNullCollections=false applies to an explicit MapFrom-computed null (as opposed to only
-        // PreCondition-skipped members) is exactly what the orchestrator's upcoming A/B parity task must
-        // verify against the real AutoMapper profile before this can be called settled either way.
-        Assert.Null(result.Statussen);
+        // dest.Statussen IS a collection member, so the shared configuration's EmptyCollectionIfNull
+        // destination transform applies on top of the register's null-returning .Map(...) lambda and
+        // substitutes an empty sequence. Both mappers behave this way for this member: the AutoMapper
+        // baseline substitutes empty through its AllowNullCollections=false default even for an explicitly
+        // computed null, and Mapster reaches the same result through the destination transform. Asserting
+        // null here would only hold under a bare TypeAdapterConfig, which is not what the service runs.
+        Assert.NotNull(result.Statussen);
+        Assert.Empty(result.Statussen);
     }
 
     [Fact]
@@ -247,6 +220,6 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<ZaakRolResponseDto>(source);
 
         Assert.NotNull(result.Statussen);
-        Assert.Equal(new[] { matchingOlder.Url, matchingNewer.Url }, result.Statussen.ToList());
+        Assert.Equal(new[] { ZrcMapperTestHost.Resolved(matchingOlder), ZrcMapperTestHost.Resolved(matchingNewer) }, result.Statussen.ToList());
     }
 }
