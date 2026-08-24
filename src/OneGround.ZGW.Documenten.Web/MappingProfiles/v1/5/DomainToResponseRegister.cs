@@ -200,7 +200,6 @@ public class DomainToResponseRegister : IRegister
         dest.Formaat = latestVersion.Formaat;
         dest.Taal = latestVersion.Taal;
         dest.Bestandsnaam = latestVersion.Bestandsnaam;
-        dest.Bestandsomvang = latestVersion.Bestandsomvang;
         dest.Link = latestVersion.Link;
         dest.Inhoud = latestVersion.BestandsDelen.Count != 0 ? null : uriService.GetUri(latestVersion);
         dest.Beschrijving = latestVersion.Beschrijving;
