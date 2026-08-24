@@ -1,18 +1,13 @@
 using System;
 using System.Globalization;
-using AutoFixture;
 using MapsterMapper;
-using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Helpers;
-using OneGround.ZGW.DataAccess.AuditTrail;
-using OneGround.ZGW.Documenten.Contracts.v1.Requests;
-using OneGround.ZGW.Documenten.Contracts.v1.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._1.Requests;
+using OneGround.ZGW.Documenten.Contracts.v1._1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using Xunit;
 
-namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
+namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests.v1_1;
 
 public class DomainToResponseProfileTests : IDisposable
 {
@@ -20,27 +15,19 @@ public class DomainToResponseProfileTests : IDisposable
     // Bronorganisatie -- never assigned to a real person or organisation.
     private const string TestBronorganisatie = "999993653";
 
-    private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
-        _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-        _fixture.Register<DateTime>(() => DateTime.UtcNow);
-
         _mapper = _host.Mapper;
     }
 
     public void Dispose() => _host.Dispose();
 
-    [Fact]
-    public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_via_AfterMapping_with_DI_resolved_Inhoud()
+    private static EnkelvoudigInformatieObjectVersie CreateVersion()
     {
-        // Covers the MapLatestEnkelvoudigInformatieObjectVersieResponse port: EnkelvoudigInformatieObjectGetResponseDto
-        // is populated entirely from src.LatestEnkelvoudigInformatieObjectVersie (and its own LatestInformatieObject)
-        // inside .AfterMapping, since every one of these members is .Ignore()-d in the main config.
-        var latestVersion = new EnkelvoudigInformatieObjectVersie
+        return new EnkelvoudigInformatieObjectVersie
         {
             Id = Guid.NewGuid(),
             Versie = 3,
@@ -56,6 +43,7 @@ public class DomainToResponseProfileTests : IDisposable
             Formaat = "application/pdf",
             Taal = "dut",
             Bestandsnaam = "bestand.pdf",
+            Inhoud = @"202401\11111111111111111111111111111111.pdf",
             Link = "https://example.test/link",
             Beschrijving = "Beschrijving-1",
             OntvangstDatum = new DateOnly(2024, 1, 3),
@@ -66,6 +54,15 @@ public class DomainToResponseProfileTests : IDisposable
             Integriteit_Datum = new DateOnly(2024, 1, 6),
             Integriteit_Waarde = "abc123",
         };
+    }
+
+    [Fact]
+    public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_via_AfterMapping_with_DI_resolved_Inhoud()
+    {
+        // Covers the MapLatestEnkelvoudigInformatieObjectVersieResponse port: EnkelvoudigInformatieObjectGetResponseDto
+        // is populated entirely from src.LatestEnkelvoudigInformatieObjectVersie (and its own LatestInformatieObject)
+        // inside .AfterMapping, since every one of these members is .Ignore()-d in the main config.
+        var latestVersion = CreateVersion();
 
         var value = new EnkelvoudigInformatieObject
         {
@@ -119,8 +116,66 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(value.Locked, result.Locked);
 
         // The DI-resolved value -- proves the ported IMappingAction's uriService.GetUri(latestVersion)
-        // call actually ran through MapContext.Current.GetService<IEntityUriService>().
+        // call actually ran through MapContext.Current.GetService<IEntityUriService>(), and that
+        // BestandsDelen.Count == 0 took the "resolve via uriService" branch (not the null branch).
         Assert.Equal("MOCKED-INHOUD-URL", result.Inhoud);
+    }
+
+    [Fact]
+    public void EnkelvoudigInformatieObject_Maps_To_GetResponseDto_Inhoud_Is_Null_When_BestandsDelen_Present()
+    {
+        // When BestandsDelen.Count != 0, Inhoud must be null regardless of what the (mocked) uriService
+        // would otherwise return -- a chunked upload in progress must not expose a download link.
+        var latestVersion = CreateVersion();
+
+        var value = new EnkelvoudigInformatieObject
+        {
+            Id = Guid.NewGuid(),
+            InformatieObjectType = "https://example.test/informatieobjecttypen/1b",
+            IndicatieGebruiksrecht = true,
+            Locked = true,
+            Lock = "bestandsdeel-lock-token",
+            EnkelvoudigInformatieObjectVersies = [latestVersion],
+            LatestEnkelvoudigInformatieObjectVersie = latestVersion,
+        };
+
+        latestVersion.InformatieObject = value;
+        latestVersion.LatestInformatieObject = value;
+        latestVersion.BestandsDelen =
+        [
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 2,
+                Omvang = 100,
+                Voltooid = true,
+                EnkelvoudigInformatieObjectVersie = latestVersion,
+            },
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 1,
+                Omvang = 50,
+                Voltooid = false,
+                EnkelvoudigInformatieObjectVersie = latestVersion,
+            },
+        ];
+
+        // Even though the uriService would happily resolve a URL for this version, BestandsDelen
+        // being present must force Inhoud to null.
+        _host.UriService.Setup(s => s.GetUri(latestVersion)).Returns("SHOULD-NOT-BE-USED");
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(value);
+
+        Assert.Null(result.Inhoud);
+
+        // Also verify BestandsDelen are mapped and ordered by Volgnummer.
+        Assert.Equal(2, result.BestandsDelen.Count);
+        Assert.Equal(1, result.BestandsDelen[0].Volgnummer);
+        Assert.Equal(2, result.BestandsDelen[1].Volgnummer);
+        Assert.Equal(50, result.BestandsDelen[0].Omvang);
+        Assert.True(result.BestandsDelen[0].Voltooid == false);
+        Assert.Equal(value.Lock, result.BestandsDelen[0].Lock);
     }
 
     [Fact]
@@ -143,6 +198,7 @@ public class DomainToResponseProfileTests : IDisposable
             Formaat = "application/xml",
             Taal = "dut",
             Bestandsnaam = "bestand2.xml",
+            Bestandsomvang = 128,
             Inhoud = @"202401\11111111111111111111111111111111.xml",
             Link = "https://example.test/link2",
             Beschrijving = "Beschrijving-2",
@@ -175,6 +231,7 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(latestVersion.Formaat, result.Formaat);
         Assert.Equal(latestVersion.Taal, result.Taal);
         Assert.Equal(latestVersion.Bestandsnaam, result.Bestandsnaam);
+        Assert.Equal(latestVersion.Bestandsomvang, result.Bestandsomvang);
         // Copied straight from the domain field -- NOT resolved through IEntityUriService (contrast with
         // the GetResponseDto port above).
         Assert.Equal(latestVersion.Inhoud, result.Inhoud);
@@ -190,9 +247,18 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Null(result.Lock);
     }
 
-    [Fact]
-    public void EnkelvoudigInformatieObjectVersie_Maps_To_CreateResponseDto_with_dates_url_and_optional_dtos()
+    [Theory]
+    [InlineData("", 0L, 0, "null-because-empty-and-zero-size")]
+    [InlineData("", 5L, 0, "resolved-because-nonzero-bestandsomvang")]
+    [InlineData(@"202401\some-file.bin", 0L, 0, "resolved-because-nonempty-inhoud")]
+    public void EnkelvoudigInformatieObjectVersie_Maps_To_CreateResponseDto_MapDownloadLink_Branches(
+        string inhoud,
+        long bestandsomvang,
+        int bestandsDelenCount,
+        string scenario
+    )
     {
+        // Covers all real branches of the ported MapDownloadLink conditional, applied to the Create-response config.
         var informatieObject = new EnkelvoudigInformatieObject
         {
             Id = Guid.NewGuid(),
@@ -205,44 +271,92 @@ public class DomainToResponseProfileTests : IDisposable
         {
             Id = Guid.NewGuid(),
             Versie = 1,
+            Inhoud = inhoud,
+            Bestandsomvang = bestandsomvang,
             CreatieDatum = new DateOnly(2024, 3, 1),
             OntvangstDatum = new DateOnly(2024, 3, 2),
             BeginRegistratie = new DateTime(2024, 3, 3, 4, 5, 6, DateTimeKind.Utc),
             VerzendDatum = new DateOnly(2024, 3, 4),
-            Ondertekening_Datum = new DateOnly(2024, 3, 5),
-            Ondertekening_Soort = Soort.analoog,
-            Integriteit_Algoritme = Algoritme.md5,
-            Integriteit_Datum = new DateOnly(2024, 3, 6),
-            Integriteit_Waarde = "integriteit-waarde",
             InformatieObject = informatieObject,
         };
 
+        if (bestandsDelenCount != 0)
+        {
+            value.BestandsDelen =
+            [
+                new BestandsDeel
+                {
+                    Id = Guid.NewGuid(),
+                    Volgnummer = 1,
+                    EnkelvoudigInformatieObjectVersie = value,
+                },
+            ];
+        }
+
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("MOCKED-CREATE-INHOUD-URL");
+
         var result = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(value);
 
+        // Empty Inhoud AND zero Bestandsomvang -> null; otherwise (and no BestandsDelen) -> DI-resolved.
+        var expectNull = string.IsNullOrEmpty(inhoud) && bestandsomvang == 0;
+        if (expectNull)
+        {
+            Assert.StartsWith("null", scenario);
+            Assert.Null(result.Inhoud);
+        }
+        else
+        {
+            Assert.StartsWith("resolved", scenario);
+            Assert.Equal("MOCKED-CREATE-INHOUD-URL", result.Inhoud);
+        }
+
         Assert.Equal(DrcMapperTestHost.Resolved(informatieObject), result.Url);
-        Assert.Equal(value.CreatieDatum.Value.ToString("yyyy-MM-dd"), result.CreatieDatum);
-        Assert.Equal(value.OntvangstDatum.Value.ToString("yyyy-MM-dd"), result.OntvangstDatum);
-        Assert.Equal(
-            value.BeginRegistratie.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
-            result.BeginRegistratie
-        );
-        Assert.Equal(value.VerzendDatum.Value.ToString("yyyy-MM-dd"), result.VerzendDatum);
-        // EnkelvoudigInformatieObjectVersieMapperHelper.CreateOptionalOndertekeningDto/CreateOptionalIntegriteitDto
-        // (an already Mapster-agnostic, untouched helper) populated these from the version's fields.
-        Assert.Equal(value.Ondertekening_Datum.Value.ToString("yyyy-MM-dd"), result.Ondertekening.Datum);
-        Assert.Equal(value.Ondertekening_Soort.Value.ToString(), result.Ondertekening.Soort);
-        Assert.Equal(value.Integriteit_Algoritme.ToString(), result.Integriteit.Algoritme);
-        Assert.Equal(value.Integriteit_Datum.Value.ToString("yyyy-MM-dd"), result.Integriteit.Datum);
-        Assert.Equal(value.Integriteit_Waarde, result.Integriteit.Waarde);
-        Assert.Equal(informatieObject.IndicatieGebruiksrecht, result.IndicatieGebruiksrecht);
-        Assert.Equal(informatieObject.Locked, result.Locked);
-        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Inhoud);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
     }
 
     [Fact]
-    public void EnkelvoudigInformatieObjectVersie_Maps_To_UpdateResponseDto_includes_Lock_and_default_optional_dtos_when_empty()
+    public void EnkelvoudigInformatieObjectVersie_Maps_To_CreateResponseDto_Inhoud_Is_Null_When_BestandsDelen_Present()
     {
+        // Even with a non-empty Inhoud and non-zero Bestandsomvang, BestandsDelen.Count != 0 must force null.
+        var informatieObject = new EnkelvoudigInformatieObject
+        {
+            Id = Guid.NewGuid(),
+            InformatieObjectType = "https://example.test/informatieobjecttypen/3b",
+            IndicatieGebruiksrecht = true,
+            Locked = false,
+        };
+
+        var value = new EnkelvoudigInformatieObjectVersie
+        {
+            Id = Guid.NewGuid(),
+            Versie = 1,
+            Inhoud = @"202401\present.bin",
+            Bestandsomvang = 999,
+            CreatieDatum = new DateOnly(2024, 3, 1),
+            InformatieObject = informatieObject,
+        };
+        value.BestandsDelen =
+        [
+            new BestandsDeel
+            {
+                Id = Guid.NewGuid(),
+                Volgnummer = 1,
+                EnkelvoudigInformatieObjectVersie = value,
+            },
+        ];
+
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(value);
+
+        Assert.Null(result.Inhoud);
+    }
+
+    [Fact]
+    public void EnkelvoudigInformatieObjectVersie_Maps_To_UpdateResponseDto_MapDownloadLink_Resolved_Case_And_Includes_Lock()
+    {
+        // Covers MapDownloadLink applied to the Update-response config (confirming both configs invoke it),
+        // plus the Lock/Locked/optional-DTO-defaults behavior specific to the Update-response DTO.
         var informatieObject = new EnkelvoudigInformatieObject
         {
             Id = Guid.NewGuid(),
@@ -252,15 +366,16 @@ public class DomainToResponseProfileTests : IDisposable
             Lock = "lock-token-4",
         };
 
-        // Ondertekening/Integriteit fields left at their defaults -- CreateOptionalOndertekeningDto/
-        // CreateOptionalIntegriteitDto(..., createDefaultWhenEmpty: true) must still return a non-null,
-        // empty DTO (not null) for the Create/Update response maps.
         var value = new EnkelvoudigInformatieObjectVersie
         {
             Id = Guid.NewGuid(),
             Versie = 2,
+            Inhoud = @"202401\present-update.bin",
+            Bestandsomvang = 256,
             InformatieObject = informatieObject,
         };
+
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("MOCKED-UPDATE-INHOUD-URL");
 
         var result = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(value);
 
@@ -268,116 +383,66 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(informatieObject.Lock, result.Lock);
         Assert.Equal(informatieObject.Locked, result.Locked);
         Assert.Equal(informatieObject.InformatieObjectType, result.InformatieObjectType);
+        Assert.Equal("MOCKED-UPDATE-INHOUD-URL", result.Inhoud);
+        // Ondertekening/Integriteit fields left at their defaults -- CreateOptionalOndertekeningDto/
+        // CreateOptionalIntegriteitDto(..., createDefaultWhenEmpty: true) must still return a non-null,
+        // empty DTO (not null) for the Create/Update response maps.
         Assert.NotNull(result.Ondertekening);
         Assert.NotNull(result.Integriteit);
     }
 
     [Fact]
-    public void ObjectInformatieObject_Maps_To_ObjectInformatieObjectResponseDto()
+    public void EnkelvoudigInformatieObjectVersie_Maps_To_UpdateResponseDto_MapDownloadLink_Null_Case_When_Empty()
     {
-        _fixture.Customize<ObjectInformatieObjectResponseDto>(c => c.With(a => a.ObjectType, ObjectType.besluit.ToString()));
-
-        var value = _fixture.Create<ObjectInformatieObject>();
-
-        var result = _mapper.Map<ObjectInformatieObjectResponseDto>(value);
-
-        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
-        Assert.Equal(value.Object, result.Object);
-        Assert.Equal(value.ObjectType.ToString(), result.ObjectType);
-        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
-    }
-
-    [Fact]
-    public void GebruiksRecht_Maps_To_GebruiksRechtResponseDto()
-    {
-        var value = _fixture.Create<GebruiksRecht>();
-
-        var result = _mapper.Map<GebruiksRechtResponseDto>(value);
-
-        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
-        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
-        Assert.Equal(value.OmschrijvingVoorwaarden, result.OmschrijvingVoorwaarden);
-        Assert.Equal(value.Startdatum.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture), result.Startdatum);
-        Assert.Equal(value.Einddatum.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Einddatum);
-    }
-
-    [Fact]
-    public void GebruiksRecht_Maps_To_GebruiksRechtRequestDto_for_PATCH_merge()
-    {
-        var value = _fixture.Create<GebruiksRecht>();
-
-        var result = _mapper.Map<GebruiksRechtRequestDto>(value);
-
-        Assert.Equal(DrcMapperTestHost.Resolved(value.InformatieObject), result.InformatieObject);
-        Assert.Equal(value.OmschrijvingVoorwaarden, result.OmschrijvingVoorwaarden);
-        Assert.Equal(value.Startdatum.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture), result.Startdatum);
-        Assert.Equal(value.Einddatum.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Einddatum);
-    }
-
-    [Fact]
-    public void AuditTrailRegel_Maps_Wijzigingen_Json_Shape()
-    {
-        // Pin Oud/Nieuw to valid JSON explicitly. This exercises ConvertWijzigingenToDto's real
-        // JsonConvert.DeserializeObject call -- a broken port would either throw during mapping or
-        // leave Wijzigingen.Oud/.Nieuw null.
-        var value = new AuditTrailRegel
+        // Empty Inhoud AND Bestandsomvang == 0 on the Update-response config -> Inhoud must be null.
+        var informatieObject = new EnkelvoudigInformatieObject
         {
             Id = Guid.NewGuid(),
-            Bron = "DRC",
-            ApplicatieId = "app-1",
-            ApplicatieWeergave = "App 1",
-            GebruikersId = "user-1",
-            GebruikersWeergave = "User 1",
-            Actie = "update",
-            ActieWeergave = "Update",
-            HoofdObject = "/enkelvoudiginformatieobjecten/1",
-            Resource = "enkelvoudiginformatieobject",
-            ResourceUrl = "/enkelvoudiginformatieobjecten/1",
-            Toelichting = "toelichting",
-            ResourceWeergave = "Resource 1",
-            AanmaakDatum = new DateTime(2024, 4, 1, 12, 0, 0, DateTimeKind.Utc),
-            Oud = "{\"naam\":\"oud-waarde\"}",
-            Nieuw = "{\"naam\":\"nieuw-waarde\"}",
+            InformatieObjectType = "https://example.test/informatieobjecttypen/4b",
+            IndicatieGebruiksrecht = false,
+            Locked = true,
+            Lock = "lock-token-4b",
         };
 
-        var result = _mapper.Map<AuditTrailRegelDto>(value);
+        var value = new EnkelvoudigInformatieObjectVersie
+        {
+            Id = Guid.NewGuid(),
+            Versie = 2,
+            InformatieObject = informatieObject,
+        };
 
-        Assert.Equal(value.Id.ToString(), result.Uuid);
-        Assert.Equal(ProfileHelper.StringDateFromDateTime(value.AanmaakDatum, true), result.AanmaakDatum);
-        Assert.NotNull(result.Wijzigingen);
-        Assert.IsType<JObject>(result.Wijzigingen.Oud);
-        Assert.IsType<JObject>(result.Wijzigingen.Nieuw);
-        Assert.Equal("oud-waarde", ((JObject)result.Wijzigingen.Oud)["naam"]!.ToString());
-        Assert.Equal("nieuw-waarde", ((JObject)result.Wijzigingen.Nieuw)["naam"]!.ToString());
+        _host.UriService.Setup(s => s.GetUri(value)).Returns("SHOULD-NOT-BE-USED");
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(value);
+
+        Assert.Null(result.Inhoud);
     }
 
     [Fact]
-    public void AuditTrailRegel_Maps_Wijzigingen_To_Null_When_Oud_And_Nieuw_Are_Empty()
+    public void BestandsDeel_Maps_To_BestandsDeelResponseDto()
     {
-        var value = new AuditTrailRegel
+        var informatieObject = new EnkelvoudigInformatieObject { Id = Guid.NewGuid(), Lock = "lock-bd" };
+        var version = new EnkelvoudigInformatieObjectVersie
         {
             Id = Guid.NewGuid(),
-            Bron = "DRC",
-            ApplicatieId = "app-1",
-            ApplicatieWeergave = "App 1",
-            GebruikersId = "user-1",
-            GebruikersWeergave = "User 1",
-            Actie = "create",
-            ActieWeergave = "Create",
-            HoofdObject = "/enkelvoudiginformatieobjecten/1",
-            Resource = "enkelvoudiginformatieobject",
-            ResourceUrl = "/enkelvoudiginformatieobjecten/1",
-            Toelichting = "toelichting",
-            ResourceWeergave = "Resource 1",
-            AanmaakDatum = new DateTime(2024, 4, 2, 12, 0, 0, DateTimeKind.Utc),
-            Oud = null,
-            Nieuw = "",
+            Versie = 1,
+            InformatieObject = informatieObject,
+        };
+        var value = new BestandsDeel
+        {
+            Id = Guid.NewGuid(),
+            Volgnummer = 3,
+            Omvang = 777,
+            Voltooid = true,
+            EnkelvoudigInformatieObjectVersie = version,
         };
 
-        var result = _mapper.Map<AuditTrailRegelDto>(value);
+        var result = _mapper.Map<BestandsDeelResponseDto>(value);
 
-        Assert.NotNull(result.Wijzigingen);
-        Assert.Null(result.Wijzigingen.Oud);
-        Assert.Null(result.Wijzigingen.Nieuw);
+        Assert.Equal(DrcMapperTestHost.Resolved(value), result.Url);
+        Assert.Equal(value.Volgnummer, result.Volgnummer);
+        Assert.Equal(value.Omvang, result.Omvang);
+        Assert.Equal(value.Voltooid, result.Voltooid);
+        Assert.Equal(informatieObject.Lock, result.Lock);
     }
 }
