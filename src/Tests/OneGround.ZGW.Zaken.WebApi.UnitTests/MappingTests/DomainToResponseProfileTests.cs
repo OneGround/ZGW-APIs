@@ -167,7 +167,7 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void Zaak_with_null_ZaakStatussen_maps_Status_to_null()
     {
-        // The Status PreCondition: unlike the general EmptyCollectionIfNull destination transform
+        // The Status null fold: unlike the general EmptyCollectionIfNull destination transform
         // (which applies to collection-typed members), dest.Status is a plain string (scalar), so a
         // null ZaakStatussen navigation must fold to a null Status, not throw or fall back to some
         // default. Verified by deliberate breakage: temporarily change the null-check in
@@ -185,7 +185,7 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void Zaak_with_multiple_ZaakStatussen_maps_Status_to_latest_by_DatumStatusGezet()
     {
-        // Confirms the PreCondition's OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault()
+        // Confirms the Status map's OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault()
         // picks the LATEST status, not merely "any" status. Verified by deliberate breakage: change
         // OrderByDescending to OrderBy (or drop the ordering) in DomainToResponseRegister and
         // re-run - this test then asserts against the oldest status's URL and fails.

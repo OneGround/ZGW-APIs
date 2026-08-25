@@ -300,9 +300,11 @@ public class RequestToDomainRegister : IRegister
         // ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name anyway,
         // omitting any rule for them here is safe (they simply stay unset when mapping the base type on its
         // own) and is required for the derived per-object-type configs' own .Map(...) calls (further down this
-        // file) to actually take effect during runtime dispatch. The fact
-        // ZaakObjectRequestDto_base_typed_reference_holding_AdresZaakObjectRequestDto_dispatches_to_Adres_mapping
-        // exists solely to catch that edit; it fails the moment this config stops being silent.
+        // file) to actually take effect during runtime dispatch. The fact dedicated to this rule is
+        // ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation,
+        // which reads RuleMap structurally and names both the offending pair and the offending rule; its
+        // behavioural twin A_derived_case_object_map_still_produces_its_identification shows the resulting
+        // blank.
 
         // Note on the eight derived XxxZaakObjectRequestDto->ZaakObject configs below: each maps its own
         // subtype navigation and ignores the seven belonging to the other subtypes, since only one is ever
@@ -497,10 +499,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.Owner);
         // Note: KvkNummer is deliberately NOT ignored (or mapped) here: VestigingZaakRolDto.KvKNummer and the
         // domain VestigingZaakRol.KvkNummer differ only by case, so the case-insensitive name convention
-        // resolves it automatically - but only because AddZgwMapster registers
-        // NameMatchingStrategy.IgnoreCase globally. A config built
-        // from this register alone would not have that setting and would leave KvkNummer silently unmapped,
-        // which is why the mapping tests run against the real AddZgwMapster configuration.
+        // resolves it automatically - but only because AddZgwMapster registers NameMatchingStrategy.IgnoreCase
+        // globally. A config built from this register alone would not have that setting and would leave
+        // KvkNummer silently unmapped, which is why the mapping tests run against the real AddZgwMapster
+        // configuration.
 
         config
             .NewConfig<VestigingZaakRolRequestDto, ZaakRol>()

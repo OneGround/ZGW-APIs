@@ -258,9 +258,11 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Registratiedatum, src => ProfileHelper.StringDateFromDateTime(src.Registratiedatum, true))
             // Note: Map only zaak-statussen which matches zaak-status.GezetDoor. dest.Statussen
             // (IEnumerable<string>, no field initializer, so it defaults to null) goes through a plain
-            // .Map(...) whose lambda body itself computes null via an inline ternary - not a PreCondition,
-            // which would bypass member assignment and null substitution entirely. The null the ternary
-            // returns does NOT reach the caller: dest.Statussen is a collection member, so the shared
+            // .Map(...) whose lambda body itself computes null via an inline ternary. Keeping it a plain
+            // .Map is what makes the rest of this work: the member is always assigned, so the destination
+            // transform still runs on the computed null. A conditional skip (.IgnoreIf) would leave the
+            // member unassigned and bypass null substitution entirely. The null the ternary returns
+            // therefore does NOT reach the caller: dest.Statussen is a collection member, so the shared
             // configuration's EmptyCollectionIfNull destination transform substitutes an empty sequence even
             // for an explicitly computed null. The observable result is empty, never null - pinned by the
             // ZaakRol_with_null_Zaak_ZaakStatussen_Maps_Statussen_to_empty_not_null fact, which only holds

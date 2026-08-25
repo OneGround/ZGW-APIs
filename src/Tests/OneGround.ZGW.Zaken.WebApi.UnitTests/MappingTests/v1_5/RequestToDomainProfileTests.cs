@@ -345,9 +345,9 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void ZaakRolRequestDto_base_typed_reference_holding_NatuurlijkPersoonZaakRolRequestDto_dispatches_to_NatuurlijkPersoon_mapping()
     {
-        // Same shape as the ZaakObject dispatch test above, for the ZaakRolRequestDto->ZaakRol
-        // .IncludeAllDerived()-replacement config. v1.5 is the version actually served in production going
-        // forward, so this gets the same priority as the ZaakObject dispatch test.
+        // Same shape as the ZaakObject dispatch test above, for the ZaakRolRequestDto->ZaakRol hierarchy.
+        // v1.5 is the version actually served in production going forward, so this gets the same priority
+        // as the ZaakObject dispatch test.
         ZaakRolRequestDto request = new NatuurlijkPersoonZaakRolRequestDto
         {
             Zaak = "https://example.test/zaken/1",

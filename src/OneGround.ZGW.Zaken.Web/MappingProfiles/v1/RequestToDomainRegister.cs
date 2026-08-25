@@ -93,8 +93,8 @@ public class RequestToDomainRegister : IRegister
             // Vertrouwelijkheidaanduiding/Betalingsindicatie despite the casing difference against the domain's
             // VertrouwelijkheidAanduiding/BetalingsIndicatie, and the global nullable-enum rule handles
             // Archiefnominatie's Nullable<enum> destination. They are therefore redundant but harmless - each
-            // names the same source member the convention would have picked - and
-            // they keep the pair correct even under a configuration without those global defaults.
+            // names the same source member the convention would have picked - and they keep the pair correct
+            // even under a configuration without those global defaults.
             .Map(dest => dest.VertrouwelijkheidAanduiding, src => src.Vertrouwelijkheidaanduiding)
             .Map(dest => dest.BetalingsIndicatie, src => src.Betalingsindicatie)
             .Map(dest => dest.Archiefnominatie, src => src.Archiefnominatie)
@@ -222,9 +222,11 @@ public class RequestToDomainRegister : IRegister
         // throwing. Since ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name
         // anyway, omitting any rule for them here is safe (they simply stay unset when mapping the base type on
         // its own) and is required for the derived per-object-type configs' own .Map(...) calls (further down
-        // this file) to actually take effect during runtime dispatch. The fact
-        // ZaakObjectRequestDto_base_typed_reference_holding_AdresZaakObjectRequestDto_dispatches_to_Adres_mapping
-        // exists solely to catch that edit; it fails the moment this config stops being silent.
+        // this file) to actually take effect during runtime dispatch. The fact dedicated to this rule is
+        // ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation,
+        // which reads RuleMap structurally and names both the offending pair and the offending rule; its
+        // behavioural twin A_derived_case_object_map_still_produces_its_identification shows the resulting
+        // blank.
 
         config
             .NewConfig<AdresZaakObjectDto, AdresZaakObject>()

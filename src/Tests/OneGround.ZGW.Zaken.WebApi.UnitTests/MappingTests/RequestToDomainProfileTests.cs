@@ -288,8 +288,8 @@ public class RequestToDomainProfileTests : IDisposable
     public void ZaakRolRequestDto_base_typed_reference_holding_NatuurlijkPersoonZaakRolRequestDto_dispatches_to_NatuurlijkPersoon_mapping()
     {
         // Lower-priority twin of the ZaakObject dispatch test above: same base-typed-reference-holding-
-        // derived-instance shape, proving the dropped .IncludeAllDerived() on ZaakRolRequestDto->ZaakRol
-        // isn't needed either.
+        // derived-instance shape, proving the runtime dispatch on source.GetType() reaches the derived
+        // config for the ZaakRolRequestDto->ZaakRol hierarchy too.
         ZaakRolRequestDto request = new NatuurlijkPersoonZaakRolRequestDto
         {
             Zaak = "https://example.test/zaken/1",
