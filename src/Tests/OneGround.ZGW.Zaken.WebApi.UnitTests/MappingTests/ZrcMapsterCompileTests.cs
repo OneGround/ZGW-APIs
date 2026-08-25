@@ -70,10 +70,9 @@ public class ZrcMapsterCompileTests
     }
 
     /// <summary>
-    /// Mapster's stand-in for AutoMapper's <c>AssertConfigurationIsValid()</c>, which this service lost
-    /// when its profile tests were retargeted: every destination member needs a source member, an explicit
-    /// <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is what keeps the registers'
-    /// <c>.Ignore(...)</c> calls load-bearing rather than decorative.
+    /// The only whole-configuration validity check this service has: every destination member needs a source
+    /// member, an explicit <c>.Map(...)</c> or an explicit <c>.Ignore(...)</c>. This is what keeps the
+    /// registers' <c>.Ignore(...)</c> calls load-bearing rather than decorative.
     /// </summary>
     /// <remarks>
     /// Observed failure mode: removing one <c>.Ignore(dest =&gt; dest.ZaakObjectType)</c> from the

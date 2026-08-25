@@ -54,8 +54,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Eigenschappen, src => MapsterUrlResolver.ResolveUrls(src.ZaakEigenschappen))
             .Map(dest => dest.Resultaat, src => MapsterUrlResolver.ResolveUrl(src.Resultaat))
             // Note: dest.Status is a plain string (scalar), not a collection, so the global
-            // EmptyCollectionIfNull destination transform does not apply here. This reproduces the
-            // AutoMapper PreCondition explicitly: a null ZaakStatussen navigation folds to null,
+            // EmptyCollectionIfNull destination transform does not apply here. The null fold therefore has
+            // to be spelled out in the lambda itself: a null ZaakStatussen navigation yields null,
             // otherwise the latest (by DatumStatusGezet) status's URL is resolved.
             .Map(
                 dest => dest.Status,
@@ -175,14 +175,13 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
             .Ignore(dest => dest.Version);
 
-        // Note: The 8 ObjectIdentificatie assignments below are AutoMapper implicit nested maps
-        // (source and destination member types differ - e.g. AdresZaakObject -> AdresZaakObjectDto -
-        // and AutoMapper auto-resolves the map registered elsewhere in this file). A bare
-        // `.Map(dest => dest.ObjectIdentificatie, src => src)` would either not compile (type
-        // mismatch) or, if it did via some implicit path, would resolve against Mapster's ambient
-        // TypeAdapterConfig.GlobalSettings instead of this local config, silently ignoring any
-        // custom rule registered above for that nested type pair. Passing `config` explicitly to
-        // Adapt keeps the nested map on this local config.
+        // Note: the 8 ObjectIdentificatie assignments below are nested maps whose source and destination
+        // member types differ (e.g. AdresZaakObject -> AdresZaakObjectDto), so each spells the nested
+        // adapt out as `src.Adapt<T>(config)`. A bare `.Map(dest => dest.ObjectIdentificatie, src => src)`
+        // would either not compile (type mismatch) or, if it did via some implicit path, would resolve
+        // against Mapster's ambient TypeAdapterConfig.GlobalSettings instead of this local config,
+        // silently ignoring any custom rule registered above for that nested type pair. Passing `config`
+        // explicitly to Adapt is what keeps the nested map on this local config.
         config
             .NewConfig<AdresZaakObject, AdresZaakObjectRequestDto>()
             .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<AdresZaakObjectDto>(config))
@@ -358,8 +357,8 @@ public class DomainToResponseRegister : IRegister
     // (which holds the custom rules registered above, e.g. OverigeZaakObject -> OverigeZaakObjectDto's
     // JToken.Parse conversion) rather than Mapster's ambient TypeAdapterConfig.GlobalSettings, which
     // would not have those rules and would silently produce different (wrong) results for those
-    // members. `.Adapt<T>(config)` on a null source returns null (Mapster's own null-source handling),
-    // matching AutoMapper's context.Mapper.Map<T>(null) behavior.
+    // members. A null nested source needs no guard of its own: `.Adapt<T>(config)` on null returns null
+    // (Mapster's own null-source handling), so the nested member comes out null rather than an empty DTO.
 
     private static ZaakRolResponseDto CreateZaakRolResponseDto(ZaakRol source, TypeAdapterConfig config)
     {

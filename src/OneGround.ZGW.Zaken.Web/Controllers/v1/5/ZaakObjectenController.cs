@@ -32,6 +32,12 @@ using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 using OneGround.ZGW.Zaken.Web.Models.v1;
 using OneGround.ZGW.Zaken.Web.Validators.v1._5.ZaakObject;
 using Swashbuckle.AspNetCore.Annotations;
+// The eight using-ALIASES below decide which mapping pairs this controller resolves, and they are easy to
+// miss: the file also imports Contracts.v1._5.Requests.ZaakObject above, but an alias beats a using-directive
+// for a simple name. So every unqualified XxxZaakObjectRequestDto in this file is the v1 type, and the eight
+// per-subtype merges run on the v1 pairs in MappingProfiles/v1/DomainToResponseRegister.cs - only the
+// unaliased base merge uses a v1.5 type. Changing or dropping an alias silently moves a merge to a different
+// registered pair.
 using AdresZaakObjectRequestDto = OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.AdresZaakObjectRequestDto;
 using BuurtZaakObjectRequestDto = OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.BuurtZaakObjectRequestDto;
 using GemeenteZaakObjectRequestDto = OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.GemeenteZaakObjectRequestDto;

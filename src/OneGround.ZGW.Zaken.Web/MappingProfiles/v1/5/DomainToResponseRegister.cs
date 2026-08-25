@@ -20,8 +20,7 @@ namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 // so shared nested-DTO configs registered over there (e.g. AdresZaakObject->AdresZaakObjectDto,
 // NatuurlijkPersoonZaakRol->NatuurlijkPersoonZaakRolDto, the Geometry->Geometry / JToken->JToken same-type
 // clone rules, etc.) apply here too - this file only registers the type pairs that are genuinely new or
-// different in v1.5 (distinct v1._5-namespaced DTOs), exactly mirroring which CreateMap calls the original
-// AutoMapper profile (now removed, having served its purpose once this port was verified) declared.
+// different in v1.5 (distinct v1._5-namespaced DTOs).
 public class DomainToResponseRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
@@ -49,10 +48,10 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.ZaakInformatieObjecten, src => MapsterUrlResolver.ResolveUrls(src.ZaakInformatieObjecten))
             .Map(dest => dest.ZaakObjecten, src => MapsterUrlResolver.ResolveUrls(src.ZaakObjecten))
             // Note: dest.Status is a plain string (scalar), not a collection, so the global
-            // EmptyCollectionIfNull destination transform does not apply here. This reproduces the
-            // AutoMapper PreCondition explicitly: a null ZaakStatussen navigation folds to null,
-            // otherwise the latest (by DatumStatusGezet) status's URL is resolved. Same fold as the v1
-            // sibling register's identical Zaak->ZaakResponseDto config.
+            // EmptyCollectionIfNull destination transform does not apply here. The null fold therefore has
+            // to be spelled out in the lambda itself: a null ZaakStatussen navigation yields null, otherwise
+            // the latest (by DatumStatusGezet) status's URL is resolved. Same fold as the v1 sibling
+            // register's identical Zaak->ZaakResponseDto config.
             .Map(
                 dest => dest.Status,
                 src =>
@@ -66,10 +65,6 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.OpdrachtgevendeOrganisatie, src => ProfileHelper.EmptyWhenNull(src.OpdrachtgevendeOrganisatie))
             .Map(dest => dest.Processobjectaard, src => ProfileHelper.EmptyWhenNull(src.Processobjectaard));
 
-        // Note: The source AutoMapper profile registers CreateMap<ZaakProcessobject, ZaakProcessobjectDto>()
-        // twice (once empty as a no-op placeholder, once with the real explicit member mappings below) -
-        // AutoMapper merges both onto the same TypePair, with the second (member-explicit) registration being
-        // the one that actually matters. Mapster only needs the single meaningful registration here.
         config
             .NewConfig<ZaakProcessobject, ZaakProcessobjectDto>()
             .Map(dest => dest.Datumkenmerk, src => src.Datumkenmerk)
@@ -146,16 +141,6 @@ public class DomainToResponseRegister : IRegister
             // zaakobjecttype column - that discriminator lives on the parent zaakobjecten row only. The
             // equivalent v1 configs already ignore every base-DTO member except ObjectIdentificatie;
             // ZaakObjectType is simply the member the v1.5 base DTO added.
-            //
-            // These eight are the domain -> v1.5-subtype-request direction that this register declares. Note
-            // which pairs the v1.5 PATCH route actually resolves, because it is not these: the v1.5
-            // ZAAKOBJECTen controller imports this namespace but then declares a file-level using-ALIAS per
-            // subtype pointing at the v1 request DTOs, and an alias beats a using-directive for a simple name
-            // (the aliases redirect those eight simple names to the v1 request DTOs). So its eight per-subtype
-            // merges run on the v1 pairs in v1/DomainToResponseRegister, and only its unaliased base merge
-            // uses a v1.5 type.
-            // The discriminator is therefore moot on both routes: the v1 subtype request DTOs have no
-            // ZaakObjectType member at all, and on this v1.5 direction the source has no value to carry.
             .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
@@ -276,9 +261,8 @@ public class DomainToResponseRegister : IRegister
             // .Map(...) whose lambda body itself computes null via an inline ternary - not a PreCondition,
             // which would bypass member assignment and null substitution entirely. The null the ternary
             // returns does NOT reach the caller: dest.Statussen is a collection member, so the shared
-            // configuration's EmptyCollectionIfNull destination transform substitutes an empty sequence,
-            // exactly as the AutoMapper baseline's AllowNullCollections=false default did for an explicitly
-            // computed null. The observable result is empty, never null - pinned by the
+            // configuration's EmptyCollectionIfNull destination transform substitutes an empty sequence even
+            // for an explicitly computed null. The observable result is empty, never null - pinned by the
             // ZaakRol_with_null_Zaak_ZaakStatussen_Maps_Statussen_to_empty_not_null fact, which only holds
             // because it runs on the real AddZgwMapster configuration that carries that transform.
             .Map(
@@ -322,8 +306,8 @@ public class DomainToResponseRegister : IRegister
     // recursive call resolves against THIS shared local config rather than Mapster's ambient
     // TypeAdapterConfig.GlobalSettings. Most target types below are the v1-namespaced DTOs (e.g.
     // Zaken.Contracts.v1.AdresZaakObjectDto), registered by the ALREADY-MERGED v1/DomainToResponseRegister.cs,
-    // not by this file - `.Adapt<T>(config)` on a null source returns null (Mapster's own null-source
-    // handling), matching AutoMapper's context.Mapper.Map<T>(null) behavior.
+    // not by this file. A null nested source needs no guard of its own: `.Adapt<T>(config)` on null returns
+    // null (Mapster's own null-source handling), so the nested member comes out null rather than an empty DTO.
 
     private static ZaakRolResponseDto CreateZaakRolResponseDto(ZaakRol source, TypeAdapterConfig config)
     {

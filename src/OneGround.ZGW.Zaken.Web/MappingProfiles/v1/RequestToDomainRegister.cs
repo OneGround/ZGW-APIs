@@ -24,8 +24,8 @@ public class RequestToDomainRegister : IRegister
     public void Register(TypeAdapterConfig config)
     {
         // NetTopologySuite's Geometry is abstract with no parameterless constructor, so Mapster can't build
-        // its usual clone expression for same-type Geometry->Geometry members (Zaak.Zaakgeometrie). AutoMapper
-        // falls back to a direct reference copy for identical source/destination types; this reproduces that.
+        // its usual clone expression for same-type Geometry->Geometry members (Zaak.Zaakgeometrie). This rule
+        // copies the reference straight through instead, which is what such a member needs anyway.
         config.NewConfig<Geometry, Geometry>().MapWith(src => src);
 
         //
@@ -87,13 +87,13 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Publicatiedatum, src => ProfileHelper.DateFromStringOptional(src.Publicatiedatum))
             .Map(dest => dest.LaatsteBetaaldatum, src => ProfileHelper.DateTimeFromString(src.LaatsteBetaaldatum))
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
-            // The source DTO's string-typed Vertrouwelijkheidaanduiding/Betalingsindicatie/Archiefnominatie/
-            // Archiefstatus were pure name-convention (unmapped) in the AutoMapper source. The shared
-            // configuration reproduces that convention on its own: NameMatchingStrategy.IgnoreCase resolves
+            // The four .Map(...) calls below cover the source DTO's string-typed Vertrouwelijkheidaanduiding/
+            // Betalingsindicatie/Archiefnominatie/Archiefstatus, which the shared configuration would resolve
+            // by convention on its own anyway: NameMatchingStrategy.IgnoreCase resolves
             // Vertrouwelijkheidaanduiding/Betalingsindicatie despite the casing difference against the domain's
             // VertrouwelijkheidAanduiding/BetalingsIndicatie, and the global nullable-enum rule handles
-            // Archiefnominatie's Nullable<enum> destination. These four explicit .Map(...) calls are therefore
-            // redundant but harmless - each names the same source member the convention would have picked - and
+            // Archiefnominatie's Nullable<enum> destination. They are therefore redundant but harmless - each
+            // names the same source member the convention would have picked - and
             // they keep the pair correct even under a configuration without those global defaults.
             .Map(dest => dest.VertrouwelijkheidAanduiding, src => src.Vertrouwelijkheidaanduiding)
             .Map(dest => dest.BetalingsIndicatie, src => src.Betalingsindicatie)
@@ -210,19 +210,21 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.ObjectTypeOverige, src => src.ObjectTypeOverige)
             .Map(dest => dest.ObjectTypeOverigeDefinitie, src => src.ObjectTypeOverigeDefinitie) // Note: Supported in v1.2 only
             .Map(dest => dest.RelatieOmschrijving, src => src.RelatieOmschrijving);
-        // Note: Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject are
-        // deliberately NOT ignored (or mapped) here, unlike AutoMapper's equivalent config, which explicitly
-        // ignores them at the base level. AutoMapper's .IncludeAllDerived() dispatches on source.GetType() at
-        // runtime and falls back to this base config when the runtime type (e.g. InvalidZaakObjectRequestDto) has
-        // no config of its own. MapsterMapper.IMapper.Map<TDestination>(object source) does the equivalent runtime
-        // dispatch automatically (confirmed empirically) - BUT ONLY as long as this base config has no explicit
-        // Map/Ignore rule for a member that a derived config (e.g. AdresZaakObjectRequestDto->ZaakObject below)
-        // maps: an explicit rule on the base config for a given member wins over ANY derived config's rule for
-        // that same member, for every source type in the hierarchy, silently discarding the derived rule. Since
-        // ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name anyway, omitting
-        // any rule for them here is safe (they simply stay unset when mapping the base type on its own) and is
-        // required for the derived per-object-type configs' own .Map(...) calls (further down this file) to
-        // actually take effect during runtime dispatch.
+        // BASE-CONFIG SILENCE RULE - do not "complete" this config by ignoring the members below.
+        // Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject are
+        // deliberately NEITHER mapped NOR ignored here. MapsterMapper.IMapper.Map<TDestination>(object source)
+        // dispatches on source.GetType() at runtime and falls back to this base config when the runtime type
+        // (e.g. InvalidZaakObjectRequestDto) has no config of its own - BUT ONLY as long as this base config
+        // stays silent about every member a derived config maps: an explicit Map/Ignore rule on the base config
+        // for a given member wins over ANY derived config's rule for that same member, for every source type in
+        // the hierarchy, silently discarding the derived rule. Adding an .Ignore here for one of these eight
+        // would therefore blank the identification object on every write through every subtype, with nothing
+        // throwing. Since ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name
+        // anyway, omitting any rule for them here is safe (they simply stay unset when mapping the base type on
+        // its own) and is required for the derived per-object-type configs' own .Map(...) calls (further down
+        // this file) to actually take effect during runtime dispatch. The fact
+        // ZaakObjectRequestDto_base_typed_reference_holding_AdresZaakObjectRequestDto_dispatches_to_Adres_mapping
+        // exists solely to catch that edit; it fails the moment this config stops being silent.
 
         config
             .NewConfig<AdresZaakObjectDto, AdresZaakObject>()

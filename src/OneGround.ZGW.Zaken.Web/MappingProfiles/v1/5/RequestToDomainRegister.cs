@@ -20,9 +20,7 @@ namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 // shared nested-DTO configs registered over there (e.g. RelevanteAndereZaakDto->RelevanteAndereZaak,
 // ZaakKenmerkDto->ZaakKenmerk, ZaakVerlengingDto->ZaakVerlenging, ZaakOpschortingDto->ZaakOpschorting,
 // NatuurlijkPersoonZaakRolDto->NatuurlijkPersoonZaakRol, etc.) apply here too - this file only registers the
-// type pairs that are genuinely new or different in v1.5 (distinct v1._5-namespaced DTOs), exactly mirroring
-// which CreateMap calls the original AutoMapper profile (now removed, having served its purpose once this
-// port was verified) declared.
+// type pairs that are genuinely new or different in v1.5 (distinct v1._5-namespaced DTOs).
 public class RequestToDomainRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
@@ -215,10 +213,9 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.LegacyAuditTrail)
             .Map(dest => dest.Zaaktype, src => src.Zaaktype.TrimEnd('/'));
         // Note: Betalingsindicatie/Archiefnominatie/Archiefstatus/OpdrachtgevendeOrganisatie/Processobjectaard/
-        // Processobject are deliberately NOT mapped or ignored here, mirroring the source AutoMapper profile
-        // exactly - they are new/plain fields introduced in v1.5's ZaakDto whose names already match the Zaak
-        // domain model's property names, so both AutoMapper's and Mapster's default name-convention resolve
-        // them automatically - but for Mapster only because AddZgwMapster registers
+        // Processobject are deliberately NOT mapped or ignored here: they are new/plain fields introduced in
+        // v1.5's ZaakDto whose names already match the Zaak domain model's property names, so the default
+        // name-convention resolves them automatically - but only because AddZgwMapster registers
         // NameMatchingStrategy.IgnoreCase and RegisterNullableEnumRule globally, which is what carries the
         // case-differing and nullable-enum members among these. A config built from this register alone would
         // have neither setting and would leave those members silently unmapped, which is why the mapping tests
@@ -291,19 +288,21 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.ObjectTypeOverige, src => src.ObjectTypeOverige)
             .Map(dest => dest.ObjectTypeOverigeDefinitie, src => src.ObjectTypeOverigeDefinitie) // Note: Supported in v1.2 only
             .Map(dest => dest.RelatieOmschrijving, src => src.RelatieOmschrijving);
-        // Note: Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject
-        // are deliberately NOT ignored (or mapped) here, unlike AutoMapper's equivalent config, which explicitly
-        // ignores them at the base level via .IncludeAllDerived(). AutoMapper's .IncludeAllDerived() dispatches
-        // on source.GetType() at runtime and falls back to this base config when the runtime type has no config
-        // of its own. MapsterMapper.IMapper.Map<TDestination>(object source) does the equivalent runtime
-        // dispatch automatically (confirmed empirically) - BUT ONLY as long as this base config has no explicit
-        // Map/Ignore rule for a member that a derived config (e.g. AdresZaakObjectRequestDto->ZaakObject below)
-        // maps: an explicit rule on the base config for a given member wins over ANY derived config's rule for
-        // that same member, for every source type in the hierarchy, silently discarding the derived rule. Since
-        // ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name anyway, omitting
-        // any rule for them here is safe (they simply stay unset when mapping the base type on its own) and is
-        // required for the derived per-object-type configs' own .Map(...) calls (further down this file) to
-        // actually take effect during runtime dispatch.
+        // BASE-CONFIG SILENCE RULE - do not "complete" this config by ignoring the members below.
+        // Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject are
+        // deliberately NEITHER mapped NOR ignored here. MapsterMapper.IMapper.Map<TDestination>(object source)
+        // dispatches on source.GetType() at runtime and falls back to this base config when the runtime type
+        // has no config of its own - BUT ONLY as long as this base config stays silent about every member a
+        // derived config maps: an explicit Map/Ignore rule on the base config for a given member wins over ANY
+        // derived config's rule for that same member, for every source type in the hierarchy, silently
+        // discarding the derived rule. Adding an .Ignore here for one of these eight would therefore blank the
+        // identification object on every write through every subtype, with nothing throwing. Since
+        // ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name anyway,
+        // omitting any rule for them here is safe (they simply stay unset when mapping the base type on its
+        // own) and is required for the derived per-object-type configs' own .Map(...) calls (further down this
+        // file) to actually take effect during runtime dispatch. The fact
+        // ZaakObjectRequestDto_base_typed_reference_holding_AdresZaakObjectRequestDto_dispatches_to_Adres_mapping
+        // exists solely to catch that edit; it fails the moment this config stops being silent.
 
         // Note on the eight derived XxxZaakObjectRequestDto->ZaakObject configs below: each maps its own
         // subtype navigation and ignores the seven belonging to the other subtypes, since only one is ever
@@ -496,10 +495,10 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.ModifiedBy)
             .Ignore(dest => dest.Owner);
-        // Note: KvkNummer is deliberately NOT ignored (or mapped) here, mirroring the source AutoMapper profile
-        // exactly: VestigingZaakRolDto.KvKNummer and the domain VestigingZaakRol.KvkNummer differ only by case,
-        // so both AutoMapper's and Mapster's case-insensitive name convention resolve it automatically - for
-        // Mapster only because AddZgwMapster registers NameMatchingStrategy.IgnoreCase globally. A config built
+        // Note: KvkNummer is deliberately NOT ignored (or mapped) here: VestigingZaakRolDto.KvKNummer and the
+        // domain VestigingZaakRol.KvkNummer differ only by case, so the case-insensitive name convention
+        // resolves it automatically - but only because AddZgwMapster registers
+        // NameMatchingStrategy.IgnoreCase globally. A config built
         // from this register alone would not have that setting and would leave KvkNummer silently unmapped,
         // which is why the mapping tests run against the real AddZgwMapster configuration.
 

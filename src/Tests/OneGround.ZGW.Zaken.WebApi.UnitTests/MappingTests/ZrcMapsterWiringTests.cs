@@ -140,8 +140,8 @@ public class ZrcMapsterWiringTests
     /// <summary>
     /// Every register's type pairs must survive into the shared config. <c>AddZgwMapster</c> scans all of
     /// this service's registers into ONE <see cref="TypeAdapterConfig"/>, and Mapster's <c>NewConfig</c>
-    /// REPLACES an existing pair rather than merging into it — unlike AutoMapper, where duplicate
-    /// <c>CreateMap</c> calls for one type pair accumulate onto the same map.
+    /// REPLACES an existing pair rather than merging into it, so a second declaration of a pair discards the
+    /// first one's rules entirely.
     /// </summary>
     /// <remarks>
     /// Easy to do by accident: a later version's register may import an earlier version's contracts

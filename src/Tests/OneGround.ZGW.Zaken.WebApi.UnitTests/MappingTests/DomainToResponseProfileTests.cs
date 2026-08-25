@@ -489,9 +489,7 @@ public class DomainToResponseProfileTests : IDisposable
     {
         // One of the 8 PATCH-merge maps: AdresZaakObject -> AdresZaakObjectRequestDto assigns
         // ObjectIdentificatie via src.Adapt<AdresZaakObjectDto>(config), threading the local config
-        // explicitly (the AutoMapper source used an implicit whole-entity MapFrom(src => src), which
-        // does not compile/translate directly under Mapster). Asserts the nested DTO is populated, not
-        // silently null/empty.
+        // explicitly. Asserts the nested DTO is populated, not silently null/empty.
         var value = _fixture.Create<AdresZaakObject>();
 
         var result = _mapper.Map<AdresZaakObjectRequestDto>(value);

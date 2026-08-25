@@ -307,9 +307,9 @@ public class RequestToDomainProfileTests : IDisposable
         // controller receives it after a custom JSON converter resolves the concrete subtype).
         // MapsterMapper.IMapper.Map<TDestination>(object source) dispatches on source.GetType() and uses the
         // AdresZaakObjectRequestDto->ZaakObject config registered further down in RequestToDomainRegister.cs.
-        // If the base ZaakObjectRequestDto->ZaakObject config had an explicit Ignore/Map rule for Adres (like
-        // AutoMapper's .ForMember(dest.Adres, opt.Ignore()) base config it replaces), that rule would silently
-        // win over this derived rule for every source type in the hierarchy and result.Adres would be null.
+        // If the base ZaakObjectRequestDto->ZaakObject config had an explicit Ignore/Map rule for Adres, that
+        // rule would silently win over this derived rule for every source type in the hierarchy and
+        // result.Adres would be null.
         ZaakObjectRequestDto request = new AdresZaakObjectRequestDto
         {
             Object = "https://example.test/objects/1",
@@ -497,8 +497,7 @@ public class RequestToDomainProfileTests : IDisposable
     {
         // Discriminates that KvKNummer (v1.5's new field) round-trips to the domain's KvkNummer despite the
         // casing difference, via NameMatchingStrategy.IgnoreCase (set globally by AddZgwMapster through the
-        // shared ZrcMapperTestHost, not by this class) - exactly like AutoMapper's case-insensitive convention
-        // in the source profile, which has no explicit ForMember for this field either.
+        // shared ZrcMapperTestHost, not by this class) - no register declares an explicit rule for this field.
         ZaakRolRequestDto request = new VestigingZaakRolRequestDto
         {
             Zaak = "https://example.test/zaken/1",

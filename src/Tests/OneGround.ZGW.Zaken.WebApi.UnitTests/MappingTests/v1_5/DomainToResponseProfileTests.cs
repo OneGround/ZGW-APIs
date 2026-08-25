@@ -173,10 +173,8 @@ public class DomainToResponseProfileTests : IDisposable
 
         // dest.Statussen IS a collection member, so the shared configuration's EmptyCollectionIfNull
         // destination transform applies on top of the register's null-returning .Map(...) lambda and
-        // substitutes an empty sequence. Both mappers behave this way for this member: the AutoMapper
-        // baseline substitutes empty through its AllowNullCollections=false default even for an explicitly
-        // computed null, and Mapster reaches the same result through the destination transform. Asserting
-        // null here would only hold under a bare TypeAdapterConfig, which is not what the service runs.
+        // substitutes an empty sequence. Asserting null here would only hold under a bare
+        // TypeAdapterConfig, which is not what the service runs.
         Assert.NotNull(result.Statussen);
         Assert.Empty(result.Statussen);
     }

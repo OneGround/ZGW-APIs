@@ -249,10 +249,9 @@ public class RequestToDomainProfileTests : IDisposable
         // The whole point of this test: `request` is declared and passed around as the BASE type
         // ZaakObjectRequestDto, but at runtime holds an AdresZaakObjectRequestDto instance (this mirrors
         // how a controller receives it after a custom JSON converter resolves the concrete subtype).
-        // AutoMapper needed .IncludeAllDerived() to dispatch on the runtime type here; Mapster's
-        // IMapper.Map<TDestination>(object source) does this by default, dispatching on source.GetType()
-        // and using the AdresZaakObjectRequestDto->ZaakObject config registered further down. If that
-        // dispatch stopped working, result.Adres below would be null (only the base config would run).
+        // IMapper.Map<TDestination>(object source) dispatches on source.GetType() by default and uses the
+        // AdresZaakObjectRequestDto->ZaakObject config registered further down. If that dispatch stopped
+        // working, result.Adres below would be null (only the base config would run).
         ZaakObjectRequestDto request = new AdresZaakObjectRequestDto
         {
             Object = "https://example.test/objects/1",
