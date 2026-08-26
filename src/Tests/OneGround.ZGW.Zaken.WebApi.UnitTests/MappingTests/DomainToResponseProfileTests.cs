@@ -3,66 +3,46 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
-using Moq;
+using MapsterMapper;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Common.Web.Mapping.ValueResolvers;
-using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.DataAccess;
+using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
+using OneGround.ZGW.Common.Helpers;
+using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
+using OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
-using OneGround.ZGW.Zaken.Web.MappingProfiles.v1;
 using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
-public class DomainToResponseProfileTests
+public class DomainToResponseProfileTests : IDisposable
 {
+    /// <summary>
+    /// RvIG omnummertabel, Test-BSN 1240 — reserved for testing and never issued to a person, so it is
+    /// safe to commit. An invented BSN-shaped value is not: a made-up nine-digit number that happens to
+    /// pass the elfproef is indistinguishable from a living citizen's BSN.
+    /// </summary>
+    private const string TestBsn = "999993653";
+
     private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
-    private readonly Mock<IEntityUriService> _mockedUriService = new Mock<IEntityUriService>();
+    private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
     public DomainToResponseProfileTests()
     {
         _fixture.Register<DateOnly>(() => DateOnly.FromDateTime(DateTime.UtcNow));
-
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
-
-        _mockedUriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => e.Url);
-
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(UrlResolver))
-            {
-                return new UrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlResolver))
-            {
-                return new MemberUrlResolver(_mockedUriService.Object);
-            }
-            if (t == typeof(MemberUrlsResolver))
-            {
-                return new MemberUrlsResolver(_mockedUriService.Object);
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakEigenschap_Maps_To_ZaakEigenschapResponseDto()
@@ -72,9 +52,9 @@ public class DomainToResponseProfileTests
 
         Assert.Equal(value.Eigenschap, result.Eigenschap);
         Assert.Equal(value.Waarde, result.Waarde);
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.Naam, result.Naam);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -86,11 +66,11 @@ public class DomainToResponseProfileTests
         var value = _fixture.Create<ZaakStatus>();
         var result = _mapper.Map<ZaakStatusResponseDto>(value);
 
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.StatusType, result.StatusType);
         Assert.Equal(value.DatumStatusGezet.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"), result.DatumStatusGezet);
         Assert.Equal(value.StatusToelichting, result.StatusToelichting);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -120,7 +100,7 @@ public class DomainToResponseProfileTests
         var result = _mapper.Map<ZaakResponseDto>(value);
 
         Assert.Equal(value.Id.ToString(), result.Uuid);
-        Assert.All(value.Deelzaken, c => Assert.Contains(c.Url, result.Deelzaken));
+        Assert.All(value.Deelzaken, c => Assert.Contains(ZrcMapperTestHost.Resolved(c), result.Deelzaken));
         Assert.Equal(value.Opschorting.Indicatie, result.Opschorting.Indicatie);
         Assert.Equal(value.Opschorting.Reden, result.Opschorting.Reden);
         Assert.Equal(value.Verlenging.Duur.ToString(), result.Verlenging.Duur);
@@ -140,9 +120,9 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.Archiefstatus.ToString(), result.Archiefstatus);
         Assert.Equal(value.BetalingsIndicatie.ToString(), result.Betalingsindicatie);
         Assert.Equal(value.VertrouwelijkheidAanduiding.ToString(), result.Vertrouwelijkheidaanduiding);
-        Assert.All(value.ZaakEigenschappen, c => Assert.Contains(c.Url, result.Eigenschappen));
-        Assert.Equal(value.ZaakStatussen.OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault().Url, result.Status);
-        Assert.Equal(value.Resultaat.Url, result.Resultaat);
+        Assert.All(value.ZaakEigenschappen, c => Assert.Contains(ZrcMapperTestHost.Resolved(c), result.Eigenschappen));
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.ZaakStatussen.OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault()), result.Status);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Resultaat), result.Resultaat);
 
         // common ZaakResponseDto and ZaakRequestDto fields
         Assert.Equal(value.Identificatie, result.Identificatie);
@@ -188,7 +168,59 @@ public class DomainToResponseProfileTests
         var value = _fixture.Create<Zaak>();
         var result = _mapper.Map<ZaakResponseDto>(value);
 
-        Assert.Equal(value.Hoofdzaak.Url, result.Hoofdzaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Hoofdzaak), result.Hoofdzaak);
+    }
+
+    [Fact]
+    public void Zaak_with_null_ZaakStatussen_maps_Status_to_null()
+    {
+        // The Status null fold: unlike the general EmptyCollectionIfNull destination transform
+        // (which applies to collection-typed members), dest.Status is a plain string (scalar), so a
+        // null ZaakStatussen navigation must fold to a null Status, not throw or fall back to some
+        // default. Verified by deliberate breakage: temporarily change the null-check in
+        // DomainToResponseRegister's Zaak->ZaakResponseDto Status map to unconditionally call
+        // MapsterUrlResolver.ResolveUrl(src.ZaakStatussen.OrderByDescending(...).FirstOrDefault())
+        // and this test throws a NullReferenceException instead of passing.
+        _fixture.Customize<Zaak>(c => c.Without(p => p.Zaakgeometrie).Without(p => p.ZaakStatussen));
+        var value = _fixture.Create<Zaak>();
+
+        var result = _mapper.Map<ZaakResponseDto>(value);
+
+        Assert.Null(result.Status);
+    }
+
+    [Fact]
+    public void Zaak_with_multiple_ZaakStatussen_maps_Status_to_latest_by_DatumStatusGezet()
+    {
+        // Confirms the Status map's OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault()
+        // picks the LATEST status, not merely "any" status. Verified by deliberate breakage: change
+        // OrderByDescending to OrderBy (or drop the ordering) in DomainToResponseRegister and
+        // re-run - this test then asserts against the oldest status's URL and fails.
+        var zaak = new Zaak { Id = Guid.NewGuid() };
+        var oldest = new ZaakStatus
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            DatumStatusGezet = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        };
+        var latest = new ZaakStatus
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            DatumStatusGezet = new DateTime(2023, 6, 15, 0, 0, 0, DateTimeKind.Utc),
+        };
+        var middle = new ZaakStatus
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            DatumStatusGezet = new DateTime(2021, 3, 3, 0, 0, 0, DateTimeKind.Utc),
+        };
+        zaak.ZaakStatussen = [oldest, latest, middle];
+
+        var result = _mapper.Map<ZaakResponseDto>(zaak);
+
+        Assert.Equal(ZrcMapperTestHost.Resolved(latest), result.Status);
+        Assert.NotEqual(ZrcMapperTestHost.Resolved(oldest), result.Status);
     }
 
     [Fact]
@@ -208,6 +240,11 @@ public class DomainToResponseProfileTests
         var result = _mapper.Map<RelevanteAndereZaakDto>(value);
 
         Assert.Equal(value.AardRelatie, result.AardRelatie);
+        // Intentionally NOT wrapped in ZrcMapperTestHost.Resolved(...), unlike every other Url assertion in
+        // this file. This pair is a bare NewConfig with no resolver rule, so dest.Url really is a same-name
+        // convention copy of a plain string column - the raw value is the correct expectation here. It doubles
+        // as the control proving the host's prefixing mock discriminates resolver-backed members from
+        // convention copies, rather than uniformly demanding a prefix. Do not "align" it with the others.
         Assert.Equal(value.Url, result.Url);
     }
 
@@ -219,7 +256,7 @@ public class DomainToResponseProfileTests
         var value = _fixture.Create<ZaakRol>();
         var result = _mapper.Map<ZaakRolResponseDto>(value);
 
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
         Assert.Equal(value.Registratiedatum.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.Registratiedatum);
         Assert.Equal(value.Omschrijving, result.Omschrijving);
@@ -337,9 +374,106 @@ public class DomainToResponseProfileTests
         Assert.Equal(obj.ObjectType.ToString(), result.ObjectType);
         Assert.Equal(obj.ObjectTypeOverige, result.ObjectTypeOverige);
         Assert.Equal(obj.RelatieOmschrijving, result.RelatieOmschrijving);
-        Assert.Equal(obj.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(obj), result.Url);
         Assert.Equal(obj.Id, result.Uuid);
-        Assert.Equal(obj.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(obj.Zaak), result.Zaak);
+    }
+
+    [Fact]
+    public void ZaakObject_with_ObjectType_adres_Maps_To_AdresZaakObjectResponseDto_via_local_config()
+    {
+        // The Shape-B ConstructUsing factory (CreateZaakObjectResponseDto) recursively adapts the
+        // nested Adres entity via source.Adres.Adapt<AdresZaakObjectDto>(config), passing the LOCAL
+        // config explicitly rather than calling a bare .Adapt<T>() (which would resolve against
+        // Mapster's ambient TypeAdapterConfig.GlobalSettings instead). This asserts the derived
+        // response type is selected and its ObjectIdentificatie is actually populated by that nested
+        // map, proving the recursive call reached the local config's AdresZaakObject->AdresZaakObjectDto
+        // rule (not merely returning a default/empty instance).
+        var zaak = new Zaak { Id = Guid.NewGuid() };
+        var adres = new AdresZaakObject
+        {
+            Id = Guid.NewGuid(),
+            Identificatie = "adres-identificatie",
+            WplWoonplaatsNaam = "Enschede",
+            GorOpenbareRuimteNaam = "Hoofdstraat",
+            Huisnummer = 42,
+        };
+        var source = new ZaakObject
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            ObjectType = ObjectType.adres,
+            Adres = adres,
+        };
+
+        var result = _mapper.Map<ZaakObjectResponseDto>(source);
+
+        var adresResult = Assert.IsType<AdresZaakObjectResponseDto>(result);
+        Assert.NotNull(adresResult.ObjectIdentificatie);
+        Assert.Equal(adres.Identificatie, adresResult.ObjectIdentificatie.Identificatie);
+        Assert.Equal(adres.WplWoonplaatsNaam, adresResult.ObjectIdentificatie.WplWoonplaatsNaam);
+        Assert.Equal(adres.GorOpenbareRuimteNaam, adresResult.ObjectIdentificatie.GorOpenbareRuimteNaam);
+        Assert.Equal(adres.Huisnummer, adresResult.ObjectIdentificatie.Huisnummer);
+    }
+
+    [Fact]
+    public void ZaakObject_with_ObjectType_overige_Maps_ObjectIdentificatie_via_local_JToken_rule()
+    {
+        // Critical proof that the recursive Adapt call inside the factory uses THIS local config, not
+        // GlobalSettings: OverigeZaakObject->OverigeZaakObjectDto has a local-only rule
+        // (.Map(dest.OverigeData, src => JToken.Parse(src.OverigeData))) converting the raw JSON
+        // string column into a JToken. If the factory's nested call fell back to GlobalSettings
+        // (which has no knowledge of this rule), OverigeData would map wrong (e.g. stay a raw string,
+        // fail to convert, or throw) instead of a correctly-parsed JToken.
+        var zaak = new Zaak { Id = Guid.NewGuid() };
+        var overige = new OverigeZaakObject { Id = Guid.NewGuid(), OverigeData = "{\"key\":\"value\",\"count\":3}" };
+        var source = new ZaakObject
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            ObjectType = ObjectType.overige,
+            Overige = overige,
+        };
+
+        var result = _mapper.Map<ZaakObjectResponseDto>(source);
+
+        var overigeResult = Assert.IsType<OverigeZaakObjectResponseDto>(result);
+        Assert.NotNull(overigeResult.ObjectIdentificatie);
+        Assert.Equal(JToken.Parse(overige.OverigeData), overigeResult.ObjectIdentificatie.OverigeData);
+        Assert.Equal("value", overigeResult.ObjectIdentificatie.OverigeData["key"].ToString());
+    }
+
+    [Fact]
+    public void ZaakRol_with_BetrokkeneType_natuurlijk_persoon_Maps_BetrokkeneIdentificatie_via_local_config()
+    {
+        // Mirrors the ZaakObject factory tests above for the other Shape-B ConstructUsing factory
+        // (CreateZaakRolResponseDto). NatuurlijkPersoonZaakRol->NatuurlijkPersoonZaakRolDto has its own
+        // local-only rule mapping InpBsn from InpBsnEncrypted (not a same-name convention match) -
+        // asserting it here proves the nested source.NatuurlijkPersoon.Adapt<T>(config) call resolved
+        // against the local config rather than GlobalSettings.
+        var zaak = new Zaak { Id = Guid.NewGuid() };
+        var natuurlijkPersoon = new NatuurlijkPersoonZaakRol
+        {
+            Id = Guid.NewGuid(),
+            InpBsnEncrypted = TestBsn,
+            Geslachtsnaam = "Jansen",
+        };
+        var source = new ZaakRol
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            BetrokkeneType = BetrokkeneType.natuurlijk_persoon,
+            NatuurlijkPersoon = natuurlijkPersoon,
+            Roltoelichting = "toelichting",
+            Omschrijving = "omschrijving",
+        };
+
+        var result = _mapper.Map<ZaakRolResponseDto>(source);
+
+        var natuurlijkPersoonResult = Assert.IsType<NatuurlijkPersoonZaakRolResponseDto>(result);
+        Assert.NotNull(natuurlijkPersoonResult.BetrokkeneIdentificatie);
+        Assert.Equal(natuurlijkPersoon.InpBsnEncrypted, natuurlijkPersoonResult.BetrokkeneIdentificatie.InpBsn);
+        Assert.Equal(natuurlijkPersoon.Geslachtsnaam, natuurlijkPersoonResult.BetrokkeneIdentificatie.Geslachtsnaam);
     }
 
     [Fact]
@@ -355,6 +489,39 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.Identificatie, result.Identificatie);
         Assert.Equal(value.Postcode, result.Postcode);
         Assert.Equal(value.WplWoonplaatsNaam, result.WplWoonplaatsNaam);
+    }
+
+    [Fact]
+    public void AdresZaakObject_Maps_To_AdresZaakObjectRequestDto_with_ObjectIdentificatie_via_local_config()
+    {
+        // One of the 8 PATCH-merge maps: AdresZaakObject -> AdresZaakObjectRequestDto assigns
+        // ObjectIdentificatie via src.Adapt<AdresZaakObjectDto>(config), threading the local config
+        // explicitly. Asserts the nested DTO is populated, not silently null/empty.
+        var value = _fixture.Create<AdresZaakObject>();
+
+        var result = _mapper.Map<AdresZaakObjectRequestDto>(value);
+
+        Assert.NotNull(result.ObjectIdentificatie);
+        Assert.Equal(value.Identificatie, result.ObjectIdentificatie.Identificatie);
+        Assert.Equal(value.WplWoonplaatsNaam, result.ObjectIdentificatie.WplWoonplaatsNaam);
+        Assert.Equal(value.GorOpenbareRuimteNaam, result.ObjectIdentificatie.GorOpenbareRuimteNaam);
+        Assert.Equal(value.Huisnummer, result.ObjectIdentificatie.Huisnummer);
+    }
+
+    [Fact]
+    public void OverigeZaakObject_Maps_To_OverigeZaakObjectRequestDto_with_ObjectIdentificatie_via_local_config()
+    {
+        // Second of the 8 PATCH-merge maps, and the more discriminating of the two: OverigeZaakObject's
+        // nested map relies on the local JToken.Parse(...) rule (same one exercised by the response-side
+        // factory test above) - a fallback to GlobalSettings here would produce a wrong/empty OverigeData.
+        var value = _fixture.Create<OverigeZaakObject>();
+        value.OverigeData = "{\"foo\":\"bar\"}";
+
+        var result = _mapper.Map<OverigeZaakObjectRequestDto>(value);
+
+        Assert.NotNull(result.ObjectIdentificatie);
+        Assert.Equal(JToken.Parse(value.OverigeData), result.ObjectIdentificatie.OverigeData);
+        Assert.Equal("bar", result.ObjectIdentificatie.OverigeData["foo"].ToString());
     }
 
     [Fact]
@@ -431,7 +598,9 @@ public class DomainToResponseProfileTests
     [Fact]
     public void ZaakInformatieObject_Maps_To_ZaakInformatieObjectResponseDto()
     {
-        _fixture.Customize<ZaakInformatieObject>(c => c.With(p => p.RegistratieDatum, DateTime.UtcNow));
+        _fixture.Customize<ZaakInformatieObject>(c =>
+            c.With(p => p.RegistratieDatum, DateTime.UtcNow).With(p => p.AardRelatieWeergave, AardRelatieWeergave.hoort_bij_omgekeerd_kent)
+        );
 
         var value = _fixture.Create<ZaakInformatieObject>();
         var result = _mapper.Map<ZaakInformatieObjectResponseDto>(value);
@@ -440,9 +609,34 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.InformatieObject, result.InformatieObject);
         Assert.Equal(value.RegistratieDatum.ToString("yyyy-MM-ddTHH:mm:ssZ"), result.RegistratieDatum);
         Assert.Equal(value.Titel, result.Titel);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
+        Assert.Equal("Hoort bij, omgekeerd: kent", result.AardRelatieWeergave);
+    }
+
+    [Fact]
+    public void AardRelatieWeergave_hoort_bij_omgekeerd_kent_Maps_To_expected_string()
+    {
+        _fixture.Customize<ZaakInformatieObject>(c => c.With(p => p.AardRelatieWeergave, AardRelatieWeergave.hoort_bij_omgekeerd_kent));
+        var value = _fixture.Create<ZaakInformatieObject>();
+
+        var result = _mapper.Map<ZaakInformatieObjectResponseDto>(value);
+
+        Assert.Equal("Hoort bij, omgekeerd: kent", result.AardRelatieWeergave);
+    }
+
+    [Fact]
+    public void AardRelatieWeergave_legt_vast_omgekeerd_kan_vastgelegd_zijn_als_Maps_To_expected_string()
+    {
+        _fixture.Customize<ZaakInformatieObject>(c =>
+            c.With(p => p.AardRelatieWeergave, AardRelatieWeergave.legt_vast_omgekeerd_kan_vastgelegd_zijn_als)
+        );
+        var value = _fixture.Create<ZaakInformatieObject>();
+
+        var result = _mapper.Map<ZaakInformatieObjectResponseDto>(value);
+
+        Assert.Equal("Legt vast, omgekeerd: kan vastgelegd zijn als", result.AardRelatieWeergave);
     }
 
     [Fact]
@@ -451,7 +645,7 @@ public class DomainToResponseProfileTests
         var value = _fixture.Create<ZaakResultaat>();
         var result = _mapper.Map<ZaakResultaatRequestDto>(value);
 
-        Assert.Equal(value.Zaak.Url, result.Zaak);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
         Assert.Equal(value.ResultaatType, result.ResultaatType);
         Assert.Equal(value.Toelichting, result.Toelichting);
     }
@@ -463,7 +657,7 @@ public class DomainToResponseProfileTests
         var result = _mapper.Map<ZaakBesluitResponseDto>(value);
 
         Assert.Equal(value.Besluit, result.Besluit);
-        Assert.Equal(value.Url, result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
         Assert.Equal(value.Id.ToString(), result.Uuid);
     }
 
@@ -480,6 +674,47 @@ public class DomainToResponseProfileTests
         Assert.Equal(value.Kanaal, result.Kanaal);
         Assert.Equal(value.Onderwerp, result.Onderwerp);
         Assert.Equal(value.Toelichting, result.Toelichting);
+        // Both resolver-backed on this pair, and previously unasserted - the only resolver-backed pair in this
+        // file with no url coverage at all, which is why retargeting onto the prefixing host forced no change
+        // here and the gap stayed invisible.
+        Assert.Equal(ZrcMapperTestHost.Resolved(value), result.Url);
+        Assert.Equal(ZrcMapperTestHost.Resolved(value.Zaak), result.Zaak);
+    }
+
+    [Fact]
+    public void AuditTrailRegel_Maps_To_AuditTrailRegelDto()
+    {
+        // AutoFixture's random strings for Oud/Nieuw won't deserialize as JSON, so pin them to
+        // valid JSON explicitly. This exercises ConvertWijzigingenToDto for real (a broken port
+        // would either throw during mapping or leave Wijzigingen.Oud/.Nieuw null).
+        var value = _fixture
+            .Build<AuditTrailRegel>()
+            .With(a => a.Oud, "{\"naam\":\"oud-waarde\"}")
+            .With(a => a.Nieuw, "{\"naam\":\"nieuw-waarde\"}")
+            .Create();
+
+        var result = _mapper.Map<AuditTrailRegelDto>(value);
+
+        Assert.Equal(value.Id.ToString(), result.Uuid);
+        Assert.Equal(ProfileHelper.StringDateFromDateTime(value.AanmaakDatum, true), result.AanmaakDatum);
+        // dynamic access into the deserialized payload proves ConvertWijzigingenToDto actually ran
+        // JsonConvert.DeserializeObject rather than just assigning the raw JSON string through -- the
+        // latter would still be non-null (Assert.NotNull alone wouldn't catch it) but ".naam" wouldn't
+        // resolve to the pinned value below.
+        Assert.Equal("oud-waarde", ((dynamic)result.Wijzigingen.Oud).naam.ToString());
+        Assert.Equal("nieuw-waarde", ((dynamic)result.Wijzigingen.Nieuw).naam.ToString());
+    }
+
+    [Fact]
+    public void AuditTrailRegel_with_null_or_empty_Oud_and_Nieuw_Maps_Wijzigingen_fields_to_null()
+    {
+        var value = _fixture.Build<AuditTrailRegel>().With(a => a.Oud, (string)null).With(a => a.Nieuw, "").Create();
+
+        var result = _mapper.Map<AuditTrailRegelDto>(value);
+
+        Assert.NotNull(result.Wijzigingen);
+        Assert.Null(result.Wijzigingen.Oud);
+        Assert.Null(result.Wijzigingen.Nieuw);
     }
 
     public static IEnumerable<object[]> OverigeDataJsonValues =>

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -43,12 +42,16 @@ public class ZaakResultatenController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakResultatenController(
         ILogger<ZaakResultatenController> logger,
         IMediator mediator,
-        IMapper mapper,
-        IRequestMerger requestMerger,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -56,6 +59,8 @@ public class ZaakResultatenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
+        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -81,8 +86,8 @@ public class ZaakResultatenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakResultatenPageSize));
-        var filter = _mapper.Map<GetAllZaakResultatenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakResultatenPageSize));
+        var filter = _mapsterMapper.Map<GetAllZaakResultatenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakResultatenQuery { GetAllZaakResultatenFilter = filter, Pagination = pagination });
 
@@ -91,7 +96,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var response = _mapper.Map<List<ZaakResultaatResponseDto>>(result.Result.PageResult);
+        var response = _mapsterMapper.Map<List<ZaakResultaatResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, response, result.Result.Count);
 
@@ -138,7 +143,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakResultaatResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakResultaatResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -172,7 +177,7 @@ public class ZaakResultatenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), request);
 
-        ZaakResultaat zaakResultaat = _mapper.Map<ZaakResultaat>(request);
+        ZaakResultaat zaakResultaat = _mapsterMapper.Map<ZaakResultaat>(request);
 
         var result = await _mediator.Send(new CreateZaakResultaatCommand { ZaakResultaat = zaakResultaat, ZaakUrl = request.Zaak });
 
@@ -191,7 +196,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakResultaatResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakResultaatResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -215,7 +220,7 @@ public class ZaakResultatenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), request, id);
 
-        ZaakResultaat zaakResultaat = _mapper.Map<ZaakResultaat>(request);
+        ZaakResultaat zaakResultaat = _mapsterMapper.Map<ZaakResultaat>(request);
 
         var result = await _mediator.Send(
             new UpdateZaakResultaatCommand
@@ -241,7 +246,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<ZaakResultaatResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakResultaatResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -277,17 +282,17 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakResultaatRequestDto mergedZaakResultaatRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakResultaatRequestDto, ZaakResultaat>(
-            resultGet.Result,
-            partialZaakResultaatRequest
-        );
+        ZaakResultaatRequestDto mergedZaakResultaatRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+            ZaakResultaatRequestDto,
+            ZaakResultaat
+        >(resultGet.Result, partialZaakResultaatRequest);
 
         if (!_validatorService.IsValid(mergedZaakResultaatRequest, out var validationResult))
         {
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakResultaat mergedZaakResultaat = _mapper.Map<ZaakResultaat>(mergedZaakResultaatRequest);
+        ZaakResultaat mergedZaakResultaat = _mapsterMapper.Map<ZaakResultaat>(mergedZaakResultaatRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateZaakResultaatCommand
@@ -309,7 +314,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakResultaatResponse = _mapper.Map<ZaakResultaatResponseDto>(resultUpd.Result);
+        var zaakResultaatResponse = _mapsterMapper.Map<ZaakResultaatResponseDto>(resultUpd.Result);
 
         return Ok(zaakResultaatResponse);
     }

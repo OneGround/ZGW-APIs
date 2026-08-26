@@ -397,6 +397,140 @@ public class MapsterSeamHealthTests
         Assert.Equal(new[] { "https://example.test/a", "https://example.test/b" }, result.Items);
     }
 
+    private sealed class RootShapeProbeEntity : IUrlEntity
+    {
+        public string Url { get; set; }
+    }
+
+    private sealed class RootShapeProbeDto
+    {
+        public string Url { get; set; }
+    }
+
+    // A per-element resolver: each element's Url member calls MapsterUrlResolver.ResolveUrl,
+    // which reads the DI-registered IEntityUriService off the ambient MapContext.Current. This
+    // is the shape every real register uses for a single-entity->url member (e.g. Url on a
+    // response DTO); the point of the facts below is what happens when the SOURCE being mapped
+    // is a collection and the DESTINATION ROOT (not a member) is a collection type.
+    public sealed class RootShapeProbeRegister : IRegister
+    {
+        public void Register(TypeAdapterConfig config) =>
+            config.NewConfig<RootShapeProbeEntity, RootShapeProbeDto>().Map(d => d.Url, s => MapsterUrlResolver.ResolveUrl(s));
+    }
+
+    // ServiceMapper (registered scoped by AddZgwMapster) stashes the request's IServiceProvider on
+    // MapContext.Current only for the duration of a single Map() call, then tears it down when
+    // Map() returns. MapsterUrlResolver.ResolveUrl reads that ambient context to resolve
+    // IEntityUriService. When the DESTINATION ROOT is List<T> (or IList<T>/ICollection<T> — see
+    // below), Mapster materializes the whole list eagerly, inside Map(), while the context is
+    // still live, so every element's resolver call succeeds before Map() returns. Asserting the
+    // resolved urls (not just Count) matters: a broken resolver that silently returned null per
+    // element would still leave the count intact.
+    [Fact]
+    public void List_destination_root_resolves_every_elements_url()
+    {
+        var services = new ServiceCollection();
+        var uriService = new Mock<IEntityUriService>();
+        uriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => $"https://example.test/{e.Url}");
+        services.AddSingleton(uriService.Object);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var src = new List<RootShapeProbeEntity>
+        {
+            new() { Url = "a" },
+            new() { Url = "b" },
+        };
+
+        var result = mapper.Map<List<RootShapeProbeDto>>(src);
+
+        Assert.Equal(new[] { "https://example.test/a", "https://example.test/b" }, result.Select(d => d.Url));
+    }
+
+    // The bug this pins: when the DESTINATION ROOT is IEnumerable<T> (as opposed to List<T>,
+    // IList<T> or ICollection<T> — all of which materialize eagerly, see the facts below), Mapster
+    // returns a LAZY Select projection instead of a materialized collection. Map() itself returns
+    // successfully — no element has been projected yet. The per-element resolver calls only run
+    // when the CALLER enumerates the result, which in production happens after the request's
+    // ServiceMapper.Map() call (and its ambient MapContext.Current) has already gone out of scope,
+    // so IEntityUriService can no longer be resolved. This fails ONLY for a non-empty source: an
+    // empty result enumerates zero elements and never touches the resolver, so it looks healthy in
+    // testing and in any production request that happens to return no rows.
+    //
+    // The two assertions below are deliberately split so the test proves ORDERING, not just that
+    // something somewhere throws: Map() must complete without throwing (matching what happens in
+    // production, where the scope looks fine until enumeration), and only the subsequent
+    // enumeration — performed immediately, still inside this DI scope, because the ambient context
+    // is torn down when Map() returns, not when the scope is disposed — must throw.
+    //
+    // If a future Mapster release starts materializing IEnumerable<T> destination roots eagerly,
+    // this fact will fail (the ToList() call will no longer throw). That failure is the signal to
+    // revisit this constraint — e.g. re-check whether IEnumerable<T> can be dropped from the list of
+    // unsafe destination roots documented at the seam — not a reason to delete or weaken the fact.
+    [Fact]
+    public void IEnumerable_destination_root_defers_the_per_element_resolver_and_throws_on_enumeration()
+    {
+        var services = new ServiceCollection();
+        var uriService = new Mock<IEntityUriService>();
+        uriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => $"https://example.test/{e.Url}");
+        services.AddSingleton(uriService.Object);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var src = new List<RootShapeProbeEntity>
+        {
+            new() { Url = "a" },
+            new() { Url = "b" },
+        };
+
+        // Map() itself must succeed — the destination root is IEnumerable<T>, so this only builds
+        // the lazy projection and never touches the resolver.
+        var result = mapper.Map<IEnumerable<RootShapeProbeDto>>(src);
+
+        // Enumerating — still inside the same DI scope, immediately after Map() returns — is what
+        // actually runs the per-element resolver, and it now runs after ServiceMapper has already
+        // torn down MapContext.Current for this Map() call.
+        var exception = Record.Exception(() => result.ToList());
+
+        Assert.NotNull(exception);
+        Assert.Contains("ServiceAdapter", exception.Message);
+    }
+
+    // Pins the empirically-established bound: List<T> (covered above), IList<T> and ICollection<T>
+    // destination roots are ALL materialized eagerly, same as List<T> — only IEnumerable<T> defers.
+    // This exists so a future reader does not over-generalize the fact above to "every
+    // interface-typed destination root is unsafe" and start wrapping IList<T>/ICollection<T> return
+    // types in defensive ToList() calls that they don't need.
+    [Fact]
+    public void IList_and_ICollection_destination_roots_are_materialized_and_resolve_every_elements_url()
+    {
+        var services = new ServiceCollection();
+        var uriService = new Mock<IEntityUriService>();
+        uriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(e => $"https://example.test/{e.Url}");
+        services.AddSingleton(uriService.Object);
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var src = new List<RootShapeProbeEntity>
+        {
+            new() { Url = "a" },
+            new() { Url = "b" },
+        };
+        var expected = new[] { "https://example.test/a", "https://example.test/b" };
+
+        IList<RootShapeProbeDto> listResult = mapper.Map<IList<RootShapeProbeDto>>(src);
+        ICollection<RootShapeProbeDto> collectionResult = mapper.Map<ICollection<RootShapeProbeDto>>(src);
+
+        Assert.Equal(expected, listResult.Select(d => d.Url));
+        Assert.Equal(expected, collectionResult.Select(d => d.Url));
+    }
+
     private sealed class InterfaceTypedEntity : IBaseEntity
     {
         public Guid Id { get; set; }
@@ -413,6 +547,115 @@ public class MapsterSeamHealthTests
     // depends on Mapster resolving the map from source.GetType(), not the declared type. If it
     // resolved on IBaseEntity there would be no registered map and Weergave would come back null,
     // which is why this asserts the custom-mapped member rather than just "not null".
+    // The BOUNDARY of the parity pinned by Null_source_collection_maps_to_empty_not_null above, asserted
+    // as a contrast in one fact because the member case on its own reads as if the parity were global.
+    // EmptyCollectionIfNull is a destination-MEMBER transform, so it never runs for a destination ROOT:
+    // mapper.Map<List<T>>(null) returns null, where AutoMapper returned an empty list (measured against
+    // AutoMapper 14.0.0). This is the one documented place the AllowNullCollections parity does not hold,
+    // and it is why a caller must not dereference the result of a collection-root Map — every GetAll in
+    // the repo feeds it a materialised EF list, which is what keeps that safe today rather than luck.
+    [Fact]
+    public void Null_source_collection_ROOT_maps_to_null_unlike_a_member()
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        object nullSource = null;
+        var root = mapper.Map<List<NestedItemDto>>(nullSource);
+        var member = mapper.Map<CollectionDto>(new CollectionSource { Items = null });
+
+        Assert.Null(root);
+        Assert.NotNull(member.Items);
+        Assert.Empty(member.Items);
+    }
+
+    private sealed class GuardProbeInner
+    {
+        public string Value { get; set; }
+    }
+
+    private sealed class GuardProbeSource
+    {
+        public string Text { get; set; }
+        public GuardProbeInner Inner { get; set; }
+    }
+
+    private sealed class GuardProbeDto
+    {
+        public string ViaArgument { get; set; }
+        public string ViaReceiver { get; set; }
+        public string ViaPlainChain { get; set; }
+    }
+
+    /// <summary>Stands in for a raw parse (JToken.Parse, PeriodPattern.Parse, Guid.Parse): rejects null.</summary>
+    private static string Required(string value) => value ?? throw new ArgumentNullException(nameof(value));
+
+    // A plain member chain is null-guarded by BOTH mappers — the shape that needs no ternary. Pinned as
+    // the counterpart to the two facts below so the line between "guarded" and "not guarded" is on record
+    // rather than re-derived per service: it is the presence of a method call, not the depth of the chain.
+    [Fact]
+    public void A_plain_source_member_chain_is_null_guarded_like_AutoMapper()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaPlainChain, s => s.Inner.Value)
+            .Ignore(d => d.ViaArgument)
+            .Ignore(d => d.ViaReceiver);
+        var mapper = new Mapper(config);
+
+        var result = mapper.Map<GuardProbeDto>(new GuardProbeSource { Inner = null });
+
+        Assert.Null(result.ViaPlainChain);
+    }
+
+    // DIVERGENCE from AutoMapper, deliberately left unguarded — do not "fix" this by adding ternaries
+    // across the registers. AutoMapper rewrote a MapFrom expression with null-propagation and
+    // short-circuited the WHOLE expression to default when any source member in it was null, so the callee
+    // was never invoked; Mapster invokes it and passes the null in. Measured on AutoMapper 14.0.0 /
+    // Mapster 10.0.11: `MapFrom(s => Required(s.Text))` with Text null → AutoMapper null, Mapster throws.
+    //
+    // Whether that is a defect at a given site is TWO factors, not one: the callee's null behaviour AND
+    // whether the field is optional in that service's validator. OneGroundFluentValidationActionFilter is
+    // a global pre-action filter, so a missing REQUIRED field answers 400 before any controller Map runs —
+    // which is what makes the remaining raw-parse sites safe. Guarding blindly would instead clear a
+    // genuinely optional field. Audit new sites with: grep 'Parse(src\.' and 'src\.\w+\.\w+\('.
+    [Fact]
+    public void A_source_member_passed_as_a_method_ARGUMENT_is_not_null_guarded()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaArgument, s => Required(s.Text))
+            .Ignore(d => d.ViaReceiver)
+            .Ignore(d => d.ViaPlainChain);
+        var mapper = new Mapper(config);
+
+        Assert.Throws<ArgumentNullException>(() => mapper.Map<GuardProbeDto>(new GuardProbeSource { Text = null }));
+    }
+
+    // The other half of the same divergence, and the half that was missed once: AutoMapper's
+    // null-propagation covered the method RECEIVER too, not just arguments. `MapFrom(s => s.Text.TrimEnd())`
+    // with Text null returned null on AutoMapper and throws NullReferenceException on Mapster. Recorded
+    // separately because "arguments" alone reads as if `src.A.Method()` were parity, which it is not for a
+    // reference-typed A. (For a value type or Nullable<T> receiver neither mapper throws.)
+    [Fact]
+    public void A_source_member_used_as_a_method_RECEIVER_is_not_null_guarded_either()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaReceiver, s => s.Text.TrimEnd('/'))
+            .Ignore(d => d.ViaArgument)
+            .Ignore(d => d.ViaPlainChain);
+        var mapper = new Mapper(config);
+
+        Assert.Throws<NullReferenceException>(() => mapper.Map<GuardProbeDto>(new GuardProbeSource { Text = null }));
+    }
+
     [Fact]
     public void Map_of_an_interface_typed_source_resolves_on_the_runtime_type()
     {
