@@ -113,7 +113,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<IEnumerable<ZaakObject>, List<ZaakObjectResponseDto>>(result.Result.PageResult);
+        var zaakObjectResponse = _mapsterMapper.Map<List<ZaakObjectResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakObjectResponse, result.Result.Count);
 
@@ -160,7 +160,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -228,7 +228,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -269,7 +269,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(result.Result);
+        var zaakObjectResponse = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
 
         return Ok(zaakObjectResponse);
     }
@@ -462,7 +462,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<ZaakObject, ZaakObjectResponseDto>(resultUpd.Result);
+        var zaakObjectResponse = _mapsterMapper.Map<ZaakObjectResponseDto>(resultUpd.Result);
 
         return Ok(zaakObjectResponse);
     }

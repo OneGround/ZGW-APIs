@@ -65,16 +65,16 @@ public class DomainToResponseRegister : IRegister
                         : MapsterUrlResolver.ResolveUrl(src.ZaakStatussen.OrderByDescending(s => s.DatumStatusGezet).FirstOrDefault())
             )
             .Map(dest => dest.Toelichting, src => ProfileHelper.EmptyWhenNull(src.Toelichting))
-            .Map(dest => dest.BetalingsindicatieWeergave, src => ProfileHelper.EmptyWhenNull(src.BetalingsindicatieWeergave))
-            // Note: Betalingsindicatie/Vertrouwelijkheidaanduiding differ from their source's casing
-            // (BetalingsIndicatie/VertrouwelijkheidAanduiding). The shared configuration's global
-            // NameMatchingStrategy.IgnoreCase already resolves both by convention, so these two explicit
-            // .Map(...) calls are redundant but harmless: they name the same source member the convention
-            // would have picked, and keep the pair correct even under a configuration without that global
-            // default. Mirrors the identical note on RequestToDomainRegister's ZaakRequestDto->Zaak config
-            // for the reverse direction.
-            .Map(dest => dest.Betalingsindicatie, src => src.BetalingsIndicatie.ToString())
-            .Map(dest => dest.Vertrouwelijkheidaanduiding, src => src.VertrouwelijkheidAanduiding.ToString());
+            .Map(dest => dest.BetalingsindicatieWeergave, src => ProfileHelper.EmptyWhenNull(src.BetalingsindicatieWeergave));
+        // Note: Betalingsindicatie/Vertrouwelijkheidaanduiding are deliberately NOT mapped or ignored here.
+        // They differ from their source's casing (BetalingsIndicatie/VertrouwelijkheidAanduiding), which the
+        // shared configuration's global NameMatchingStrategy.IgnoreCase resolves; both sources are
+        // non-nullable enums, so the enum->string conversion yields the member NAME either way (pinned by
+        // MapsterSeamHealthTests.Enum_to_string_conversion_produces_the_name_not_the_numeric_value). Because
+        // that rule is registered globally by AddZgwMapster, a config built from this register alone would
+        // leave them silently unmapped - which is why the mapping tests take their mapper from the shared
+        // test host on the real configuration. Same rule as the RequestToDomainRegister note for the reverse
+        // direction, and as the v1.5 sibling registers.
 
         config.NewConfig<RelevanteAndereZaak, RelevanteAndereZaakDto>();
         config.NewConfig<ZaakKenmerk, ZaakKenmerkDto>();
@@ -91,10 +91,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.UiterlijkeEinddatumAfdoening, src => ProfileHelper.StringDateFromDate(src.UiterlijkeEinddatumAfdoening))
             .Map(dest => dest.Publicatiedatum, src => ProfileHelper.StringDateFromDate(src.Publicatiedatum))
             .Map(dest => dest.LaatsteBetaaldatum, src => ProfileHelper.StringDateFromDateTime(src.LaatsteBetaaldatum, true))
-            .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.StringDateFromDate(src.Archiefactiedatum))
-            // See identical note on the Zaak->ZaakResponseDto config above.
-            .Map(dest => dest.Betalingsindicatie, src => src.BetalingsIndicatie.ToString())
-            .Map(dest => dest.Vertrouwelijkheidaanduiding, src => src.VertrouwelijkheidAanduiding.ToString());
+            .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.StringDateFromDate(src.Archiefactiedatum));
+        // Betalingsindicatie/Vertrouwelijkheidaanduiding: see the note on the Zaak->ZaakResponseDto config above.
 
         //
         // 2. ZaakStatus

@@ -547,6 +547,115 @@ public class MapsterSeamHealthTests
     // depends on Mapster resolving the map from source.GetType(), not the declared type. If it
     // resolved on IBaseEntity there would be no registered map and Weergave would come back null,
     // which is why this asserts the custom-mapped member rather than just "not null".
+    // The BOUNDARY of the parity pinned by Null_source_collection_maps_to_empty_not_null above, asserted
+    // as a contrast in one fact because the member case on its own reads as if the parity were global.
+    // EmptyCollectionIfNull is a destination-MEMBER transform, so it never runs for a destination ROOT:
+    // mapper.Map<List<T>>(null) returns null, where AutoMapper returned an empty list (measured against
+    // AutoMapper 14.0.0). This is the one documented place the AllowNullCollections parity does not hold,
+    // and it is why a caller must not dereference the result of a collection-root Map — every GetAll in
+    // the repo feeds it a materialised EF list, which is what keeps that safe today rather than luck.
+    [Fact]
+    public void Null_source_collection_ROOT_maps_to_null_unlike_a_member()
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(MapsterSeamHealthTests).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        object nullSource = null;
+        var root = mapper.Map<List<NestedItemDto>>(nullSource);
+        var member = mapper.Map<CollectionDto>(new CollectionSource { Items = null });
+
+        Assert.Null(root);
+        Assert.NotNull(member.Items);
+        Assert.Empty(member.Items);
+    }
+
+    private sealed class GuardProbeInner
+    {
+        public string Value { get; set; }
+    }
+
+    private sealed class GuardProbeSource
+    {
+        public string Text { get; set; }
+        public GuardProbeInner Inner { get; set; }
+    }
+
+    private sealed class GuardProbeDto
+    {
+        public string ViaArgument { get; set; }
+        public string ViaReceiver { get; set; }
+        public string ViaPlainChain { get; set; }
+    }
+
+    /// <summary>Stands in for a raw parse (JToken.Parse, PeriodPattern.Parse, Guid.Parse): rejects null.</summary>
+    private static string Required(string value) => value ?? throw new ArgumentNullException(nameof(value));
+
+    // A plain member chain is null-guarded by BOTH mappers — the shape that needs no ternary. Pinned as
+    // the counterpart to the two facts below so the line between "guarded" and "not guarded" is on record
+    // rather than re-derived per service: it is the presence of a method call, not the depth of the chain.
+    [Fact]
+    public void A_plain_source_member_chain_is_null_guarded_like_AutoMapper()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaPlainChain, s => s.Inner.Value)
+            .Ignore(d => d.ViaArgument)
+            .Ignore(d => d.ViaReceiver);
+        var mapper = new Mapper(config);
+
+        var result = mapper.Map<GuardProbeDto>(new GuardProbeSource { Inner = null });
+
+        Assert.Null(result.ViaPlainChain);
+    }
+
+    // DIVERGENCE from AutoMapper, deliberately left unguarded — do not "fix" this by adding ternaries
+    // across the registers. AutoMapper rewrote a MapFrom expression with null-propagation and
+    // short-circuited the WHOLE expression to default when any source member in it was null, so the callee
+    // was never invoked; Mapster invokes it and passes the null in. Measured on AutoMapper 14.0.0 /
+    // Mapster 10.0.11: `MapFrom(s => Required(s.Text))` with Text null → AutoMapper null, Mapster throws.
+    //
+    // Whether that is a defect at a given site is TWO factors, not one: the callee's null behaviour AND
+    // whether the field is optional in that service's validator. OneGroundFluentValidationActionFilter is
+    // a global pre-action filter, so a missing REQUIRED field answers 400 before any controller Map runs —
+    // which is what makes the remaining raw-parse sites safe. Guarding blindly would instead clear a
+    // genuinely optional field. Audit new sites with: grep 'Parse(src\.' and 'src\.\w+\.\w+\('.
+    [Fact]
+    public void A_source_member_passed_as_a_method_ARGUMENT_is_not_null_guarded()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaArgument, s => Required(s.Text))
+            .Ignore(d => d.ViaReceiver)
+            .Ignore(d => d.ViaPlainChain);
+        var mapper = new Mapper(config);
+
+        Assert.Throws<ArgumentNullException>(() => mapper.Map<GuardProbeDto>(new GuardProbeSource { Text = null }));
+    }
+
+    // The other half of the same divergence, and the half that was missed once: AutoMapper's
+    // null-propagation covered the method RECEIVER too, not just arguments. `MapFrom(s => s.Text.TrimEnd())`
+    // with Text null returned null on AutoMapper and throws NullReferenceException on Mapster. Recorded
+    // separately because "arguments" alone reads as if `src.A.Method()` were parity, which it is not for a
+    // reference-typed A. (For a value type or Nullable<T> receiver neither mapper throws.)
+    [Fact]
+    public void A_source_member_used_as_a_method_RECEIVER_is_not_null_guarded_either()
+    {
+        var config = new TypeAdapterConfig();
+        config
+            .NewConfig<GuardProbeSource, GuardProbeDto>()
+            .Map(d => d.ViaReceiver, s => s.Text.TrimEnd('/'))
+            .Ignore(d => d.ViaArgument)
+            .Ignore(d => d.ViaPlainChain);
+        var mapper = new Mapper(config);
+
+        Assert.Throws<NullReferenceException>(() => mapper.Map<GuardProbeDto>(new GuardProbeSource { Text = null }));
+    }
+
     [Fact]
     public void Map_of_an_interface_typed_source_resolves_on_the_runtime_type()
     {

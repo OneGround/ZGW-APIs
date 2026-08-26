@@ -288,30 +288,15 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.ObjectTypeOverige, src => src.ObjectTypeOverige)
             .Map(dest => dest.ObjectTypeOverigeDefinitie, src => src.ObjectTypeOverigeDefinitie) // Note: Supported in v1.2 only
             .Map(dest => dest.RelatieOmschrijving, src => src.RelatieOmschrijving);
-        // BASE-CONFIG SILENCE RULE - do not "complete" this config by ignoring the members below.
-        // Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject are
-        // deliberately NEITHER mapped NOR ignored here. MapsterMapper.IMapper.Map<TDestination>(object source)
-        // dispatches on source.GetType() at runtime and falls back to this base config when the runtime type
-        // has no config of its own - BUT ONLY as long as this base config stays silent about every member a
-        // derived config maps: an explicit Map/Ignore rule on the base config for a given member wins over ANY
-        // derived config's rule for that same member, for every source type in the hierarchy, silently
-        // discarding the derived rule. Adding an .Ignore here for one of these eight would therefore blank the
-        // identification object on every write through every subtype, with nothing throwing. Since
-        // ZaakObjectRequestDto (the base DTO) has no property matching Adres/Buurt/etc. by name anyway,
-        // omitting any rule for them here is safe (they simply stay unset when mapping the base type on its
-        // own) and is required for the derived per-object-type configs' own .Map(...) calls (further down this
-        // file) to actually take effect during runtime dispatch. The fact dedicated to this rule is
-        // ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation,
-        // which reads RuleMap structurally and names both the offending pair and the offending rule; its
-        // behavioural twin A_derived_case_object_map_still_produces_its_identification shows the resulting
-        // blank.
-
-        // Note on the eight derived XxxZaakObjectRequestDto->ZaakObject configs below: each maps its own
-        // subtype navigation and ignores the seven belonging to the other subtypes, since only one is ever
-        // populated. The ignores go on the DERIVED configs, never on the ZaakObjectRequestDto->ZaakObject base
-        // config above - a base-config rule for one of these members wins over every derived config's rule for
-        // that same member, for every source type in the hierarchy, which would blank the identification object
-        // on every write through every subtype.
+        // BASE-CONFIG SILENCE RULE - do not "complete" this config by ignoring
+        // Adres/Buurt/Pand/KadastraleOnroerendeZaak/Gemeente/TerreinGebouwdObject/Overige/WozWaardeObject.
+        // Stated in full on the identical ZaakObjectRequestDto->ZaakObject config in
+        // MappingProfiles/v1/RequestToDomainRegister.cs; in short, a base-config rule for a member wins over
+        // every derived config's rule for it, so an .Ignore here blanks the identification object on every
+        // write through every subtype with nothing throwing. Enforced by
+        // ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation.
+        // The eight derived XxxZaakObjectRequestDto->ZaakObject configs below therefore carry the ignores
+        // themselves, each mapping its own navigation and ignoring the other seven.
         config
             .NewConfig<AdresZaakObjectRequestDto, ZaakObject>()
             .Map(dest => dest.Adres, src => src.ObjectIdentificatie)

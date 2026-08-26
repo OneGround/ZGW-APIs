@@ -13,6 +13,13 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests.v1_5;
 
 public class DomainToResponseProfileTests : IDisposable
 {
+    /// <summary>
+    /// RvIG omnummertabel, Test-BSN 1240 — reserved for testing and never issued to a person, so it is
+    /// safe to commit. An invented BSN-shaped value is not: a made-up nine-digit number that happens to
+    /// pass the elfproef is indistinguishable from a living citizen's BSN.
+    /// </summary>
+    private const string TestBsn = "999993653";
+
     private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 
@@ -138,7 +145,7 @@ public class DomainToResponseProfileTests : IDisposable
         var natuurlijkPersoon = new NatuurlijkPersoonZaakRol
         {
             Id = Guid.NewGuid(),
-            InpBsnEncrypted = "123456789",
+            InpBsnEncrypted = TestBsn,
             Geslachtsnaam = "Jansen",
         };
         var source = new ZaakRol

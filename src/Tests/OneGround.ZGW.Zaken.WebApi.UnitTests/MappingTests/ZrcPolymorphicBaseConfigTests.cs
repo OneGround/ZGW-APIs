@@ -23,51 +23,12 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 /// </summary>
 public class ZrcPolymorphicBaseConfigTests
 {
-    private static readonly string[] ZaakObjectSubtypeNavigations =
-    [
-        "Adres",
-        "Buurt",
-        "Pand",
-        "KadastraleOnroerendeZaak",
-        "Gemeente",
-        "TerreinGebouwdObject",
-        "Overige",
-        "WozWaardeObject",
-    ];
-
-    private static readonly string[] ZaakRolSubtypeNavigations =
-    [
-        "NatuurlijkPersoon",
-        "NietNatuurlijkPersoon",
-        "Vestiging",
-        "Medewerker",
-        "OrganisatorischeEenheid",
-    ];
-
     /// <summary>
-    /// The four polymorphic base pairs, in the same <c>source -&gt; destination</c> notation the
-    /// completeness gate's exclusion list uses. Both contract versions declare their own base request DTO
-    /// and both map onto the single data model type, so each destination appears twice.
+    /// The four polymorphic base pairs and their subtype navigations, taken from the single list
+    /// <see cref="ZrcPolymorphicBasePairs"/> that the completeness gate's per-member exclusion also reads —
+    /// the two facts only compose while they agree on the same members.
     /// </summary>
-    private static readonly (string Pair, string[] Navigations)[] BasePairs =
-    [
-        (
-            "OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.ZaakObjectRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakObject.ZaakObject",
-            ZaakObjectSubtypeNavigations
-        ),
-        (
-            "OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakObject.ZaakObjectRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakObject.ZaakObject",
-            ZaakObjectSubtypeNavigations
-        ),
-        (
-            "OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakRol.ZaakRolRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakRol.ZaakRol",
-            ZaakRolSubtypeNavigations
-        ),
-        (
-            "OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakRol.ZaakRolRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakRol.ZaakRol",
-            ZaakRolSubtypeNavigations
-        ),
-    ];
+    private static (string Pair, string[] Navigations)[] BasePairs => ZrcPolymorphicBasePairs.All;
 
     /// <summary>
     /// A base config must declare no rule at all — neither <c>.Map</c> nor <c>.Ignore</c> — for a member
@@ -77,8 +38,9 @@ public class ZrcPolymorphicBaseConfigTests
     /// <remarks>
     /// This is deliberately the inverse of the destination-member completeness gate in
     /// <see cref="ZrcMapsterCompileTests.Every_registered_type_pair_maps_or_ignores_every_destination_member"/>,
-    /// which would accept only the annotation this forbids. That is why those four pairs are excluded there
-    /// and asserted here instead — the exclusion is safe exactly as long as this fact holds.
+    /// which would accept only the annotation this forbids. That is why the gate excludes these subtype
+    /// navigations — and only these members, not the whole pair — and asserts them here instead; the
+    /// exclusion is safe exactly as long as this fact holds.
     /// <para>
     /// Observed failure mode: adding <c>.Ignore(dest =&gt; dest.Adres)</c> to the
     /// <c>ZaakObjectRequestDto -&gt; ZaakObject</c> base config fails with the offending pair AND the

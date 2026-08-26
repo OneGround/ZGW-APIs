@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mapster;
@@ -11,27 +12,58 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 public class ZrcMapsterCompileTests
 {
     /// <summary>
-    /// The polymorphic base pairs, excluded from the completeness gate below. Their destinations carry one
-    /// navigation per concrete subtype, and the base request DTO has no source member for any of them — so
-    /// the only annotation the gate would accept is an <c>.Ignore(...)</c> on the BASE config. That is
-    /// exactly what must not be added: a base-config rule for a member wins over every derived config's
-    /// rule for it, so ignoring the subtype navigations here silently blanks the identification object on
-    /// every write through every subtype. Measured on these registers: mapping an address case object
-    /// yields the identification with the base ignores absent, and null with them present.
-    /// <para>
-    /// The inverse fact —
-    /// <see cref="ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation"/>
-    /// — asserts these base configs declare no rule for a subtype navigation. That is what makes this
-    /// exclusion safe rather than a hole; the two halves only work as a pair.
-    /// </para>
+    /// Runs the same completeness gate over the four polymorphic base pairs, excluding their subtype
+    /// navigations — and ONLY those — so every other destination member on those pairs stays gated.
     /// </summary>
-    private static readonly string[] PolymorphicBasePairs =
-    [
-        "OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakObject.ZaakObjectRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakObject.ZaakObject",
-        "OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakObject.ZaakObjectRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakObject.ZaakObject",
-        "OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakRol.ZaakRolRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakRol.ZaakRol",
-        "OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakRol.ZaakRolRequestDto -> OneGround.ZGW.Zaken.DataModel.ZaakRol.ZaakRol",
-    ];
+    /// <remarks>
+    /// Those navigations cannot be annotated on the real config: the base request DTO has no source member
+    /// for any of them, so the only annotation the gate would accept is an <c>.Ignore(...)</c> on the BASE
+    /// config, and a base-config rule for a member wins over every derived config's rule for it — which
+    /// silently blanks the identification object on every write through every subtype. Measured on these
+    /// registers: mapping an address case object yields the identification with the base ignores absent,
+    /// and null with them present. The inverse fact,
+    /// <see cref="ZrcPolymorphicBaseConfigTests.The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation"/>,
+    /// forbids that rule on the real config; the two halves only work as a pair.
+    /// <para>
+    /// The exclusion is applied to a SEPARATE, throwaway config so it cannot reach production behaviour or
+    /// the pairs compiled above — verified: the real config still maps the identification through. Excluding
+    /// per member rather than skipping the whole pair is what closes the hole the earlier version had, where
+    /// a newly added column on <c>ZaakObject</c>/<c>ZaakRol</c> (or a property on either base request DTO)
+    /// would be neither gated here nor forbidden there, and would silently map to its default on the write
+    /// path. <c>ForType</c> merges into the scanned rule rather than replacing it, so the base config's own
+    /// existing <c>.Map</c>/<c>.Ignore</c> rules still count toward the gate.
+    /// </para>
+    /// </remarks>
+    private static void GateBasePairsPerMember(List<(string Name, Type Source, Type Destination)> basePairs, List<string> unmapped)
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+
+        using var provider = services.BuildServiceProvider();
+        var probe = provider.GetRequiredService<TypeAdapterConfig>();
+        probe.Default.RequireDestinationMemberSource(true);
+
+        foreach (var (name, source, destination) in basePairs)
+        {
+            // Ignore(null) would throw rather than report, so fail with the pair name instead: the caller
+            // only collects pairs this lookup already matched, so a miss here means the two have diverged.
+            Assert.True(ZrcPolymorphicBasePairs.TryGetNavigations(name, out var navigations), $"No navigations recorded for {name}.");
+
+            probe.ForType(source, destination).Ignore(navigations);
+        }
+
+        foreach (var (name, source, destination) in basePairs)
+        {
+            try
+            {
+                probe.Compile(source, destination);
+            }
+            catch (CompileException ex)
+            {
+                unmapped.Add($"{name}\n    {ex.InnerException?.Message ?? ex.Message}");
+            }
+        }
+    }
 
     /// <summary>
     /// Compiles every registered type pair up front, so a register that makes Mapster emit an
@@ -97,16 +129,16 @@ public class ZrcMapsterCompileTests
         config.Default.RequireDestinationMemberSource(true);
 
         var unmapped = new List<string>();
-        var skipped = 0;
+        var basePairsSeen = new List<(string Name, Type Source, Type Destination)>();
 
         // Per pair rather than one config.Compile(), which throws on the first failure and would make a
         // multi-member regression take several rounds to clear.
         foreach (var pair in config.RuleMap.Keys.OrderBy(k => k.Source.FullName).ThenBy(k => k.Destination.FullName).ToList())
         {
             var name = $"{pair.Source.FullName} -> {pair.Destination.FullName}";
-            if (PolymorphicBasePairs.Contains(name))
+            if (ZrcPolymorphicBasePairs.TryGetNavigations(name, out _))
             {
-                skipped++;
+                basePairsSeen.Add((name, pair.Source, pair.Destination));
                 continue;
             }
 
@@ -121,10 +153,16 @@ public class ZrcMapsterCompileTests
             }
         }
 
-        // A skip-list entry that matches no real pair is a dead string: the base pair it was meant to
-        // exclude stays in the gate, and the obvious way to make the gate pass is the base-config
-        // .Ignore(...) that blanks the identification object on write. Assert the exclusion actually fired.
-        Assert.Equal(PolymorphicBasePairs.Length, skipped);
+        // A base-pair name that matches no real pair is a dead string: the pair it was meant to cover
+        // silently leaves the gate entirely. Assert the four were actually found — by identity rather than
+        // by count, so a renamed pair cannot be masked by a second one matching twice. Sorted on both sides
+        // because the loop's order is the RuleMap's, where "v1._5" sorts ahead of "v1.".
+        Assert.Equal(
+            ZrcPolymorphicBasePairs.Names.OrderBy(n => n, StringComparer.Ordinal),
+            basePairsSeen.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal)
+        );
+
+        GateBasePairsPerMember(basePairsSeen, unmapped);
 
         Assert.True(
             unmapped.Count == 0,

@@ -36,9 +36,17 @@ public class ZrcMapperContractTests : IDisposable
     /// <summary>
     /// Entity string members a mapping body hands straight to a JSON parser. Their columns are NOT NULL,
     /// so a bare instance leaving them unset is an artifact of this file, not a state a persisted entity
-    /// can be in — and because Mapster does not null-guard a member passed as a method argument, an unset
+    /// can be in — and because Mapster does not null-guard a member used inside a method call, an unset
     /// one surfaces as a parser <c>ArgumentNullException</c> rather than as a mapping failure. Seeded with
     /// the smallest valid JSON document so the theories below assert about mapping instead.
+    /// <para>
+    /// Not merely a quirk of this file: AutoMapper DID guard that shape (it short-circuited the whole
+    /// <c>MapFrom</c> expression to default when any source member in it was null, so the parser was never
+    /// called), so this is a real divergence and the NOT NULL column — not the mapper — is what makes the
+    /// ported bodies safe. The seam pins it in
+    /// <c>MapsterSeamHealthTests.A_source_member_passed_as_a_method_ARGUMENT_is_not_null_guarded</c> and its
+    /// receiver-shaped twin; read those before adding a ternary to any register.
+    /// </para>
     /// </summary>
     private static readonly HashSet<string> JsonValuedMembers = [nameof(OverigeZaakObject.OverigeData)];
 
@@ -143,15 +151,27 @@ public class ZrcMapperContractTests : IDisposable
     public static TheoryData<Type, Type> EntityToRequestDtoPairs() => DeclaredPairsEndingIn("RequestDto", requireUrlOnDestination: false);
 
     /// <summary>
+    /// The config <c>AddZgwMapster</c> actually builds — the scanned, merged one that decides which
+    /// definition of a pair survives. Built once: both <c>MemberData</c> sources below read it, and a
+    /// scan-plus-merge of the whole Web assembly is the slowest part of this class. Read-only here (only
+    /// <c>RuleMap</c> keys), so sharing it cannot leak state between the two — unlike
+    /// <c>ZrcMapsterCompileTests</c>, whose facts each mutate <c>Default</c> and so need their own.
+    /// </summary>
+    private static readonly Lazy<TypeAdapterConfig> DeclaredConfig = new(() =>
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        using var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<TypeAdapterConfig>();
+    });
+
+    /// <summary>
     /// Reads the pairs out of the config <c>AddZgwMapster</c> actually builds — the scanned, merged one
     /// that decides which definition of a pair survives.
     /// </summary>
     private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
     {
-        var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
-        using var provider = services.BuildServiceProvider();
-        var config = provider.GetRequiredService<TypeAdapterConfig>();
+        var config = DeclaredConfig.Value;
 
         var data = new TheoryData<Type, Type>();
         var pairs = config

@@ -87,18 +87,14 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.Publicatiedatum, src => ProfileHelper.DateFromStringOptional(src.Publicatiedatum))
             .Map(dest => dest.LaatsteBetaaldatum, src => ProfileHelper.DateTimeFromString(src.LaatsteBetaaldatum))
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
-            // The four .Map(...) calls below cover the source DTO's string-typed Vertrouwelijkheidaanduiding/
-            // Betalingsindicatie/Archiefnominatie/Archiefstatus, which the shared configuration would resolve
-            // by convention on its own anyway: NameMatchingStrategy.IgnoreCase resolves
-            // Vertrouwelijkheidaanduiding/Betalingsindicatie despite the casing difference against the domain's
-            // VertrouwelijkheidAanduiding/BetalingsIndicatie, and the global nullable-enum rule handles
-            // Archiefnominatie's Nullable<enum> destination. They are therefore redundant but harmless - each
-            // names the same source member the convention would have picked - and they keep the pair correct
-            // even under a configuration without those global defaults.
-            .Map(dest => dest.VertrouwelijkheidAanduiding, src => src.Vertrouwelijkheidaanduiding)
-            .Map(dest => dest.BetalingsIndicatie, src => src.Betalingsindicatie)
-            .Map(dest => dest.Archiefnominatie, src => src.Archiefnominatie)
-            .Map(dest => dest.Archiefstatus, src => src.Archiefstatus)
+            // Note: Vertrouwelijkheidaanduiding/Betalingsindicatie/Archiefnominatie/Archiefstatus are
+            // deliberately NOT mapped or ignored here - the shared configuration resolves all four on its own.
+            // NameMatchingStrategy.IgnoreCase carries the two whose casing differs from the domain's
+            // VertrouwelijkheidAanduiding/BetalingsIndicatie, and RegisterNullableEnumRule carries
+            // Archiefnominatie's Nullable<enum> destination. Both are registered globally by AddZgwMapster, so
+            // a config built from this register alone would leave them silently unmapped - which is why the
+            // mapping tests take their mapper from the shared test host on the real configuration. Same rule as
+            // the v1.5 sibling register states for the members v1.5 added.
             .Ignore(dest => dest.KlantContacten)
             .Ignore(dest => dest.Owner)
             .Ignore(dest => dest.OpdrachtgevendeOrganisatie)
