@@ -87,20 +87,16 @@ public class ZrcPolymorphicBaseConfigTests
 
             var settings = entry.Value.Settings;
 
-            foreach (var ignored in settings.Ignore.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            foreach (var ignored in settings.Ignore.Keys.Where(k => navigations.Contains(RootMember(k))).OrderBy(k => k, StringComparer.Ordinal))
             {
-                if (navigations.Contains(RootMember(ignored)))
-                {
-                    offences.Add($"{pair}\n      .Ignore(dest => dest.{ignored})");
-                }
+                offences.Add($"{pair}\n      .Ignore(dest => dest.{ignored})");
             }
 
-            foreach (var resolver in settings.Resolvers)
+            foreach (
+                var member in settings.Resolvers.Select(r => r.DestinationMemberName).Where(m => m is not null && navigations.Contains(RootMember(m)))
+            )
             {
-                if (resolver.DestinationMemberName is { } member && navigations.Contains(RootMember(member)))
-                {
-                    offences.Add($"{pair}\n      .Map(dest => dest.{member}, ...)");
-                }
+                offences.Add($"{pair}\n      .Map(dest => dest.{member}, ...)");
             }
         }
 
