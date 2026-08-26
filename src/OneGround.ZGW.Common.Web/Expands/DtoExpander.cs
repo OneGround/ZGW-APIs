@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace OneGround.ZGW.Common.Web.Expands;
 
@@ -16,7 +17,9 @@ public static class DtoExpander
             throw new InvalidOperationException("Merging a main object with a null expanded object is not possible.");
         }
 
-        var serializer = new ZGWJsonSerializer();
+        // Name properties the way MVC would: expand hands the client this JObject verbatim, so the
+        // response pipeline never gets to apply its own naming. The converters stay attached.
+        var serializer = new ZGWJsonSerializer { ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() } };
 
         var jMain = JObject.FromObject(main, serializer);
 
