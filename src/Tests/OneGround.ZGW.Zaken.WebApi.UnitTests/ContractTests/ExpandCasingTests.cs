@@ -55,13 +55,13 @@ public class ExpandCasingTests
         var expanded = Expand(rol);
 
         Assert.False(expanded.ContainsKey("BetrokkeneIdentificatie"), $"{label}: expand output still carries the C# member name.");
-        Assert.True(expanded.ContainsKey("betrokkeneIdentificatie"), $"{label}: expand output is missing 'betrokkeneIdentificatie'.");
+        Assert.True(expanded.TryGetValue("betrokkeneIdentificatie", out var token), $"{label}: expand output is missing 'betrokkeneIdentificatie'.");
 
         // Nothing inside the object moves: every member of these five betrokkene DTOs already
         // carries an explicit [JsonProperty] name, and an explicit name is left alone. That is a
         // fact about these five DTOs, not about the fix - elsewhere it does rename inner members,
         // ZaakObject's url and uuid among them.
-        var betrokkeneIdentificatie = Assert.IsType<JObject>(expanded["betrokkeneIdentificatie"]);
+        var betrokkeneIdentificatie = Assert.IsType<JObject>(token);
 
         Assert.True(betrokkeneIdentificatie.ContainsKey(innerKey), $"{label}: 'betrokkeneIdentificatie' is missing '{innerKey}'.");
         Assert.All(
