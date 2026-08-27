@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Expands;
 using Xunit;
@@ -44,6 +45,9 @@ public class ExpandCasingTests
         yield return ["medewerker", Medewerker(), "identificatie"];
     }
 
+    // Same rollen, for the assertions that do not look inside the betrokkene identification object.
+    public static IEnumerable<object[]> RollenWithoutInnerKey() => Rollen().Select(row => new[] { row[0], row[1] });
+
     [Theory]
     [MemberData(nameof(Rollen))]
     public void ExpandedRol_NamesTheBetrokkeneIdentificationInCamelCase(string label, object rol, string innerKey)
@@ -53,22 +57,26 @@ public class ExpandCasingTests
         Assert.False(expanded.ContainsKey("BetrokkeneIdentificatie"), $"{label}: expand output still carries the C# member name.");
         Assert.True(expanded.ContainsKey("betrokkeneIdentificatie"), $"{label}: expand output is missing 'betrokkeneIdentificatie'.");
 
-        // The fix renames the wrapping key only - everything inside it keeps the casing it had.
+        // Nothing inside the object moves: every member of these five betrokkene DTOs already
+        // carries an explicit [JsonProperty] name, and an explicit name is left alone. That is a
+        // fact about these five DTOs, not about the fix - elsewhere it does rename inner members,
+        // ZaakObject's url and uuid among them.
         var betrokkeneIdentificatie = Assert.IsType<JObject>(expanded["betrokkeneIdentificatie"]);
 
         Assert.True(betrokkeneIdentificatie.ContainsKey(innerKey), $"{label}: 'betrokkeneIdentificatie' is missing '{innerKey}'.");
         Assert.All(
             betrokkeneIdentificatie.Properties(),
-            property => Assert.True(char.IsLower(property.Name[0]), $"{label}: '{property.Name}' inside 'betrokkeneIdentificatie' is not camelCase.")
+            // Not char.IsLower: a leading underscore is legitimate (_expand, _error) and is not an
+            // uppercase C# member name leaking through.
+            property =>
+                Assert.False(char.IsUpper(property.Name[0]), $"{label}: '{property.Name}' inside 'betrokkeneIdentificatie' is not camelCase.")
         );
     }
 
     [Theory]
-    [MemberData(nameof(Rollen))]
-    public void ExpandedRol_KeepsTheKeysThatWereAlreadyCorrect(string label, object rol, string innerKey)
+    [MemberData(nameof(RollenWithoutInnerKey))]
+    public void ExpandedRol_KeepsTheKeysThatWereAlreadyCorrect(string label, object rol)
     {
-        _ = innerKey;
-
         var expanded = Expand(rol);
 
         Assert.True(expanded.ContainsKey("_expand"), $"{label}: the _expand key lost its leading underscore.");
