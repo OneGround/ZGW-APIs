@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Contracts.v1;

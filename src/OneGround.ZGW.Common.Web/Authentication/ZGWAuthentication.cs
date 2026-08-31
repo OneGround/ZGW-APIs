@@ -50,7 +50,6 @@ public static class ZGWAuthenticationServiceCollectionExtensions
                 options =>
                 {
                     options.IntrospectionEndpoint = configuration.GetValue<string>("Auth:ZgwTokenIntrospectionEndpoint");
-                    options.EnableCaching = true;
                     options.CacheKeyPrefix = "ZGW:TokenIntrospections:";
                     options.CacheDuration = TimeSpan.FromMinutes(5);
                 }

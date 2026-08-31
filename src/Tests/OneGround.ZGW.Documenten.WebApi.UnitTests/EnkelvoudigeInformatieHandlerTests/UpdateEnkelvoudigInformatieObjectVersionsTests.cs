@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,7 +16,7 @@ using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._1;
-using OneGround.ZGW.Documenten.Web.MappingProfiles.v1._1;
+using OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 using Polly;
 using Xunit;
 using UpdateV1_5Command = OneGround.ZGW.Documenten.Web.Handlers.v1._5.UpdateEnkelvoudigInformatieObjectCommand;
@@ -25,32 +24,20 @@ using UpdateV1_5Handler = OneGround.ZGW.Documenten.Web.Handlers.v1._5.UpdateEnke
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.EnkelvoudigeInformatieHandlerTests;
 
-public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInformatieObjectVersionsBase<UpdateEnkelvoudigInformatieObjectCommandHandler>
+public class UpdateEnkelvoudigInformatieObjectVersionsTests
+    : EnkelvoudigInformatieObjectVersionsBase<UpdateEnkelvoudigInformatieObjectCommandHandler>,
+        IDisposable
 {
-    private readonly IRequestMerger _requestMerger;
-    private readonly IMapper _mapper;
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
+    private readonly IZgwRequestMerger _requestMerger;
 
     public UpdateEnkelvoudigInformatieObjectVersionsTests(TestMocksFixture fixture)
         : base(fixture)
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new DomainToResponseProfile());
-            config.AddProfile(new RequestToDomainProfile());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        _mapper = configuration.CreateMapper(t =>
-        {
-            if (t == typeof(MapLatestEnkelvoudigInformatieObjectVersieRequest))
-            {
-                return new MapLatestEnkelvoudigInformatieObjectVersieRequest();
-            }
-            throw new NotImplementedException($"Mapper is missing the service: {t})");
-        });
-
-        _requestMerger = new RequestMerger(_mapper);
+        _requestMerger = new ZgwRequestMerger(_host.Mapper);
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public async Task Existing_Document_Update_With_Base64_Inhoud_Should_Send_Notification()
@@ -967,17 +954,20 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests : EnkelvoudigInforma
         );
     }
 
+    // Merges the partial patch onto the current entity's request-DTO shape using the real production
+    // ZgwRequestMerger (backed by the same Mapster seam Startup builds), then maps the merged request
+    // through to a domain Versie the same way production handlers do via IEnkelvoudigInformatieObjectMerger.
     private EnkelvoudigInformatieObjectVersie MergeWithCurrentEnkelvoudigInformatieObject(
         EnkelvoudigInformatieObject currentEnkelvoudigInformatieObject,
-        dynamic partialEnkelvoudigInformatieObjectRequest
+        object partialEnkelvoudigInformatieObjectRequest
     )
     {
-        EnkelvoudigInformatieObjectUpdateRequestDto mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+        var mergedEnkelvoudigInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
             EnkelvoudigInformatieObjectUpdateRequestDto,
             EnkelvoudigInformatieObject
         >(currentEnkelvoudigInformatieObject, partialEnkelvoudigInformatieObjectRequest);
 
-        EnkelvoudigInformatieObjectVersie mergedEnkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
+        EnkelvoudigInformatieObjectVersie mergedEnkelvoudigInformatieObjectVersie = _host.Mapper.Map<EnkelvoudigInformatieObjectVersie>(
             mergedEnkelvoudigInformatieObjectRequest
         );
 

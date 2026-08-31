@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -41,12 +40,16 @@ public class ResultaatTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ResultaatTypeController(
         ILogger<ResultaatTypeController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -54,6 +57,8 @@ public class ResultaatTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
+        _mapsterMapper = mapsterMapper;
+        _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -83,7 +88,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var response = _mapper.Map<ResultaatTypeResponseDto>(result.Result);
+        var response = _mapsterMapper.Map<ResultaatTypeResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -124,7 +129,7 @@ public class ResultaatTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), resultTypeRequest);
 
-        ResultaatType resultType = _mapper.Map<ResultaatType>(resultTypeRequest);
+        ResultaatType resultType = _mapsterMapper.Map<ResultaatType>(resultTypeRequest);
 
         var result = await _mediator.Send(
             new CreateResultaatTypeCommand
@@ -140,7 +145,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var resultTypeResponse = _mapper.Map<ResultaatTypeResponseDto>(result.Result);
+        var resultTypeResponse = _mapsterMapper.Map<ResultaatTypeResponseDto>(result.Result);
 
         return Created(resultTypeResponse.Url, resultTypeResponse);
     }
@@ -164,8 +169,8 @@ public class ResultaatTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ResultaatTypenPageSize));
-        var filter = _mapper.Map<GetAllResultaatTypenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ResultaatTypenPageSize));
+        var filter = _mapsterMapper.Map<GetAllResultaatTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllResultaatTypenQuery { GetAllResultaatTypenFilter = filter, Pagination = pagination });
 
@@ -174,7 +179,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var resultTypenResponse = _mapper.Map<List<ResultaatTypeResponseDto>>(result.Result.PageResult);
+        var resultTypenResponse = _mapsterMapper.Map<List<ResultaatTypeResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, resultTypenResponse, result.Result.Count);
 
@@ -200,7 +205,7 @@ public class ResultaatTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), resultTypeRequest, id);
 
-        ResultaatType resultType = _mapper.Map<ResultaatType>(resultTypeRequest);
+        ResultaatType resultType = _mapsterMapper.Map<ResultaatType>(resultTypeRequest);
 
         var result = await _mediator.Send(
             new UpdateResultaatTypeCommand
@@ -223,7 +228,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var resultTypeResponse = _mapper.Map<ResultaatTypeResponseDto>(result.Result);
+        var resultTypeResponse = _mapsterMapper.Map<ResultaatTypeResponseDto>(result.Result);
 
         return Ok(resultTypeResponse);
     }
@@ -254,7 +259,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        ResultaatTypeRequestDto mergedResultTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<ResultaatTypeRequestDto, ResultaatType>(
+        ResultaatTypeRequestDto mergedResultTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ResultaatTypeRequestDto, ResultaatType>(
             resultGet.Result,
             partialResultTypeRequest
         );
@@ -264,7 +269,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ResultaatType mergedResultType = _mapper.Map<ResultaatType>(mergedResultTypeRequest);
+        ResultaatType mergedResultType = _mapsterMapper.Map<ResultaatType>(mergedResultTypeRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateResultaatTypeCommand
@@ -282,7 +287,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var response = _mapper.Map<ResultaatTypeResponseDto>(resultUpd.Result);
+        var response = _mapsterMapper.Map<ResultaatTypeResponseDto>(resultUpd.Result);
 
         return Ok(response);
     }

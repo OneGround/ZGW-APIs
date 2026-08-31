@@ -1,36 +1,28 @@
+using System;
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using MapsterMapper;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Documenten.Contracts.v1;
 using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Documenten.Web.MappingProfiles.v1;
 using OneGround.ZGW.Documenten.Web.Models.v1;
 using Xunit;
 
 namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
+    private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-            config.ShouldMapMethod = (m => false);
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        _mapper = _host.Mapper;
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void GetAllEnkelvoudigInformatieObjectenQueryParameters_Maps_To_GetAllEnkelvoudiginformatieobjectenFilter()
@@ -110,6 +102,35 @@ public class RequestToDomainProfileTests
         Assert.Equal(value.Integriteit.Waarde, result.Integriteit_Waarde);
         Assert.Equal(value.Integriteit.Datum, result.Integriteit_Datum.Value.ToString("yyyy-MM-dd"));
         Assert.Equal(value.InformatieObjectType, result.InformatieObject.InformatieObjectType);
+    }
+
+    [Fact]
+    public void EnkelvoudigInformatieObjectCreateRequestDto_With_Null_Ondertekening_And_Integriteit_Maps_Without_Throwing()
+    {
+        // Ondertekening/Integriteit are optional on the wire; the register's Mapster .Map lambdas don't
+        // null-guard member-path access the way AutoMapper's MapFrom did, so a request omitting them must
+        // not throw a NullReferenceException here.
+        _fixture.Customize<EnkelvoudigInformatieObjectCreateRequestDto>(c =>
+            c.With(p => p.Identificatie, "DOC-2020-0000002")
+                .With(p => p.Bronorganisatie, "999990561")
+                .With(p => p.CreatieDatum, "2020-11-12")
+                .With(p => p.OntvangstDatum, "2020-11-13")
+                .With(p => p.VerzendDatum, "2020-11-14")
+                .With(p => p.Taal, "eng")
+                .With(p => p.InformatieObjectType, "https://some-informatieobjecttype")
+                .Without(p => p.Ondertekening)
+                .Without(p => p.Integriteit)
+        );
+
+        var value = _fixture.Create<EnkelvoudigInformatieObjectCreateRequestDto>();
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectVersie>(value);
+
+        Assert.Null(result.Ondertekening_Datum);
+        Assert.Null(result.Ondertekening_Soort);
+        Assert.Equal(default, result.Integriteit_Algoritme);
+        Assert.Null(result.Integriteit_Datum);
+        Assert.Null(result.Integriteit_Waarde);
     }
 
     [Fact]

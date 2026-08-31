@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -44,18 +43,24 @@ public class KlantContactenController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IPaginationHelper _paginationHelper;
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public KlantContactenController(
         ILogger<KlantContactenController> logger,
         IMediator mediator,
-        IMapper mapper,
-        IRequestMerger requestMerger,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
+        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
+        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorObjectResultBuilder,
         IPaginationHelper paginationHelper
     )
         : base(logger, mediator, mapper, requestMerger, errorObjectResultBuilder)
     {
+        _zgwRequestMerger = zgwRequestMerger;
+        _mapsterMapper = mapsterMapper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _paginationHelper = paginationHelper;
     }
@@ -76,8 +81,8 @@ public class KlantContactenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.KlantContactenPageSize));
-        var filter = _mapper.Map<GetAllKlantContactenFilter>(queryParameters);
+        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.KlantContactenPageSize));
+        var filter = _mapsterMapper.Map<GetAllKlantContactenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllKlantContactenQuery() { GetAllKlantContactenFilter = filter, Pagination = pagination });
 
@@ -86,7 +91,7 @@ public class KlantContactenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var klantContactenResponse = _mapper.Map<List<KlantContactResponseDto>>(result.Result.PageResult);
+        var klantContactenResponse = _mapsterMapper.Map<List<KlantContactResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, klantContactenResponse, result.Result.Count);
 
@@ -131,7 +136,7 @@ public class KlantContactenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var klantContactResponse = _mapper.Map<KlantContactResponseDto>(result.Result);
+        var klantContactResponse = _mapsterMapper.Map<KlantContactResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -163,7 +168,7 @@ public class KlantContactenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), klantContactRequestDto);
 
-        KlantContact klantContact = _mapper.Map<KlantContact>(klantContactRequestDto);
+        KlantContact klantContact = _mapsterMapper.Map<KlantContact>(klantContactRequestDto);
 
         var result = await _mediator.Send(new CreateKlantContactCommand { KlantContact = klantContact, ZaakUrl = klantContactRequestDto.Zaak });
 
@@ -177,7 +182,7 @@ public class KlantContactenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var klantContactResponse = _mapper.Map<KlantContactResponseDto>(result.Result);
+        var klantContactResponse = _mapsterMapper.Map<KlantContactResponseDto>(result.Result);
 
         return Created(klantContactResponse.Url, klantContactResponse);
     }

@@ -53,6 +53,13 @@ public static class MapsterServiceCollectionExtensions
         // maps to an empty destination collection rather than null. Applied globally so every
         // service's collection members behave like the AutoMapper baseline without per-register
         // null-coalescing. See MapsterSeamHealthTests.Null_source_collection_maps_to_empty_not_null.
+        //
+        // SCOPE: destination MEMBERS only, never the destination ROOT. A destination transform runs
+        // as part of mapping a member, so `Map<List<T>>(null)` still returns null here where
+        // AutoMapper returned an empty list — the one place this parity does NOT hold. Callers that
+        // dereference the result of a collection-root Map (e.g. `.ForEach(...)`) must not rely on it
+        // being non-null; every such caller in the repo today feeds it a materialised EF list.
+        // Pinned by MapsterSeamHealthTests.Null_source_collection_ROOT_maps_to_null_unlike_a_member.
         config.Default.AddDestinationTransform(DestinationTransform.EmptyCollectionIfNull);
 
         // Parity with AutoMapper's default member matching, which is case-insensitive (a

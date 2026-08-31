@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using AutoMapper;
+using MapsterMapper;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1;
 using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;

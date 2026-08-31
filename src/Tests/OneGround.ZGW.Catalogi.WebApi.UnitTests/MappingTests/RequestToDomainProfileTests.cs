@@ -1,7 +1,8 @@
+using System;
 using System.Linq;
 using AutoFixture;
-using AutoMapper;
-using AutoMapper.Internal;
+using Mapster;
+using MapsterMapper;
 using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.Contracts.v1.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1.Requests;
@@ -10,27 +11,20 @@ using OneGround.ZGW.Catalogi.Web.MappingProfiles.v1;
 using OneGround.ZGW.Catalogi.Web.Models.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web;
+using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using Xunit;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
-public class RequestToDomainProfileTests
+public class RequestToDomainProfileTests : IDisposable
 {
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
+    private readonly ZtcMapperTestHost _host = new ZtcMapperTestHost();
     private readonly IMapper _mapper;
 
     public RequestToDomainProfileTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.AddProfile(new RequestToDomainProfile());
-            config.ShouldMapMethod = (m => false);
-            config.Internal().Mappers.Insert(0, new NullableEnumMapper());
-        });
-
-        configuration.AssertConfigurationIsValid();
-
-        _mapper = configuration.CreateMapper();
+        _mapper = _host.Mapper;
 
         _fixture.Customize<ZaakTypeInformatieObjectTypeRequestDto>(c => c.With(p => p.Richting, _fixture.Create<Richting>().ToString()));
 
@@ -43,6 +37,8 @@ public class RequestToDomainProfileTests
                 .With(p => p.ObjectType, _fixture.Create<ObjectType>().ToString())
         );
     }
+
+    public void Dispose() => _host.Dispose();
 
     [Fact]
     public void ZaakTypeRequestDtoMapsToZaakType()
@@ -309,5 +305,25 @@ public class RequestToDomainProfileTests
         var result = _mapper.Map<ArchiefNominatie?>(source);
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void Optional_Period_fields_left_unset_map_to_null_rather_than_throwing()
+    {
+        // See the v1_3 sibling test.
+        var zaakType = _mapper.Map<ZaakType>(new ZaakTypeRequestDto { BeginGeldigheid = "2020-11-12", VersieDatum = "2020-11-12" });
+        Assert.Null(zaakType.Doorlooptijd);
+        Assert.Null(zaakType.VerlengingsTermijn);
+        Assert.Null(zaakType.Servicenorm);
+
+        var resultaatType = _mapper.Map<ResultaatType>(new ResultaatTypeRequestDto());
+        Assert.Null(resultaatType.ArchiefActieTermijn);
+
+        var brondatum = _mapper.Map<BronDatumArchiefProcedure>(new BronDatumArchiefProcedureDto());
+        Assert.Null(brondatum.ProcesTermijn);
+
+        var besluitType = _mapper.Map<BesluitType>(new BesluitTypeRequestDto { BeginGeldigheid = "2020-11-12" });
+        Assert.Null(besluitType.ReactieTermijn);
+        Assert.Null(besluitType.PublicatieTermijn);
     }
 }

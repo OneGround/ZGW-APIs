@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
+using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;

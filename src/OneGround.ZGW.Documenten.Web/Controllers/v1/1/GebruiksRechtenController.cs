@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -30,14 +29,20 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
+    private readonly MapsterMapper.IMapper _mapsterMapper;
+
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        IMapper mapper,
+        AutoMapper.IMapper mapper,
+        MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder) { }
+        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+    {
+        _mapsterMapper = mapsterMapper;
+    }
 
     /// <summary>
     /// Een specifieke GEBRUIKSRECHT opvragen.
@@ -68,7 +73,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksRechtResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
