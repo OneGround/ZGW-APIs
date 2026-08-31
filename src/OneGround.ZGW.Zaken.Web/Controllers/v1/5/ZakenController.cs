@@ -24,6 +24,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
+using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Requests;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
@@ -45,6 +46,12 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [Produces("application/json")]
 public class ZakenController : ZGWControllerBase
 {
+    // Feature-vlag (bewust hardcoded, geen configuratie): 'resource'/'resource_id' op een
+    // _snapshots-item zijn geen onderdeel van de VNG-standaard "Synchronisatie van collecties".
+    // Op false laat ZaakSnapshotDto's NullValueHandling.Ignore deze velden geheel weg, zodat de
+    // response strikt aan de standaard voldoet.
+    private static readonly bool IncludeNonStandardSnapshotFields = false;
+
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly IObjectExpander<ZaakResponseDto> _expander;
@@ -202,6 +209,191 @@ public class ZakenController : ZGWControllerBase
 
         return Ok(paginationResponse);
     }
+
+    /// <summary>
+    /// Beschikbare snapshots van de ZAAK-collectie opvragen (synchronisatie van collecties).
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpGet(ApiRoutes.Zaken.Snapshots, Name = Operations.Zaken.Snapshots)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakSnapshotsResponseDto))]
+    public async Task<IActionResult> GetSnapshotsAsync([FromQuery] GetZaakSnapshotsQueryParameters queryParameters)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetSnapshotsAsync), queryParameters);
+
+        var result = await _mediator.Send(
+            new GetZaakSnapshotsQuery
+            {
+                After = queryParameters.After,
+                Limit = queryParameters.Limit,
+                AanmaakdatumGte = queryParameters.AanmaakdatumGte,
+            }
+        );
+
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        var items = _mapper.Map<List<ZaakSnapshotDto>>(result.Result);
+
+        if (!IncludeNonStandardSnapshotFields)
+        {
+            foreach (var item in items)
+            {
+                item.Resource = null;
+                item.ResourceId = null;
+            }
+        }
+
+        var response = new ZaakSnapshotsResponseDto { Items = items };
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Een individuele snapshot opvragen (de href uit een _snapshots-item).
+    /// </summary>
+    /// <remarks>
+    /// Niet onderdeel van de VNG-standaard "Synchronisatie van collecties" — die specificeert geen
+    /// vorm voor het ophalen van een individuele snapshot, maar elk _snapshots-item heeft een href die
+    /// hierheen wijst, dus dit endpoint maakt die href werkend.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpGet(ApiRoutes.Zaken.SnapshotGet, Name = Operations.Zaken.SnapshotRead)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakSnapshotDetailDto))]
+    public async Task<IActionResult> GetSnapshotAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetSnapshotAsync), id);
+
+        var result = await _mediator.Send(new GetZaakSnapshotQuery { Id = id });
+
+        if (result.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        var snapshot = result.Result;
+
+        var response = new ZaakSnapshotDetailDto
+        {
+            Id = snapshot.Id.ToString(),
+            ResourceId = snapshot.ResourceId?.ToString(),
+            Resource = snapshot.SnapshotJson != null ? JToken.Parse(snapshot.SnapshotJson) : null,
+        };
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Wijzigingen (delta's) op één ZAAK opvragen sinds een gegeven state-id (synchronisatie van collecties).
+    /// </summary>
+    /// <remarks>
+    /// <c>after</c> is verplicht: dit is zowel het startpunt in de tijd als de identificatie van de ZAAK
+    /// (via de audittrail-rij die dat id representeert, bv. uit <c>_snapshots</c>) — geen collectie-brede
+    /// stream, maar het vervolg van de versie-geschiedenis van die ene zaak.
+    /// Ondersteunt zowel gewone JSON-polling (via de <c>after</c>/<c>limit</c> query-parameters) als een SSE-variant
+    /// op dezelfde resource, content-genegotieerd via de <c>Accept: text/event-stream</c> header.
+    /// </remarks>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpGet(ApiRoutes.Zaken.Deltas, Name = Operations.Zaken.Deltas)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakDeltasResponseDto))]
+    public async Task<IActionResult> GetDeltasAsync([FromQuery] GetZaakDeltasQueryParameters queryParameters)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetDeltasAsync), queryParameters);
+
+        if (Request.Headers.Accept.Any(accept => accept != null && accept.Contains("text/event-stream")))
+        {
+            Response.ContentType = "text/event-stream";
+
+            throw new NotImplementedException();
+        }
+
+        var result = await _mediator.Send(new GetZaakDeltasQuery { After = queryParameters.After, Limit = queryParameters.Limit });
+
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        if (result.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        // 'id' is de echte primary key van de audittrail_deltas-rij (dezelfde id als bij _snapshots),
+        // geen berekende positie. 'prev_id' is de id van de voorganger in dezelfde (AanmaakDatum, Id)-
+        // ordening binnen dezelfde resource als 'after': voor het eerste item in de pagina is dat
+        // 'after' zelf (gap-detectie voor de consumer), voor de rest gewoon de vorige rij in deze pagina.
+        var pageResult = result.Result.PageResult.ToList();
+
+        var deltas = pageResult
+            .Select(
+                (delta, index) =>
+                {
+                    string prevId = index == 0 ? queryParameters.After.Value.ToString() : pageResult[index - 1].Id.ToString();
+                    return MapToDeltaDto(delta, prevId);
+                }
+            )
+            .ToList();
+
+        var response = new ZaakDeltasResponseDto { Items = deltas };
+
+        return Ok(response);
+    }
+
+    private static ZaakDeltaDto MapToDeltaDto(AuditTrailDelta delta, string prevId)
+    {
+        // Note: create/retrieve slaan de volledige resource-state op in SnapshotJson, update/partial_update
+        // meestal in DeltaJson (een gegenereerde diff, behalve op geforceerde snapshot-versies), en destroy
+        // slaat de laatst-bekende state juist onder DeltaJson op (zie ResolveSnapshotOrDeltaAsync).
+        var resourceJson = delta.SnapshotJson ?? delta.DeltaJson;
+
+        return new ZaakDeltaDto
+        {
+            Id = delta.Id.ToString(),
+            PrevId = prevId,
+            Operations = new List<ZaakDeltaOperationDto>
+            {
+                new ZaakDeltaOperationDto
+                {
+                    Type = MapActieToOperationType(delta.Actie),
+                    ResourceId = delta.ResourceId?.ToString(),
+                    Resource = resourceJson != null ? JToken.Parse(resourceJson) : null,
+                },
+            },
+        };
+    }
+
+    // Vertaalt onze interne audittrail-actie naar de generieke CRUD-woordenschat uit het
+    // synchronisatiepatroon (create/update/delete) — 'partial_update' en 'destroy' zijn interne
+    // ZGW-termen die niet als zodanig in de publieke _deltas-contract horen te lekken.
+    private static string MapActieToOperationType(string actie) =>
+        actie switch
+        {
+            nameof(AuditActie.partial_update) => nameof(AuditActie.update),
+            nameof(AuditActie.destroy) => "delete",
+            _ => actie,
+        };
 
     /// <summary>
     /// Maak een ZAAK aan.

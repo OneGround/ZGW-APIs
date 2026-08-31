@@ -19,6 +19,12 @@ public class ApiRoutes
         public const string Update = Base + "/zaken/{id}";
 
         public const string Search = Base + "/zaken/_zoek";
+
+        public const string Snapshots = Base + "/zaken/_snapshots";
+
+        public const string SnapshotGet = Base + "/zaken/_snapshots/{id}";
+
+        public const string Deltas = Base + "/zaken/_deltas";
     }
 
     public class ZaakEigenschappen

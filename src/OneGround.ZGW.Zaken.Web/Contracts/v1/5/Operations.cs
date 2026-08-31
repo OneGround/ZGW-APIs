@@ -17,6 +17,12 @@ public class Operations
         public const string PartialUpdate = "zaak_partial_update";
 
         public const string Search = "zaak__zoek";
+
+        public const string Snapshots = "zaak__snapshots";
+
+        public const string SnapshotRead = "zaak__snapshot_read";
+
+        public const string Deltas = "zaak__deltas";
     }
 
     public class ZaakEigenschappen

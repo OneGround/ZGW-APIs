@@ -13,6 +13,7 @@ using OneGround.ZGW.Zaken.Contracts.v1._5.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
+using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 
@@ -95,6 +96,8 @@ public class DomainToResponseProfile : Profile
             .ForMember(dest => dest.Identificatie, opt => opt.MapFrom(src => src.Identificatie))
             .ForMember(dest => dest.Objecttype, opt => opt.MapFrom(src => src.Objecttype))
             .ForMember(dest => dest.Registratie, opt => opt.MapFrom(src => src.Registratie));
+
+        CreateMap<ZaakSnapshotResult, ZaakSnapshotDto>();
 
         //
         // 2. ZaakStatus
