@@ -11,7 +11,6 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Services;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
@@ -44,7 +43,9 @@ class GetZaakSnapshotQueryHandler : ZakenBaseHandler<GetZaakSnapshotQueryHandler
         // en GetZaakDeltasQueryHandler.
         var snapshot = await _context
             .AuditTrailDeltas.Where(d =>
-                AuditTrailSyncActies.Mutaties.Contains(d.Actie) && d.SnapshotJson != null && d.ResourceId == d.HoofdObjectId && d.Id == request.Id
+                AuditTrailSyncActies.Mutaties.Contains(d.Actie)
+                && d.SnapshotJson != null /*&& d.ResourceId == d.HoofdObjectId*/
+                && d.Id == request.Id
             )
             .Join(_context.Zaken.Where(rsinFilter), delta => delta.HoofdObjectId, zaak => (Guid?)zaak.Id, (delta, zaak) => delta)
             .SingleOrDefaultAsync(cancellationToken);

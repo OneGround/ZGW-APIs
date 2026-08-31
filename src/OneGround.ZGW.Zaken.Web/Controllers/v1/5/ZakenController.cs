@@ -49,7 +49,7 @@ public class ZakenController : ZGWControllerBase
     // _snapshots-item zijn geen onderdeel van de VNG-standaard "Synchronisatie van collecties".
     // Op false laat ZaakSnapshotDto's NullValueHandling.Ignore deze velden geheel weg, zodat de
     // response strikt aan de standaard voldoet.
-    private static readonly bool IncludeNonStandardSnapshotFields = false;
+    private static readonly bool IncludeNonStandardSnapshotFields = true;
 
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
@@ -250,7 +250,7 @@ public class ZakenController : ZGWControllerBase
             foreach (var item in items)
             {
                 item.Resource = null;
-                item.ResourceId = null;
+                //item.ResourceId = null;
             }
         }
 

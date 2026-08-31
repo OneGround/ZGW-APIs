@@ -12,7 +12,6 @@ using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Services;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
@@ -50,7 +49,9 @@ class GetZaakDeltasQueryHandler
         // sub-resource-mutatie wijkt ResourceId daarvan af — een structurele guid-vergelijking, niet
         // afhankelijk van een losse stringliteral die per schrijvende handler kan verschillen.
         var query = _context
-            .AuditTrailDeltas.Where(d => AuditTrailSyncActies.Mutaties.Contains(d.Actie) && d.ResourceId == d.HoofdObjectId)
+            .AuditTrailDeltas.Where(d =>
+                AuditTrailSyncActies.Mutaties.Contains(d.Actie) /*&& d.ResourceId == d.HoofdObjectId*/
+            )
             .Join(_context.Zaken.Where(rsinFilter), delta => delta.HoofdObjectId, zaak => (Guid?)zaak.Id, (delta, zaak) => delta);
 
         // 'after' is verplicht (zie GetZaakDeltasQueryParameters) en dient een dubbel doel: het is

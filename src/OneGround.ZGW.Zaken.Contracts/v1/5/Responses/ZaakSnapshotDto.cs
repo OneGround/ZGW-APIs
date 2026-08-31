@@ -16,8 +16,8 @@ public class ZaakSnapshotDto
     [JsonProperty("resource", Order = 3, NullValueHandling = NullValueHandling.Ignore)]
     public string Resource { get; set; }
 
-    [JsonProperty("resource_id", Order = 4, NullValueHandling = NullValueHandling.Ignore)]
-    public string ResourceId { get; set; }
+    //[JsonProperty("resource_id", Order = 4, NullValueHandling = NullValueHandling.Ignore)]
+    //public string ResourceId { get; set; }
 
     // Aantal delta_json-rijen van deze resource tussen dit snapshot en de volgende snapshot van
     // diezelfde resource; als er nog geen volgende snapshot is, het hoogst bereikte versienummer.

@@ -12,7 +12,6 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Services;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
@@ -49,7 +48,9 @@ class GetZaakSnapshotsQueryHandler
         // filter zou _snapshots items kunnen aanbieden die niet bruikbaar zijn als anker bij
         // _deltas (die diezelfde filter al afdwingt) — elke rij hier moet een geldig vervolgpunt zijn.
         var mutatieDeltasQuery = _context
-            .AuditTrailDeltas.Where(d => AuditTrailSyncActies.Mutaties.Contains(d.Actie) && d.ResourceId == d.HoofdObjectId)
+            .AuditTrailDeltas.Where(d =>
+                AuditTrailSyncActies.Mutaties.Contains(d.Actie) /*&& d.ResourceId == d.HoofdObjectId*/
+            )
             .Join(_context.Zaken.Where(rsinFilter), delta => delta.HoofdObjectId, zaak => (Guid?)zaak.Id, (delta, zaak) => delta);
 
         // Elke rij met een SnapshotJson is een losse, volledige-state-vastlegging van één resource
