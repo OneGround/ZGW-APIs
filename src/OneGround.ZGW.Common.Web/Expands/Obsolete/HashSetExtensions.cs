@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace OneGround.ZGW.Common.Web.Expands;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
 public static class HashSetExtensions
 {
     public static bool ContainsIgnoreCase(this HashSet<string> hashset, string key)

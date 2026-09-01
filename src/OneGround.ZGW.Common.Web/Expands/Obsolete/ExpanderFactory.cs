@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OneGround.ZGW.Common.Web.Expands;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
 public class ExpanderFactory : IExpanderFactory
 {
     private readonly IServiceProvider _serviceProvider;
