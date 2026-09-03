@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Services;
 
@@ -103,5 +104,14 @@ public abstract class ZGWControllerBase : ControllerBase
             return default;
 
         return value.ToObject<T>();
+    }
+
+    protected IActionResult ExterneServiceFout(string serviceName, string serviceUrl)
+    {
+        return _errorResponseBuilder.BadGateway(
+            code: ErrorCode.ExternalServiceError,
+            title: $"Externe service '{serviceName}' niet beschikbaar",
+            detail: $"De expand kon niet worden uitgevoerd omdat service '{serviceName}' niet bereikbaar is of een fout heeft teruggegeven voor URL '{serviceUrl}'."
+        );
     }
 }

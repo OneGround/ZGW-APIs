@@ -66,4 +66,5 @@ public static class ErrorCode
     public const string FileSize = "file-size";
     public const string Conflict = "conflict";
     public const string Other = "other";
+    public const string ExternalServiceError = "external-service-error";
 }

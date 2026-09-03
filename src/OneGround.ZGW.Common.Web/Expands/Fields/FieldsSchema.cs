@@ -4,14 +4,14 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
 /// <summary>
 /// Beschrijft per response-DTO welke veldnamen geldig zijn in een <see cref="FieldSelection"/>.
 /// <para>
-/// Scalaire velden worden afgeleid uit de <see cref="JsonPropertyNameAttribute"/> waarden van de DTO.
+/// Scalaire velden worden afgeleid uit de <see cref="JsonPropertyAttribute"/> waarden van de DTO.
 /// Sub-entiteiten (geneste objecten in <c>fields</c>) worden expliciet geregistreerd als
 /// type → (naam → child-type), zodat de validatie de DTO-graaf op elke diepte kan volgen — inclusief
 /// recursieve relaties zoals <c>hoofdzaak</c>/<c>deelzaken</c> die zelf weer een Zaak zijn.
@@ -22,7 +22,7 @@ public sealed class FieldsSchema
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, Type>> _entities;
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> _nestedObjects;
     private readonly ConcurrentDictionary<Type, HashSet<string>> _scalarCache = new();
-    private readonly ConcurrentDictionary<(Type, string), IReadOnlyList<Type>?> _nestedReflectionCache = new();
+    private readonly ConcurrentDictionary<(Type, string), IReadOnlyList<Type>> _nestedReflectionCache = new();
 
     internal FieldsSchema(
         IReadOnlyDictionary<Type, IReadOnlyDictionary<string, Type>> entities,
@@ -76,18 +76,18 @@ public sealed class FieldsSchema
         return reflected is not null;
     }
 
-    private IReadOnlyList<Type>? ReflectNested(Type parent, string name)
+    private IReadOnlyList<Type> ReflectNested(Type parent, string name)
     {
         var prop = parent
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(p => p.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name == name);
+            .FirstOrDefault(p => p.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == name);
         if (prop is null)
-            return null;
+            return Array.Empty<Type>();
 
         var elementType = UnwrapElementType(prop.PropertyType);
 
         // Alleen een "complex DTO" (met JsonPropertyName-velden) is een genest object om in af te dalen.
-        return ScalarsOf(elementType).Count > 0 ? new[] { elementType } : null;
+        return ScalarsOf(elementType).Count > 0 ? new[] { elementType } : Array.Empty<Type>();
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public sealed class FieldsSchema
 
     private static HashSet<string> Reflect(Type type) =>
         type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Select(p => p.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name)
+            .Select(p => p.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName)
             .Where(name => name is not null && name != "_expand")
             .Select(name => name!)
             .ToHashSet(StringComparer.Ordinal);

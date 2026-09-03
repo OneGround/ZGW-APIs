@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
@@ -9,15 +9,15 @@ public static class FieldsParser
     // recursie (en uiteindelijk een StackOverflow) in parser/validator/projector kan veroorzaken.
     private const int MaxPathDepth = 20;
 
-    public static (FieldSelection? Selection, List<string> ExpandPaths, string? Error) ParseAndValidate(JsonElement? fieldsElement)
+    public static (FieldSelection Selection, List<string> ExpandPaths, string Error) ParseAndValidate(JToken fieldsToken)
     {
-        if (fieldsElement is null)
+        if (fieldsToken is null)
             return (null, [], null);
 
-        if (fieldsElement.Value.ValueKind != JsonValueKind.Array)
+        if (fieldsToken.Type != JTokenType.Array)
             return (null, [], "Het 'fields' veld moet een JSON array zijn.");
 
-        var (selection, error) = ParseArray(fieldsElement.Value, prefix: "");
+        var (selection, error) = ParseArray((JArray)fieldsToken, prefix: "");
         if (error is not null)
             return (null, [], error);
 
@@ -27,28 +27,29 @@ public static class FieldsParser
         return (selection, expandPaths, null);
     }
 
-    private static (FieldSelection? Result, string? Error) ParseArray(JsonElement array, string prefix)
+    private static (FieldSelection Result, string Error) ParseArray(JArray array, string prefix)
     {
         var selection = new FieldSelection();
 
-        foreach (var element in array.EnumerateArray())
+        foreach (var element in array)
         {
-            if (element.ValueKind == JsonValueKind.String)
+            if (element.Type == JTokenType.String)
             {
-                var value = element.GetString()!;
+                var value = element.Value<string>()!;
                 var pathError = AddPath(selection, value, prefix);
                 if (pathError is not null)
                     return (null, pathError);
             }
-            else if (element.ValueKind == JsonValueKind.Object)
+            else if (element.Type == JTokenType.Object)
             {
-                foreach (var prop in element.EnumerateObject())
+                var obj = (JObject)element;
+                foreach (var prop in obj.Properties())
                 {
-                    if (prop.Value.ValueKind != JsonValueKind.Array)
+                    if (prop.Value.Type != JTokenType.Array)
                         return (null, $"De waarde van '{prop.Name}' in 'fields' moet een JSON array zijn.");
 
                     var childPrefix = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
-                    var (child, error) = ParseArray(prop.Value, childPrefix);
+                    var (child, error) = ParseArray((JArray)prop.Value, childPrefix);
                     if (error is not null)
                         return (null, error);
 
@@ -74,7 +75,7 @@ public static class FieldsParser
     /// inline genest object (<see cref="FieldSelection.NestedObjects"/>) en werkt zo recursief voor
     /// <c>a.b.c</c> en <c>verlenging.*</c>. Retourneert een foutmelding bij een leeg segment, anders <c>null</c>.
     /// </summary>
-    private static string? AddPath(FieldSelection selection, string path, string prefix)
+    private static string AddPath(FieldSelection selection, string path, string prefix)
     {
         var segments = path.Split('.');
         if (segments.Length > MaxPathDepth)

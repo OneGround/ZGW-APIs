@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using Xunit;
 
@@ -8,8 +8,7 @@ namespace OneGround.ZGW.Common.Web.UnitTests.Expands.Fields;
 
 public class FieldsParserTests
 {
-    // Clone() maakt het element los van de JsonDocument-levensduur.
-    private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
+    private static JToken Json(string json) => JToken.Parse(json);
 
     // ---- Afwezige / verkeerde top-level vorm ----
 

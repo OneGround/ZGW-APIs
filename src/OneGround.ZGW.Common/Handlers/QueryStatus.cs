@@ -1,4 +1,4 @@
-﻿namespace OneGround.ZGW.Common.Handlers;
+namespace OneGround.ZGW.Common.Handlers;
 
 public enum QueryStatus
 {
@@ -8,4 +8,5 @@ public enum QueryStatus
     NotFound = HanderStatusCodes.NotFound,
     Failed = HanderStatusCodes.Failed,
     Forbidden = HanderStatusCodes.Forbidden,
+    ExternalServiceFailure = HanderStatusCodes.ExternalServiceFailure,
 }

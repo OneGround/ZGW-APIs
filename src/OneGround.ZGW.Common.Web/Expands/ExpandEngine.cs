@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Common.Web.Expands;
 
@@ -37,7 +38,7 @@ public class ExpandEngine<TEntity>
             return;
 
         var ordered = TopologicalSort(pathSet);
-        var resolved = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var resolved = new Dictionary<string, object>(StringComparer.Ordinal);
 
         foreach (var path in ordered)
         {
@@ -49,7 +50,7 @@ public class ExpandEngine<TEntity>
         }
 
         // Top-level paden → entity._expand
-        var topLevel = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var topLevel = new Dictionary<string, object>(StringComparer.Ordinal);
 
         foreach (var (path, value) in resolved)
         {
@@ -66,7 +67,7 @@ public class ExpandEngine<TEntity>
 
                 if (resolved.TryGetValue(parentPath, out var parentObj) && parentObj is IExpandable expandableParent)
                 {
-                    expandableParent.Expand ??= new Dictionary<string, object?>();
+                    expandableParent.Expand ??= new Dictionary<string, object>();
                     expandableParent.Expand[childKey] = value ?? new object();
                 }
             }

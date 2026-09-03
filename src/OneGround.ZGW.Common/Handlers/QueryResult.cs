@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OneGround.ZGW.Common.Contracts.v1;
 
 namespace OneGround.ZGW.Common.Handlers;

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Resilience;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -36,6 +37,7 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Expands.v1._7;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
@@ -100,7 +102,11 @@ public class Startup
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
 
-        services.AddExpandables();
+        services.AddExpandables(); // Note: Legacy Expand Engine v1.5
+        services.AddDocumentenAPIExpands(); // Note: New Expand Engine v1.7
+        services.AddDocumentenAPIFieldsSelection(); // New field-selection at search endpoint
+
+        services.AddSingleton<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
         services.AddMassTransit(x =>
         {

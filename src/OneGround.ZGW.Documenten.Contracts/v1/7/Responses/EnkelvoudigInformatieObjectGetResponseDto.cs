@@ -1,12 +1,11 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
-using OneGround.ZGW.Common.Contracts.v1._5;
+using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
-public class EnkelvoudigInformatieObjectGetResponseDto : EnkelvoudigInformatieObjectResponseDto { }
-
-public class EnkelvoudigInformatieObjectGetResponseExpandedDto : EnkelvoudigInformatieObjectGetResponseDto, IExpandResponseDto
+public class EnkelvoudigInformatieObjectGetResponseDto : EnkelvoudigInformatieObjectResponseDto, IExpandable
 {
-    [JsonProperty(PropertyName = "_expand")]
-    public object Expand { get; set; }
+    [JsonProperty("_expand", NullValueHandling = NullValueHandling.Ignore, Order = ExpandConstants.OrderLast)]
+    public Dictionary<string, object> Expand { get; set; }
 }

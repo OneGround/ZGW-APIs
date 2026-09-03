@@ -304,6 +304,25 @@ public class ErrorResponseBuilder : IErrorResponseBuilder
         };
     }
 
+    public JsonResult BadGateway(string code, string title, string detail)
+    {
+        var statusCode = (int)HttpStatusCode.BadGateway;
+
+        return new JsonResult(
+            new ErrorResponse
+            {
+                Type = $"{BaseUrl}{ErrorCategory.ValidationError}",
+                Code = code,
+                Title = title,
+                Status = statusCode,
+                Detail = detail,
+            }
+        )
+        {
+            StatusCode = statusCode,
+        };
+    }
+
     private static ValidationError MapValidationError(ValidationFailure error)
     {
         return new ValidationError(error.PropertyName, MapErrorCode(error), MapErrorMessage(error));

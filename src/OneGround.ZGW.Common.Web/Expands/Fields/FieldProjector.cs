@@ -2,38 +2,38 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
 public static class FieldProjector
 {
-    public static Dictionary<string, object?> Project<TEntity>(TEntity entity, FieldSelection selection) => ProjectObject(entity!, selection);
+    public static Dictionary<string, object> Project<TEntity>(TEntity entity, FieldSelection selection) => ProjectObject(entity!, selection);
 
-    public static List<Dictionary<string, object?>> ProjectList<TEntity>(IEnumerable<TEntity> entities, FieldSelection selection) =>
+    public static List<Dictionary<string, object>> ProjectList<TEntity>(IEnumerable<TEntity> entities, FieldSelection selection) =>
         entities.Select(e => Project(e, selection)).ToList();
 
-    private static Dictionary<string, object?> ProjectObject(object source, FieldSelection selection)
+    private static Dictionary<string, object> ProjectObject(object source, FieldSelection selection)
     {
-        var result = new Dictionary<string, object?>();
+        var result = new Dictionary<string, object>();
         var properties = source.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        PropertyInfo? expandProperty = null;
+        PropertyInfo expandProperty = null;
         var scalarLookup = new Dictionary<string, PropertyInfo>();
 
         foreach (var prop in properties)
         {
-            var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+            var jsonAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
             if (jsonAttr == null)
                 continue;
 
-            if (jsonAttr.Name == "_expand")
+            if (jsonAttr.PropertyName == "_expand")
             {
                 expandProperty = prop;
                 continue;
             }
 
-            scalarLookup[jsonAttr.Name] = prop;
+            scalarLookup[jsonAttr.PropertyName] = prop;
         }
 
         if (selection.IncludeAllScalars)
@@ -60,8 +60,8 @@ public static class FieldProjector
 
         if (selection.Entities.Count > 0)
         {
-            var expandDict = new Dictionary<string, object?>();
-            var expandValue = expandProperty?.GetValue(source) as Dictionary<string, object?>;
+            var expandDict = new Dictionary<string, object>();
+            var expandValue = expandProperty?.GetValue(source) as Dictionary<string, object>;
 
             foreach (var (entityName, subSelection) in selection.Entities)
             {
@@ -89,7 +89,7 @@ public static class FieldProjector
         return result;
     }
 
-    private static object? ProjectNested(object? value, FieldSelection selection)
+    private static object ProjectNested(object value, FieldSelection selection)
     {
         if (value is null)
             return null;
@@ -97,7 +97,7 @@ public static class FieldProjector
         // Een collectie van geneste objecten: projecteer elk element afzonderlijk.
         if (value is IEnumerable enumerable && value is not string)
         {
-            var items = new List<object?>();
+            var items = new List<object>();
             foreach (var item in enumerable)
                 items.Add(item is null ? null : ProjectObject(item, selection));
             return items;
