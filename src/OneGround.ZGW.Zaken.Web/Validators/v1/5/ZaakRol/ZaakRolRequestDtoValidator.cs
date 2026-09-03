@@ -1,4 +1,5 @@
 using FluentValidation;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Requests.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
@@ -22,7 +23,7 @@ public class ZaakRolRequestDtoValidator : ZGWValidator<ZaakRolRequestDto>
                 v.CascadeRuleFor(b => b.EmailAdres).MaximumLength(254);
                 v.CascadeRuleFor(b => b.Functie).MaximumLength(50);
                 v.CascadeRuleFor(b => b.Telefoonnummer).MaximumLength(20);
-                v.CascadeRuleFor(b => b.Naam).MaximumLength(40);
+                v.CascadeRuleFor(b => b.Naam).NotNull().WithErrorCode(ErrorCode.Required).MaximumLength(40);
             });
     }
 }
