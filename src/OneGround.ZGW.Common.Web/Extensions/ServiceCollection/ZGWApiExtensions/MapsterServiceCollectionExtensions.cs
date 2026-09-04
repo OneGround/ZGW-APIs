@@ -76,7 +76,7 @@ public static class MapsterServiceCollectionExtensions
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
 
-        services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
+        services.AddScoped<IRequestMerger, RequestMerger>();
 
         return services;
     }

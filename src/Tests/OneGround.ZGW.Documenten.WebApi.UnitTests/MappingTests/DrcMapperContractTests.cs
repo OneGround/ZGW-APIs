@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// Covers the mapping contracts DRC depends on OUTSIDE the Map calls its controllers make: the audit trail
-/// via <see cref="IMapper"/> and the PATCH merge via <see cref="IZgwRequestMerger"/>. The per-register
+/// via <see cref="IMapper"/> and the PATCH merge via <see cref="IRequestMerger"/>. The per-register
 /// tests build their own mapper and exercise neither path -- they passed while both were broken. A
 /// regression here is silent (Mapster convention-maps instead of throwing), so the adapter type is
 /// asserted directly rather than inferred from a working map.
@@ -31,7 +31,7 @@ public class DrcMapperContractTests : IDisposable
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public DrcMapperContractTests()
     {
@@ -43,13 +43,13 @@ public class DrcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly, Mapster enabled.
+        // Mirrors Startup exactly: same extensions, same order, same assembly.
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
         _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -94,7 +94,7 @@ public class DrcMapperContractTests : IDisposable
 
     /// <summary>
     /// Every entity → request-DTO pair the registers declare, run through the real
-    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check (values
+    /// <see cref="IRequestMerger"/> with an empty patch. A routing tripwire, not a value check (values
     /// are pinned by the register tests) -- it catches a merge resolved against a mapper with no map for
     /// the pair, which would throw at request time while every register-level fact stays green.
     /// </summary>
@@ -128,7 +128,7 @@ public class DrcMapperContractTests : IDisposable
         };
         var patch = new JObject { ["omschrijvingVoorwaarden"] = "gewijzigde voorwaarden" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<Documenten.Contracts.v1.Requests.GebruiksRechtRequestDto, GebruiksRecht>(
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<Documenten.Contracts.v1.Requests.GebruiksRechtRequestDto, GebruiksRecht>(
             existing,
             patch
         );
@@ -236,8 +236,8 @@ public class DrcMapperContractTests : IDisposable
     // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
     // apply optional-parameter defaults - the argument array has to carry it explicitly.
     private object MergeEmptyPatch(Type requestDtoType, Type entityType, object entity) =>
-        typeof(IZgwRequestMerger)
-            .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
+        typeof(IRequestMerger)
+            .GetMethod(nameof(IRequestMerger.MergePartialUpdateToObjectRequest))!
             .MakeGenericMethod(requestDtoType, entityType)
-            .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
+            .Invoke(_requestMerger, [entity, new JObject(), null]);
 }

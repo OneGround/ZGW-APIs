@@ -37,19 +37,19 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._2;
 public class ZakenController : ZGWControllerBase
 {
     private readonly IValidatorService _validatorService;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ZakenController(
         ILogger<ZakenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _validatorService = validatorService;
     }
 
@@ -128,7 +128,7 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakEigenschapRequestDto mergedZaakEigenschapRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+        ZaakEigenschapRequestDto mergedZaakEigenschapRequest = _requestMerger.MergePartialUpdateToObjectRequest<
             ZaakEigenschapRequestDto,
             ZaakEigenschap
         >(resultGet.Result, partialZaakEigenschapRequest);

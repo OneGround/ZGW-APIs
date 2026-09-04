@@ -19,7 +19,7 @@ namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 /// <summary>
 /// Guards the mapping contracts BRC depends on OUTSIDE its controllers: the audit trail
 /// (<c>AuditTrailServiceBase.SetOld/SetNew</c>) via <see cref="IMapper"/>, the PATCH merge via
-/// <see cref="IZgwRequestMerger"/>, and the <c>?expand=</c> expander. The per-register tests in this
+/// <see cref="IRequestMerger"/>, and the <c>?expand=</c> expander. The per-register tests in this
 /// folder build an isolated TypeAdapterConfig and cannot see any of these paths — they passed while all
 /// three were broken. These resolve the real container the way Startup does.
 /// </summary>
@@ -34,7 +34,7 @@ public class BrcMapperContractTests : IDisposable
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public BrcMapperContractTests()
     {
@@ -52,7 +52,7 @@ public class BrcMapperContractTests : IDisposable
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
         _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -109,7 +109,7 @@ public class BrcMapperContractTests : IDisposable
         var existing = _fixture.Create<Besluit>();
         var patch = new JObject { ["toelichting"] = "gewijzigde toelichting" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(existing, patch);
 
         // The patched field comes from the JObject; the untouched field can only come from the existing
         // entity having been mapped in first, which is the step that needs the register.

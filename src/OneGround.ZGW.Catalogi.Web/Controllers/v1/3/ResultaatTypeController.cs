@@ -40,13 +40,13 @@ public class ResultaatTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ResultaatTypeController(
         ILogger<ResultaatTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -54,7 +54,7 @@ public class ResultaatTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -255,7 +255,7 @@ public class ResultaatTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        ResultaatTypeRequestDto mergedResultTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ResultaatTypeRequestDto, ResultaatType>(
+        ResultaatTypeRequestDto mergedResultTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<ResultaatTypeRequestDto, ResultaatType>(
             resultGet.Result,
             partialResultTypeRequest
         );

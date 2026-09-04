@@ -21,12 +21,12 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// The two mapping contracts ZRC depends on outside the Map calls its controllers make themselves: the
-/// audit trail (<see cref="IMapper"/>) and the PATCH merge (<see cref="IZgwRequestMerger"/>). The
-/// register tests resolve <c>MapsterMapper.IMapper</c> directly and so exercise neither adapter.
+/// audit trail (<see cref="IMapper"/>) and the PATCH merge (<see cref="IRequestMerger"/>). The
+/// register tests build their own TypeAdapterConfig, so neither path is exercised on the real seam.
 /// </summary>
 /// <remarks>
 /// A regression here is silent, not loud: Mapster convention-maps instead of throwing, so an audit
-/// record or a PATCH result comes back quietly wrong. Hence the adapter type is asserted directly rather
+/// record or a PATCH result comes back quietly wrong. Hence the mapper type is asserted directly rather
 /// than inferred from a working map, and the controller constructors are checked by reflection — a
 /// controller that took its merger from anywhere but the shared registration would keep compiling, and
 /// every mapping fact here would keep passing, because they resolve the merger themselves.
@@ -53,7 +53,7 @@ public class ZrcMapperContractTests : IDisposable
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ZrcMapperContractTests()
     {
@@ -65,15 +65,13 @@ public class ZrcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly. The order
-        // matters - the seam uses services.Replace for IMapper, and Replace on an empty collection
-        // merely adds, which would leave the type assertion below green without proving the replace wins.
+        // Mirrors Startup exactly: same extensions, same order, same assembly.
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
         _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -129,7 +127,7 @@ public class ZrcMapperContractTests : IDisposable
 
     /// <summary>
     /// Every entity → request-DTO pair the registers declare, run through the real
-    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
+    /// <see cref="IRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
     /// values are pinned by the register tests; this catches a merge resolved against a mapper that has
     /// no map for the pair, which throws at request time while every register-level fact stays green.
     /// </summary>
@@ -252,13 +250,13 @@ public class ZrcMapperContractTests : IDisposable
     // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
     // apply optional-parameter defaults - the argument array has to carry it explicitly.
     private object MergeEmptyPatch(Type requestDtoType, Type entityType, object entity) =>
-        typeof(IZgwRequestMerger)
-            .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
+        typeof(IRequestMerger)
+            .GetMethod(nameof(IRequestMerger.MergePartialUpdateToObjectRequest))!
             .MakeGenericMethod(requestDtoType, entityType)
-            .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
+            .Invoke(_requestMerger, [entity, new JObject(), null]);
 
     /// <summary>
-    /// Every ZRC controller that runs a PATCH must take the shared <see cref="IZgwRequestMerger"/> rather
+    /// Every ZRC controller that runs a PATCH must take the shared <see cref="IRequestMerger"/> rather
     /// than roll its own merge. Asserted structurally because it cannot be observed from a mapping test:
     /// the merge facts above resolve the merger themselves and stay green regardless of what any
     /// controller depends on.
@@ -269,7 +267,7 @@ public class ZrcMapperContractTests : IDisposable
     {
         var parameterTypes = controllerType.GetConstructors().Single().GetParameters().Select(p => p.ParameterType);
 
-        Assert.Contains(typeof(IZgwRequestMerger), parameterTypes);
+        Assert.Contains(typeof(IRequestMerger), parameterTypes);
     }
 
     /// <summary>

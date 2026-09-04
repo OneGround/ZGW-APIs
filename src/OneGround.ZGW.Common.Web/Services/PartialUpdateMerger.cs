@@ -6,7 +6,7 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Common.Web.Services;
 
 /// <summary>
-/// The mapper-agnostic half of a partial (PATCH) update, used by <see cref="ZgwRequestMerger"/>: it
+/// The mapper-agnostic half of a partial (PATCH) update, used by <see cref="RequestMerger"/>: it
 /// validates the caller's partial request and merges it over a request DTO, knowing nothing about how
 /// that DTO was produced from the existing entity.
 /// </summary>

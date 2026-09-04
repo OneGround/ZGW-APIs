@@ -30,20 +30,20 @@ namespace OneGround.ZGW.Notificaties.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class AbonnementController : ZGWControllerBase
 {
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
     private readonly IValidatorService _validatorService;
 
     public AbonnementController(
         ILogger<AbonnementController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _validatorService = validatorService;
     }
 
@@ -182,7 +182,7 @@ public class AbonnementController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        AbonnementRequestDto mergedAbonnementRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(
+        AbonnementRequestDto mergedAbonnementRequest = _requestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(
             resultGet.Result,
             partialAbonnementRequest
         );

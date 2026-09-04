@@ -27,9 +27,9 @@ public class GenericObjectMergerFactory : IGenericObjectMergerFactory
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _requestMerger;
+    private readonly IRequestMerger _requestMerger;
 
-    public GenericObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
+    public GenericObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;
@@ -48,9 +48,9 @@ public class GenericObjectMerger<TRequestDto> : IGenericObjectMerger
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _requestMerger;
+    private readonly IRequestMerger _requestMerger;
 
-    public GenericObjectMerger(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
+    public GenericObjectMerger(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;

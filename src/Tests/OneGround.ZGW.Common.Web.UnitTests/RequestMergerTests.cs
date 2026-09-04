@@ -34,7 +34,7 @@ public class RequestMergerTests : IDisposable
     private readonly JsonSerializer _serializer = new ZGWJsonSerializer();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly ZgwRequestMerger _merger;
+    private readonly RequestMerger _merger;
 
     public RequestMergerTests()
     {
@@ -64,7 +64,7 @@ public class RequestMergerTests : IDisposable
         // ServiceMapper is scoped and resolves the url resolver through the request's provider, so the
         // scope has to outlive every test in this class, not just the constructor.
         _scope = _provider.CreateScope();
-        _merger = new ZgwRequestMerger(_scope.ServiceProvider.GetRequiredService<IMapper>());
+        _merger = new RequestMerger(_scope.ServiceProvider.GetRequiredService<IMapper>());
     }
 
     public void Dispose()

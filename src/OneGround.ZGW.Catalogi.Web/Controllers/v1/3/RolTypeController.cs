@@ -40,13 +40,13 @@ public class RolTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public RolTypeController(
         ILogger<RolTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
@@ -54,7 +54,7 @@ public class RolTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -247,7 +247,7 @@ public class RolTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        RolTypeRequestDto mergedRolTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<RolTypeRequestDto, RolType>(
+        RolTypeRequestDto mergedRolTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<RolTypeRequestDto, RolType>(
             resultGet.Result,
             partialRolTypeRequest
         );

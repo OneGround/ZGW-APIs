@@ -42,13 +42,13 @@ public class ZaakResultatenController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ZaakResultatenController(
         ILogger<ZaakResultatenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -56,7 +56,7 @@ public class ZaakResultatenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -278,10 +278,10 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakResultaatRequestDto mergedZaakResultaatRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
-            ZaakResultaatRequestDto,
-            ZaakResultaat
-        >(resultGet.Result, partialZaakResultaatRequest);
+        ZaakResultaatRequestDto mergedZaakResultaatRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakResultaatRequestDto, ZaakResultaat>(
+            resultGet.Result,
+            partialZaakResultaatRequest
+        );
 
         if (!_validatorService.IsValid(mergedZaakResultaatRequest, out var validationResult))
         {

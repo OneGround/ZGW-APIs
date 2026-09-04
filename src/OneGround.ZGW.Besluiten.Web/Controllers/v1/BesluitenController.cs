@@ -47,13 +47,13 @@ public class BesluitenController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IObjectExpander<BesluitResponseDto> _expander;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public BesluitenController(
         ILogger<BesluitenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -62,7 +62,7 @@ public class BesluitenController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -268,7 +268,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        BesluitRequestDto mergedBesluitRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(
+        BesluitRequestDto mergedBesluitRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(
             resultGet.Result,
             partialBesluitRequest
         );

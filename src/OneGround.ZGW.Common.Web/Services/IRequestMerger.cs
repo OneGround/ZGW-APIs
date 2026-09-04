@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Common.Web.Services;
 /// The pre-merge hook is a plain <c>Action&lt;TRequest&gt;</c> rather than any mapper's own options type,
 /// so this contract stays independent of the mapper behind it.
 /// </remarks>
-public interface IZgwRequestMerger
+public interface IRequestMerger
 {
     bool TryMergeValidity(IValidityEntity entity, object partialObjectRequest);
 

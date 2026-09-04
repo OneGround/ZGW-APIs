@@ -40,13 +40,13 @@ public class BesluitTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public BesluitTypeController(
         ILogger<BesluitTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
@@ -54,7 +54,7 @@ public class BesluitTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -245,7 +245,7 @@ public class BesluitTypeController : ZGWControllerBase
 
         BesluitType result;
 
-        if (_zgwRequestMerger.TryMergeValidity(resultGet.Result, partialBesluitTypeRequest))
+        if (_requestMerger.TryMergeValidity(resultGet.Result, partialBesluitTypeRequest))
         {
             var updateEindeGeldigheidResult = await _mediator.Send(new UpdateEindeGeldigheidCommand { Entity = resultGet.Result });
 
@@ -258,7 +258,7 @@ public class BesluitTypeController : ZGWControllerBase
         }
         else
         {
-            BesluitTypeRequestDto mergedBesluitTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
+            BesluitTypeRequestDto mergedBesluitTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
                 resultGet.Result,
                 partialBesluitTypeRequest
             );

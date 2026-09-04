@@ -39,13 +39,13 @@ public class StatusTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public StatusTypeController(
         ILogger<StatusTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
@@ -53,7 +53,7 @@ public class StatusTypeController : ZGWControllerBase
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -226,7 +226,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        StatusTypeRequestDto mergedStatusTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<StatusTypeRequestDto, StatusType>(
+        StatusTypeRequestDto mergedStatusTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<StatusTypeRequestDto, StatusType>(
             resultGet.Result,
             partialStatusTypeRequest
         );

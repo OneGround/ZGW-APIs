@@ -320,7 +320,7 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void ZaakType_with_null_relations_maps_to_null_on_the_PATCH_request_dto_too()
     {
-        // Same contract on the Entity -> RequestDto map that IZgwRequestMerger uses for PATCH: a null
+        // Same contract on the Entity -> RequestDto map that IRequestMerger uses for PATCH: a null
         // navigation must survive as null so the merge does not present [] as the existing value and
         // wipe the relations the ZAAKTYPE actually has.
         var source = new ZaakType

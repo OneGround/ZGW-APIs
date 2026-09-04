@@ -38,19 +38,19 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 public class ZaakInformatieObjectenController : ZGWControllerBase
 {
     private readonly IValidatorService _validatorService;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ZaakInformatieObjectenController(
         ILogger<ZaakInformatieObjectenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IZgwRequestMerger zgwRequestMerger,
+        IRequestMerger requestMerger,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _validatorService = validatorService;
     }
 
@@ -281,7 +281,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        ZaakInformatieObjectRequestDto mergedZaakInformatieObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+        ZaakInformatieObjectRequestDto mergedZaakInformatieObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
             ZaakInformatieObjectRequestDto,
             ZaakInformatieObject
         >(resultGet.Result, partialZaakInformatieObjectRequest);

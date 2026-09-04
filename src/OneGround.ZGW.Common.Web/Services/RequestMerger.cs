@@ -4,12 +4,12 @@ using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Common.Web.Services;
 
-public class ZgwRequestMerger : IZgwRequestMerger
+public class RequestMerger : IRequestMerger
 {
     private readonly PartialUpdateMerger _merger = new PartialUpdateMerger();
     private readonly IMapper _mapper;
 
-    public ZgwRequestMerger(IMapper mapper)
+    public RequestMerger(IMapper mapper)
     {
         _mapper = mapper;
     }

@@ -18,7 +18,7 @@ using ApplicatieRequestDtoV11 = OneGround.ZGW.Autorisaties.Contracts.v1._1.Reque
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The PATCH merge via <see cref="IZgwRequestMerger"/> — the one mapping contract AC depends on outside
+/// The PATCH merge via <see cref="IRequestMerger"/> — the one mapping contract AC depends on outside
 /// its controllers. own Map calls. The per-register tests build an isolated config and cannot see it;
 /// they stayed green while this path resolved an AutoMapper map that had already been deleted.
 /// </summary>
@@ -31,7 +31,7 @@ public class AcMapperContractTests : IDisposable
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public AcMapperContractTests()
     {
@@ -47,7 +47,7 @@ public class AcMapperContractTests : IDisposable
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
         _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -70,7 +70,7 @@ public class AcMapperContractTests : IDisposable
         var existing = ExistingApplicatie();
         var patch = new JObject { ["label"] = "gewijzigd label" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV1, Applicatie>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV1, Applicatie>(existing, patch);
 
         // The untouched fields can only come from the existing entity having been mapped in first —
         // the step that needs the register.
@@ -86,7 +86,7 @@ public class AcMapperContractTests : IDisposable
         var existing = ExistingApplicatie();
         var patch = new JObject { ["label"] = "gewijzigd label" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV11, Applicatie>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV11, Applicatie>(existing, patch);
 
         Assert.Equal("gewijzigd label", merged.Label);
         Assert.Equal(existing.HeeftAlleAutorisaties, merged.HeeftAlleAutorisaties);

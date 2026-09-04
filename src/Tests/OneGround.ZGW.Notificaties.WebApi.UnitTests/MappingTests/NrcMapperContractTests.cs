@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Notificaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// Guards the mapping contract NRC depends on OUTSIDE its controllers: the PATCH merge via
-/// <see cref="IZgwRequestMerger"/>. The per-register tests in this folder build an isolated
+/// <see cref="IRequestMerger"/>. The per-register tests in this folder build an isolated
 /// TypeAdapterConfig and cannot see that path — they passed while PATCH was broken at runtime.
 /// </summary>
 /// <remarks>
@@ -30,7 +30,7 @@ namespace OneGround.ZGW.Notificaties.WebApi.UnitTests.MappingTests;
 /// <para>
 /// Note the division of labour between the two merge-related facts here.
 /// <see cref="RequestMerger_can_merge_a_PATCH_onto_an_existing_Abonnement"/> resolves
-/// IZgwRequestMerger directly, so it proves the register still serves the merge but CANNOT detect a
+/// IRequestMerger directly, so it proves the register still serves the merge but CANNOT detect a
 /// controller that does not depend on that merger — it passes either way.
 /// <see cref="AbonnementController_depends_on_the_Mapster_backed_merger"/> is the fact that catches
 /// that, and it is cheap because the controller and its constructor are public.
@@ -41,7 +41,7 @@ public class NrcMapperContractTests : IDisposable
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
     private readonly IMapper _mapper;
 
     public NrcMapperContractTests()
@@ -57,7 +57,7 @@ public class NrcMapperContractTests : IDisposable
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
         _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
     }
 
@@ -81,7 +81,7 @@ public class NrcMapperContractTests : IDisposable
         var existing = _fixture.Create<Abonnement>();
         var patch = new JObject { ["callbackUrl"] = "https://example.test/new" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<AbonnementRequestDto, Abonnement>(existing, patch);
 
         // The patched field comes from the JObject; the untouched fields can only come from the existing
         // entity having been mapped in first, which is the step that needs the register. Kanalen is the
@@ -99,7 +99,7 @@ public class NrcMapperContractTests : IDisposable
         // controller which PATCHes in a Mapster-only service must depend on the Mapster merger.
         var parameterTypes = typeof(AbonnementController).GetConstructors().Single().GetParameters().Select(p => p.ParameterType).ToArray();
 
-        Assert.Contains(typeof(IZgwRequestMerger), parameterTypes);
+        Assert.Contains(typeof(IRequestMerger), parameterTypes);
     }
 
     [Fact]
