@@ -68,7 +68,6 @@ public class ZrcMapperContractTests : IDisposable
         // Mirrors Startup exactly: same extensions, same order, same assembly. The order
         // matters - the seam uses services.Replace for IZgwMapper, and Replace on an empty collection
         // merely adds, which would leave the type assertion below green without proving the replace wins.
-        services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();

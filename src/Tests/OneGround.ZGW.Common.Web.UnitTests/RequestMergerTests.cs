@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.DataAccess;
 using Xunit;
@@ -26,25 +29,49 @@ class RequestDto<T>
     public T Property { get; set; }
 }
 
-public class RequestMergerTests
+public class RequestMergerTests : IDisposable
 {
     private readonly JsonSerializer _serializer = new ZGWJsonSerializer();
-    private readonly RequestMerger _merger;
+    private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
+    private readonly ZgwRequestMerger _merger;
 
     public RequestMergerTests()
     {
-        var configuration = new MapperConfiguration(config =>
-        {
-            config.CreateMap<Entity<bool>, RequestDto<bool>>().ForMember(dest => dest.Id, opt => opt.Ignore());
-            config.CreateMap<Entity<string>, RequestDto<string>>().ForMember(dest => dest.Id, opt => opt.Ignore());
-            config.CreateMap<Entity<Point>, RequestDto<Point>>().ForMember(dest => dest.Id, opt => opt.Ignore());
-        });
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(RequestMergerTests).Assembly);
+        _provider = services.BuildServiceProvider();
 
-        // Important: if tests starts failing, that means that mappings are missing Ignore() or MapFrom()
-        // for members which does not map automatically by name
-        configuration.AssertConfigurationIsValid();
+        // Configured on this test's own config, never inside AddZgwMapster: Entity<T>.Id throws on get, so
+        // the destination Id must be ignored or the map dereferences it. RequireDestinationMemberSource is
+        // Mapster's stand-in for AutoMapper's AssertConfigurationIsValid -- if these tests start failing,
+        // that means a mapping is missing an Ignore or an explicit Map for a member that does not map
+        // automatically by name.
+        var config = _provider.GetRequiredService<TypeAdapterConfig>();
 
-        _merger = new RequestMerger(configuration.CreateMapper());
+        // Geometry passthrough, for the same reason RequestToDomainRegister registers one for the abstract
+        // Geometry base: Mapster's same-type clone expression is wrong for NetTopologySuite geometry. Point
+        // is concrete, so unlike Geometry it clones without erroring -- it just walks Boundary/Centroid/
+        // Envelope and every other computed geometry property, and compilation never terminates. Measured:
+        // without this rule config.Compile() below hangs indefinitely rather than throwing.
+        config.NewConfig<Point, Point>().MapWith(src => src);
+
+        config.ForType<Entity<bool>, RequestDto<bool>>().Ignore(dest => dest.Id).RequireDestinationMemberSource(true);
+        config.ForType<Entity<string>, RequestDto<string>>().Ignore(dest => dest.Id).RequireDestinationMemberSource(true);
+        config.ForType<Entity<Point>, RequestDto<Point>>().Ignore(dest => dest.Id).RequireDestinationMemberSource(true);
+        config.Compile();
+
+        // ServiceMapper is scoped and resolves the url resolver through the request's provider, so the
+        // scope has to outlive every test in this class, not just the constructor.
+        _scope = _provider.CreateScope();
+        _merger = new ZgwRequestMerger(_scope.ServiceProvider.GetRequiredService<IMapper>());
+    }
+
+    public void Dispose()
+    {
+        _scope.Dispose();
+        _provider.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public static IEnumerable<object[]> TypeTestData =>

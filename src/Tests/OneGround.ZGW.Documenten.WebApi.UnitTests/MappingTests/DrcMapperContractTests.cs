@@ -44,7 +44,6 @@ public class DrcMapperContractTests : IDisposable
         services.AddSingleton(mockedUriService.Object);
 
         // Mirrors Startup exactly: same extensions, same order, same assembly, Mapster enabled.
-        services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();

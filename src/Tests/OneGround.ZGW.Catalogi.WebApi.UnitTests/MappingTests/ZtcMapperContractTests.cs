@@ -57,7 +57,6 @@ public class ZtcMapperContractTests : IDisposable
         services.AddSingleton(mockedUriService.Object);
 
         // Mirrors Startup exactly: same extensions, same order, same assembly.
-        services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
