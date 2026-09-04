@@ -31,9 +31,14 @@ public static class MapsterServiceCollectionExtensions
         // navigation-property loop). At this depth, Mapster returns a default value instead of
         // recursing further, rather than crashing the process with an uncatchable
         // StackOverflowException.
-        // 200 is not derived from any real domain-graph measurement — it was chosen to clear the
-        // synthetic 100-deep health test (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow)
-        // with headroom. Now that services map real graphs, revisit this value against measured depths.
+        // Measured 2026-09-04 across the richest service's 166 registered pairs: the deepest destination
+        // TYPE graph is 8 levels. 200 is therefore ~25x headroom, and deliberately not tightened to fit
+        // that number — a self-referential entity (deel-zaaktypen chains, relevanteAndereZaken) nests by
+        // DATA at runtime, which the type graph does not bound. The failure mode of a cap that is too low
+        // is silent: Mapster returns a default value for the truncated member instead of erroring, so
+        // trading headroom for earlier cycle detection would risk quietly dropping real data. Also clears
+        // the synthetic 100-deep health test
+        // (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow).
         config.Default.MaxDepth(200);
 
         // Parity with AutoMapper's default (AllowNullCollections = false): a null source collection
