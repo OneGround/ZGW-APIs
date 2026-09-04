@@ -59,8 +59,8 @@ public class AcMapperContractTests : IDisposable
     [Fact]
     public void AC_resolves_the_Mapster_backed_mapper()
     {
-        // AC has no AutoMapper profiles left, so a regression to that adapter would map every shared
-        // consumer against an empty configuration. Asserted directly, not inferred from a working map.
+        // Every shared consumer maps through this adapter, and a missing or swapped registration is
+        // silent because Mapster convention-maps instead of throwing. Asserted directly, not inferred.
         Assert.IsType<MapsterZgwMapper>(_zgwMapper);
     }
 

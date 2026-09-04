@@ -28,10 +28,9 @@ public static class MapsterServiceCollectionExtensions
         var config = new TypeAdapterConfig();
 
         // Defense-in-depth against unbounded recursion on a cyclic object graph (e.g. an EF Core
-        // navigation-property loop). AutoMapper's parallel path in this seam has no equivalent
-        // guard and remains exposed to the same class of risk — this only protects the Mapster
-        // side. At this depth, Mapster returns a default value instead of recursing further,
-        // rather than crashing the process with an uncatchable StackOverflowException.
+        // navigation-property loop). At this depth, Mapster returns a default value instead of
+        // recursing further, rather than crashing the process with an uncatchable
+        // StackOverflowException.
         // 200 is not derived from any real domain-graph measurement — it was chosen to clear the
         // synthetic 100-deep health test (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow)
         // with headroom. Now that services map real graphs, revisit this value against measured depths.
@@ -77,13 +76,9 @@ public static class MapsterServiceCollectionExtensions
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
 
-        // Replaces the AutoMapper-backed default registered by AddAutoMapper. Relies on AddZGWApi
-        // calling AddAutoMapper first; if those two calls were ever reordered this Replace would be
-        // overwritten and a migrated service would silently fall back to AutoMapper.
-        services.Replace(ServiceDescriptor.Scoped<IZgwMapper, MapsterZgwMapper>());
+        // The mapper surface shared infrastructure resolves; the audit trail is its only consumer.
+        services.AddScoped<IZgwMapper, MapsterZgwMapper>();
 
-        // Registered only when Mapster is enabled, never unconditionally: a service that hasn't
-        // enabled Mapster must fail to resolve this, not silently get a merger backed by an empty config.
         services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
 
         return services;

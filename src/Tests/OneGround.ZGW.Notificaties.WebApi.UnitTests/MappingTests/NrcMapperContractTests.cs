@@ -32,7 +32,7 @@ namespace OneGround.ZGW.Notificaties.WebApi.UnitTests.MappingTests;
 /// Note the division of labour between the two merge-related facts here.
 /// <see cref="RequestMerger_can_merge_a_PATCH_onto_an_existing_Abonnement"/> resolves
 /// IZgwRequestMerger directly, so it proves the register still serves the merge but CANNOT detect a
-/// controller wired to the AutoMapper-backed IRequestMerger — it passes either way.
+/// controller that does not depend on that merger — it passes either way.
 /// <see cref="AbonnementController_depends_on_the_Mapster_backed_merger"/> is the fact that catches
 /// that, and it is cheap because the controller and its constructor are public.
 /// </para>
@@ -97,8 +97,7 @@ public class NrcMapperContractTests : IDisposable
     [Fact]
     public void AbonnementController_depends_on_the_Mapster_backed_merger()
     {
-        // NRC has no AutoMapper maps left, so a PATCH routed through the AutoMapper-backed
-        // IRequestMerger throws at runtime. There are no controller-level tests in this repo and the
+        // There are no controller-level tests in this repo and the
         // MediatR queries are internal, so assert the dependency itself: this is the invariant that a
         // controller which PATCHes in a Mapster-only service must depend on the Mapster merger.
         var parameterTypes = typeof(AbonnementController).GetConstructors().Single().GetParameters().Select(p => p.ParameterType).ToArray();

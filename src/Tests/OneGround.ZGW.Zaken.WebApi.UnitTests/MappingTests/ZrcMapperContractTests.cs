@@ -28,8 +28,8 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 /// A regression here is silent, not loud: Mapster convention-maps instead of throwing, so an audit
 /// record or a PATCH result comes back quietly wrong. Hence the adapter type is asserted directly rather
 /// than inferred from a working map, and the controller constructors are checked by reflection — a
-/// controller left on the AutoMapper merger keeps compiling and every mapping fact here keeps passing,
-/// because they resolve the correct merger themselves.
+/// controller that took its merger from anywhere but the shared registration would keep compiling, and
+/// every mapping fact here would keep passing, because they resolve the merger themselves.
 /// </remarks>
 public class ZrcMapperContractTests : IDisposable
 {
@@ -85,8 +85,8 @@ public class ZrcMapperContractTests : IDisposable
     [Fact]
     public void ZRC_resolves_the_Mapster_backed_mapper()
     {
-        // ZRC has no AutoMapper profiles left, so a regression to that adapter would map every shared
-        // consumer against an empty configuration.
+        // Every shared consumer (the audit trail) maps through this adapter, and a missing or swapped
+        // registration is silent because Mapster convention-maps instead of throwing.
         Assert.IsType<MapsterZgwMapper>(_zgwMapper);
     }
 
@@ -255,11 +255,10 @@ public class ZrcMapperContractTests : IDisposable
             .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
 
     /// <summary>
-    /// Every ZRC controller that runs a PATCH must take <see cref="IZgwRequestMerger"/>, not only the
-    /// AutoMapper <see cref="IRequestMerger"/> that <c>ZGWControllerBase</c> still requires. Asserted
-    /// structurally because it cannot be observed from a mapping test: the merge facts above resolve
-    /// the Mapster merger themselves and stay green while a controller merges through the AutoMapper
-    /// one against an empty configuration.
+    /// Every ZRC controller that runs a PATCH must take the shared <see cref="IZgwRequestMerger"/> rather
+    /// than roll its own merge. Asserted structurally because it cannot be observed from a mapping test:
+    /// the merge facts above resolve the merger themselves and stay green regardless of what any
+    /// controller depends on.
     /// </summary>
     [Theory]
     [MemberData(nameof(PatchingControllerTypes))]

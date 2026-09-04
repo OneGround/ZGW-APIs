@@ -4,16 +4,12 @@ using OneGround.ZGW.DataAccess;
 namespace OneGround.ZGW.Common.Web.Services;
 
 /// <summary>
-/// Mapster-side counterpart to <see cref="IRequestMerger"/>, for services that have adopted Mapster.
+/// Applies a partial (PATCH) request over an existing entity: maps the entity to its request DTO, then
+/// merges the caller's partial payload onto it.
 /// </summary>
 /// <remarks>
-/// This exists as a separate contract rather than a change to <see cref="IRequestMerger"/> because that
-/// interface is consumed outside this repository and its signature exposes AutoMapper's
-/// <c>IMappingOperationOptions</c>, which no mapper-agnostic abstraction can honour. In place of that,
-/// this contract takes a plain, mapper-agnostic <c>Action&lt;TRequest&gt;</c> for the one caller in this
-/// repository that needs to touch the mapped request before it is merged.
-/// <c>TryMergeValidity</c> is duplicated onto this contract (it needs no mapper) so a migrated service
-/// never has to inject both mergers.
+/// The pre-merge hook is a plain <c>Action&lt;TRequest&gt;</c> rather than any mapper's own options type,
+/// so this contract stays independent of the mapper behind it.
 /// </remarks>
 public interface IZgwRequestMerger
 {

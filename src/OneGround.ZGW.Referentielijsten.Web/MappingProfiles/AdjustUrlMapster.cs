@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 namespace OneGround.ZGW.Referentielijsten.Web.MappingProfiles;
 
 /// <summary>
-/// Mapster boundary for the AutoMapper <c>AdjustUrl</c> resolver. Resolves
+/// Mapster replacement for the former <c>AdjustUrl</c> value resolver. Resolves
 /// <see cref="IHttpContextAccessor"/> from <see cref="MapContext"/>, so mapping must run
 /// through ServiceMapper. Rewrite logic lives in <see cref="RequestUrlRewriter"/>.
 /// </summary>

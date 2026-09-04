@@ -64,8 +64,8 @@ public class BrcMapperContractTests : IDisposable
     [Fact]
     public void BRC_resolves_the_Mapster_backed_mapper()
     {
-        // If this ever regresses to the AutoMapper adapter, BRC has no profiles left and every write
-        // would fail — so assert the routing directly rather than inferring it from a successful map.
+        // A missing or swapped registration here is silent because Mapster convention-maps instead of
+        // throwing — so assert the routing directly rather than inferring it from a successful map.
         Assert.IsType<MapsterZgwMapper>(_zgwMapper);
     }
 

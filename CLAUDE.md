@@ -67,7 +67,7 @@ Async work runs in two message listeners (Hangfire + MassTransit/RabbitMQ): `One
 Each API is split into projects with a fixed dependency direction:
 
 - **`*.WebApi`** — thin host. `Program.cs` wires host defaults, auth, DataProtection, then delegates to `Startup` in the `*.Web` project. Holds `appsettings*.json`, `Dockerfile`, background services. Has almost no business logic.
-- **`*.Web`** — the core. Contains `Controllers/` (versioned), `Handlers/` (MediatR command/query handlers, the actual logic), `BusinessRules/`, `Validators/` (FluentValidation), `MappingProfiles/` (AutoMapper), `Notificaties/`, and the `Startup` class.
+- **`*.Web`** — the core. Contains `Controllers/` (versioned), `Handlers/` (MediatR command/query handlers, the actual logic), `BusinessRules/`, `Validators/` (FluentValidation), `MappingProfiles/` (Mapster `IRegister` definitions), `Notificaties/`, and the `Startup` class.
 - **`*.DataModel`** — EF Core entities + `DbContext` (e.g. `ZrcDbContext`) + `Migrations/`.
 - **`*.Contracts`** — request/response DTOs, versioned (`v1`, `v1._2`, `v1._5`).
 - **`*.ServiceAgent`** + **`*.ClientProxy`** — typed HTTP clients one service uses to call another (e.g. ZRC handlers call ZTC via `ICatalogiServiceAgent`).
@@ -86,7 +86,7 @@ Each API is split into projects with a fixed dependency direction:
 
 ## Key tech
 
-MediatR (CQRS), FluentValidation, AutoMapper, EF Core 8 + Npgsql, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
+MediatR (CQRS), FluentValidation, Mapster, EF Core 8 + Npgsql, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
 
 ## Further docs
 

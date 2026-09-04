@@ -61,8 +61,8 @@ public class DrcMapperContractTests : IDisposable
     [Fact]
     public void DRC_resolves_the_Mapster_backed_mapper()
     {
-        // Startup sets Mapster on, so a regression to the AutoMapper adapter would map every shared
-        // consumer against a configuration with no DRC profiles left in it.
+        // Every shared consumer (the audit trail) maps through this adapter, and a missing or swapped
+        // registration is silent because Mapster convention-maps instead of throwing.
         Assert.IsType<MapsterZgwMapper>(_zgwMapper);
     }
 

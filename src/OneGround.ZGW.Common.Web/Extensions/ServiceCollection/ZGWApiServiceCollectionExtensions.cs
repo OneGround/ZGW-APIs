@@ -56,7 +56,6 @@ public static class ZGWApiServiceCollectionExtensions
 
         services.AddMediator(callingAssembly, zgwApiOptions.ApiServiceSettings);
 
-        services.AddAutoMapper(callingAssembly);
         services.AddZgwMapster(callingAssembly);
 
         // Replace the default IApiVersionParser implementation with our own implementation which supports patch numbr (like 1.3.1)
