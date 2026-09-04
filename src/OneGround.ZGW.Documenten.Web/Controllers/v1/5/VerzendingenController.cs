@@ -68,15 +68,13 @@ public class VerzendingenController : ZGWControllerBase
     public VerzendingenController(
         ILogger<VerzendingenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();

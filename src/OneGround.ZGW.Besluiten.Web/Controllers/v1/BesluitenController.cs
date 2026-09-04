@@ -53,9 +53,7 @@ public class BesluitenController : ZGWControllerBase
     public BesluitenController(
         ILogger<BesluitenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
@@ -63,7 +61,7 @@ public class BesluitenController : ZGWControllerBase
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;

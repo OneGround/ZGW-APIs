@@ -46,16 +46,14 @@ public class BesluitTypeController : ZGWControllerBase
     public BesluitTypeController(
         ILogger<BesluitTypeController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
         _zgwRequestMerger = zgwRequestMerger;

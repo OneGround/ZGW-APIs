@@ -45,16 +45,14 @@ public class ResultaatTypeController : ZGWControllerBase
     public ResultaatTypeController(
         ILogger<ResultaatTypeController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
         _zgwRequestMerger = zgwRequestMerger;

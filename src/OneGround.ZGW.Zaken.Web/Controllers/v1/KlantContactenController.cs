@@ -49,15 +49,13 @@ public class KlantContactenController : ZGWControllerBase
     public KlantContactenController(
         ILogger<KlantContactenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorObjectResultBuilder,
         IPaginationHelper paginationHelper
     )
-        : base(logger, mediator, mapper, requestMerger, errorObjectResultBuilder)
+        : base(logger, mediator, errorObjectResultBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;

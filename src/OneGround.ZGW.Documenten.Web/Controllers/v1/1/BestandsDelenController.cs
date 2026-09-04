@@ -32,12 +32,10 @@ public class BestandsDelenController : ZGWControllerBase
     public BestandsDelenController(
         ILogger<BestandsDelenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
     }

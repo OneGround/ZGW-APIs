@@ -68,60 +68,6 @@ public class DrcMapperContractTests : IDisposable
     }
 
     /// <summary>
-    /// Nothing in DRC may CALL AutoMapper any more, even though every controller still TAKES
-    /// <c>AutoMapper.IMapper</c> (the shared <c>ZGWControllerBase</c> demands it, keeping it visible as a
-    /// protected field a merge could reintroduce a call through). That field has no DRC profiles left, so
-    /// such a call compiles and only throws at request time. Scanning the MemberRef table (rather than
-    /// walking IL) is what makes this fire on <b>use</b>, not on the constructor parameter the base class forces.
-    /// This fact becomes obsolete once <c>ZGWControllerBase</c> no longer requires an
-    /// <c>AutoMapper.IMapper</c> constructor parameter; delete it then.
-    /// </summary>
-    [Fact]
-    public void No_DRC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
-    {
-        var assemblyPath = typeof(Startup).Assembly.Location;
-
-        // A single-file or in-memory host reports an empty Location; fail with that reason rather than an
-        // opaque IO error that reads like the assertion below found nothing.
-        Assert.False(string.IsNullOrEmpty(assemblyPath), "Cannot scan metadata: Documenten.Web has no on-disk location.");
-
-        using var stream = File.OpenRead(assemblyPath);
-        using var peReader = new PEReader(stream);
-        var metadata = peReader.GetMetadataReader();
-
-        var calls = new List<string>();
-
-        // A metadata table with no member references would make the loop below pass while inspecting nothing.
-        Assert.NotEmpty(metadata.MemberReferences);
-
-        foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
-        {
-            if (memberReference.Parent.Kind != HandleKind.TypeReference)
-            {
-                continue;
-            }
-
-            var typeReference = metadata.GetTypeReference((TypeReferenceHandle)memberReference.Parent);
-            var declaringNamespace = metadata.GetString(typeReference.Namespace);
-            var declaringType = metadata.GetString(typeReference.Name);
-
-            var isAutoMapper = declaringNamespace == "AutoMapper" || declaringNamespace.StartsWith("AutoMapper.", StringComparison.Ordinal);
-            var isAutoMapperMerger = declaringType == nameof(IRequestMerger);
-            if (isAutoMapper || isAutoMapperMerger)
-            {
-                calls.Add($"{declaringNamespace}.{declaringType}.{metadata.GetString(memberReference.Name)}");
-            }
-        }
-
-        Assert.True(
-            calls.Count == 0,
-            "DRC has no AutoMapper profiles left, so these calls run against a configuration without "
-                + "them and throw at request time. Use MapsterMapper.IMapper / IZgwRequestMerger instead:\n  "
-                + string.Join("\n  ", calls.Distinct().OrderBy(c => c))
-        );
-    }
-
-    /// <summary>
     /// Every entity → response-DTO pair the registers declare, mapped through the adapter
     /// <c>AuditTrailServiceBase.SetOld</c>/<c>SetNew</c> uses. Asserts the URL is ABSOLUTE rather than
     /// equal to a fixed value, because these DTOs all have a same-named <c>Url</c> that Mapster

@@ -65,16 +65,14 @@ public class ZaakObjectenController : ZGWControllerBase
     public ZaakObjectenController(
         ILogger<ZaakObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IZaakObjectValidatorService zaakObjectValidatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
         _mapsterMapper = mapsterMapper;

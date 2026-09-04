@@ -57,15 +57,13 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public EnkelvoudigInformatieObjectenController(
         ILogger<EnkelvoudigInformatieObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder /*
         IExpanderFactory expanderFactory*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();

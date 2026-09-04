@@ -37,14 +37,12 @@ public class AbonnementController : ZGWControllerBase
     public AbonnementController(
         ILogger<AbonnementController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
         IZgwRequestMerger zgwRequestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
         _zgwRequestMerger = zgwRequestMerger;

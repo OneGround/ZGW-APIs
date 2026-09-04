@@ -42,13 +42,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
         _mapsterMapper = mapsterMapper;

@@ -42,14 +42,12 @@ public class CatalogusController : ZGWControllerBase
     public CatalogusController(
         ILogger<CatalogusController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();

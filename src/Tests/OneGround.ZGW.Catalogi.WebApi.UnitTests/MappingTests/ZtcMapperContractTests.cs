@@ -286,61 +286,6 @@ public class ZtcMapperContractTests : IDisposable
     }
 
     /// <summary>
-    /// Nothing in ZTC may CALL AutoMapper any more. The constructor fact above only proves the Mapster
-    /// merger is injected; every controller still takes <c>AutoMapper.IMapper</c> and
-    /// <see cref="IRequestMerger"/> because the shared <c>ZGWControllerBase</c> demands them, and
-    /// <c>ZGWControllerBase._mapper</c> stays visible to every ZTC controller as a protected field.
-    /// </summary>
-    /// <remarks>
-    /// That field is a mapper over an EMPTY AutoMapper configuration, so a merge from an older branch can
-    /// reintroduce <c>_mapper.Map&lt;T&gt;(...)</c>: it compiles, no mapping fact notices, and it throws
-    /// only when a real request hits that action. Reading the MemberRef table rather than walking IL is
-    /// what makes this fire on <b>use</b> and not on the constructor parameter the base class forces.
-    /// Scope is <c>Catalogi.Web</c>; add the host assembly if it ever gains an AutoMapper reference.
-    /// Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
-    /// </remarks>
-    [Fact]
-    public void No_ZTC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
-    {
-        var assemblyPath = typeof(Startup).Assembly.Location;
-
-        // A single-file or in-memory host reports an empty Location; fail with that reason rather than an
-        // opaque IO error that reads like the assertion below found nothing.
-        Assert.False(string.IsNullOrEmpty(assemblyPath), "Cannot scan metadata: Catalogi.Web has no on-disk location.");
-
-        using var stream = File.OpenRead(assemblyPath);
-        using var peReader = new PEReader(stream);
-        var metadata = peReader.GetMetadataReader();
-
-        var calls = new List<string>();
-        foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
-        {
-            if (memberReference.Parent.Kind != HandleKind.TypeReference)
-            {
-                continue;
-            }
-
-            var typeReference = metadata.GetTypeReference((TypeReferenceHandle)memberReference.Parent);
-            var declaringNamespace = metadata.GetString(typeReference.Namespace);
-            var declaringType = metadata.GetString(typeReference.Name);
-
-            var isAutoMapper = declaringNamespace == "AutoMapper" || declaringNamespace.StartsWith("AutoMapper.", StringComparison.Ordinal);
-            var isAutoMapperMerger = declaringType == nameof(IRequestMerger);
-            if (isAutoMapper || isAutoMapperMerger)
-            {
-                calls.Add($"{declaringNamespace}.{declaringType}.{metadata.GetString(memberReference.Name)}");
-            }
-        }
-
-        Assert.True(
-            calls.Count == 0,
-            "ZTC has no AutoMapper profiles left, so these calls run against an empty configuration and "
-                + "throw at request time. Use MapsterMapper.IMapper / IZgwRequestMerger instead:\n  "
-                + string.Join("\n  ", calls.Distinct().OrderBy(c => c))
-        );
-    }
-
-    /// <summary>
     /// Discovered rather than listed, so a controller that gains a PATCH later is covered without
     /// anyone remembering to extend a list. Which merger field a method body uses is not visible by
     /// reflection, so "patching" is taken from the action name ZTC controllers use for it.

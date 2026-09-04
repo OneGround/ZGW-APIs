@@ -57,16 +57,14 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     public EnkelvoudigInformatieObjectenController(
         ILogger<EnkelvoudigInformatieObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();

@@ -46,16 +46,14 @@ public class ApplicatiesController : ZGWControllerBase
     public ApplicatiesController(
         ILogger<ApplicatiesController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, errorResponseBuilder)
     {
         _mapsterMapper = mapsterMapper;
         _zgwRequestMerger = zgwRequestMerger;
