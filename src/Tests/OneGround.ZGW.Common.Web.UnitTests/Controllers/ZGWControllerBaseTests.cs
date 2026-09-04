@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Reflection;
+using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Web.Controllers;
@@ -13,27 +15,30 @@ public class ZGWControllerBaseTests
     private const BindingFlags AllInstance = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
     /// <summary>
-    /// The shared controller base must not take a mapper or a merger. It held both for the whole Mapster
-    /// migration, over an empty AutoMapper configuration, where a reintroduced _mapper.Map call would
-    /// compile, pass every mapping test, and throw only when a real request reached that action.
+    /// The shared controller base owns the one mapper every controller uses. Pinned because the base held
+    /// a second, dead mapper for the whole Mapster migration: a reintroduced mapper on the base compiles,
+    /// passes every mapping test, and misbehaves only when a real request reaches that action.
     /// </summary>
     [Fact]
-    public void Constructor_takes_only_logger_mediator_and_error_response_builder()
+    public void Constructor_takes_logger_mediator_mapper_and_error_response_builder()
     {
         var constructor = Assert.Single(typeof(ZGWControllerBase).GetConstructors(AllInstance));
 
         var parameterTypes = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
 
-        Assert.Equal(new[] { typeof(ILogger), typeof(IMediator), typeof(IErrorResponseBuilder) }, parameterTypes);
+        Assert.Equal(new[] { typeof(ILogger), typeof(IMediator), typeof(IMapper), typeof(IErrorResponseBuilder) }, parameterTypes);
     }
 
+    /// <summary>
+    /// Exactly one mapper on the base, and it is Mapster's. Asserted by type identity rather than by name
+    /// so that a second mapping abstraction reintroduced alongside it fails here.
+    /// </summary>
     [Fact]
-    public void Base_exposes_no_mapper_or_merger_field()
+    public void Base_exposes_one_mapper_and_no_merger()
     {
-        var fieldTypeNames = typeof(ZGWControllerBase).GetFields(AllInstance).Select(f => f.FieldType.Name).ToArray();
+        var fieldTypes = typeof(ZGWControllerBase).GetFields(AllInstance).Select(f => f.FieldType).ToArray();
 
-        Assert.DoesNotContain("IMapper", fieldTypeNames);
-        Assert.DoesNotContain("IRequestMerger", fieldTypeNames);
-        Assert.DoesNotContain("IZgwRequestMerger", fieldTypeNames);
+        Assert.Single(fieldTypes, t => t == typeof(IMapper));
+        Assert.DoesNotContain(fieldTypes, t => t.Name.Contains("Merger", StringComparison.Ordinal));
     }
 }

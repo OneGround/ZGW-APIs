@@ -37,19 +37,17 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 public class ObjectInformatieObjectenController : ZGWControllerBase
 {
     private readonly IObjectExpander<InformatieObjectContext> _expander;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ObjectInformatieObjectenController(
         ILogger<ObjectInformatieObjectenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
-        _mapsterMapper = mapsterMapper;
     }
 
     /// <summary>
@@ -73,14 +71,14 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapsterMapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
+        var filter = _mapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
             cancellationToken
         );
 
-        var objectInformatieObjectenResponse = _mapsterMapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
+        var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
@@ -136,7 +134,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObject = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObject = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 

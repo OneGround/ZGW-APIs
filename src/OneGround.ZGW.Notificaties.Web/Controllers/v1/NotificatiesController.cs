@@ -31,18 +31,13 @@ namespace OneGround.ZGW.Notificaties.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class NotificatiesController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public NotificatiesController(
         ILogger<NotificatiesController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Publiceer een notificatie.
@@ -60,7 +55,7 @@ public class NotificatiesController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(NotificeerAsync), notificatieRequest);
 
-        var notificatie = _mapsterMapper.Map<Notificatie>(notificatieRequest);
+        var notificatie = _mapper.Map<Notificatie>(notificatieRequest);
 
         var result = await _mediator.Send(new QueueNotificatieCommand { Notificatie = notificatie });
 

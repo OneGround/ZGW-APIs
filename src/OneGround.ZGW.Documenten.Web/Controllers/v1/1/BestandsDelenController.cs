@@ -27,18 +27,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class BestandsDelenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public BestandsDelenController(
         ILogger<BestandsDelenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     // HTTP PUT http://documenten.user.local:5007/api/v1/bestandsdelen/59bad509-840b-4cd0-82dc-cbda74a75c2b
 
@@ -89,7 +84,7 @@ public class BestandsDelenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var bestandsDeelResponse = _mapsterMapper.Map<BestandsDeelResponseDto>(result.Result);
+        var bestandsDeelResponse = _mapper.Map<BestandsDeelResponseDto>(result.Result);
 
         return Ok(bestandsDeelResponse);
     }

@@ -35,20 +35,18 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class ZaakVerzoekenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakVerzoekenController(
         ILogger<ZaakVerzoekenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IZgwRequestMerger zgwRequestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
     }
 
     /// <summary>
@@ -68,11 +66,11 @@ public class ZaakVerzoekenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapsterMapper.Map<GetAllZaakVerzoekenFilter>(queryParameters);
+        var filter = _mapper.Map<GetAllZaakVerzoekenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakVerzoekenQuery { GetAllZaakVerzoekenFilter = filter });
 
-        var zaakVerzoekResponse = _mapsterMapper.Map<IList<ZaakVerzoekResponseDto>>(result.Result);
+        var zaakVerzoekResponse = _mapper.Map<IList<ZaakVerzoekResponseDto>>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -114,7 +112,7 @@ public class ZaakVerzoekenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakVerzoekResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakVerzoekResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -145,7 +143,7 @@ public class ZaakVerzoekenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakVerzoekRequest);
 
-        ZaakVerzoek zaakverzoek = _mapsterMapper.Map<ZaakVerzoek>(zaakVerzoekRequest);
+        ZaakVerzoek zaakverzoek = _mapper.Map<ZaakVerzoek>(zaakVerzoekRequest);
 
         var result = await _mediator.Send(new CreateZaakVerzoekCommand { ZaakVerzoek = zaakverzoek, ZaakUrl = zaakVerzoekRequest.Zaak });
 
@@ -164,7 +162,7 @@ public class ZaakVerzoekenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakVerzoekResponse = _mapsterMapper.Map<ZaakVerzoekResponseDto>(result.Result);
+        var zaakVerzoekResponse = _mapper.Map<ZaakVerzoekResponseDto>(result.Result);
 
         return Created(zaakVerzoekResponse.Url, zaakVerzoekResponse);
     }

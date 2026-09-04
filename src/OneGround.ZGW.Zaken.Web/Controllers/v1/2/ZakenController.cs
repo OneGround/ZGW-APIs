@@ -37,21 +37,19 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._2;
 public class ZakenController : ZGWControllerBase
 {
     private readonly IValidatorService _validatorService;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZakenController(
         ILogger<ZakenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IZgwRequestMerger zgwRequestMerger,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
         _validatorService = validatorService;
     }
 
@@ -71,7 +69,7 @@ public class ZakenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {zaak_uuid}, {uuid}", nameof(UpdateAsync), request, zaak_uuid, uuid);
 
-        ZaakEigenschap zaakEigenschap = _mapsterMapper.Map<ZaakEigenschap>(request);
+        ZaakEigenschap zaakEigenschap = _mapper.Map<ZaakEigenschap>(request);
 
         var result = await _mediator.Send(
             new UpdateZaakEigenschapCommand
@@ -97,7 +95,7 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakEigenschapResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -140,7 +138,7 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakEigenschap mergedZaakEigenschap = _mapsterMapper.Map<ZaakEigenschap>(mergedZaakEigenschapRequest);
+        ZaakEigenschap mergedZaakEigenschap = _mapper.Map<ZaakEigenschap>(mergedZaakEigenschapRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateZaakEigenschapCommand
@@ -162,7 +160,7 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakEigenschapResponse = _mapsterMapper.Map<ZaakEigenschapResponseDto>(resultUpd.Result);
+        var zaakEigenschapResponse = _mapper.Map<ZaakEigenschapResponseDto>(resultUpd.Result);
 
         return Ok(zaakEigenschapResponse);
     }

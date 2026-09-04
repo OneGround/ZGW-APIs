@@ -41,22 +41,20 @@ public class ZaakObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakObjectenController(
         ILogger<ZaakObjectenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
@@ -78,8 +76,8 @@ public class ZaakObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
-        var filter = _mapsterMapper.Map<GetAllZaakObjectenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
+        var filter = _mapper.Map<GetAllZaakObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakObjectenQuery { GetAllZaakObjectenFilter = filter, Pagination = pagination });
 
@@ -88,7 +86,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<List<ZaakObjectResponseDto>>(result.Result.PageResult);
+        var zaakObjectResponse = _mapper.Map<List<ZaakObjectResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakObjectResponse, result.Result.Count);
 
@@ -144,7 +142,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakObjectResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -177,7 +175,7 @@ public class ZaakObjectenController : ZGWControllerBase
 
         zaakObjectRequest.ObjectTypeOverigeDefinitie = null; // Note: To be sure not added with the 1.0 version!
 
-        ZaakObject zaakObject = _mapsterMapper.Map<ZaakObject>(zaakObjectRequest);
+        ZaakObject zaakObject = _mapper.Map<ZaakObject>(zaakObjectRequest);
 
         var result = await _mediator.Send(new CreateZaakObjectCommand { ZaakObject = zaakObject, ZaakUrl = zaakObjectRequest.Zaak });
 
@@ -191,7 +189,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakObjectResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }

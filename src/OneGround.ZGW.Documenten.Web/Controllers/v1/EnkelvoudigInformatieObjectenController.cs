@@ -51,22 +51,20 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public EnkelvoudigInformatieObjectenController(
         ILogger<EnkelvoudigInformatieObjectenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         IValidatorService validatorService
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
-        _mapsterMapper = mapsterMapper;
     }
 
     //
@@ -93,10 +91,8 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(
-            new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize)
-        );
-        var filter = _mapsterMapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
+        var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllEnkelvoudigInformatieObjectenQuery { GetAllEnkelvoudigInformatieObjectenFilter = filter, Pagination = pagination },
@@ -108,7 +104,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var enkelvoudigInformatieObjectenResponse = _mapsterMapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
+        var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,
@@ -156,7 +152,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
-        var filter = _mapsterMapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
+        var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
@@ -173,7 +169,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var enkelvoudigInformatieObjectResponse = _mapsterMapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
+        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -216,7 +212,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             enkelvoudigInformatieObjectRequest.Bronorganisatie
         );
 
-        var enkelvoudigInformatieObjectVersie = _mapsterMapper.Map<EnkelvoudigInformatieObjectVersie>(enkelvoudigInformatieObjectRequest);
+        var enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(enkelvoudigInformatieObjectRequest);
 
         // Note: we should investigate who send the 2-letter language code so we log for these situations
         LogInvalidTaalCode(enkelvoudigInformatieObjectRequest.Taal, enkelvoudigInformatieObjectVersie.Taal);
@@ -236,7 +232,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var enkelvoudigInformatieObjectResponse = _mapsterMapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(result.Result);
+        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectCreateResponseDto>(result.Result);
 
         return Created(enkelvoudigInformatieObjectResponse.Url, enkelvoudigInformatieObjectResponse);
     }
@@ -271,7 +267,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             enkelvoudigInformatieObjectRequest.Bronorganisatie
         );
 
-        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapsterMapper.Map<EnkelvoudigInformatieObjectVersie>(
+        EnkelvoudigInformatieObjectVersie enkelvoudigInformatieObjectVersie = _mapper.Map<EnkelvoudigInformatieObjectVersie>(
             enkelvoudigInformatieObjectRequest
         );
 
@@ -308,7 +304,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Conflict(result.Errors);
         }
 
-        var enkelvoudigInformatieObjectResponse = _mapsterMapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
+        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
 
         return Ok(enkelvoudigInformatieObjectResponse);
     }
@@ -365,7 +361,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Conflict(result.Errors);
         }
 
-        var enkelvoudigInformatieObjectResponse = _mapsterMapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
+        var enkelvoudigInformatieObjectResponse = _mapper.Map<EnkelvoudigInformatieObjectUpdateResponseDto>(result.Result);
 
         return Ok(enkelvoudigInformatieObjectResponse);
     }
@@ -394,7 +390,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(DownloadAsync), id, queryParameters);
 
-        var filter = _mapsterMapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
+        var filter = _mapper.Map<GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
         var resultGet = await _mediator.Send(
             new GetEnkelvoudigInformatieObjectQuery { Id = id, GetEnkelvoudigInformatieObjectFilter = filter },
@@ -660,7 +656,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var enkelvoudiginformatieobjectAuditTrailRegelsResponse = _mapsterMapper.Map<List<AuditTrailRegelDto>>(result.Result);
+        var enkelvoudiginformatieobjectAuditTrailRegelsResponse = _mapper.Map<List<AuditTrailRegelDto>>(result.Result);
 
         return Ok(enkelvoudiginformatieobjectAuditTrailRegelsResponse);
     }
@@ -710,7 +706,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var enkelvoudiginformatieobjectAuditTrailRegelResponse = _mapsterMapper.Map<AuditTrailRegelDto>(result.Result);
+        var enkelvoudiginformatieobjectAuditTrailRegelResponse = _mapper.Map<AuditTrailRegelDto>(result.Result);
 
         return Ok(enkelvoudiginformatieobjectAuditTrailRegelResponse);
     }

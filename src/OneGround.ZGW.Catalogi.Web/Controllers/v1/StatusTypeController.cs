@@ -39,22 +39,20 @@ public class StatusTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public StatusTypeController(
         ILogger<StatusTypeController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
         _zgwRequestMerger = zgwRequestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
@@ -80,8 +78,8 @@ public class StatusTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.StatusTypenPageSize));
-        var filter = _mapsterMapper.Map<GetAllStatusTypenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.StatusTypenPageSize));
+        var filter = _mapper.Map<GetAllStatusTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllStatusTypenQuery { GetAllStatusTypenFilter = filter, Pagination = pagination });
 
@@ -90,7 +88,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var statustypenResponse = _mapsterMapper.Map<List<StatusTypeResponseDto>>(result.Result.PageResult);
+        var statustypenResponse = _mapper.Map<List<StatusTypeResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
@@ -119,7 +117,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var statustypeResponse = _mapsterMapper.Map<StatusTypeResponseDto>(result.Result);
+        var statustypeResponse = _mapper.Map<StatusTypeResponseDto>(result.Result);
 
         return Ok(statustypeResponse);
     }
@@ -142,7 +140,7 @@ public class StatusTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), statusTypeRequest);
 
-        StatusType statusType = _mapsterMapper.Map<StatusType>(statusTypeRequest);
+        StatusType statusType = _mapper.Map<StatusType>(statusTypeRequest);
 
         var result = await _mediator.Send(new CreateStatusTypeCommand { StatusType = statusType, ZaakType = statusTypeRequest.ZaakType });
 
@@ -151,7 +149,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var statusTypeResponse = _mapsterMapper.Map<StatusTypeResponseDto>(result.Result);
+        var statusTypeResponse = _mapper.Map<StatusTypeResponseDto>(result.Result);
 
         return Created(statusTypeResponse.Url, statusTypeResponse);
     }
@@ -175,7 +173,7 @@ public class StatusTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), statusTypeRequest, id);
 
-        StatusType statusType = _mapsterMapper.Map<StatusType>(statusTypeRequest);
+        StatusType statusType = _mapper.Map<StatusType>(statusTypeRequest);
 
         var result = await _mediator.Send(
             new UpdateStatusTypeCommand
@@ -197,7 +195,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var statusTypeResponse = _mapsterMapper.Map<StatusTypeResponseDto>(result.Result);
+        var statusTypeResponse = _mapper.Map<StatusTypeResponseDto>(result.Result);
 
         return Ok(statusTypeResponse);
     }
@@ -238,7 +236,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        StatusType mergedStatusType = _mapsterMapper.Map<StatusType>(mergedStatusTypeRequest);
+        StatusType mergedStatusType = _mapper.Map<StatusType>(mergedStatusTypeRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateStatusTypeCommand
@@ -255,7 +253,7 @@ public class StatusTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var statusTypeResponse = _mapsterMapper.Map<StatusTypeResponseDto>(resultUpd.Result);
+        var statusTypeResponse = _mapper.Map<StatusTypeResponseDto>(resultUpd.Result);
 
         return Ok(statusTypeResponse);
     }

@@ -32,18 +32,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1;
 [Produces("application/json")]
 public class ObjectInformatieObjectenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public ObjectInformatieObjectenController(
         ILogger<ObjectInformatieObjectenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle OBJECT-INFORMATIEOBJECT relaties opvragen.
@@ -67,14 +62,14 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapsterMapper.Map<GetAllObjectInformatieObjectenFilter>(queryParameters);
+        var filter = _mapper.Map<GetAllObjectInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
             cancellationToken
         );
 
-        var objectInformatieObjectenResponse = _mapsterMapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
+        var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
         // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
         //await _mediator.Send(new LogAuditTrailGetObjectListCommand
@@ -115,7 +110,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObjectResponse = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
         //await _mediator.Send(new LogAuditTrailGetObjectCommand
@@ -157,7 +152,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), objectInformatieObjectRequest);
 
-        ObjectInformatieObject objectInformatieObject = _mapsterMapper.Map<ObjectInformatieObject>(objectInformatieObjectRequest);
+        ObjectInformatieObject objectInformatieObject = _mapper.Map<ObjectInformatieObject>(objectInformatieObjectRequest);
 
         var result = await _mediator.Send(
             new CreateObjectInformatieObjectCommand
@@ -178,7 +173,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObjectResponse = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         return Created(objectInformatieObjectResponse.Url, objectInformatieObjectResponse);
     }

@@ -27,20 +27,18 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class ZaakResultatenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakResultatenController(
         ILogger<ZaakResultatenController> logger,
         IMediator mediator,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IZgwRequestMerger zgwRequestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
     }
 
     /// <summary>
@@ -73,7 +71,7 @@ public class ZaakResultatenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(result.Result);
+        var response = _mapper.Map<Zaken.Contracts.v1.Responses.ZaakResultaatResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
