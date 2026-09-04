@@ -56,9 +56,9 @@ public class ZtcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly, EnableMapster on.
+        // Mirrors Startup exactly: same extensions, same order, same assembly.
         services.AddAutoMapper(typeof(Startup).Assembly);
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
@@ -201,7 +201,7 @@ public class ZtcMapperContractTests : IDisposable
     private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 

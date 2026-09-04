@@ -39,7 +39,7 @@ public class AcMapsterCompileTests
         // Same assembly Startup passes: AddZGWApi forwards Assembly.GetCallingAssembly(), and Startup
         // lives in the .Web project. No other registrations are needed - Compile() only builds the
         // mapping plans; DI-backed resolvers are not invoked until an actual Map() call.
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();

@@ -65,11 +65,11 @@ public class ZrcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly, EnableMapster on. The order
+        // Mirrors Startup exactly: same extensions, same order, same assembly. The order
         // matters - the seam uses services.Replace for IZgwMapper, and Replace on an empty collection
         // merely adds, which would leave the type assertion below green without proving the replace wins.
         services.AddAutoMapper(typeof(Startup).Assembly);
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
@@ -160,7 +160,7 @@ public class ZrcMapperContractTests : IDisposable
     private static readonly Lazy<TypeAdapterConfig> DeclaredConfig = new(() =>
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
         using var provider = services.BuildServiceProvider();
         return provider.GetRequiredService<TypeAdapterConfig>();
     });

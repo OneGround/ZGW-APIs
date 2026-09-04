@@ -26,8 +26,7 @@ public class AcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        // enable: true is load-bearing — without it the seam registers nothing at all.
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -62,7 +61,7 @@ public class AcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -175,7 +174,7 @@ public class AcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
 
         // Not disposed: the URL resolver pulls IEntityUriService from MapContext lazily at Map()-call time,
         // after this method has returned.

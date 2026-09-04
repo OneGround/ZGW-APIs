@@ -37,7 +37,7 @@ public class ZrcMapsterCompileTests
     private static void GateBasePairsPerMember(List<(string Name, Type Source, Type Destination)> basePairs, List<string> unmapped)
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var probe = provider.GetRequiredService<TypeAdapterConfig>();
@@ -89,7 +89,7 @@ public class ZrcMapsterCompileTests
     public void AddZgwMapster_config_compiles_every_registered_type_pair()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
@@ -119,7 +119,7 @@ public class ZrcMapsterCompileTests
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();

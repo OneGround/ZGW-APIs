@@ -23,7 +23,7 @@ public class AddZgwMapsterTests
     public void AddZgwMapster_registers_IMapper_and_maps_same_named_members()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly, enable: true);
+        services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -36,7 +36,7 @@ public class AddZgwMapsterTests
     }
 
     [Fact]
-    public void AddZgwMapster_disabled_by_default_registers_nothing()
+    public void AddZgwMapster_registers_IMapper_with_no_opt_in_flag()
     {
         var services = new ServiceCollection();
         services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
@@ -44,6 +44,6 @@ public class AddZgwMapsterTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        Assert.Null(scope.ServiceProvider.GetService<IMapper>());
+        Assert.NotNull(scope.ServiceProvider.GetService<IMapper>());
     }
 }

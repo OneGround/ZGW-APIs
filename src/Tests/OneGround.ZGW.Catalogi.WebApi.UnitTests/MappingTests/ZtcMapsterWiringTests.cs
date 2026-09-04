@@ -26,7 +26,7 @@ public class ZtcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -63,7 +63,7 @@ public class ZtcMapsterWiringTests
 
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
-        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly, enable: true);
+        services.AddZgwMapster(typeof(DomainToResponseRegister).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();

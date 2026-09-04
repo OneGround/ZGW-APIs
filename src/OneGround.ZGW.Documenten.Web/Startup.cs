@@ -86,7 +86,6 @@ public class Startup
                 };
 
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
-                c.ApiServiceSettings.EnableMapster = true;
             }
         );
 
