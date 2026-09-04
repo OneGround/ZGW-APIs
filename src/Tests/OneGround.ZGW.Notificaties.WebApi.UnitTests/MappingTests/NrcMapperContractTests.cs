@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -42,9 +41,8 @@ public class NrcMapperContractTests : IDisposable
     private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
-    private readonly IMapper _mapsterMapper;
+    private readonly IMapper _mapper;
 
     public NrcMapperContractTests()
     {
@@ -59,9 +57,8 @@ public class NrcMapperContractTests : IDisposable
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
         _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
-        _mapsterMapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
     }
 
     public void Dispose()
@@ -73,9 +70,9 @@ public class NrcMapperContractTests : IDisposable
     [Fact]
     public void NRC_resolves_the_Mapster_backed_mapper()
     {
-        // NRC consumes no IZgwMapper today, so this guards the routing rather than a live call path —
-        // it becomes load-bearing the moment RegisterSharedAudittrailHandlers is turned on.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        // ServiceMapper rather than the plain Mapper: only ServiceMapper exposes the request's
+        // IServiceProvider through MapContext, which is what DI-resolved resolvers depend on.
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     [Fact]
@@ -125,7 +122,7 @@ public class NrcMapperContractTests : IDisposable
             },
         };
 
-        var result = _mapsterMapper.Map<Abonnement>(dto);
+        var result = _mapper.Map<Abonnement>(dto);
 
         Assert.Single(result.AbonnementKanalen);
         Assert.Equal("zaken", result.AbonnementKanalen[0].Kanaal.Naam);

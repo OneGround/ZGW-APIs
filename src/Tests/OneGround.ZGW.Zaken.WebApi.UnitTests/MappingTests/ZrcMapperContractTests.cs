@@ -5,11 +5,11 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// The two mapping contracts ZRC depends on outside the Map calls its controllers make themselves: the
-/// audit trail (<see cref="IZgwMapper"/>) and the PATCH merge (<see cref="IZgwRequestMerger"/>). The
+/// audit trail (<see cref="IMapper"/>) and the PATCH merge (<see cref="IZgwRequestMerger"/>). The
 /// register tests resolve <c>MapsterMapper.IMapper</c> directly and so exercise neither adapter.
 /// </summary>
 /// <remarks>
@@ -52,7 +52,7 @@ public class ZrcMapperContractTests : IDisposable
 
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
+    private readonly IMapper _mapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZrcMapperContractTests()
@@ -66,13 +66,13 @@ public class ZrcMapperContractTests : IDisposable
         services.AddSingleton(mockedUriService.Object);
 
         // Mirrors Startup exactly: same extensions, same order, same assembly. The order
-        // matters - the seam uses services.Replace for IZgwMapper, and Replace on an empty collection
+        // matters - the seam uses services.Replace for IMapper, and Replace on an empty collection
         // merely adds, which would leave the type assertion below green without proving the replace wins.
         services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
         _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
     }
 
@@ -87,7 +87,7 @@ public class ZrcMapperContractTests : IDisposable
     {
         // Every shared consumer (the audit trail) maps through this adapter, and a missing or swapped
         // registration is silent because Mapster convention-maps instead of throwing.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     /// <summary>
@@ -120,7 +120,7 @@ public class ZrcMapperContractTests : IDisposable
     {
         var entity = (IUrlEntity)BareEntity(entityType);
 
-        var dto = MapThroughZgwMapper(responseDtoType, entity);
+        var dto = MapThroughSeam(responseDtoType, entity);
 
         var url = (string)responseDtoType.GetProperty("Url")!.GetValue(dto);
 
@@ -243,8 +243,11 @@ public class ZrcMapperContractTests : IDisposable
         return entity;
     }
 
-    private object MapThroughZgwMapper(Type destinationType, object source) =>
-        typeof(IZgwMapper).GetMethod(nameof(IZgwMapper.Map))!.MakeGenericMethod(destinationType).Invoke(_zgwMapper, [source]);
+    private object MapThroughSeam(Type destinationType, object source) =>
+        typeof(IMapper)
+            .GetMethod(nameof(IMapper.Map), genericParameterCount: 1, types: [typeof(object)])!
+            .MakeGenericMethod(destinationType)
+            .Invoke(_mapper, [source]);
 
     // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
     // apply optional-parameter defaults - the argument array has to carry it explicitly.

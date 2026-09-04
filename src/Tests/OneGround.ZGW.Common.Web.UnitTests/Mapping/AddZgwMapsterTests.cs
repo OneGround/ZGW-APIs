@@ -1,7 +1,6 @@
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using Xunit;
 
 namespace OneGround.ZGW.Common.Web.UnitTests.Mapping;
@@ -37,12 +36,13 @@ public class AddZgwMapsterTests
     }
 
     /// <summary>
-    /// Replaces the registration test that pinned this while two mappers existed. The guarantee still
-    /// matters -- shared infrastructure (the audit trail) resolves IZgwMapper, and nothing else in the
-    /// repository does, so a wrong registration here would surface only as silently wrong audit records.
+    /// <c>ServiceMapper</c>, never the plain <c>Mapper</c>. Only <c>ServiceMapper</c> publishes the
+    /// request's <see cref="System.IServiceProvider"/> on <c>MapContext</c>, which every DI-resolved
+    /// resolver in the registers depends on -- the url resolvers and the host rewriter among them.
+    /// Registering the plain <c>Mapper</c> compiles, and fails only when such a resolver runs.
     /// </summary>
     [Fact]
-    public void AddZgwMapster_registers_MapsterZgwMapper_as_the_only_IZgwMapper()
+    public void AddZgwMapster_registers_ServiceMapper_so_resolvers_can_reach_DI()
     {
         var services = new ServiceCollection();
         services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
@@ -50,7 +50,7 @@ public class AddZgwMapsterTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        Assert.IsType<MapsterZgwMapper>(scope.ServiceProvider.GetRequiredService<IZgwMapper>());
+        Assert.IsType<ServiceMapper>(scope.ServiceProvider.GetRequiredService<IMapper>());
     }
 
     [Fact]

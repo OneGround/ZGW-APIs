@@ -1,5 +1,6 @@
 using System;
 using AutoFixture;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -8,7 +9,6 @@ using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Besluiten.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// Guards the mapping contracts BRC depends on OUTSIDE its controllers: the audit trail
-/// (<c>AuditTrailServiceBase.SetOld/SetNew</c>) via <see cref="IZgwMapper"/>, the PATCH merge via
+/// (<c>AuditTrailServiceBase.SetOld/SetNew</c>) via <see cref="IMapper"/>, the PATCH merge via
 /// <see cref="IZgwRequestMerger"/>, and the <c>?expand=</c> expander. The per-register tests in this
 /// folder build an isolated TypeAdapterConfig and cannot see any of these paths — they passed while all
 /// three were broken. These resolve the real container the way Startup does.
@@ -33,7 +33,7 @@ public class BrcMapperContractTests : IDisposable
     private readonly MappingTestFixture _fixture = new MappingTestFixture();
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
+    private readonly IMapper _mapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public BrcMapperContractTests()
@@ -51,7 +51,7 @@ public class BrcMapperContractTests : IDisposable
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
         _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
     }
 
@@ -66,7 +66,7 @@ public class BrcMapperContractTests : IDisposable
     {
         // A missing or swapped registration here is silent because Mapster convention-maps instead of
         // throwing — so assert the routing directly rather than inferring it from a successful map.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class BrcMapperContractTests : IDisposable
         // CreateBesluitCommandHandler and UpdateBesluitCommandHandler.
         var besluit = _fixture.Create<Besluit>();
 
-        var dto = _zgwMapper.Map<BesluitResponseDto>(besluit);
+        var dto = _mapper.Map<BesluitResponseDto>(besluit);
 
         Assert.Equal(besluit.Identificatie, dto.Identificatie);
         // Url still copies through. This class's mocked IEntityUriService is set up as a passthrough
@@ -97,7 +97,7 @@ public class BrcMapperContractTests : IDisposable
         // BesluitInformatieObjectenExpander for _expand.
         var besluitInformatieObject = _fixture.Create<BesluitInformatieObject>();
 
-        var dto = _zgwMapper.Map<BesluitInformatieObjectResponseDto>(besluitInformatieObject);
+        var dto = _mapper.Map<BesluitInformatieObjectResponseDto>(besluitInformatieObject);
 
         Assert.Equal(besluitInformatieObject.InformatieObject, dto.InformatieObject);
         Assert.Equal(besluitInformatieObject.Besluit.Url, dto.Besluit);

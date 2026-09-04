@@ -5,11 +5,11 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// Covers the mapping contracts DRC depends on OUTSIDE the Map calls its controllers make: the audit trail
-/// via <see cref="IZgwMapper"/> and the PATCH merge via <see cref="IZgwRequestMerger"/>. The per-register
+/// via <see cref="IMapper"/> and the PATCH merge via <see cref="IZgwRequestMerger"/>. The per-register
 /// tests build their own mapper and exercise neither path -- they passed while both were broken. A
 /// regression here is silent (Mapster convention-maps instead of throwing), so the adapter type is
 /// asserted directly rather than inferred from a working map.
@@ -30,7 +30,7 @@ public class DrcMapperContractTests : IDisposable
 {
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
+    private readonly IMapper _mapper;
     private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public DrcMapperContractTests()
@@ -48,7 +48,7 @@ public class DrcMapperContractTests : IDisposable
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
         _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
     }
 
@@ -63,7 +63,7 @@ public class DrcMapperContractTests : IDisposable
     {
         // Every shared consumer (the audit trail) maps through this adapter, and a missing or swapped
         // registration is silent because Mapster convention-maps instead of throwing.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public class DrcMapperContractTests : IDisposable
     {
         var entity = BareEntity(entityType);
 
-        var dto = MapThroughZgwMapper(responseDtoType, entity);
+        var dto = MapThroughSeam(responseDtoType, entity);
 
         var url = (string)responseDtoType.GetProperty("Url")!.GetValue(dto);
 
@@ -227,8 +227,11 @@ public class DrcMapperContractTests : IDisposable
         }
     }
 
-    private object MapThroughZgwMapper(Type destinationType, object source) =>
-        typeof(IZgwMapper).GetMethod(nameof(IZgwMapper.Map))!.MakeGenericMethod(destinationType).Invoke(_zgwMapper, [source]);
+    private object MapThroughSeam(Type destinationType, object source) =>
+        typeof(IMapper)
+            .GetMethod(nameof(IMapper.Map), genericParameterCount: 1, types: [typeof(object)])!
+            .MakeGenericMethod(destinationType)
+            .Invoke(_mapper, [source]);
 
     // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
     // apply optional-parameter defaults - the argument array has to carry it explicitly.

@@ -76,9 +76,6 @@ public static class MapsterServiceCollectionExtensions
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
 
-        // The mapper surface shared infrastructure resolves; the audit trail is its only consumer.
-        services.AddScoped<IZgwMapper, MapsterZgwMapper>();
-
         services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
 
         return services;
