@@ -43,20 +43,17 @@ public class KlantContactenController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IRequestMerger _requestMerger;
 
     public KlantContactenController(
         ILogger<KlantContactenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorObjectResultBuilder,
         IPaginationHelper paginationHelper
     )
         : base(logger, mediator, mapper, errorObjectResultBuilder)
     {
-        _requestMerger = requestMerger;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _paginationHelper = paginationHelper;
     }

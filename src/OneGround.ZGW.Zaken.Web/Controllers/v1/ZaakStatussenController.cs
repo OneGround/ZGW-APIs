@@ -42,20 +42,17 @@ public class ZaakStatussenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly IRequestMerger _requestMerger;
 
     public ZaakStatussenController(
         ILogger<ZaakStatussenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }

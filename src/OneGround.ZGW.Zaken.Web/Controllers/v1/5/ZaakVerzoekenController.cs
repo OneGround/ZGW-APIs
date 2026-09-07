@@ -35,19 +35,13 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [ZgwApiVersion(Api.LatestVersion_1_5)]
 public class ZaakVerzoekenController : ZGWControllerBase
 {
-    private readonly IRequestMerger _requestMerger;
-
     public ZaakVerzoekenController(
         ILogger<ZaakVerzoekenController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
-        IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, errorResponseBuilder)
-    {
-        _requestMerger = requestMerger;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle ZAAK-VERZOEKen opvragen.
