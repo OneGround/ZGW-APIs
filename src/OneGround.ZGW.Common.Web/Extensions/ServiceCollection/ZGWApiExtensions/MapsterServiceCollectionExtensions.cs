@@ -28,16 +28,19 @@ public static class MapsterServiceCollectionExtensions
         var config = new TypeAdapterConfig();
 
         // Defense-in-depth against unbounded recursion on a cyclic object graph (e.g. an EF Core
-        // navigation-property loop). At this depth, Mapster returns a default value instead of
-        // recursing further, rather than crashing the process with an uncatchable
-        // StackOverflowException.
-        // Measured 2026-09-04 across the richest service's 166 registered pairs: the deepest destination
-        // TYPE graph is 8 levels. 200 is therefore ~25x headroom, and deliberately not tightened to fit
-        // that number — a self-referential entity (deel-zaaktypen chains, relevanteAndereZaken) nests by
-        // DATA at runtime, which the type graph does not bound. The failure mode of a cap that is too low
-        // is silent: Mapster returns a default value for the truncated member instead of erroring, so
-        // trading headroom for earlier cycle detection would risk quietly dropping real data. Also clears
-        // the synthetic 100-deep health test
+        // navigation-property loop). At this depth Mapster returns a default value instead of recursing
+        // further, rather than crashing the process with an uncatchable StackOverflowException.
+        //
+        // Deliberately far above the depth the mapped types themselves declare, and not to be tightened
+        // towards it. Two reasons:
+        //   - The declared type graph does not bound how deep an instance goes. A self-referential entity
+        //     nests as deeply as its data does, so a cap fitted to the types can truncate a legitimate
+        //     graph that simply happens to be deep.
+        //   - Truncation is silent. The over-deep member gets a default value, not an error, so a cap set
+        //     too low loses data quietly; one set too high only delays cycle detection. Given those two
+        //     failure modes, err high.
+        //
+        // Also comfortably clears the synthetic deep-graph health test
         // (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow).
         config.Default.MaxDepth(200);
 
