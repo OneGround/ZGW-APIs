@@ -24,22 +24,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public async Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl)
-    {
-        try
-        {
-            var result = await _inner.GetCatalogusAsync(catalogusUrl);
-            if (!result.Success || result.Response == null)
-            {
-                throw new ExpandExternalServiceException(ServiceName, catalogusUrl, null);
-            }
-            return result;
-        }
-        catch (Exception ex) when (ex is not ExpandExternalServiceException)
-        {
-            throw new ExpandExternalServiceException(ServiceName, catalogusUrl, ex);
-        }
-    }
+    public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl) =>
+        WrapAsync(catalogusUrl, () => _inner.GetCatalogusAsync(catalogusUrl));
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(Guid catalogusId)
     {
@@ -59,22 +45,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public async Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(string informatieObjectTypeUrl)
-    {
-        try
-        {
-            var result = await _inner.GetInformatieObjectTypeByUrlAsync(informatieObjectTypeUrl);
-            if (!result.Success || result.Response == null)
-            {
-                throw new ExpandExternalServiceException(ServiceName, informatieObjectTypeUrl, null);
-            }
-            return result;
-        }
-        catch (Exception ex) when (ex is not ExpandExternalServiceException)
-        {
-            throw new ExpandExternalServiceException(ServiceName, informatieObjectTypeUrl, ex);
-        }
-    }
+    public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(string informatieObjectTypeUrl) =>
+        WrapAsync(informatieObjectTypeUrl, () => _inner.GetInformatieObjectTypeByUrlAsync(informatieObjectTypeUrl));
 
     public Task<ServiceAgentResponse<PagedResponse<InformatieObjectTypeResponseDto>>> GetInformatieObjectTypenAsync(
         Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters parameters,
@@ -131,5 +103,22 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
     )
     {
         throw new NotImplementedException();
+    }
+
+    private static async Task<ServiceAgentResponse<T>> WrapAsync<T>(string url, Func<Task<ServiceAgentResponse<T>>> call)
+    {
+        try
+        {
+            var result = await call();
+            if (!result.Success || result.Response == null)
+            {
+                throw new ExpandExternalServiceException(ServiceName, url, null);
+            }
+            return result;
+        }
+        catch (Exception ex) when (ex is not ExpandExternalServiceException)
+        {
+            throw new ExpandExternalServiceException(ServiceName, url, ex);
+        }
     }
 }
