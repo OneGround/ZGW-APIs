@@ -105,7 +105,7 @@ public class Startup
         services.AddDocumentenAPIExpands(); // Note: New Expand Engine v1.7
         services.AddDocumentenAPIFieldsValidators(); // New field-selection at search endpoint
 
-        services.AddSingleton<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
+        services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
         services.AddMassTransit(x =>
         {
