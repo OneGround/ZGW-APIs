@@ -18,6 +18,9 @@ public static class WebApplicationExtension
             new UnhealthMonitorDashboardPage(app.Services.GetRequiredService<ICircuitBreakerSubscriberHealthTracker>())
         );
 
+        // The page's client-side script is served from its own route so the page carries no inline script
+        DashboardRoutes.Routes.Add(UnhealthMonitorScriptPage.RoutePath, new UnhealthMonitorScriptPage());
+
         // Add a menu-item to the Hangfire Dashboard navigation bar
         NavigationMenu.Items.Add(page => new MenuItem("Unhealthy endpoints", $"/hangfire/{UnhealthMonitorUrl}"));
     }

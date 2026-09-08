@@ -50,11 +50,15 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                     <td>{state.LastStatusCode?.ToString() ?? "N/A"}</td>
                     <td class='error-message'>{System.Net.WebUtility.HtmlEncode(state.LastErrorMessage ?? "N/A")}</td>
                     <td class='actions-cell'>
-                        <button class='delete-btn' data-key='{encodedKey}' data-url='{encodedUrl}' onclick='deleteItem(this)'>Delete</button>
+                        <button class='delete-btn' data-key='{encodedKey}' data-url='{encodedUrl}'>Delete</button>
                     </td>
                 </tr>"
             );
         }
+
+        // The dashboard is mounted at several different path bases, so the script has to be addressed
+        // through the current one rather than by a bare relative path.
+        var scriptUrl = System.Net.WebUtility.HtmlEncode(context.Request.PathBase?.TrimEnd('/') + UnhealthMonitorScriptPage.RoutePath);
 
         var htmlContent =
             $@"
@@ -334,200 +338,7 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         background-color: #d3d9df;
                     }}
                 </style>
-                <script>
-                    let refreshIntervalId = null;
-                    let pendingAction = null;
-
-                    function refreshTable() {{
-                        fetch(window.location.href)
-                            .then(response => response.text())
-                            .then(html => {{
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(html, 'text/html');
-
-                                const newSummary = doc.querySelector('.summary');
-                                const currentSummary = document.querySelector('.summary');
-                                if (newSummary && currentSummary) {{
-                                    currentSummary.innerHTML = newSummary.innerHTML;
-                                }}
-
-                                const newContent = doc.querySelector('#table-content');
-                                const currentContent = document.querySelector('#table-content');
-                                if (newContent && currentContent) {{
-                                    currentContent.innerHTML = newContent.innerHTML;
-                                }}
-
-                                const newTimestamp = doc.querySelector('.timestamp');
-                                const currentTimestamp = document.querySelector('.timestamp');
-                                if (newTimestamp && currentTimestamp) {{
-                                    currentTimestamp.innerHTML = newTimestamp.innerHTML;
-                                }}
-                            }})
-                            .catch(error => console.error('Error refreshing table:', error));
-                    }}
-
-                    function toggleAutoRefresh() {{
-                        const toggle = document.getElementById('autoRefreshToggle');
-                        const isEnabled = toggle.checked;
-
-                        if (isEnabled) {{
-                            // Start auto-refresh every 3 seconds
-                            refreshIntervalId = setInterval(refreshTable, 3000);
-                            localStorage.setItem('autoRefreshEnabled', 'true');
-                        }} else {{
-                            // Stop auto-refresh
-                            if (refreshIntervalId) {{
-                                clearInterval(refreshIntervalId);
-                                refreshIntervalId = null;
-                            }}
-                            localStorage.setItem('autoRefreshEnabled', 'false');
-                        }}
-                    }}
-
-                    function initializeAutoRefresh() {{
-                        const toggle = document.getElementById('autoRefreshToggle');
-                        const savedState = localStorage.getItem('autoRefreshEnabled');
-
-                        // Default to enabled if not set
-                        if (savedState === null || savedState === 'true') {{
-                            toggle.checked = true;
-                            refreshIntervalId = setInterval(refreshTable, 3000);
-                        }} else {{
-                            toggle.checked = false;
-                        }}
-                    }}
-
-                    // Confirmation modal helpers
-                    function openConfirmModal(title, message, confirmLabel, action) {{
-                        pendingAction = action;
-                        document.getElementById('modalTitle').textContent = title;
-                        document.getElementById('modalMessage').textContent = message;
-                        const confirmBtn = document.getElementById('modalConfirmBtn');
-                        confirmBtn.textContent = confirmLabel;
-                        confirmBtn.disabled = false;
-                        document.getElementById('confirmModal').classList.add('show');
-                        // Move keyboard focus into the dialog for accessibility
-                        confirmBtn.focus();
-                    }}
-
-                    function closeConfirmModal() {{
-                        pendingAction = null;
-                        document.getElementById('modalConfirmBtn').disabled = false;
-                        document.getElementById('confirmModal').classList.remove('show');
-                    }}
-
-                    function confirmModalProceed() {{
-                        const action = pendingAction;
-                        // Guard against rapid double-clicks: ignore if there is no pending action
-                        if (typeof action !== 'function') {{
-                            return;
-                        }}
-                        pendingAction = null;
-                        document.getElementById('modalConfirmBtn').disabled = true;
-                        document.getElementById('confirmModal').classList.remove('show');
-                        action();
-                    }}
-
-                    // Ask for confirmation before clearing the whole cache
-                    function clearCache() {{
-                        openConfirmModal(
-                            'Clear all unhealthy subscribers',
-                            'Are you sure you want to clear the cache for ALL unhealthy subscribers? This cannot be undone.',
-                            'Clear all',
-                            submitClearAllRequest
-                        );
-                    }}
-
-                    // Shared POST helper - returns the parsed JSON response
-                    async function postClearRequest(body) {{
-                        const response = await fetch(window.location.href, {{
-                            method: 'POST',
-                            headers: {{
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            }},
-                            body: body
-                        }});
-                        return response.json();
-                    }}
-
-                    async function submitClearAllRequest() {{
-                        const btn = document.getElementById('clearCacheBtn');
-                        btn.disabled = true;
-                        btn.textContent = 'Clearing...';
-
-                        try {{
-                            const data = await postClearRequest('');
-                            if (data.success) {{
-                                showNotification(data.message || 'Cache cleared successfully');
-                                setTimeout(refreshTable, 500);
-                            }} else {{
-                                showNotification(data.message || 'Failed to clear cache', true);
-                            }}
-                        }} catch (error) {{
-                            console.error('Error clearing cache:', error);
-                            showNotification('Error clearing cache: ' + error.message, true);
-                        }} finally {{
-                            btn.disabled = false;
-                            btn.textContent = 'Clear all';
-                        }}
-                    }}
-
-                    // Ask for confirmation before deleting a single subscriber
-                    function deleteItem(button) {{
-                        const key = button.getAttribute('data-key');
-                        const url = button.getAttribute('data-url') || 'this subscriber';
-                        openConfirmModal(
-                            'Delete subscriber',
-                            'Are you sure you want to remove ' + url + ' from the unhealthy cache?',
-                            'Delete',
-                            () => submitDeleteRequest(key, button)
-                        );
-                    }}
-
-                    function resetDeleteButton(button) {{
-                        if (button) {{
-                            button.disabled = false;
-                            button.textContent = 'Delete';
-                        }}
-                    }}
-
-                    async function submitDeleteRequest(key, button) {{
-                        if (button) {{
-                            button.disabled = true;
-                            button.textContent = 'Deleting...';
-                        }}
-
-                        try {{
-                            const data = await postClearRequest('key=' + encodeURIComponent(key));
-                            if (data.success) {{
-                                showNotification(data.message || 'Subscriber removed successfully');
-                                // On success the row disappears after the refresh, so no button reset needed
-                                setTimeout(refreshTable, 500);
-                            }} else {{
-                                showNotification(data.message || 'Failed to remove subscriber', true);
-                                resetDeleteButton(button);
-                            }}
-                        }} catch (error) {{
-                            console.error('Error removing subscriber:', error);
-                            showNotification('Error removing subscriber: ' + error.message, true);
-                            resetDeleteButton(button);
-                        }}
-                    }}
-
-                    function showNotification(message, isError = false) {{
-                        const notification = document.getElementById('notification');
-                        notification.textContent = message;
-                        notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
-                        notification.classList.add('show');
-
-                        setTimeout(() => {{
-                            notification.classList.remove('show');
-                        }}, 3000);
-                    }}
-
-                    // Initialize auto-refresh on page load
-                    window.addEventListener('DOMContentLoaded', initializeAutoRefresh);
-                </script>
+                <script src='{scriptUrl}'></script>
             </head>
             <body>
                 <div id='notification' class='notification'></div>
@@ -536,8 +347,8 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                         <h2 id='modalTitle'>Please confirm</h2>
                         <p id='modalMessage'></p>
                         <div class='modal-buttons'>
-                            <button class='modal-btn modal-btn-cancel' onclick='closeConfirmModal()'>Cancel</button>
-                            <button id='modalConfirmBtn' class='modal-btn modal-btn-confirm' onclick='confirmModalProceed()'>Confirm</button>
+                            <button id='modalCancelBtn' class='modal-btn modal-btn-cancel'>Cancel</button>
+                            <button id='modalConfirmBtn' class='modal-btn modal-btn-confirm'>Confirm</button>
                         </div>
                     </div>
                 </div>
@@ -548,12 +359,12 @@ public class UnhealthMonitorDashboardPage : IDashboardDispatcher
                             <div class='toggle-container'>
                                 <span class='toggle-label'>Auto Refresh</span>
                                 <label class='toggle-switch'>
-                                    <input type='checkbox' id='autoRefreshToggle' onchange='toggleAutoRefresh()'>
+                                    <input type='checkbox' id='autoRefreshToggle'>
                                     <span class='toggle-slider'></span>
                                 </label>
                             </div>
-                            <button id='clearCacheBtn' class='clear-cache-btn' onclick='clearCache()'>Clear all</button>
-                            <a href='javascript:history.back()' class='back-link'>Back to Previous Page</a>
+                            <button id='clearCacheBtn' class='clear-cache-btn'>Clear all</button>
+                            <a id='backLink' href='#' class='back-link'>Back to Previous Page</a>
                         </div>
                     </div>
                     <div class='summary'>
