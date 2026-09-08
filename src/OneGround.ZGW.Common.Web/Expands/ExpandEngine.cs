@@ -9,6 +9,10 @@ namespace OneGround.ZGW.Common.Web.Expands;
 public class ExpandEngine<TEntity>
     where TEntity : IExpandable
 {
+    // Note: I/O-bound (HTTP calls to ZTC, DB roundtrips), not CPU-bound -- the bound protects downstream
+    // capacity (connection pools, the ZTC service), so it is deliberately not tied to Environment.ProcessorCount.
+    private const int MaxDegreeOfParallelism = 8;
+
     private readonly Dictionary<string, IExpandResolver<TEntity>> _dispatched;
     private readonly Dictionary<string, string> _parentOf;
 
@@ -82,8 +86,15 @@ public class ExpandEngine<TEntity>
         if (pathList.Count == 0)
             return;
 
-        foreach (var entity in entities)
-            await ResolveAsync(entity, pathList);
+        // Note: Entities resolve concurrently (bounded, see MaxDegreeOfParallelism), so every registered
+        // IExpandResolver<TEntity> must tolerate being invoked concurrently for different entities in the
+        // same request. Resolvers that need a Scoped dependency (e.g. a DbContext via MediatR) must open
+        // their own IServiceProvider scope per call instead of depending on one injected in their
+        // constructor -- see GebruiksRecht/Verzending/ObjectInformatieObject_InformatieObject_Resolver for
+        // the pattern.
+        var options = new ParallelOptions { MaxDegreeOfParallelism = MaxDegreeOfParallelism };
+
+        await Parallel.ForEachAsync(entities, options, async (entity, _) => await ResolveAsync(entity, pathList));
     }
 
     private List<string> TopologicalSort(HashSet<string> paths)
