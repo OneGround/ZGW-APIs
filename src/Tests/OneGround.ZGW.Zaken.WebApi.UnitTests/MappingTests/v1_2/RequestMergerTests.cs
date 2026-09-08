@@ -10,7 +10,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests.v1_2;
 
 /// <summary>
 /// Covers the v1.2-only PATCH merge for ZAAKOBJECTen, run through the real Mapster seam
-/// (<see cref="ZrcMapperTestHost"/>) and a real <see cref="ZgwRequestMerger"/> — never a hand-rolled
+/// (<see cref="ZrcMapperTestHost"/>) and a real <see cref="RequestMerger"/> — never a hand-rolled
 /// <c>TypeAdapterConfig</c> and never a hand-copy of the merge logic, since either would drift from what
 /// the controller actually does.
 /// </summary>
@@ -48,7 +48,7 @@ public class RequestMergerTests : IDisposable
         // Version == "1.2", and that check runs during that serialization, not on the value this method
         // returns. Get the timing wrong and a v1.2 PATCH that never mentions objectTypeOverigeDefinitie
         // silently drops it.
-        var merger = new ZgwRequestMerger(_host.Mapper);
+        var merger = new RequestMerger(_host.Mapper);
         var existing = CreateZaakObjectWithOverigeDefinitie();
         var patch = new JObject { ["relatieomschrijving"] = "nieuwe omschrijving" };
 

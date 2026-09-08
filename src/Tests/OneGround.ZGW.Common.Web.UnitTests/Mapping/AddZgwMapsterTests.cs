@@ -23,7 +23,7 @@ public class AddZgwMapsterTests
     public void AddZgwMapster_registers_IMapper_and_maps_same_named_members()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly, enable: true);
+        services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -35,8 +35,14 @@ public class AddZgwMapsterTests
         Assert.Equal(3, result.Count);
     }
 
+    /// <summary>
+    /// <c>ServiceMapper</c>, never the plain <c>Mapper</c>. Only <c>ServiceMapper</c> publishes the
+    /// request's <see cref="System.IServiceProvider"/> on <c>MapContext</c>, which every DI-resolved
+    /// resolver in the registers depends on -- the url resolvers and the host rewriter among them.
+    /// Registering the plain <c>Mapper</c> compiles, and fails only when such a resolver runs.
+    /// </summary>
     [Fact]
-    public void AddZgwMapster_disabled_by_default_registers_nothing()
+    public void AddZgwMapster_registers_ServiceMapper_so_resolvers_can_reach_DI()
     {
         var services = new ServiceCollection();
         services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
@@ -44,6 +50,18 @@ public class AddZgwMapsterTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        Assert.Null(scope.ServiceProvider.GetService<IMapper>());
+        Assert.IsType<ServiceMapper>(scope.ServiceProvider.GetRequiredService<IMapper>());
+    }
+
+    [Fact]
+    public void AddZgwMapster_registers_IMapper_with_no_opt_in_flag()
+    {
+        var services = new ServiceCollection();
+        services.AddZgwMapster(typeof(AddZgwMapsterTests).Assembly);
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+
+        Assert.NotNull(scope.ServiceProvider.GetService<IMapper>());
     }
 }

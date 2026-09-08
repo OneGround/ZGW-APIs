@@ -40,24 +40,17 @@ public class ZaakRollenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
 
     public ZaakRollenController(
         ILogger<ZaakRollenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
-        IZgwRequestMerger zgwRequestMerger,
+        MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
@@ -78,8 +71,8 @@ public class ZaakRollenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakRollenPageSize));
-        var filter = _mapsterMapper.Map<Models.v1.GetAllZaakRollenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakRollenPageSize));
+        var filter = _mapper.Map<Models.v1.GetAllZaakRollenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakRolQuery { GetAllZaakRolFilter = filter, Pagination = pagination });
 
@@ -88,7 +81,7 @@ public class ZaakRollenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakRolResponse = _mapsterMapper.Map<List<ZaakRolResponseDto>>(result.Result.PageResult);
+        var zaakRolResponse = _mapper.Map<List<ZaakRolResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakRolResponse, result.Result.Count);
 
@@ -136,7 +129,7 @@ public class ZaakRollenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakRolResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakRolResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -185,7 +178,7 @@ public class ZaakRollenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakRolRequest);
 
-        ZaakRol zaakrol = _mapsterMapper.Map<ZaakRol>(zaakRolRequest);
+        ZaakRol zaakrol = _mapper.Map<ZaakRol>(zaakRolRequest);
 
         var result = await _mediator.Send(new CreateZaakRolCommand { ZaakRol = zaakrol, ZaakUrl = zaakRolRequest.Zaak });
 
@@ -204,7 +197,7 @@ public class ZaakRollenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakRolResponse = _mapsterMapper.Map<ZaakRolResponseDto>(result.Result);
+        var zaakRolResponse = _mapper.Map<ZaakRolResponseDto>(result.Result);
 
         return Created(zaakRolResponse.Url, zaakRolResponse);
     }

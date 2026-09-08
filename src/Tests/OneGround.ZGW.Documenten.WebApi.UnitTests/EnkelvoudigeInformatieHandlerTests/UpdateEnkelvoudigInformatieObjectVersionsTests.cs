@@ -29,12 +29,12 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests
         IDisposable
 {
     private readonly DrcMapperTestHost _host = new DrcMapperTestHost();
-    private readonly IZgwRequestMerger _requestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public UpdateEnkelvoudigInformatieObjectVersionsTests(TestMocksFixture fixture)
         : base(fixture)
     {
-        _requestMerger = new ZgwRequestMerger(_host.Mapper);
+        _requestMerger = new RequestMerger(_host.Mapper);
     }
 
     public void Dispose() => _host.Dispose();
@@ -955,7 +955,7 @@ public class UpdateEnkelvoudigInformatieObjectVersionsTests
     }
 
     // Merges the partial patch onto the current entity's request-DTO shape using the real production
-    // ZgwRequestMerger (backed by the same Mapster seam Startup builds), then maps the merged request
+    // RequestMerger (backed by the same Mapster seam Startup builds), then maps the merged request
     // through to a domain Versie the same way production handlers do via IEnkelvoudigInformatieObjectMerger.
     private EnkelvoudigInformatieObjectVersie MergeWithCurrentEnkelvoudigInformatieObject(
         EnkelvoudigInformatieObject currentEnkelvoudigInformatieObject,

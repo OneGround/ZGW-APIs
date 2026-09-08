@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -12,7 +13,6 @@ using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -26,15 +26,15 @@ namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests;
 
 /// <summary>
 /// The two mapping contracts ZTC depends on outside the Map calls its controllers make themselves: the
-/// audit trail (<see cref="IZgwMapper"/>) and the PATCH merge (<see cref="IZgwRequestMerger"/>). The
-/// register tests resolve <c>MapsterMapper.IMapper</c> directly and so exercise neither adapter.
+/// audit trail (<see cref="IMapper"/>) and the PATCH merge (<see cref="IRequestMerger"/>). The
+/// register tests build their own TypeAdapterConfig, so neither path is exercised on the real seam.
 /// </summary>
 /// <remarks>
 /// A regression here is silent, not loud: Mapster convention-maps instead of throwing, so an audit
-/// record or a PATCH result comes back quietly wrong. Hence the adapter type is asserted directly rather
+/// record or a PATCH result comes back quietly wrong. Hence the mapper type is asserted directly rather
 /// than inferred from a working map, and the controller constructors are checked by reflection — a
-/// controller left on the AutoMapper merger keeps compiling and every mapping fact here keeps passing,
-/// because they resolve the correct merger themselves.
+/// controller that took its merger from anywhere but the shared registration would keep compiling, and
+/// every mapping fact here would keep passing, because they resolve the merger themselves.
 /// </remarks>
 public class ZtcMapperContractTests : IDisposable
 {
@@ -43,8 +43,8 @@ public class ZtcMapperContractTests : IDisposable
 
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IMapper _mapper;
+    private readonly IRequestMerger _requestMerger;
 
     public ZtcMapperContractTests()
     {
@@ -56,14 +56,13 @@ public class ZtcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly, EnableMapster on.
-        services.AddAutoMapper(typeof(Startup).Assembly);
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        // Mirrors Startup exactly: same extensions, same order, same assembly.
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -75,9 +74,9 @@ public class ZtcMapperContractTests : IDisposable
     [Fact]
     public void ZTC_resolves_the_Mapster_backed_mapper()
     {
-        // ZTC has no AutoMapper profiles left, so a regression to that adapter would map every shared
-        // consumer against an empty configuration.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        // Every shared consumer (the audit trail) maps through this adapter, and a missing or swapped
+        // registration is silent because Mapster convention-maps instead of throwing.
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public class ZtcMapperContractTests : IDisposable
     {
         var existing = ExistingZaakType();
 
-        var dto = _zgwMapper.Map<ZaakTypeResponseDtoV1>(existing);
+        var dto = _mapper.Map<ZaakTypeResponseDtoV1>(existing);
 
         Assert.Equal(ZtcMapperTestHost.Resolved(existing), dto.Url);
         Assert.Equal("ZAAKTYPE-001", dto.Identificatie);
@@ -101,7 +100,7 @@ public class ZtcMapperContractTests : IDisposable
     {
         var existing = ExistingZaakType();
 
-        var dto = _zgwMapper.Map<ZaakTypeResponseDtoV13>(existing);
+        var dto = _mapper.Map<ZaakTypeResponseDtoV13>(existing);
 
         Assert.Equal(ZtcMapperTestHost.Resolved(existing), dto.Url);
         Assert.Equal("ZAAKTYPE-001", dto.Identificatie);
@@ -116,7 +115,7 @@ public class ZtcMapperContractTests : IDisposable
         var existing = ExistingZaakType();
         var patch = new JObject { ["omschrijving"] = "gewijzigde omschrijving" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDtoV1, ZaakType>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDtoV1, ZaakType>(existing, patch);
 
         // The untouched fields can only come from the existing entity having been mapped in first -
         // the step that needs the register.
@@ -134,7 +133,7 @@ public class ZtcMapperContractTests : IDisposable
         var existing = ExistingZaakType();
         var patch = new JObject { ["omschrijving"] = "gewijzigde omschrijving" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDtoV13, ZaakType>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ZaakTypeRequestDtoV13, ZaakType>(existing, patch);
 
         Assert.Equal("gewijzigde omschrijving", merged.Omschrijving);
         Assert.Equal("ZAAKTYPE-001", merged.Identificatie);
@@ -167,14 +166,14 @@ public class ZtcMapperContractTests : IDisposable
     {
         var entity = (IUrlEntity)BareEntity(entityType);
 
-        var dto = MapThroughZgwMapper(responseDtoType, entity);
+        var dto = MapThroughSeam(responseDtoType, entity);
 
         Assert.Equal(ZtcMapperTestHost.Resolved(entity), (string)responseDtoType.GetProperty("Url")!.GetValue(dto));
     }
 
     /// <summary>
     /// Every entity → request-DTO pair the registers declare, run through the real
-    /// <see cref="IZgwRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
+    /// <see cref="IRequestMerger"/> with an empty patch. A routing tripwire, not a value check —
     /// values are pinned by the register tests; this catches a merge resolved against a mapper that has
     /// no map for the pair, which throws at request time while every register-level fact stays green.
     /// </summary>
@@ -201,7 +200,7 @@ public class ZtcMapperContractTests : IDisposable
     private static TheoryData<Type, Type> DeclaredPairsEndingIn(string destinationSuffix, bool requireUrlOnDestination)
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
@@ -258,23 +257,25 @@ public class ZtcMapperContractTests : IDisposable
         return entity;
     }
 
-    private object MapThroughZgwMapper(Type destinationType, object source) =>
-        typeof(IZgwMapper).GetMethod(nameof(IZgwMapper.Map))!.MakeGenericMethod(destinationType).Invoke(_zgwMapper, [source]);
+    private object MapThroughSeam(Type destinationType, object source) =>
+        typeof(IMapper)
+            .GetMethod(nameof(IMapper.Map), genericParameterCount: 1, types: [typeof(object)])!
+            .MakeGenericMethod(destinationType)
+            .Invoke(_mapper, [source]);
 
     // MergePartialUpdateToObjectRequest's afterMap parameter is optional, but MethodBase.Invoke does not
     // apply optional-parameter defaults - the argument array has to carry it explicitly.
     private object MergeEmptyPatch(Type requestDtoType, Type entityType, object entity) =>
-        typeof(IZgwRequestMerger)
-            .GetMethod(nameof(IZgwRequestMerger.MergePartialUpdateToObjectRequest))!
+        typeof(IRequestMerger)
+            .GetMethod(nameof(IRequestMerger.MergePartialUpdateToObjectRequest))!
             .MakeGenericMethod(requestDtoType, entityType)
-            .Invoke(_zgwRequestMerger, [entity, new JObject(), null]);
+            .Invoke(_requestMerger, [entity, new JObject(), null]);
 
     /// <summary>
-    /// Every ZTC controller that runs a PATCH must take <see cref="IZgwRequestMerger"/>, not only the
-    /// AutoMapper <see cref="IRequestMerger"/> that <c>ZGWControllerBase</c> still requires. Asserted
-    /// structurally because it cannot be observed from a mapping test: the merge facts above resolve
-    /// the Mapster merger themselves and stay green while a controller merges through the AutoMapper
-    /// one against an empty configuration.
+    /// Every ZTC controller that runs a PATCH must take the shared <see cref="IRequestMerger"/> rather
+    /// than roll its own merge. Asserted structurally because it cannot be observed from a mapping test:
+    /// the merge facts above resolve the merger themselves and stay green regardless of what any
+    /// controller depends on.
     /// </summary>
     [Theory]
     [MemberData(nameof(PatchingControllerTypes))]
@@ -282,62 +283,7 @@ public class ZtcMapperContractTests : IDisposable
     {
         var parameterTypes = controllerType.GetConstructors().Single().GetParameters().Select(p => p.ParameterType);
 
-        Assert.Contains(typeof(IZgwRequestMerger), parameterTypes);
-    }
-
-    /// <summary>
-    /// Nothing in ZTC may CALL AutoMapper any more. The constructor fact above only proves the Mapster
-    /// merger is injected; every controller still takes <c>AutoMapper.IMapper</c> and
-    /// <see cref="IRequestMerger"/> because the shared <c>ZGWControllerBase</c> demands them, and
-    /// <c>ZGWControllerBase._mapper</c> stays visible to every ZTC controller as a protected field.
-    /// </summary>
-    /// <remarks>
-    /// That field is a mapper over an EMPTY AutoMapper configuration, so a merge from an older branch can
-    /// reintroduce <c>_mapper.Map&lt;T&gt;(...)</c>: it compiles, no mapping fact notices, and it throws
-    /// only when a real request hits that action. Reading the MemberRef table rather than walking IL is
-    /// what makes this fire on <b>use</b> and not on the constructor parameter the base class forces.
-    /// Scope is <c>Catalogi.Web</c>; add the host assembly if it ever gains an AutoMapper reference.
-    /// Delete this fact once <c>ZGWControllerBase</c> drops its AutoMapper dependency.
-    /// </remarks>
-    [Fact]
-    public void No_ZTC_code_calls_AutoMapper_or_the_AutoMapper_backed_request_merger()
-    {
-        var assemblyPath = typeof(Startup).Assembly.Location;
-
-        // A single-file or in-memory host reports an empty Location; fail with that reason rather than an
-        // opaque IO error that reads like the assertion below found nothing.
-        Assert.False(string.IsNullOrEmpty(assemblyPath), "Cannot scan metadata: Catalogi.Web has no on-disk location.");
-
-        using var stream = File.OpenRead(assemblyPath);
-        using var peReader = new PEReader(stream);
-        var metadata = peReader.GetMetadataReader();
-
-        var calls = new List<string>();
-        foreach (var memberReference in metadata.MemberReferences.Select(metadata.GetMemberReference))
-        {
-            if (memberReference.Parent.Kind != HandleKind.TypeReference)
-            {
-                continue;
-            }
-
-            var typeReference = metadata.GetTypeReference((TypeReferenceHandle)memberReference.Parent);
-            var declaringNamespace = metadata.GetString(typeReference.Namespace);
-            var declaringType = metadata.GetString(typeReference.Name);
-
-            var isAutoMapper = declaringNamespace == "AutoMapper" || declaringNamespace.StartsWith("AutoMapper.", StringComparison.Ordinal);
-            var isAutoMapperMerger = declaringType == nameof(IRequestMerger);
-            if (isAutoMapper || isAutoMapperMerger)
-            {
-                calls.Add($"{declaringNamespace}.{declaringType}.{metadata.GetString(memberReference.Name)}");
-            }
-        }
-
-        Assert.True(
-            calls.Count == 0,
-            "ZTC has no AutoMapper profiles left, so these calls run against an empty configuration and "
-                + "throw at request time. Use MapsterMapper.IMapper / IZgwRequestMerger instead:\n  "
-                + string.Join("\n  ", calls.Distinct().OrderBy(c => c))
-        );
+        Assert.Contains(typeof(IRequestMerger), parameterTypes);
     }
 
     /// <summary>

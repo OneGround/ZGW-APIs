@@ -40,25 +40,21 @@ public class BesluitTypeController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public BesluitTypeController(
         ILogger<BesluitTypeController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IRequestMerger requestMerger,
-        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -86,7 +82,7 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var response = _mapsterMapper.Map<BesluitTypeResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitTypeResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -106,7 +102,7 @@ public class BesluitTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), besluitTypeRequest);
 
-        var besluitType = _mapsterMapper.Map<BesluitType>(besluitTypeRequest);
+        var besluitType = _mapper.Map<BesluitType>(besluitTypeRequest);
 
         var result = await _mediator.Send(
             new CreateBesluitTypeCommand
@@ -123,7 +119,7 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapsterMapper.Map<BesluitTypeResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitTypeResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -149,8 +145,8 @@ public class BesluitTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.BesluitTypenPageSize));
-        var filter = _mapsterMapper.Map<GetAllBesluitTypenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.BesluitTypenPageSize));
+        var filter = _mapper.Map<GetAllBesluitTypenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new GetAllBesluitTypenQuery
@@ -166,7 +162,7 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var statustypenResponse = _mapsterMapper.Map<List<BesluitTypeResponseDto>>(result.Result.PageResult);
+        var statustypenResponse = _mapper.Map<List<BesluitTypeResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
@@ -192,7 +188,7 @@ public class BesluitTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), besluitTypeRequest, id);
 
-        BesluitType besluitType = _mapsterMapper.Map<BesluitType>(besluitTypeRequest);
+        BesluitType besluitType = _mapper.Map<BesluitType>(besluitTypeRequest);
 
         var result = await _mediator.Send(
             new UpdateBesluitTypeCommand
@@ -216,7 +212,7 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var resultTypeResponse = _mapsterMapper.Map<BesluitTypeResponseDto>(result.Result);
+        var resultTypeResponse = _mapper.Map<BesluitTypeResponseDto>(result.Result);
 
         return Ok(resultTypeResponse);
     }
@@ -249,7 +245,7 @@ public class BesluitTypeController : ZGWControllerBase
 
         BesluitType result;
 
-        if (_zgwRequestMerger.TryMergeValidity(resultGet.Result, partialBesluitTypeRequest))
+        if (_requestMerger.TryMergeValidity(resultGet.Result, partialBesluitTypeRequest))
         {
             var updateEindeGeldigheidResult = await _mediator.Send(new UpdateEindeGeldigheidCommand { Entity = resultGet.Result });
 
@@ -262,7 +258,7 @@ public class BesluitTypeController : ZGWControllerBase
         }
         else
         {
-            BesluitTypeRequestDto mergedBesluitTypeRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
+            BesluitTypeRequestDto mergedBesluitTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
                 resultGet.Result,
                 partialBesluitTypeRequest
             );
@@ -272,7 +268,7 @@ public class BesluitTypeController : ZGWControllerBase
                 return _errorResponseBuilder.BadRequest(validationResult);
             }
 
-            BesluitType mergedBesluitType = _mapsterMapper.Map<BesluitType>(mergedBesluitTypeRequest);
+            BesluitType mergedBesluitType = _mapper.Map<BesluitType>(mergedBesluitTypeRequest);
 
             var besluitTypeUpdate = await _mediator.Send(
                 new UpdateBesluitTypeCommand
@@ -294,7 +290,7 @@ public class BesluitTypeController : ZGWControllerBase
             result = besluitTypeUpdate.Result;
         }
 
-        var response = _mapsterMapper.Map<BesluitTypeResponseDto>(result);
+        var response = _mapper.Map<BesluitTypeResponseDto>(result);
 
         return Ok(response);
     }
@@ -364,7 +360,7 @@ public class BesluitTypeController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapsterMapper.Map<BesluitTypeResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitTypeResponseDto>(result.Result);
 
         return Ok(response);
     }

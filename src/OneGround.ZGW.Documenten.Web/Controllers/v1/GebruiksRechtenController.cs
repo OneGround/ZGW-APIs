@@ -36,20 +36,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1;
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle GEBRUIKSRECHTen opvragen.
@@ -73,11 +66,11 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapsterMapper.Map<GetAllGebruiksRechtenFilter>(queryParameters);
+        var filter = _mapper.Map<GetAllGebruiksRechtenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
-        var gebruiksRechtenResponse = _mapsterMapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
+        var gebruiksRechtenResponse = _mapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -120,7 +113,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksRechtResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -158,7 +151,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), gebruiksRechtRequest);
 
-        GebruiksRecht gebruiksRecht = _mapsterMapper.Map<GebruiksRecht>(gebruiksRechtRequest);
+        GebruiksRecht gebruiksRecht = _mapper.Map<GebruiksRecht>(gebruiksRechtRequest);
 
         var result = await _mediator.Send(
             new CreateGebruiksRechtCommand { GebruiksRecht = gebruiksRecht, InformatieObjectUrl = gebruiksRechtRequest.InformatieObject },
@@ -175,7 +168,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var objectInformatieObjectResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var objectInformatieObjectResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         return Created(objectInformatieObjectResponse.Url, objectInformatieObjectResponse);
     }
@@ -205,7 +198,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), gebruiksRechtRequest, id);
 
-        GebruiksRecht gebruiksRecht = _mapsterMapper.Map<GebruiksRecht>(gebruiksRechtRequest);
+        GebruiksRecht gebruiksRecht = _mapper.Map<GebruiksRecht>(gebruiksRechtRequest);
 
         var result = await _mediator.Send(
             new UpdateGebruiksRechtCommand
@@ -233,7 +226,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var gebruiksRechtResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         return Ok(gebruiksRechtResponse);
     }
@@ -275,7 +268,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var gebruiksRechtResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         return Ok(gebruiksRechtResponse);
     }

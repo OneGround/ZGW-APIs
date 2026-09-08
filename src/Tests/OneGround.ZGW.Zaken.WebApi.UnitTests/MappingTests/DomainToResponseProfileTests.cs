@@ -32,7 +32,7 @@ public class DomainToResponseProfileTests : IDisposable
     /// </summary>
     private const string TestBsn = "999993653";
 
-    private readonly AutoMapperFixture _fixture = new AutoMapperFixture();
+    private readonly OmitOnRecursionFixture _fixture = new OmitOnRecursionFixture();
     private readonly ZrcMapperTestHost _host = new();
     private readonly IMapper _mapper;
 

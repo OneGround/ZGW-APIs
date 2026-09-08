@@ -14,39 +14,34 @@ public static class MapsterServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Mapster mapping seam (a scanned <see cref="TypeAdapterConfig"/> plus a scoped
-    /// <c>MapsterMapper.IMapper</c>) for a service. Opt-in per service: when <paramref name="enable"/> is
-    /// <c>false</c> (the default) nothing is registered and the service keeps using AutoMapper only, so a
-    /// service adopts Mapster by explicitly enabling it. Nullable-enum string conversion (see
+    /// <c>MapsterMapper.IMapper</c>) for a service. Nullable-enum string conversion (see
     /// <see cref="NullableEnumMapsterRegistration.RegisterNullableEnumRule"/>) is registered globally here — it
     /// applies to every Nullable&lt;enum&gt; in every assembly automatically, with no per-service registration
     /// needed. <paramref name="additionalAssemblies"/> is only relevant to <c>IRegister</c> discovery
     /// (<c>config.Scan</c>) below, not to enum handling.
     /// </summary>
-    public static IServiceCollection AddZgwMapster(
-        this IServiceCollection services,
-        Assembly callingAssembly,
-        bool enable = false,
-        params Assembly[] additionalAssemblies
-    )
+    public static IServiceCollection AddZgwMapster(this IServiceCollection services, Assembly callingAssembly, params Assembly[] additionalAssemblies)
     {
-        if (!enable)
-        {
-            return services;
-        }
-
         var commonWebAssembly = typeof(MapsterServiceCollectionExtensions).Assembly;
         var assemblies = new[] { callingAssembly, commonWebAssembly }.Concat(additionalAssemblies).Distinct().ToArray();
 
         var config = new TypeAdapterConfig();
 
         // Defense-in-depth against unbounded recursion on a cyclic object graph (e.g. an EF Core
-        // navigation-property loop). AutoMapper's parallel path in this seam has no equivalent
-        // guard and remains exposed to the same class of risk — this only protects the Mapster
-        // side. At this depth, Mapster returns a default value instead of recursing further,
-        // rather than crashing the process with an uncatchable StackOverflowException.
-        // 200 is not derived from any real domain-graph measurement — it was chosen to clear the
-        // synthetic 100-deep health test (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow)
-        // with headroom. Now that services map real graphs, revisit this value against measured depths.
+        // navigation-property loop). At this depth Mapster returns a default value instead of recursing
+        // further, rather than crashing the process with an uncatchable StackOverflowException.
+        //
+        // Deliberately far above the depth the mapped types themselves declare, and not to be tightened
+        // towards it. Two reasons:
+        //   - The declared type graph does not bound how deep an instance goes. A self-referential entity
+        //     nests as deeply as its data does, so a cap fitted to the types can truncate a legitimate
+        //     graph that simply happens to be deep.
+        //   - Truncation is silent. The over-deep member gets a default value, not an error, so a cap set
+        //     too low loses data quietly; one set too high only delays cycle detection. Given those two
+        //     failure modes, err high.
+        //
+        // Also comfortably clears the synthetic deep-graph health test
+        // (MapsterSeamHealthTests.Deeply_nested_acyclic_graph_maps_without_stack_overflow).
         config.Default.MaxDepth(200);
 
         // Parity with AutoMapper's default (AllowNullCollections = false): a null source collection
@@ -89,14 +84,7 @@ public static class MapsterServiceCollectionExtensions
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
 
-        // Replaces the AutoMapper-backed default registered by AddAutoMapper. Relies on AddZGWApi
-        // calling AddAutoMapper first; if those two calls were ever reordered this Replace would be
-        // overwritten and a migrated service would silently fall back to AutoMapper.
-        services.Replace(ServiceDescriptor.Scoped<IZgwMapper, MapsterZgwMapper>());
-
-        // Registered only when Mapster is enabled, never unconditionally: a service that hasn't
-        // enabled Mapster must fail to resolve this, not silently get a merger backed by an empty config.
-        services.AddScoped<IZgwRequestMerger, ZgwRequestMerger>();
+        services.AddScoped<IRequestMerger, RequestMerger>();
 
         return services;
     }

@@ -33,9 +33,6 @@ public class ZGWApiServiceSettings
 {
     public bool RegisterSharedAudittrailHandlers = false;
 
-    // Opt-in per service to the Mapster mapping seam (registered alongside AutoMapper). Default false:
-    // a service keeps using AutoMapper only until it explicitly enables Mapster.
-    public bool EnableMapster = false;
     public string ApiGroupNameFormat = "'v'VVV";
 }
 
@@ -59,8 +56,7 @@ public static class ZGWApiServiceCollectionExtensions
 
         services.AddMediator(callingAssembly, zgwApiOptions.ApiServiceSettings);
 
-        services.AddAutoMapper(callingAssembly);
-        services.AddZgwMapster(callingAssembly, zgwApiOptions.ApiServiceSettings.EnableMapster);
+        services.AddZgwMapster(callingAssembly);
 
         // Replace the default IApiVersionParser implementation with our own implementation which supports patch numbr (like 1.3.1)
         services.Replace(ServiceDescriptor.Transient<IApiVersionParser, ZgwApiVersionParser>());

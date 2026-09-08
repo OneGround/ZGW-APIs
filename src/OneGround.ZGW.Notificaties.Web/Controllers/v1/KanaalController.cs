@@ -29,20 +29,13 @@ namespace OneGround.ZGW.Notificaties.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class KanaalController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public KanaalController(
         ILogger<KanaalController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle KANAALen opvragen.
@@ -62,7 +55,7 @@ public class KanaalController : ZGWControllerBase
 
         var result = await _mediator.Send(new GetAllKanalenQuery(naam));
 
-        var kanalenResponse = _mapsterMapper.Map<IReadOnlyList<KanaalResponseDto>>(result.Result);
+        var kanalenResponse = _mapper.Map<IReadOnlyList<KanaalResponseDto>>(result.Result);
 
         return Ok(kanalenResponse);
     }
@@ -89,7 +82,7 @@ public class KanaalController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var kanaalResponse = _mapsterMapper.Map<KanaalResponseDto>(result.Result);
+        var kanaalResponse = _mapper.Map<KanaalResponseDto>(result.Result);
 
         return Ok(kanaalResponse);
     }
@@ -109,7 +102,7 @@ public class KanaalController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(CreateAsync), kanaalRequest);
 
-        Kanaal kanaal = _mapsterMapper.Map<Kanaal>(kanaalRequest);
+        Kanaal kanaal = _mapper.Map<Kanaal>(kanaalRequest);
 
         var result = await _mediator.Send(new CreateKanaalCommand { Kanaal = kanaal });
 
@@ -118,7 +111,7 @@ public class KanaalController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var kanaalResponse = _mapsterMapper.Map<KanaalResponseDto>(result.Result);
+        var kanaalResponse = _mapper.Map<KanaalResponseDto>(result.Result);
 
         return Created(kanaalResponse.Url, kanaalResponse);
     }

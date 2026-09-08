@@ -1,5 +1,5 @@
 using System;
-using AutoMapper;
+using MapsterMapper;
 using OneGround.ZGW.DataAccess;
 
 namespace OneGround.ZGW.Common.Web.Services;
@@ -20,17 +20,19 @@ public class RequestMerger : IRequestMerger
     public TRequest MergePartialUpdateToObjectRequest<TRequest, TEntity>(
         TEntity existingObject,
         object partialObjectRequest,
-        Action<IMappingOperationOptions<TEntity, TRequest>> opts = null
+        Action<TRequest> afterMap = null
     )
         where TEntity : IBaseEntity
     {
         var objectRequest = PartialUpdateMerger.AsJObject(partialObjectRequest);
 
-        TRequest existingObjectRequest;
-        if (opts == null)
-            existingObjectRequest = _mapper.Map<TRequest>(existingObject);
-        else
-            existingObjectRequest = _mapper.Map<TEntity, TRequest>(existingObject, opts);
+        var existingObjectRequest = _mapper.Map<TRequest>(existingObject);
+
+        // Must run before Merge(): Merge() serializes existingObjectRequest to build the merge base, and
+        // some request DTOs conditionally serialize a property based on other property values on the same
+        // object. Applying afterMap here, before that serialization, lets a caller opt such a property into
+        // the merge base; applying it to the value this method returns would be too late.
+        afterMap?.Invoke(existingObjectRequest);
 
         return _merger.Merge(existingObjectRequest, objectRequest);
     }

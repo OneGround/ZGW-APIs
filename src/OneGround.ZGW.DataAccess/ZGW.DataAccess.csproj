@@ -5,7 +5,6 @@
     <RootNamespace>OneGround.ZGW.DataAccess</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AutoMapper" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />

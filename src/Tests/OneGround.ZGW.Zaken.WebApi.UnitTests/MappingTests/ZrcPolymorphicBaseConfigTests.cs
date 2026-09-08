@@ -54,7 +54,7 @@ public class ZrcPolymorphicBaseConfigTests
     public void The_polymorphic_base_configs_declare_no_rule_for_a_subtype_navigation()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();

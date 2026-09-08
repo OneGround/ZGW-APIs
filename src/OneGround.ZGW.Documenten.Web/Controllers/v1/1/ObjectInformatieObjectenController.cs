@@ -26,20 +26,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 [Produces("application/json")]
 public class ObjectInformatieObjectenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public ObjectInformatieObjectenController(
         ILogger<ObjectInformatieObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Een specifieke OBJECT-INFORMATIEOBJECT relatie opvragen.
@@ -70,7 +63,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObjectResponse = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
         //await _mediator.Send(new LogAuditTrailGetObjectCommand

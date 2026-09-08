@@ -29,20 +29,13 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Een specifieke GEBRUIKSRECHT opvragen.
@@ -73,7 +66,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksRechtResponse = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksRechtResponse = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand

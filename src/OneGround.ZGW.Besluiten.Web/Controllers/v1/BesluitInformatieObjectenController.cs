@@ -35,20 +35,13 @@ namespace OneGround.ZGW.Besluiten.Web.Controllers.v1;
 [ZgwApiVersion(Api.LatestVersion_1_0)]
 public class BesluitInformatieObjectenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-
     public BesluitInformatieObjectenController(
         ILogger<BesluitInformatieObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
-    {
-        _mapsterMapper = mapsterMapper;
-    }
+        : base(logger, mediator, mapper, errorResponseBuilder) { }
 
     /// <summary>
     /// Alle BESLUIT-INFORMATIEOBJECT relaties opvragen.
@@ -67,11 +60,11 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
-        var filter = _mapsterMapper.Map<GetAllBesluitInformatieObjectenFilter>(queryParameters);
+        var filter = _mapper.Map<GetAllBesluitInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllBesluitInformatieObjectenQuery { GetAllBesluitInformatieObjectenFilter = filter });
 
-        var besluitInformatieObjectenResponse = _mapsterMapper.Map<List<BesluitInformatieObjectResponseDto>>(result.Result);
+        var besluitInformatieObjectenResponse = _mapper.Map<List<BesluitInformatieObjectResponseDto>>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -107,7 +100,7 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var besluitInformatieObjectResponse = _mapsterMapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
+        var besluitInformatieObjectResponse = _mapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -138,7 +131,7 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), besluitInformatieObjectRequest);
 
-        BesluitInformatieObject besluitInformatieObject = _mapsterMapper.Map<BesluitInformatieObject>(besluitInformatieObjectRequest);
+        BesluitInformatieObject besluitInformatieObject = _mapper.Map<BesluitInformatieObject>(besluitInformatieObjectRequest);
 
         var result = await _mediator.Send(
             new CreateBesluitInformatieObjectCommand
@@ -153,7 +146,7 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var besluitResponse = _mapsterMapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
+        var besluitResponse = _mapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
 
         return Created(besluitResponse.Url, besluitResponse);
     }
