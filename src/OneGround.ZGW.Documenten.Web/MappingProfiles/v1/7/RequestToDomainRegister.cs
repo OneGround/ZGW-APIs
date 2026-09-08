@@ -196,18 +196,6 @@ public class RequestToDomainRegister : IRegister
         config.NewConfig<GetAllObjectInformatieObjectenQueryParameters, Models.v1.GetAllObjectInformatieObjectenFilter>();
 
         config
-            .NewConfig<Documenten.Contracts.v1.Requests.ObjectInformatieObjectRequestDto, ObjectInformatieObject>()
-            .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.CreatedBy)
-            .Ignore(dest => dest.ModifiedBy)
-            .Ignore(dest => dest.CreationTime)
-            .Ignore(dest => dest.ModificationTime)
-            .Ignore(dest => dest.InformatieObject)
-            .Ignore(dest => dest.InformatieObjectId)
-            .Ignore(dest => dest.Owner)
-            .Ignore(dest => dest.RowVersion);
-
-        config
             .NewConfig<GetAllGebruiksRechtenQueryParameters, Models.v1.GetAllGebruiksRechtenFilter>()
             .Map(dest => dest.Startdatum__gt, src => ProfileHelper.DateTimeFromString(src.Startdatum__gt))
             .Map(dest => dest.Startdatum__gte, src => ProfileHelper.DateTimeFromString(src.Startdatum__gte))

@@ -44,6 +44,8 @@ public class DomainToResponseRegister : IRegister
             // Set below in MapLatestVersieToGetResponse's AfterMapping, invisible to Mapster's static analysis.
             .Ignore(dest => dest.BestandsDelen)
             .Ignore(dest => dest.InhoudIsVervallen)
+            // Populated after mapping by ExpandEngine.ResolveAsync/ResolveListAsync, never by Mapster.
+            .Ignore(dest => dest.Expand)
             .AfterMapping((src, dest) => MapLatestVersieToGetResponse(src, dest, MapContext.Current.GetService<IEntityUriService>()));
 
         config
@@ -116,14 +118,18 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<ObjectInformatieObject, ObjectInformatieObjectResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
-            .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject));
+            .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject))
+            // Populated after mapping by ExpandEngine.ResolveAsync/ResolveListAsync, never by Mapster.
+            .Ignore(dest => dest.Expand);
 
         config
             .NewConfig<GebruiksRecht, GebruiksRechtResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
             .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject))
             .Map(dest => dest.Startdatum, src => ProfileHelper.StringDateFromDateTime(src.Startdatum, true))
-            .Map(dest => dest.Einddatum, src => ProfileHelper.StringDateFromDateTime(src.Einddatum, true));
+            .Map(dest => dest.Einddatum, src => ProfileHelper.StringDateFromDateTime(src.Einddatum, true))
+            // Populated after mapping by ExpandEngine.ResolveAsync/ResolveListAsync, never by Mapster.
+            .Ignore(dest => dest.Expand);
 
         config
             .NewConfig<Verzending, VerzendingResponseDto>()
@@ -142,6 +148,8 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EmailAdres, src => src.EmailAdres)
             .Map(dest => dest.MijnOverheid, src => src.MijnOverheid)
             .Map(dest => dest.Telefoonnummer, src => src.Telefoonnummer)
+            // Populated after mapping by ExpandEngine.ResolveAsync/ResolveListAsync, never by Mapster.
+            .Ignore(dest => dest.Expand)
             .AfterMapping(
                 (_, dest) =>
                 {
