@@ -25,6 +25,7 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._1;
 [Authorize]
 [ZgwApiVersion(Api.LatestVersion_1_1)]
 [ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 public class BestandsDelenController : ZGWControllerBase
 {
     private readonly MapsterMapper.IMapper _mapsterMapper;
