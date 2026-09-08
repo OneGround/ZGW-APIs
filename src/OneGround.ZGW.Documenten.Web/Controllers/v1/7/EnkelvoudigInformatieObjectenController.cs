@@ -118,9 +118,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             );
         }
 
-        var pagination = _mapper.Map<PaginationFilter>(
-            new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize)
-        );
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
@@ -380,9 +378,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             expandPaths = paths;
         }
 
-        var pagination = _mapper.Map<PaginationFilter>(
-            new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize)
-        );
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(enkelvoudiginformatieobjectSearchRequest);
 
         var result = await _mediator.Send(
