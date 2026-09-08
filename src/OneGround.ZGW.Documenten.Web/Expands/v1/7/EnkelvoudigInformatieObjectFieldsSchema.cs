@@ -4,7 +4,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
-public static partial class DocumentenExpandsServiceCollectionExtensions
+public static partial class ExpandsServiceCollectionExtensions
 {
     /// <summary>
     /// Bouwt het schema waartegen de <c>fields</c> selectie van POST /zaken/_zoek wordt gevalideerd.

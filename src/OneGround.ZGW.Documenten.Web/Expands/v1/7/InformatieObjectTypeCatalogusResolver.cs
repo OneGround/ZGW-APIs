@@ -40,7 +40,7 @@ public class InformatieObjectTypeCatalogusResolver<TEntity> : IExpandResolver<TE
         if (resolved.TryGetValue(Parent, out var obj) && obj is InformatieObjectTypeResponseDto informatieobjecttype)
         {
             var cachedCatalogus = await _catalogusCache.GetOrCacheAndGetAsync(
-                $"key_{informatieobjecttype.Url}",
+                $"key_{informatieobjecttype.Catalogus}",
                 async () => (await _catalogiServiceAgent.GetCatalogusAsync(informatieobjecttype.Catalogus)).Response
             );
 

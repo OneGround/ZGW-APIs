@@ -9,7 +9,7 @@ using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
-public static partial class DocumentenExpandsServiceCollectionExtensions
+public static partial class ExpandsServiceCollectionExtensions
 {
     public static void AddDocumentenAPIFieldsValidators(this IServiceCollection services)
     {
@@ -124,6 +124,11 @@ public static partial class DocumentenExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<VerzendingResponseDto>(sp.GetServices<IExpandResolver<VerzendingResponseDto>>()));
 
         // Registreer cache voor expand resolvers
+        // Note: Deze registraties staan ook (nog) in de [Obsolete] v1.5 AddExpandables() -- v1.7 moet
+        // hier niet stilzwijgend op leunen, anders breekt v1.7 expand zodra AddExpandables() ooit
+        // verwijderd wordt (zie de TODO bij de aanroep in Startup.cs).
         services.AddScoped<IGenericCache<EnkelvoudigInformatieObjectGetResponseDto>, GenericCache<EnkelvoudigInformatieObjectGetResponseDto>>();
+        services.AddScoped<IGenericCache<InformatieObjectTypeResponseDto>, GenericCache<InformatieObjectTypeResponseDto>>();
+        services.AddScoped<IGenericCache<CatalogusResponseDto>, GenericCache<CatalogusResponseDto>>();
     }
 }
