@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -13,14 +15,12 @@ namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 public class ObjectInformatieObject_InformatieObject_Resolver : IExpandResolver<ObjectInformatieObjectResponseDto>
 {
     private readonly IEntityUriService _uriService;
-    private readonly IMapper _mapper;
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
 
-    public ObjectInformatieObject_InformatieObject_Resolver(IMapper mapper, IEntityUriService uriService, IMediator mediator)
+    public ObjectInformatieObject_InformatieObject_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
     {
-        _mapper = mapper;
+        _serviceProvider = serviceProvider;
         _uriService = uriService;
-        _mediator = mediator;
     }
 
     public string Path => "informatieobject";
@@ -32,12 +32,18 @@ public class ObjectInformatieObject_InformatieObject_Resolver : IExpandResolver<
         IReadOnlySet<string> requestedPaths
     )
     {
-        var result = await _mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = _uriService.GetId(entity.InformatieObject) });
+        // Note: Eigen scope (dus eigen DbContext) per aanroep, zodat concurrente resolves voor
+        // verschillende entities uit dezelfde lijst nooit dezelfde scoped DbContext-instantie delen.
+        using var scope = _serviceProvider.CreateScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        var result = await mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = _uriService.GetId(entity.InformatieObject) });
         if (result.Status != QueryStatus.OK)
         {
             throw new ExpandInternalQueryHandlerException("informatieobject", result.Status);
         }
 
-        return _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
+        return mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
     }
 }
