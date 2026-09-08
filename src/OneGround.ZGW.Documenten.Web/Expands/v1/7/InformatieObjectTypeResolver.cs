@@ -7,12 +7,17 @@ using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
-public class GebruiksRecht_InformatieObject_InformatieObjectType_Resolver : IExpandResolver<GebruiksRechtResponseDto>
+/// <summary>
+/// Resolves "informatieobject.informatieobjecttype" from the already-resolved "informatieobject"
+/// parent. Shared by GebruiksRecht, ObjectInformatieObject and Verzending, since the path/parent
+/// and the resolve logic are identical for all three -- only the entity type differs.
+/// </summary>
+public class InformatieObjectTypeResolver<TEntity> : IExpandResolver<TEntity>
 {
     private readonly ICatalogiServiceAgentDecorator _catalogiServiceAgent;
     private readonly IGenericCache<InformatieObjectTypeResponseDto> _informatieobjecttypeCache;
 
-    public GebruiksRecht_InformatieObject_InformatieObjectType_Resolver(
+    public InformatieObjectTypeResolver(
         ICatalogiServiceAgentDecorator catalogiServiceAgent,
         IGenericCache<InformatieObjectTypeResponseDto> informatieobjecttypeCache
     )
@@ -22,14 +27,9 @@ public class GebruiksRecht_InformatieObject_InformatieObjectType_Resolver : IExp
     }
 
     public string Path => "informatieobject.informatieobjecttype";
-
     public string Parent => "informatieobject";
 
-    public async Task<object> ResolveAsync(
-        GebruiksRechtResponseDto entity,
-        IReadOnlyDictionary<string, object> resolved,
-        IReadOnlySet<string> requestedPaths
-    )
+    public async Task<object> ResolveAsync(TEntity entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
         if (resolved.TryGetValue("informatieobject", out var obj) && obj is EnkelvoudigInformatieObjectGetResponseDto informatieobject)
         {

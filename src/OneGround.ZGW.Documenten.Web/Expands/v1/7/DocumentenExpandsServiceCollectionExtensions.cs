@@ -1,11 +1,11 @@
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
+using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
-using OneGround.ZGW.Documenten.DataModel;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
@@ -29,10 +29,14 @@ public static partial class DocumentenExpandsServiceCollectionExtensions
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>
         services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>, EnkelvoudigInformatieObject_InformatieObjectType_Resolver>();
-        services.AddScoped<
-            IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>,
-            EnkelvoudigInformatieObject_InformatieObjectType_Catalogus_Resolver
-        >();
+        services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>>(
+            sp => new InformatieObjectTypeCatalogusResolver<EnkelvoudigInformatieObjectGetResponseDto>(
+                sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
+                sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+                path: "informatieobjecttype.catalogus",
+                parent: "informatieobjecttype"
+            )
+        );
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<EnkelvoudigInformatieObjectGetResponseDto>(
@@ -48,15 +52,20 @@ public static partial class DocumentenExpandsServiceCollectionExtensions
         // 2. Registratie van expand resolvers en engines voor ObjectInformatieObjectResponseDto
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<ObjectInformatieObjectResponseDto>
-        services.AddScoped<IExpandResolver<ObjectInformatieObjectResponseDto>, ObjectInformatieObject_InformatieObject_Resolver>();
-        services.AddScoped<
-            IExpandResolver<ObjectInformatieObjectResponseDto>,
-            ObjectInformatieObject_InformatieObject_InformatieObjectType_Resolver
-        >();
-        services.AddScoped<
-            IExpandResolver<ObjectInformatieObjectResponseDto>,
-            ObjectInformatieObject_InformatieObject_InformatieObjectType_Catalogus_Resolver
-        >();
+        services.AddScoped<IExpandResolver<ObjectInformatieObjectResponseDto>>(sp => new InformatieObjectResolver<ObjectInformatieObjectResponseDto>(
+            sp,
+            sp.GetRequiredService<IEntityUriService>(),
+            e => e.InformatieObject
+        ));
+        services.AddScoped<IExpandResolver<ObjectInformatieObjectResponseDto>, InformatieObjectTypeResolver<ObjectInformatieObjectResponseDto>>();
+        services.AddScoped<IExpandResolver<ObjectInformatieObjectResponseDto>>(
+            sp => new InformatieObjectTypeCatalogusResolver<ObjectInformatieObjectResponseDto>(
+                sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
+                sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+                path: "informatieobject.informatieobjecttype.catalogus",
+                parent: "informatieobject.informatieobjecttype"
+            )
+        );
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<ObjectInformatieObjectResponseDto>(
@@ -72,9 +81,18 @@ public static partial class DocumentenExpandsServiceCollectionExtensions
         // 3. Registratie van expand resolvers en engines voor GebruiksRechtResponseDto
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<GebruiksRechtResponseDto>
-        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>, GebruiksRecht_InformatieObject_Resolver>();
-        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>, GebruiksRecht_InformatieObject_InformatieObjectType_Resolver>();
-        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>, GebruiksRecht_InformatieObject_InformatieObjectType_Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>>(sp => new InformatieObjectResolver<GebruiksRechtResponseDto>(
+            sp,
+            sp.GetRequiredService<IEntityUriService>(),
+            e => e.InformatieObject
+        ));
+        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>, InformatieObjectTypeResolver<GebruiksRechtResponseDto>>();
+        services.AddScoped<IExpandResolver<GebruiksRechtResponseDto>>(sp => new InformatieObjectTypeCatalogusResolver<GebruiksRechtResponseDto>(
+            sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
+            sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+            path: "informatieobject.informatieobjecttype.catalogus",
+            parent: "informatieobject.informatieobjecttype"
+        ));
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<GebruiksRechtResponseDto>(sp.GetServices<IExpandResolver<GebruiksRechtResponseDto>>()));
@@ -86,9 +104,18 @@ public static partial class DocumentenExpandsServiceCollectionExtensions
         // 4. Registratie van expand resolvers en engines voor VerzendingResponseDto
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<VerzendingResponseDto>
-        services.AddScoped<IExpandResolver<VerzendingResponseDto>, Verzending_InformatieObject_Resolver>();
-        services.AddScoped<IExpandResolver<VerzendingResponseDto>, Verzending_InformatieObject_InformatieObjectType_Resolver>();
-        services.AddScoped<IExpandResolver<VerzendingResponseDto>, Verzending_InformatieObject_InformatieObjectType_Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<VerzendingResponseDto>>(sp => new InformatieObjectResolver<VerzendingResponseDto>(
+            sp,
+            sp.GetRequiredService<IEntityUriService>(),
+            e => e.InformatieObject
+        ));
+        services.AddScoped<IExpandResolver<VerzendingResponseDto>, InformatieObjectTypeResolver<VerzendingResponseDto>>();
+        services.AddScoped<IExpandResolver<VerzendingResponseDto>>(sp => new InformatieObjectTypeCatalogusResolver<VerzendingResponseDto>(
+            sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
+            sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+            path: "informatieobject.informatieobjecttype.catalogus",
+            parent: "informatieobject.informatieobjecttype"
+        ));
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<VerzendingResponseDto>(sp.GetServices<IExpandResolver<VerzendingResponseDto>>()));
