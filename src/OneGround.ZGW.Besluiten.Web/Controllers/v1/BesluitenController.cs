@@ -47,26 +47,22 @@ public class BesluitenController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IObjectExpander<BesluitResponseDto> _expander;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public BesluitenController(
         ILogger<BesluitenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
-        IZgwRequestMerger zgwRequestMerger,
+        MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder,
         IExpanderFactory expanderFactory
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -91,8 +87,8 @@ public class BesluitenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.BesluitenPageSize));
-        var filter = _mapsterMapper.Map<GetAllBesluitenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.BesluitenPageSize));
+        var filter = _mapper.Map<GetAllBesluitenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllBesluitenQuery { GetAllBesluitenFilter = filter, Pagination = pagination });
 
@@ -101,7 +97,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var besluitenResponse = _mapsterMapper.Map<List<BesluitResponseDto>>(result.Result.PageResult);
+        var besluitenResponse = _mapper.Map<List<BesluitResponseDto>>(result.Result.PageResult);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
@@ -155,7 +151,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<BesluitResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitResponseDto>(result.Result);
 
         var expandLookup = ExpandLookup(queryParameters.Expand);
 
@@ -190,7 +186,7 @@ public class BesluitenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), besluitRequest);
 
-        Besluit besluit = _mapsterMapper.Map<Besluit>(besluitRequest);
+        Besluit besluit = _mapper.Map<Besluit>(besluitRequest);
 
         var result = await _mediator.Send(new CreateBesluitCommand { Besluit = besluit });
 
@@ -204,7 +200,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<BesluitResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -225,7 +221,7 @@ public class BesluitenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), besluitRequest, id);
 
-        Besluit besluit = _mapsterMapper.Map<Besluit>(besluitRequest);
+        Besluit besluit = _mapper.Map<Besluit>(besluitRequest);
 
         var result = await _mediator.Send(new UpdateBesluitCommand { Besluit = besluit, Id = id });
 
@@ -244,7 +240,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<BesluitResponseDto>(result.Result);
+        var response = _mapper.Map<BesluitResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -272,7 +268,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        BesluitRequestDto mergedBesluitRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(
+        BesluitRequestDto mergedBesluitRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitRequestDto, Besluit>(
             resultGet.Result,
             partialBesluitRequest
         );
@@ -282,7 +278,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        Besluit mergedBesluit = _mapsterMapper.Map<Besluit>(mergedBesluitRequest);
+        Besluit mergedBesluit = _mapper.Map<Besluit>(mergedBesluitRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateBesluitCommand
@@ -303,7 +299,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<BesluitResponseDto>(resultUpd.Result);
+        var response = _mapper.Map<BesluitResponseDto>(resultUpd.Result);
 
         return Ok(response);
     }
@@ -366,7 +362,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<List<AuditTrailRegelDto>>(result.Result);
+        var response = _mapper.Map<List<AuditTrailRegelDto>>(result.Result);
 
         return Ok(response);
     }
@@ -396,7 +392,7 @@ public class BesluitenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<AuditTrailRegelDto>(result.Result);
+        var response = _mapper.Map<AuditTrailRegelDto>(result.Result);
 
         return Ok(response);
     }

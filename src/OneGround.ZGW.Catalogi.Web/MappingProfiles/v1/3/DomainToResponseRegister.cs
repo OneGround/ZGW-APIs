@@ -12,7 +12,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.MappingProfiles.v1._3;
 
 /// <summary>
-/// Serves the audit trail (<c>IZgwMapper</c>) and the PATCH merge (<c>IZgwRequestMerger</c>), not just
+/// Serves the audit trail (the mapper) and the PATCH merge (<c>IRequestMerger</c>), not just
 /// the controllers.
 /// </summary>
 /// <remarks>

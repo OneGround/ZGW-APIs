@@ -40,25 +40,21 @@ public class EigenschapController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public EigenschapController(
         ILogger<EigenschapController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
+        MapsterMapper.IMapper mapper,
         IRequestMerger requestMerger,
-        IZgwRequestMerger zgwRequestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
-        _zgwRequestMerger = zgwRequestMerger;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -88,7 +84,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var response = _mapsterMapper.Map<EigenschapResponseDto>(result.Result);
+        var response = _mapper.Map<EigenschapResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -129,7 +125,7 @@ public class EigenschapController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), eigenschapRequest);
 
-        Eigenschap eigenschap = _mapsterMapper.Map<Eigenschap>(eigenschapRequest);
+        Eigenschap eigenschap = _mapper.Map<Eigenschap>(eigenschapRequest);
 
         var result = await _mediator.Send(
             new CreateEigenschapCommand
@@ -145,7 +141,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapsterMapper.Map<EigenschapResponseDto>(result.Result);
+        var response = _mapper.Map<EigenschapResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }
@@ -169,8 +165,8 @@ public class EigenschapController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EigenschappenPageSize));
-        var filter = _mapsterMapper.Map<GetAllEigenschappenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EigenschappenPageSize));
+        var filter = _mapper.Map<GetAllEigenschappenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllEigenschappenQuery { GetAllEigenschappenFilter = filter, Pagination = pagination });
 
@@ -179,7 +175,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var eigenschappenResponse = _mapsterMapper.Map<List<EigenschapResponseDto>>(result.Result.PageResult);
+        var eigenschappenResponse = _mapper.Map<List<EigenschapResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, eigenschappenResponse, result.Result.Count);
 
@@ -205,7 +201,7 @@ public class EigenschapController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), eigenschapRequest, id);
 
-        Eigenschap eigenschap = _mapsterMapper.Map<Eigenschap>(eigenschapRequest);
+        Eigenschap eigenschap = _mapper.Map<Eigenschap>(eigenschapRequest);
 
         var result = await _mediator.Send(
             new UpdateEigenschapCommand
@@ -228,7 +224,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapsterMapper.Map<EigenschapResponseDto>(result.Result);
+        var response = _mapper.Map<EigenschapResponseDto>(result.Result);
 
         return Ok(response);
     }
@@ -259,7 +255,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        EigenschapRequestDto mergedEigenschapRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<EigenschapRequestDto, Eigenschap>(
+        EigenschapRequestDto mergedEigenschapRequest = _requestMerger.MergePartialUpdateToObjectRequest<EigenschapRequestDto, Eigenschap>(
             resultGet.Result,
             partialEigenschapRequest
         );
@@ -269,7 +265,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        Eigenschap mergedEigenschap = _mapsterMapper.Map<Eigenschap>(mergedEigenschapRequest);
+        Eigenschap mergedEigenschap = _mapper.Map<Eigenschap>(mergedEigenschapRequest);
 
         var resultUpd = await _mediator.Send(
             new UpdateEigenschapCommand
@@ -287,7 +283,7 @@ public class EigenschapController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(resultUpd.Errors);
         }
 
-        var response = _mapsterMapper.Map<EigenschapResponseDto>(resultUpd.Result);
+        var response = _mapper.Map<EigenschapResponseDto>(resultUpd.Result);
 
         return Ok(response);
     }

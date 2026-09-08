@@ -26,9 +26,9 @@ public class EnkelvoudigInformatieObjectMergerFactory : IEnkelvoudigInformatieOb
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _requestMerger;
+    private readonly IRequestMerger _requestMerger;
 
-    public EnkelvoudigInformatieObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
+    public EnkelvoudigInformatieObjectMergerFactory(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;
@@ -49,9 +49,9 @@ public class EnkelvoudigInformatieObjectMerger<TEnkelvoudigInformatieObjectReque
 {
     private readonly IValidatorService _validatorService;
     private readonly IMapper _mapper;
-    private readonly IZgwRequestMerger _requestMerger;
+    private readonly IRequestMerger _requestMerger;
 
-    public EnkelvoudigInformatieObjectMerger(IValidatorService validatorService, IMapper mapper, IZgwRequestMerger requestMerger)
+    public EnkelvoudigInformatieObjectMerger(IValidatorService validatorService, IMapper mapper, IRequestMerger requestMerger)
     {
         _validatorService = validatorService;
         _mapper = mapper;

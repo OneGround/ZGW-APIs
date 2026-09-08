@@ -35,7 +35,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly ExpandValidator<GebruiksRechtResponseDto> _expandValidator;
     private readonly ExpandEngine<GebruiksRechtResponseDto> _expandEngine;
     private readonly ApplicationConfiguration _applicationConfiguration;
@@ -43,17 +42,14 @@ public class GebruiksRechtenController : ZGWControllerBase
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IErrorResponseBuilder errorResponseBuilder,
         IConfiguration configuration,
         ExpandValidator<GebruiksRechtResponseDto> expandValidator,
         ExpandEngine<GebruiksRechtResponseDto> expandEngine
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
 
@@ -98,11 +94,11 @@ public class GebruiksRechtenController : ZGWControllerBase
             );
         }
 
-        var filter = _mapsterMapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
+        var filter = _mapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
 
         var result = await _mediator.Send(new Handlers.v1.GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
-        var gebruiksRechtenResponse = _mapsterMapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
+        var gebruiksRechtenResponse = _mapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })
@@ -187,7 +183,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksrecht = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
+        var gebruiksrecht = _mapper.Map<GebruiksRechtResponseDto>(result.Result);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })

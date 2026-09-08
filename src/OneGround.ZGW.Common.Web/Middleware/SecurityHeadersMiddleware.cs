@@ -9,7 +9,8 @@ public class SecurityHeadersMiddleware
     private const string XFrameOptionsHeader = "X-Frame-Options";
     private const string XFrameOptionsValue = "DENY";
     private const string ContentSecurityPolicyHeader = "Content-Security-Policy";
-    private const string ContentSecurityPolicyValue = "frame-ancestors 'none'";
+    private const string ContentSecurityPolicyValue =
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'";
 
     private readonly RequestDelegate _next;
 

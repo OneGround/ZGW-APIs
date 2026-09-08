@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,21 +21,13 @@ public abstract class ZGWControllerBase : ControllerBase
     protected readonly ILogger _logger;
     protected readonly IMediator _mediator;
     protected readonly IMapper _mapper;
-    protected readonly IRequestMerger _requestMerger;
     protected readonly IErrorResponseBuilder _errorResponseBuilder;
 
-    protected ZGWControllerBase(
-        ILogger logger,
-        IMediator mediator,
-        IMapper mapper,
-        IRequestMerger requestMerger,
-        IErrorResponseBuilder errorResponseBuilder
-    )
+    protected ZGWControllerBase(ILogger logger, IMediator mediator, IMapper mapper, IErrorResponseBuilder errorResponseBuilder)
     {
         _logger = logger;
         _mediator = mediator;
         _mapper = mapper;
-        _requestMerger = requestMerger;
         _errorResponseBuilder = errorResponseBuilder;
     }
 

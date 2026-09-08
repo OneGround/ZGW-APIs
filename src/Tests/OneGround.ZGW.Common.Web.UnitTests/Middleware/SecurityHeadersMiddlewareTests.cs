@@ -14,6 +14,10 @@ public class SecurityHeadersMiddlewareTests
     private const string XFrameOptions = "X-Frame-Options";
     private const string ContentSecurityPolicy = "Content-Security-Policy";
 
+    // Both tests below assert this same policy, so widening it stays a one-line edit here.
+    private const string ExpectedContentSecurityPolicy =
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'";
+
     [Fact]
     public async Task Sets_both_security_headers_exactly_once_on_a_successful_response()
     {
@@ -29,7 +33,7 @@ public class SecurityHeadersMiddlewareTests
         await response.FireOnStartingAsync();
 
         AssertSingleHeader(context, XFrameOptions, "DENY");
-        AssertSingleHeader(context, ContentSecurityPolicy, "frame-ancestors 'none'");
+        AssertSingleHeader(context, ContentSecurityPolicy, ExpectedContentSecurityPolicy);
     }
 
     [Fact]
@@ -49,7 +53,7 @@ public class SecurityHeadersMiddlewareTests
         await response.FireOnStartingAsync();
 
         AssertSingleHeader(context, XFrameOptions, "DENY");
-        AssertSingleHeader(context, ContentSecurityPolicy, "frame-ancestors 'none'");
+        AssertSingleHeader(context, ContentSecurityPolicy, ExpectedContentSecurityPolicy);
     }
 
     private static void AssertSingleHeader(HttpContext context, string name, string expectedValue)

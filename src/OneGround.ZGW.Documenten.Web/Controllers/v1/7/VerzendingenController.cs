@@ -57,28 +57,22 @@ public class VerzendingenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
     private readonly ExpandValidator<VerzendingResponseDto> _expandValidator;
     private readonly ExpandEngine<VerzendingResponseDto> _expandEngine;
 
     public VerzendingenController(
         ILogger<VerzendingenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         ExpandValidator<VerzendingResponseDto> expandValidator,
         ExpandEngine<VerzendingResponseDto> expandEngine
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _expandValidator = expandValidator;
-        _expandEngine = expandEngine;
-        _mapsterMapper = mapsterMapper;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
 
@@ -127,8 +121,8 @@ public class VerzendingenController : ZGWControllerBase
             );
         }
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.VerzendingenPageSize));
-        var filter = _mapsterMapper.Map<Models.v1._5.GetAllVerzendingenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.VerzendingenPageSize));
+        var filter = _mapper.Map<Models.v1._5.GetAllVerzendingenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new Handlers.v1._5.GetAllVerzendingenQuery { GetAllVerzendingenFilter = filter, Pagination = pagination },
@@ -140,7 +134,7 @@ public class VerzendingenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var verzendingenResponse = _mapsterMapper.Map<List<VerzendingResponseDto>>(result.Result.PageResult);
+        var verzendingenResponse = _mapper.Map<List<VerzendingResponseDto>>(result.Result.PageResult);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })
@@ -228,7 +222,7 @@ public class VerzendingenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var verzending = _mapsterMapper.Map<VerzendingResponseDto>(result.Result);
+        var verzending = _mapper.Map<VerzendingResponseDto>(result.Result);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })
@@ -304,7 +298,7 @@ public class VerzendingenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), verzendingRequest);
 
-        var verzending = _mapsterMapper.Map<Verzending>(verzendingRequest);
+        var verzending = _mapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
             new Handlers.v1._5.CreateVerzendingCommand
@@ -326,7 +320,7 @@ public class VerzendingenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var verzendingResponse = _mapsterMapper.Map<VerzendingResponseDto>(result.Result);
+        var verzendingResponse = _mapper.Map<VerzendingResponseDto>(result.Result);
 
         return Created(verzendingResponse.Url, verzendingResponse);
     }
@@ -356,7 +350,7 @@ public class VerzendingenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(UpdateAsync), verzendingRequest);
 
-        var verzending = _mapsterMapper.Map<Verzending>(verzendingRequest);
+        var verzending = _mapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
             new Handlers.v1._5.UpdateVerzendingCommand
@@ -385,7 +379,7 @@ public class VerzendingenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var verzendingResponse = _mapsterMapper.Map<VerzendingResponseDto>(result.Result);
+        var verzendingResponse = _mapper.Map<VerzendingResponseDto>(result.Result);
 
         return Ok(verzendingResponse);
     }
@@ -434,7 +428,7 @@ public class VerzendingenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var verzendingResponse = _mapsterMapper.Map<VerzendingResponseDto>(result.Result);
+        var verzendingResponse = _mapper.Map<VerzendingResponseDto>(result.Result);
 
         return Ok(verzendingResponse);
     }

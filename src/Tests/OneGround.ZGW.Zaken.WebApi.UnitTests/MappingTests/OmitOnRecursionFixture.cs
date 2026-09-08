@@ -4,9 +4,9 @@ using NetTopologySuite.Geometries;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
-public class AutoMapperFixture : Fixture
+public class OmitOnRecursionFixture : Fixture
 {
-    public AutoMapperFixture()
+    public OmitOnRecursionFixture()
     {
         Behaviors.OfType<ThrowingRecursionBehavior>().ToList().ForEach(b => Behaviors.Remove(b));
         Behaviors.Add(new OmitOnRecursionBehavior());

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -7,7 +8,6 @@ using OneGround.ZGW.Autorisaties.Contracts.v1.Requests;
 using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -18,7 +18,7 @@ using ApplicatieRequestDtoV11 = OneGround.ZGW.Autorisaties.Contracts.v1._1.Reque
 namespace OneGround.ZGW.Autorisaties.WebApi.UnitTests.MappingTests;
 
 /// <summary>
-/// The PATCH merge via <see cref="IZgwRequestMerger"/> — the one mapping contract AC depends on outside
+/// The PATCH merge via <see cref="IRequestMerger"/> — the one mapping contract AC depends on outside
 /// its controllers. own Map calls. The per-register tests build an isolated config and cannot see it;
 /// they stayed green while this path resolved an AutoMapper map that had already been deleted.
 /// </summary>
@@ -30,8 +30,8 @@ public class AcMapperContractTests : IDisposable
 {
     private readonly ServiceProvider _provider;
     private readonly IServiceScope _scope;
-    private readonly IZgwMapper _zgwMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IMapper _mapper;
+    private readonly IRequestMerger _requestMerger;
 
     public AcMapperContractTests()
     {
@@ -41,14 +41,13 @@ public class AcMapperContractTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton(mockedUriService.Object);
 
-        // Mirrors Startup exactly: same extensions, same order, same assembly, EnableMapster on.
-        services.AddAutoMapper(typeof(Startup).Assembly);
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        // Mirrors Startup exactly: same extensions, same order, same assembly.
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
-        _zgwMapper = _scope.ServiceProvider.GetRequiredService<IZgwMapper>();
-        _zgwRequestMerger = _scope.ServiceProvider.GetRequiredService<IZgwRequestMerger>();
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
+        _requestMerger = _scope.ServiceProvider.GetRequiredService<IRequestMerger>();
     }
 
     public void Dispose()
@@ -60,9 +59,9 @@ public class AcMapperContractTests : IDisposable
     [Fact]
     public void AC_resolves_the_Mapster_backed_mapper()
     {
-        // AC has no AutoMapper profiles left, so a regression to that adapter would map every shared
-        // consumer against an empty configuration. Asserted directly, not inferred from a working map.
-        Assert.IsType<MapsterZgwMapper>(_zgwMapper);
+        // Every shared consumer maps through this adapter, and a missing or swapped registration is
+        // silent because Mapster convention-maps instead of throwing. Asserted directly, not inferred.
+        Assert.IsType<ServiceMapper>(_mapper);
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public class AcMapperContractTests : IDisposable
         var existing = ExistingApplicatie();
         var patch = new JObject { ["label"] = "gewijzigd label" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV1, Applicatie>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV1, Applicatie>(existing, patch);
 
         // The untouched fields can only come from the existing entity having been mapped in first —
         // the step that needs the register.
@@ -87,7 +86,7 @@ public class AcMapperContractTests : IDisposable
         var existing = ExistingApplicatie();
         var patch = new JObject { ["label"] = "gewijzigd label" };
 
-        var merged = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV11, Applicatie>(existing, patch);
+        var merged = _requestMerger.MergePartialUpdateToObjectRequest<ApplicatieRequestDtoV11, Applicatie>(existing, patch);
 
         Assert.Equal("gewijzigd label", merged.Label);
         Assert.Equal(existing.HeeftAlleAutorisaties, merged.HeeftAlleAutorisaties);

@@ -46,25 +46,21 @@ public class ZaakObjectenController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly IZaakObjectValidatorService _zaakObjectValidatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
-    private readonly IZgwRequestMerger _zgwRequestMerger;
+    private readonly IRequestMerger _requestMerger;
 
     public ZaakObjectenController(
         ILogger<ZaakObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger, // unused here; ZGWControllerBase's constructor still requires it
-        IZgwRequestMerger zgwRequestMerger,
+        MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IZaakObjectValidatorService zaakObjectValidatorService,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _zgwRequestMerger = zgwRequestMerger;
-        _mapsterMapper = mapsterMapper;
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _zaakObjectValidatorService = zaakObjectValidatorService;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -87,8 +83,8 @@ public class ZaakObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
-        var filter = _mapsterMapper.Map<GetAllZaakObjectenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakObjectenPageSize));
+        var filter = _mapper.Map<GetAllZaakObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllZaakObjectenQuery { GetAllZaakObjectenFilter = filter, Pagination = pagination });
 
@@ -97,7 +93,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<List<ZaakObjectResponseDto>>(result.Result.PageResult);
+        var zaakObjectResponse = _mapper.Map<List<ZaakObjectResponseDto>>(result.Result.PageResult);
         zaakObjectResponse.ForEach(o => o.Version = "1.2"); // Maps with additional (1.2) data
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaakObjectResponse, result.Result.Count);
@@ -143,7 +139,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakObjectResponseDto>(result.Result);
         response.Version = "1.2"; // Maps with additional (1.2) data
 
         await _mediator.Send(
@@ -180,7 +176,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakObject zaakObject = _mapsterMapper.Map<ZaakObject>(zaakObjectRequest);
+        ZaakObject zaakObject = _mapper.Map<ZaakObject>(zaakObjectRequest);
 
         var result = await _mediator.Send(new CreateZaakObjectCommand { ZaakObject = zaakObject, ZaakUrl = zaakObjectRequest.Zaak });
 
@@ -194,7 +190,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakObjectResponseDto>(result.Result);
         response.Version = "1.2"; // Maps with additional (1.2) data
 
         return Created(response.Url, response);
@@ -222,7 +218,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        var zaakobject = _mapsterMapper.Map<ZaakObject>(zaakobjectRequest);
+        var zaakobject = _mapper.Map<ZaakObject>(zaakobjectRequest);
 
         var result = await _mediator.Send(new UpdateZaakObjectCommand { ZaakObject = zaakobject, ZaakObjectId = id });
 
@@ -236,7 +232,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<ZaakObjectResponseDto>(result.Result);
+        var zaakObjectResponse = _mapper.Map<ZaakObjectResponseDto>(result.Result);
         zaakObjectResponse.Version = "1.2"; // Maps with additional (1.2) data
 
         return Ok(zaakObjectResponse);
@@ -273,7 +269,7 @@ public class ZaakObjectenController : ZGWControllerBase
         // afterMap must run before the pre-merge serialization: ZaakObjectRequestDto conditionally serializes
         // ObjectTypeOverigeDefinitie based on Version, so Version has to be set on the mapped request before
         // the merger builds its merge base, or a v1.2 PATCH that omits that field would drop it.
-        ZaakObjectRequestDto mergedZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(
+        ZaakObjectRequestDto mergedZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(
             resultGet.Result,
             partialZaakObjectRequest,
             request => request.Version = "1.2"
@@ -284,12 +280,12 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(validationResult);
         }
 
-        ZaakObject mergedZaakObject = _mapsterMapper.Map<ZaakObject>(mergedZaakObjectRequest);
+        ZaakObject mergedZaakObject = _mapper.Map<ZaakObject>(mergedZaakObjectRequest);
 
         switch (resultGet.Result.ObjectType)
         {
             case ObjectType.adres:
-                AdresZaakObjectRequestDto mergedAdresZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                AdresZaakObjectRequestDto mergedAdresZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     AdresZaakObjectRequestDto,
                     AdresZaakObject
                 >(resultGet.Result.Adres, partialZaakObjectRequest);
@@ -299,11 +295,11 @@ public class ZaakObjectenController : ZGWControllerBase
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
 
-                mergedZaakObject.Adres = _mapsterMapper.Map<AdresZaakObject>(mergedAdresZaakObjectRequest);
+                mergedZaakObject.Adres = _mapper.Map<AdresZaakObject>(mergedAdresZaakObjectRequest);
                 break;
 
             case ObjectType.buurt:
-                BuurtZaakObjectRequestDto mergedBuurtZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                BuurtZaakObjectRequestDto mergedBuurtZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     BuurtZaakObjectRequestDto,
                     BuurtZaakObject
                 >(resultGet.Result.Buurt, partialZaakObjectRequest);
@@ -312,11 +308,11 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Buurt = _mapsterMapper.Map<BuurtZaakObject>(mergedBuurtZaakObjectRequest);
+                mergedZaakObject.Buurt = _mapper.Map<BuurtZaakObject>(mergedBuurtZaakObjectRequest);
                 break;
 
             case ObjectType.gemeente:
-                GemeenteZaakObjectRequestDto mergedGemeenteZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                GemeenteZaakObjectRequestDto mergedGemeenteZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     GemeenteZaakObjectRequestDto,
                     GemeenteZaakObject
                 >(resultGet.Result.Gemeente, partialZaakObjectRequest);
@@ -325,12 +321,12 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Gemeente = _mapsterMapper.Map<GemeenteZaakObject>(mergedGemeenteZaakObjectRequest);
+                mergedZaakObject.Gemeente = _mapper.Map<GemeenteZaakObject>(mergedGemeenteZaakObjectRequest);
                 break;
 
             case ObjectType.kadastrale_onroerende_zaak:
                 KadastraleOnroerendeZaakObjectRequestDto mergedKadastraleOnroerendeZaakObjectRequest =
-                    _zgwRequestMerger.MergePartialUpdateToObjectRequest<KadastraleOnroerendeZaakObjectRequestDto, KadastraleOnroerendeZaakObject>(
+                    _requestMerger.MergePartialUpdateToObjectRequest<KadastraleOnroerendeZaakObjectRequestDto, KadastraleOnroerendeZaakObject>(
                         resultGet.Result.KadastraleOnroerendeZaak,
                         partialZaakObjectRequest
                     );
@@ -344,13 +340,11 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.KadastraleOnroerendeZaak = _mapsterMapper.Map<KadastraleOnroerendeZaakObject>(
-                    mergedKadastraleOnroerendeZaakObjectRequest
-                );
+                mergedZaakObject.KadastraleOnroerendeZaak = _mapper.Map<KadastraleOnroerendeZaakObject>(mergedKadastraleOnroerendeZaakObjectRequest);
                 break;
 
             case ObjectType.overige:
-                OverigeZaakObjectRequestDto mergedOverigeZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                OverigeZaakObjectRequestDto mergedOverigeZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     OverigeZaakObjectRequestDto,
                     OverigeZaakObject
                 >(resultGet.Result.Overige, partialZaakObjectRequest);
@@ -359,11 +353,11 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Overige = _mapsterMapper.Map<OverigeZaakObject>(mergedOverigeZaakObjectRequest);
+                mergedZaakObject.Overige = _mapper.Map<OverigeZaakObject>(mergedOverigeZaakObjectRequest);
                 break;
 
             case ObjectType.pand:
-                PandZaakObjectRequestDto mergedPandZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                PandZaakObjectRequestDto mergedPandZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     PandZaakObjectRequestDto,
                     PandZaakObject
                 >(resultGet.Result.Pand, partialZaakObjectRequest);
@@ -372,12 +366,12 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.Pand = _mapsterMapper.Map<PandZaakObject>(mergedPandZaakObjectRequest);
+                mergedZaakObject.Pand = _mapper.Map<PandZaakObject>(mergedPandZaakObjectRequest);
                 break;
 
             case ObjectType.terrein_gebouwd_object:
                 TerreinGebouwdObjectZaakObjectRequestDto mergedTerreinGebouwdObjectZaakObjectRequest =
-                    _zgwRequestMerger.MergePartialUpdateToObjectRequest<TerreinGebouwdObjectZaakObjectRequestDto, TerreinGebouwdObjectZaakObject>(
+                    _requestMerger.MergePartialUpdateToObjectRequest<TerreinGebouwdObjectZaakObjectRequestDto, TerreinGebouwdObjectZaakObject>(
                         resultGet.Result.TerreinGebouwdObject,
                         partialZaakObjectRequest
                     );
@@ -391,13 +385,11 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.TerreinGebouwdObject = _mapsterMapper.Map<TerreinGebouwdObjectZaakObject>(
-                    mergedTerreinGebouwdObjectZaakObjectRequest
-                );
+                mergedZaakObject.TerreinGebouwdObject = _mapper.Map<TerreinGebouwdObjectZaakObject>(mergedTerreinGebouwdObjectZaakObjectRequest);
                 break;
 
             case ObjectType.woz_waarde:
-                WozWaardeZaakObjectRequestDto mergedWozWaardeZaakObjectRequest = _zgwRequestMerger.MergePartialUpdateToObjectRequest<
+                WozWaardeZaakObjectRequestDto mergedWozWaardeZaakObjectRequest = _requestMerger.MergePartialUpdateToObjectRequest<
                     WozWaardeZaakObjectRequestDto,
                     WozWaardeZaakObject
                 >(resultGet.Result.WozWaardeObject, partialZaakObjectRequest);
@@ -411,7 +403,7 @@ public class ZaakObjectenController : ZGWControllerBase
                 {
                     return _errorResponseBuilder.BadRequest(validationResult);
                 }
-                mergedZaakObject.WozWaardeObject = _mapsterMapper.Map<WozWaardeZaakObject>(mergedWozWaardeZaakObjectRequest);
+                mergedZaakObject.WozWaardeObject = _mapper.Map<WozWaardeZaakObject>(mergedWozWaardeZaakObjectRequest);
                 break;
         }
 
@@ -434,7 +426,7 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var zaakObjectResponse = _mapsterMapper.Map<ZaakObjectResponseDto>(resultUpd.Result);
+        var zaakObjectResponse = _mapper.Map<ZaakObjectResponseDto>(resultUpd.Result);
         zaakObjectResponse.Version = "1.2"; // Maps with additional (1.2) data
 
         return Ok(zaakObjectResponse);

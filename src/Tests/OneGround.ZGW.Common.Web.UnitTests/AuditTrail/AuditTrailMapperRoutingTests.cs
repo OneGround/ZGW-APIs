@@ -1,7 +1,7 @@
 using System;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
@@ -22,28 +22,28 @@ public class AuditTrailMapperRoutingTests
         public string Naam { get; set; }
     }
 
-    private static AuditTrailService CreateSut(IZgwMapper mapper) =>
+    private static AuditTrailService CreateSut(IMapper mapper) =>
         new AuditTrailService(Mock.Of<IDbContextWithAuditTrail>(), mapper, Mock.Of<IHttpContextAccessor>(), Mock.Of<IEntityUriService>());
 
     [Fact]
-    public void SetNew_maps_through_the_injected_IZgwMapper()
+    public void SetNew_maps_through_the_injected_mapper()
     {
         var entity = new TestEntity { Id = Guid.NewGuid() };
-        var mapper = new Mock<IZgwMapper>();
+        var mapper = new Mock<IMapper>();
         mapper.Setup(m => m.Map<TestDto>(entity)).Returns(new TestDto { Naam = "gemapt" });
 
         CreateSut(mapper.Object).SetNew<TestDto>(entity);
 
-        // Proves the audit trail resolves its DTO through the swappable abstraction rather than a
-        // hard-coded mapper, which is what lets a service choose Mapster without touching this class.
+        // Proves the audit trail builds its DTO through the injected mapper rather than serializing the
+        // entity itself -- the reason a register's rules govern what an audit record contains.
         mapper.Verify(m => m.Map<TestDto>(entity), Times.Once());
     }
 
     [Fact]
-    public void SetOld_maps_through_the_injected_IZgwMapper()
+    public void SetOld_maps_through_the_injected_mapper()
     {
         var entity = new TestEntity { Id = Guid.NewGuid() };
-        var mapper = new Mock<IZgwMapper>();
+        var mapper = new Mock<IMapper>();
         mapper.Setup(m => m.Map<TestDto>(entity)).Returns(new TestDto { Naam = "gemapt" });
 
         CreateSut(mapper.Object).SetOld<TestDto>(entity);

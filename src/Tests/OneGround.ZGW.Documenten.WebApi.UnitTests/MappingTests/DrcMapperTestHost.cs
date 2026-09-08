@@ -39,7 +39,7 @@ internal sealed class DrcMapperTestHost : IDisposable
 
         var services = new ServiceCollection();
         services.AddSingleton(UriService.Object);
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();

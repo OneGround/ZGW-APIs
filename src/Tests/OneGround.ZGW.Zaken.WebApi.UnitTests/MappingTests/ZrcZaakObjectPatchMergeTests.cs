@@ -16,7 +16,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 /// cannot coincidentally reproduce.
 /// </summary>
 /// <remarks>
-/// Built on the real seam (<see cref="ZrcMapperTestHost"/>) and a real <see cref="ZgwRequestMerger"/> — never
+/// Built on the real seam (<see cref="ZrcMapperTestHost"/>) and a real <see cref="RequestMerger"/> — never
 /// a hand-rolled <c>TypeAdapterConfig</c> and never a hand-copy of the merge logic, either of which would
 /// drift from what the controller does.
 /// <para>
@@ -47,7 +47,7 @@ public class ZrcZaakObjectPatchMergeTests : IDisposable
 
     private TRequest Merge<TRequest, TEntity>(TEntity existing)
         where TEntity : OneGround.ZGW.DataAccess.IBaseEntity =>
-        new ZgwRequestMerger(_host.Mapper).MergePartialUpdateToObjectRequest<TRequest, TEntity>(existing, EmptyPatch());
+        new RequestMerger(_host.Mapper).MergePartialUpdateToObjectRequest<TRequest, TEntity>(existing, EmptyPatch());
 
     [Fact]
     public void An_adres_case_object_survives_a_patch_merge()
@@ -269,7 +269,7 @@ public class ZrcZaakObjectPatchMergeTests : IDisposable
         };
         var patch = new JObject { ["zaakobjecttype"] = "https://example.test/zaakobjecttypen/2" };
 
-        var merged = new ZgwRequestMerger(_host.Mapper).MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(existing, patch);
+        var merged = new RequestMerger(_host.Mapper).MergePartialUpdateToObjectRequest<ZaakObjectRequestDto, ZaakObject>(existing, patch);
 
         Assert.Equal("https://example.test/zaakobjecttypen/2", merged.ZaakObjectType);
     }

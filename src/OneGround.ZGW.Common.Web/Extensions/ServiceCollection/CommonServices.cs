@@ -11,11 +11,10 @@ public static class CommonServicesServiceCollectionExtensions
         services.AddScoped<IPaginationHelper, PaginationHelper>();
         services.AddScoped<IPaginationUriService, PaginationUriService>();
 
-        // IEntityUriService must be singleton, because it is used in Automapper
+        // IEntityUriService must be singleton, because it is resolved from the mapping seam
         services.AddSingleton<IEntityUriService, UriService>();
 
         services.AddHttpContextAccessor();
-        services.AddSingleton<IRequestMerger, RequestMerger>();
         services.AddSingleton<IValidatorService, ValidatorService>();
         services.AddSingleton<IErrorResponseBuilder, ErrorResponseBuilder>();
     }

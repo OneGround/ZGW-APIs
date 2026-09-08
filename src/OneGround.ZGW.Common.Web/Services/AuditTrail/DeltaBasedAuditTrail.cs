@@ -6,10 +6,10 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Extensions;
-using OneGround.ZGW.Common.Web.Mapping;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -27,7 +27,7 @@ public class DeltaBasedAuditTrail : AuditTrailServiceBase
 
     public DeltaBasedAuditTrail(
         IDbContextWithAuditTrail context,
-        IZgwMapper mapper,
+        IMapper mapper,
         IHttpContextAccessor httpContextAccessor,
         IEntityUriService uriService
     )

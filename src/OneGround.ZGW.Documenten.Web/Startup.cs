@@ -87,7 +87,6 @@ public class Startup
                 };
 
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
-                c.ApiServiceSettings.EnableMapster = true;
             }
         );
 
@@ -163,7 +162,7 @@ public class Startup
         services.AddSingleton<IDistributedCacheHelper, DistributedCacheHelper>();
 
         // Scoped, not singleton: both factories inject MapsterMapper.IMapper (ServiceMapper) and
-        // IZgwRequestMerger, which the Mapster seam registers scoped. A singleton factory would be a
+        // IRequestMerger, which the Mapster seam registers scoped. A singleton factory would be a
         // captive dependency -- ValidateOnBuild rejects it at host startup, and with validation off it
         // would pin one root-scope mapper for the process lifetime. Every consumer is a MediatR handler,
         // which is already scoped.

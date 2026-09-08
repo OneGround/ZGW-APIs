@@ -36,21 +36,17 @@ public class CatalogusController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IPaginationHelper _paginationHelper;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public CatalogusController(
         ILogger<CatalogusController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
         _paginationHelper = paginationHelper;
     }
@@ -75,8 +71,8 @@ public class CatalogusController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.CatalogussenPageSize));
-        var filter = _mapsterMapper.Map<Models.v1.GetAllCatalogussenFilter>(queryParameters);
+        var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.CatalogussenPageSize));
+        var filter = _mapper.Map<Models.v1.GetAllCatalogussenFilter>(queryParameters);
 
         var result = await _mediator.Send(new GetAllCatalogussenQuery() { GetAllCatalogussenFilter = filter, Pagination = pagination });
 
@@ -85,7 +81,7 @@ public class CatalogusController : ZGWControllerBase
             return _errorResponseBuilder.PageNotFound();
         }
 
-        var statustypenResponse = _mapsterMapper.Map<List<CatalogusResponseDto>>(result.Result.PageResult);
+        var statustypenResponse = _mapper.Map<List<CatalogusResponseDto>>(result.Result.PageResult);
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
@@ -116,7 +112,7 @@ public class CatalogusController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
-        var catalogusResponse = _mapsterMapper.Map<CatalogusResponseDto>(result.Result);
+        var catalogusResponse = _mapper.Map<CatalogusResponseDto>(result.Result);
 
         return Ok(catalogusResponse);
     }
@@ -154,7 +150,7 @@ public class CatalogusController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Rsin}", nameof(AddAsync), catalogusRequestDto, catalogusRequestDto.Rsin);
 
-        Catalogus catalogus = _mapsterMapper.Map<Catalogus>(catalogusRequestDto);
+        Catalogus catalogus = _mapper.Map<Catalogus>(catalogusRequestDto);
 
         var result = await _mediator.Send(new CreateCatalogusCommand { Catalogus = catalogus });
 
@@ -163,7 +159,7 @@ public class CatalogusController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
-        var response = _mapsterMapper.Map<CatalogusResponseDto>(result.Result);
+        var response = _mapper.Map<CatalogusResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }

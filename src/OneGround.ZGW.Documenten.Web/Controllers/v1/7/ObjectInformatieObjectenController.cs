@@ -35,22 +35,18 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<ObjectInformatieObjectResponseDto> _expandValidator;
     private readonly ExpandEngine<ObjectInformatieObjectResponseDto> _expandEngine;
-    private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ObjectInformatieObjectenController(
         ILogger<ObjectInformatieObjectenController> logger,
         IMediator mediator,
-        AutoMapper.IMapper mapper,
-        MapsterMapper.IMapper mapsterMapper,
-        IRequestMerger requestMerger,
+        MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         ExpandValidator<ObjectInformatieObjectResponseDto> expandValidator,
         ExpandEngine<ObjectInformatieObjectResponseDto> expandEngine
     )
-        : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
+        : base(logger, mediator, mapper, errorResponseBuilder)
     {
-        _mapsterMapper = mapsterMapper;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
 
@@ -102,14 +98,14 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             );
         }
 
-        var filter = _mapsterMapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
+        var filter = _mapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
             new Handlers.v1.GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
             cancellationToken
         );
 
-        var objectInformatieObjectenResponse = _mapsterMapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
+        var objectInformatieObjectenResponse = _mapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })
@@ -184,7 +180,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var objectInformatieObject = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
+        var objectInformatieObject = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
         // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
         if (expandPaths is { Count: > 0 })

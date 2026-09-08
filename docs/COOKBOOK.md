@@ -10,7 +10,7 @@ architecture (project layering, request flow, conventions) see [`../CLAUDE.md`](
 1. `*.Contracts/v{X}/` — add/extend the request/response DTO for that version.
 2. `*.Web/Validators/` — add a FluentValidation validator for the new request DTO.
 3. `*.Web/Handlers/v{X}/` — add the `*Command`/`*Query` + its `*Handler` (inherit the API's base handler, e.g. `ZakenBaseHandler<T>`).
-4. `*.Web/MappingProfiles/` — add AutoMapper entries if the handler maps between contract and entity.
+4. `*.Web/MappingProfiles/` — add Mapster `IRegister` entries if the handler maps between contract and entity.
 5. `*.Web/Controllers/v{X}/` — add the controller action, `Send`-ing the command/query.
 6. `*.Web/Controllers/Api.cs` — only if this changes what a version supports; otherwise skip.
 7. Add/extend a test in `Tests/OneGround.ZGW.<Api>.WebApi.UnitTests/`.

@@ -37,7 +37,7 @@ public class ZrcMapsterCompileTests
     private static void GateBasePairsPerMember(List<(string Name, Type Source, Type Destination)> basePairs, List<string> unmapped)
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var probe = provider.GetRequiredService<TypeAdapterConfig>();
@@ -89,7 +89,7 @@ public class ZrcMapsterCompileTests
     public void AddZgwMapster_config_compiles_every_registered_type_pair()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
@@ -119,13 +119,14 @@ public class ZrcMapsterCompileTests
     public void Every_registered_type_pair_maps_or_ignores_every_destination_member()
     {
         var services = new ServiceCollection();
-        services.AddZgwMapster(typeof(Startup).Assembly, enable: true);
+        services.AddZgwMapster(typeof(Startup).Assembly);
 
         using var provider = services.BuildServiceProvider();
         var config = provider.GetRequiredService<TypeAdapterConfig>();
 
-        // On the test's own config, never inside AddZgwMapster: as a global seam setting this would throw
-        // at startup for every service that has not migrated and has no registers at all.
+        // On the test's own config, never inside AddZgwMapster: as a global seam setting it would also apply
+        // to pairs with no register entry, which compile lazily on their first Map() call rather than at
+        // startup -- so the failure would surface on a live request instead of here.
         config.Default.RequireDestinationMemberSource(true);
 
         var unmapped = new List<string>();
