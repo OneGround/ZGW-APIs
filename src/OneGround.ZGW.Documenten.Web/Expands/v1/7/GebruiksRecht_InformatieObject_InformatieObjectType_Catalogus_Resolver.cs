@@ -7,12 +7,12 @@ using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
-public class InformatieObjectTypeCatalogusResolver : IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>
+public class GebruiksRecht_InformatieObject_InformatieObjectType_Catalogus_Resolver : IExpandResolver<GebruiksRechtResponseDto>
 {
     private readonly ICatalogiServiceAgentDecorator _catalogiServiceAgent;
     private readonly IGenericCache<CatalogusResponseDto> _catalogusCache;
 
-    public InformatieObjectTypeCatalogusResolver(
+    public GebruiksRecht_InformatieObject_InformatieObjectType_Catalogus_Resolver(
         ICatalogiServiceAgentDecorator catalogiServiceAgent,
         IGenericCache<CatalogusResponseDto> catalogusCache
     )
@@ -21,16 +21,17 @@ public class InformatieObjectTypeCatalogusResolver : IExpandResolver<Enkelvoudig
         _catalogusCache = catalogusCache;
     }
 
-    public string Path => "informatieobjecttype.catalogus";
-    public string Parent => "informatieobjecttype";
+    public string Path => "informatieobject.informatieobjecttype.catalogus";
+
+    public string Parent => "informatieobject.informatieobjecttype";
 
     public async Task<object> ResolveAsync(
-        EnkelvoudigInformatieObjectGetResponseDto document,
+        GebruiksRechtResponseDto entity,
         IReadOnlyDictionary<string, object> resolved,
         IReadOnlySet<string> requestedPaths
     )
     {
-        if (resolved.TryGetValue("informatieobjecttype", out var obj) && obj is InformatieObjectTypeResponseDto informatieobjecttype)
+        if (resolved.TryGetValue("informatieobject.informatieobjecttype", out var obj) && obj is InformatieObjectTypeResponseDto informatieobjecttype)
         {
             var cachedCatalogus = await _catalogusCache.GetOrCacheAndGetAsync(
                 $"key_{informatieobjecttype.Url}",

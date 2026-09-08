@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
@@ -6,8 +7,10 @@ using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._5;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
 public static class DocumentExpanderExtensions
 {
+    [Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
     public static void AddExpandables(this IServiceCollection services)
     {
         // Expanders support _expand in responses (>= v1.4)

@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -20,23 +20,25 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.Web.Authorization;
-using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
+namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 
 [ApiController]
 [Authorize]
-[ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class GebruiksRechtenController : ZGWControllerBase
 {
-    private readonly IObjectExpander<InformatieObjectContext> _expander;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly ExpandValidator<GebruiksRechtResponseDto> _expandValidator;
+    private readonly ExpandEngine<GebruiksRechtResponseDto> _expandEngine;
+    private readonly ApplicationConfiguration _applicationConfiguration;
 
     public GebruiksRechtenController(
         ILogger<GebruiksRechtenController> logger,
@@ -45,12 +47,17 @@ public class GebruiksRechtenController : ZGWControllerBase
         MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
         IErrorResponseBuilder errorResponseBuilder,
-        IExpanderFactory expanderFactory
+        IConfiguration configuration,
+        ExpandValidator<GebruiksRechtResponseDto> expandValidator,
+        ExpandEngine<GebruiksRechtResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
-        _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
         _mapsterMapper = mapsterMapper;
+        _expandValidator = expandValidator;
+        _expandEngine = expandEngine;
+
+        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
     /// <summary>
@@ -61,9 +68,10 @@ public class GebruiksRechtenController : ZGWControllerBase
     /// <response code="403">Forbidden</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1.ApiRoutes.GebruiksRechten.GetAll, Name = Contracts.v1.Operations.GebruiksRechten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<GebruiksRechtResponseExpandedDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<GebruiksRechtResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllGebruiksRechtenQueryParameters>))]
@@ -74,19 +82,44 @@ public class GebruiksRechtenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.List, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
         var filter = _mapsterMapper.Map<Models.v1.GetAllGebruiksRechtenFilter>(queryParameters);
 
         var result = await _mediator.Send(new Handlers.v1.GetAllGebruiksRechtenQuery { GetAllGebruiksRechtenFilter = filter }, cancellationToken);
 
-        var gebruiksRechtenResponse = _mapsterMapper.Map<List<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>>(result.Result);
+        var gebruiksRechtenResponse = _mapsterMapper.Map<List<GebruiksRechtResponseDto>>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        var gebruiksrechtenWithOptionalExpand = gebruiksRechtenResponse
-            .Select(g =>
-                _expander.ResolveAsync(expandLookup, new InformatieObjectContext { InformatieObject = g.InformatieObject, ObjectDto = g }).Result
-            )
-            .ToList();
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(gebruiksRechtenResponse, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -98,7 +131,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             cancellationToken
         );
 
-        return Ok(gebruiksrechtenWithOptionalExpand);
+        return Ok(gebruiksRechtenResponse);
     }
 
     /// <summary>
@@ -110,12 +143,14 @@ public class GebruiksRechtenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1.ApiRoutes.GebruiksRechten.Get, Name = Contracts.v1.Operations.GebruiksRechten.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseExpandedDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(GebruiksRechtResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetGebruiksRechtQueryParameters>))]
     public async Task<IActionResult> GetAsync(
         Guid id,
         [FromQuery] GetGebruiksRechtQueryParameters queryParameters,
@@ -123,6 +158,22 @@ public class GebruiksRechtenController : ZGWControllerBase
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
+
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
 
         var result = await _mediator.Send(new Handlers.v1.GetGebruiksRechtQuery { Id = id }, cancellationToken);
 
@@ -136,14 +187,24 @@ public class GebruiksRechtenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var gebruiksrecht = _mapsterMapper.Map<Documenten.Contracts.v1.Responses.GebruiksRechtResponseDto>(result.Result);
+        var gebruiksrecht = _mapsterMapper.Map<GebruiksRechtResponseDto>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        var gebruiksrechtWithOptionalExpand = await _expander.ResolveAsync(
-            expandLookup,
-            new InformatieObjectContext { InformatieObject = gebruiksrecht.InformatieObject, ObjectDto = gebruiksrecht }
-        );
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveAsync(gebruiksrecht, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -157,7 +218,7 @@ public class GebruiksRechtenController : ZGWControllerBase
             cancellationToken
         );
 
-        return Ok(gebruiksrechtWithOptionalExpand);
+        return Ok(gebruiksrecht);
     }
 
     /// <summary>
@@ -170,10 +231,12 @@ public class GebruiksRechtenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpHead(Contracts.v1.ApiRoutes.GebruiksRechten.Get, Name = Contracts.v1.Operations.GebruiksRechten.ReadHead)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetGebruiksRechtQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetGebruiksRechtQueryParameters queryParameters, CancellationToken cancellationToken)
     {
         return GetAsync(id, queryParameters, cancellationToken);

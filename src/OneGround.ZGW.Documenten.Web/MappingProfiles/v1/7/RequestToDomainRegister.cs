@@ -15,6 +15,10 @@ public class RequestToDomainRegister : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config
+            .NewConfig<GetEnkelvoudigInformatieObjectQueryParameters, Models.v1.GetEnkelvoudigInformatieObjectFilter>()
+            .Map(dest => dest.RegistratieOp, src => ProfileHelper.DateTimeFromString(src.RegistratieOp));
+
+        config
             .NewConfig<GetAllEnkelvoudigInformatieObjectenQueryParameters, GetAllEnkelvoudigInformatieObjectenFilter>()
             .Map(dest => dest.Trefwoorden_In, src => ProfileHelper.ArrayFromString(src.Trefwoorden))
             // Not present on these query parameters -- only the search-request DTO config below has Uuid_In.
@@ -189,71 +193,33 @@ public class RequestToDomainRegister : IRegister
                     }
             );
 
-        //CreateMap<Documenten.Contracts.v1._5.Queries.GetAllGebruiksRechtenQueryParameters, Models.v1.GetAllGebruiksRechtenFilter>()
-        //    .ForMember(dest => dest.Startdatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Startdatum__gt)))
-        //    .ForMember(dest => dest.Startdatum__gte, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Startdatum__gte)))
-        //    .ForMember(dest => dest.Startdatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Startdatum__lt)))
-        //    .ForMember(dest => dest.Startdatum__lte, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Startdatum__lte)))
-        //    .ForMember(dest => dest.Einddatum__gt, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Einddatum__gt)))
-        //    .ForMember(dest => dest.Einddatum__gte, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Einddatum__gte)))
-        //    .ForMember(dest => dest.Einddatum__lt, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Einddatum__lt)))
-        //    .ForMember(dest => dest.Einddatum__lte, opt => opt.MapFrom(src => ProfileHelper.DateTimeFromString(src.Einddatum__lte)));
+        config.NewConfig<GetAllObjectInformatieObjectenQueryParameters, Models.v1.GetAllObjectInformatieObjectenFilter>();
 
-        //CreateMap<GetAllVerzendingenQueryParameters, GetAllVerzendingenFilter>();
+        config
+            .NewConfig<Documenten.Contracts.v1.Requests.ObjectInformatieObjectRequestDto, ObjectInformatieObject>()
+            .Ignore(dest => dest.Id)
+            .Ignore(dest => dest.CreatedBy)
+            .Ignore(dest => dest.ModifiedBy)
+            .Ignore(dest => dest.CreationTime)
+            .Ignore(dest => dest.ModificationTime)
+            .Ignore(dest => dest.InformatieObject)
+            .Ignore(dest => dest.InformatieObjectId)
+            .Ignore(dest => dest.Owner)
+            .Ignore(dest => dest.RowVersion);
 
-        //CreateMap<BinnenlandsCorrespondentieAdresDto, BinnenlandsCorrespondentieAdres>()
-        //    .ForMember(dest => dest.Huisletter, opt => opt.MapFrom(src => src.Huisletter))
-        //    .ForMember(dest => dest.Huisnummer, opt => opt.MapFrom(src => src.Huisnummer))
-        //    .ForMember(dest => dest.HuisnummerToevoeging, opt => opt.MapFrom(src => src.HuisnummerToevoeging))
-        //    .ForMember(dest => dest.NaamOpenbareRuimte, opt => opt.MapFrom(src => src.NaamOpenbareRuimte))
-        //    .ForMember(dest => dest.Postcode, opt => opt.MapFrom(src => src.Postcode))
-        //    .ForMember(dest => dest.WoonplaatsNaam, opt => opt.MapFrom(src => src.WoonplaatsNaam));
+        config
+            .NewConfig<GetAllGebruiksRechtenQueryParameters, Models.v1.GetAllGebruiksRechtenFilter>()
+            .Map(dest => dest.Startdatum__gt, src => ProfileHelper.DateTimeFromString(src.Startdatum__gt))
+            .Map(dest => dest.Startdatum__gte, src => ProfileHelper.DateTimeFromString(src.Startdatum__gte))
+            .Map(dest => dest.Startdatum__lt, src => ProfileHelper.DateTimeFromString(src.Startdatum__lt))
+            .Map(dest => dest.Startdatum__lte, src => ProfileHelper.DateTimeFromString(src.Startdatum__lte))
+            .Map(dest => dest.Einddatum__gt, src => ProfileHelper.DateTimeFromString(src.Einddatum__gt))
+            .Map(dest => dest.Einddatum__gte, src => ProfileHelper.DateTimeFromString(src.Einddatum__gte))
+            .Map(dest => dest.Einddatum__lt, src => ProfileHelper.DateTimeFromString(src.Einddatum__lt))
+            .Map(dest => dest.Einddatum__lte, src => ProfileHelper.DateTimeFromString(src.Einddatum__lte));
 
-        //CreateMap<BuitenlandsCorrespondentieAdresDto, BuitenlandsCorrespondentieAdres>()
-        //    .ForMember(dest => dest.AdresBuitenland1, opt => opt.MapFrom(src => src.AdresBuitenland1))
-        //    .ForMember(dest => dest.AdresBuitenland2, opt => opt.MapFrom(src => src.AdresBuitenland2))
-        //    .ForMember(dest => dest.AdresBuitenland3, opt => opt.MapFrom(src => src.AdresBuitenland3))
-        //    .ForMember(dest => dest.LandPostadres, opt => opt.MapFrom(src => src.LandPostadres));
-
-        //CreateMap<CorrespondentiePostAdresDto, CorrespondentiePostadres>()
-        //    .ForMember(dest => dest.PostbusOfAntwoordnummer, opt => opt.MapFrom(src => src.PostbusOfAntwoordnummer))
-        //    .ForMember(dest => dest.PostadresPostcode, opt => opt.MapFrom(src => src.PostadresPostcode))
-        //    .ForMember(dest => dest.PostadresType, opt => opt.MapFrom(src => src.PostadresType))
-        //    .ForMember(dest => dest.WoonplaatsNaam, opt => opt.MapFrom(src => src.WoonplaatsNaam));
-
-        //CreateMap<VerzendingRequestDto, Verzending>()
-        //    .ForMember(dest => dest.Betrokkene, opt => opt.MapFrom(src => src.Betrokkene))
-        //    .ForMember(dest => dest.AardRelatie, opt => opt.MapFrom(src => AardRelatieFromString(src.AardRelatie)))
-        //    .ForMember(dest => dest.Toelichting, opt => opt.MapFrom(src => src.Toelichting))
-        //    .ForMember(dest => dest.Ontvangstdatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.OntvangstDatum)))
-        //    .ForMember(dest => dest.Verzenddatum, opt => opt.MapFrom(src => ProfileHelper.DateFromStringOptional(src.Verzenddatum)))
-        //    .ForMember(dest => dest.Contactpersoon, opt => opt.MapFrom(src => src.Contactpersoon))
-        //    .ForMember(dest => dest.BinnenlandsCorrespondentieAdres, opt => opt.MapFrom(src => src.BinnenlandsCorrespondentieAdres))
-        //    .ForMember(dest => dest.BuitenlandsCorrespondentieAdres, opt => opt.MapFrom(src => src.BuitenlandsCorrespondentieAdres))
-        //    .ForMember(dest => dest.CorrespondentiePostadres, opt => opt.MapFrom(src => src.CorrespondentiePostadres))
-        //    .ForMember(dest => dest.Faxnummer, opt => opt.MapFrom(src => src.Faxnummer))
-        //    .ForMember(dest => dest.EmailAdres, opt => opt.MapFrom(src => src.EmailAdres))
-        //    .ForMember(dest => dest.MijnOverheid, opt => opt.MapFrom(src => src.MijnOverheid))
-        //    .ForMember(dest => dest.Telefoonnummer, opt => opt.MapFrom(src => src.Telefoonnummer))
-        //    .ForMember(dest => dest.Id, opt => opt.Ignore())
-        //    .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-        //    .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
-        //    .ForMember(dest => dest.CreationTime, opt => opt.Ignore())
-        //    .ForMember(dest => dest.ModificationTime, opt => opt.Ignore())
-        //    .ForMember(dest => dest.InformatieObject, opt => opt.Ignore())
-        //    .ForMember(dest => dest.InformatieObjectId, opt => opt.Ignore())
-        //    .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+        config.NewConfig<GetAllVerzendingenQueryParameters, Models.v1._5.GetAllVerzendingenFilter>();
     }
-
-    //private static DataModel.AardRelatie AardRelatieFromString(string aardRelatie)
-    //{
-    //    ArgumentNullException.ThrowIfNull(aardRelatie);
-
-    //    if (!Enum.TryParse<DataModel.AardRelatie>(aardRelatie.Trim(), out var result))
-    //        throw new InvalidOperationException($"AardRelatie {aardRelatie} not implemented.");
-
-    //    return result;
-    //}
 
     private static VertrouwelijkheidAanduiding? VertrouwelijkheidAanduidingFromString(string vertrouwelijkheidaanduiding)
     {

@@ -91,6 +91,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
@@ -110,6 +111,14 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(
                 new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
                 title: "Ongeldige expand parameter"
+            );
+        }
+
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.List, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
             );
         }
 
@@ -140,6 +149,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             catch (ExpandExternalServiceException ex)
             {
                 return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
             }
         }
 
@@ -178,15 +191,17 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetEnkelvoudigInformatieObjectQueryParameters>))]
     public async Task<IActionResult> GetAsync(
         Guid id,
-        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
@@ -198,6 +213,13 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(
                 new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
                 title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
             );
         }
 
@@ -231,6 +253,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
             }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
         }
 
         await _mediator.Send(
@@ -258,13 +284,15 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpHead(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.ReadHead)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetEnkelvoudigInformatieObjectQueryParameters>))]
     public Task<IActionResult> HeadAsync(
         Guid id,
-        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
@@ -285,6 +313,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Search, Name = Contracts.v1._5.Operations.EnkelvoudigInformatieObjecten.Search)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
@@ -309,7 +338,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             {
                 return _errorResponseBuilder.BadRequest(
                     new[] { new ValidationError("fields", ErrorCode.Invalid, fieldsError) },
-                    title: "Ongeldige fields parameter"
+                    title: "Ongeldige fields parameter."
                 );
             }
 
@@ -321,6 +350,14 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                     .ToArray();
 
                 return _errorResponseBuilder.BadRequest(fieldErrors, title: "Ongeldige fields parameter");
+            }
+
+            if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Search, impliedExpands))
+            {
+                return _errorResponseBuilder.BadRequest(
+                    new[] { new ValidationError("fields", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                    title: "Invalid input"
+                );
             }
 
             fieldSelection = selection;
@@ -335,6 +372,13 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
                 return _errorResponseBuilder.BadRequest(
                     new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
                     title: "Ongeldige expand parameter"
+                );
+            }
+            if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Search, paths))
+            {
+                return _errorResponseBuilder.BadRequest(
+                    new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                    title: "Invalid input"
                 );
             }
             expandPaths = paths;
@@ -367,6 +411,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             catch (ExpandExternalServiceException ex)
             {
                 return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
             }
         }
 
@@ -601,6 +649,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [Produces("application/octet-stream", "application/json")]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters>))]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,

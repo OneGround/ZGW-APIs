@@ -28,6 +28,7 @@ public class ExpanderFactory : IExpanderFactory
     }
 }
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
 public interface IExpanderFactory
 {
     IObjectExpander<TEntity> Create<TEntity>(string expandName)

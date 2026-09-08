@@ -112,6 +112,44 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.InhoudIsVervallen)
             .Ignore(dest => dest.Trefwoorden)
             .AfterMapping((src, dest) => MapLatestVersieToUpdateRequest(src, dest));
+
+        config
+            .NewConfig<ObjectInformatieObject, ObjectInformatieObjectResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject));
+
+        config
+            .NewConfig<GebruiksRecht, GebruiksRechtResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject))
+            .Map(dest => dest.Startdatum, src => ProfileHelper.StringDateFromDateTime(src.Startdatum, true))
+            .Map(dest => dest.Einddatum, src => ProfileHelper.StringDateFromDateTime(src.Einddatum, true));
+
+        config
+            .NewConfig<Verzending, VerzendingResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.InformatieObject, src => MapsterUrlResolver.ResolveUrl(src.InformatieObject))
+            .Map(dest => dest.Betrokkene, src => src.Betrokkene)
+            .Map(dest => dest.AardRelatie, src => src.AardRelatie.ToString())
+            .Map(dest => dest.Toelichting, src => src.Toelichting)
+            .Map(dest => dest.OntvangstDatum, src => ProfileHelper.StringDateFromDate(src.Ontvangstdatum))
+            .Map(dest => dest.Verzenddatum, src => ProfileHelper.StringDateFromDate(src.Verzenddatum))
+            .Map(dest => dest.Contactpersoon, src => src.Contactpersoon)
+            .Map(dest => dest.BinnenlandsCorrespondentieAdres, src => src.BinnenlandsCorrespondentieAdres)
+            .Map(dest => dest.BuitenlandsCorrespondentieAdres, src => src.BuitenlandsCorrespondentieAdres)
+            .Map(dest => dest.CorrespondentiePostadres, src => src.CorrespondentiePostadres)
+            .Map(dest => dest.Faxnummer, src => src.Faxnummer)
+            .Map(dest => dest.EmailAdres, src => src.EmailAdres)
+            .Map(dest => dest.MijnOverheid, src => src.MijnOverheid)
+            .Map(dest => dest.Telefoonnummer, src => src.Telefoonnummer)
+            .AfterMapping(
+                (_, dest) =>
+                {
+                    dest.BinnenlandsCorrespondentieAdres ??= new Documenten.Contracts.v1._5.BinnenlandsCorrespondentieAdresDto();
+                    dest.BuitenlandsCorrespondentieAdres ??= new Documenten.Contracts.v1._5.BuitenlandsCorrespondentieAdresDto();
+                    dest.CorrespondentiePostadres ??= new Documenten.Contracts.v1._5.CorrespondentiePostAdresDto();
+                }
+            );
     }
 
     // Ported verbatim from v1.7's MapLatestEnkelvoudigInformatieObjectVersieResponse.Process(...) (_uriService -> uriService parameter).

@@ -503,6 +503,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [Produces("application/octet-stream", "application/json")]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<DownloadEnkelvoudigInformatieObjectQueryParameters>))]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,

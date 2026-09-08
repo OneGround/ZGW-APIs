@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,19 +25,14 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Requests;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Configuration;
-using OneGround.ZGW.Documenten.Web.Contracts.v1._5;
-using OneGround.ZGW.Documenten.Web.Expands.v1._5;
-using OneGround.ZGW.Documenten.Web.Handlers.v1._5;
-using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
+namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 
 /*
     https://vng-realisatie.github.io/gemma-zaken/standaard/documenten/
@@ -54,15 +50,16 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 */
 [ApiController]
 [Authorize]
-[ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class VerzendingenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-    private readonly IObjectExpander<InformatieObjectContext> _expander;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly MapsterMapper.IMapper _mapsterMapper;
+    private readonly ExpandValidator<VerzendingResponseDto> _expandValidator;
+    private readonly ExpandEngine<VerzendingResponseDto> _expandEngine;
 
     public VerzendingenController(
         ILogger<VerzendingenController> logger,
@@ -73,14 +70,19 @@ public class VerzendingenController : ZGWControllerBase
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
-        IExpanderFactory expanderFactory
+        ExpandValidator<VerzendingResponseDto> expandValidator,
+        ExpandEngine<VerzendingResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
-        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
-        _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
+        _expandValidator = expandValidator;
+        _expandEngine = expandEngine;
         _mapsterMapper = mapsterMapper;
+        _expandValidator = expandValidator;
+        _expandEngine = expandEngine;
+
+        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
     //
@@ -95,9 +97,10 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.Verzendingen.GetAll, Name = Operations.Verzendingen.List)]
+    /// <response code="502">Bad Gateway</response>
+    [HttpGet(Contracts.v1._5.ApiRoutes.Verzendingen.GetAll, Name = Contracts.v1._5.Operations.Verzendingen.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<VerzendingResponseExpandedDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<VerzendingResponseDto>))]
     [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllVerzendingenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
@@ -108,11 +111,27 @@ public class VerzendingenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.List, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
         var pagination = _mapsterMapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.VerzendingenPageSize));
-        var filter = _mapsterMapper.Map<GetAllVerzendingenFilter>(queryParameters);
+        var filter = _mapsterMapper.Map<Models.v1._5.GetAllVerzendingenFilter>(queryParameters);
 
         var result = await _mediator.Send(
-            new GetAllVerzendingenQuery { GetAllVerzendingenFilter = filter, Pagination = pagination },
+            new Handlers.v1._5.GetAllVerzendingenQuery { GetAllVerzendingenFilter = filter, Pagination = pagination },
             cancellationToken
         );
 
@@ -123,20 +142,24 @@ public class VerzendingenController : ZGWControllerBase
 
         var verzendingenResponse = _mapsterMapper.Map<List<VerzendingResponseDto>>(result.Result.PageResult);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(verzendingenResponse, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
-        var verzendingenWithOptionalExpand = verzendingenResponse
-            .Select(v =>
-                _expander.ResolveAsync(expandLookup, new InformatieObjectContext { InformatieObject = v.InformatieObject, ObjectDto = v }).Result
-            )
-            .ToList();
-
-        var paginationResponse = _paginationHelper.CreatePaginatedResponse(
-            queryParameters,
-            pagination,
-            verzendingenWithOptionalExpand,
-            result.Result.Count
-        );
+        var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, verzendingenResponse, result.Result.Count);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -165,17 +188,35 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.Verzendingen.Get, Name = Operations.Verzendingen.Read)]
+    /// <response code="502">Bad Gateway</response>
+    [HttpGet(Contracts.v1._5.ApiRoutes.Verzendingen.Get, Name = Contracts.v1._5.Operations.Verzendingen.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseExpandedDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetVerzendingQueryParameters>))]
     public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
-        var result = await _mediator.Send(new GetVerzendingQuery { Id = id }, cancellationToken);
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
+        var result = await _mediator.Send(new Handlers.v1._5.GetVerzendingQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -189,12 +230,22 @@ public class VerzendingenController : ZGWControllerBase
 
         var verzending = _mapsterMapper.Map<VerzendingResponseDto>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        var verzendingWithOptionalExpand = await _expander.ResolveAsync(
-            expandLookup,
-            new InformatieObjectContext { InformatieObject = verzending.InformatieObject, ObjectDto = verzending }
-        );
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveAsync(verzending, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -208,7 +259,7 @@ public class VerzendingenController : ZGWControllerBase
             cancellationToken
         );
 
-        return Ok(verzendingWithOptionalExpand);
+        return Ok(verzending);
     }
 
     /// <summary>
@@ -221,10 +272,12 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpHead(ApiRoutes.Verzendingen.Get, Name = Operations.Verzendingen.ReadHead)]
+    /// <response code="502">Bad Gateway</response>
+    [HttpHead(Contracts.v1._5.ApiRoutes.Verzendingen.Get, Name = Contracts.v1._5.Operations.Verzendingen.ReadHead)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetVerzendingQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetVerzendingQueryParameters queryParameters, CancellationToken cancellationToken)
     {
         return GetAsync(id, queryParameters, cancellationToken);
@@ -240,18 +293,21 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="403">Forbidden</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPost(ApiRoutes.Verzendingen.Create, Name = Operations.Verzendingen.Create)]
+    [HttpPost(Contracts.v1._5.ApiRoutes.Verzendingen.Create, Name = Contracts.v1._5.Operations.Verzendingen.Create)]
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(VerzendingResponseDto))]
-    public async Task<IActionResult> AddAsync([FromBody] VerzendingRequestDto verzendingRequest, CancellationToken cancellationToken)
+    public async Task<IActionResult> AddAsync(
+        [FromBody] Documenten.Contracts.v1._5.Requests.VerzendingRequestDto verzendingRequest,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), verzendingRequest);
 
         var verzending = _mapsterMapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
-            new CreateVerzendingCommand
+            new Handlers.v1._5.CreateVerzendingCommand
             {
                 Verzending = verzending,
                 InformatieObjectUrl = verzendingRequest.InformatieObject,
@@ -287,19 +343,23 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="409">Verzending was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPut(ApiRoutes.Verzendingen.Update, Name = Operations.Verzendingen.Update)]
+    [HttpPut(Contracts.v1._5.ApiRoutes.Verzendingen.Update, Name = Contracts.v1._5.Operations.Verzendingen.Update)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(VerzendingResponseDto))]
-    public async Task<IActionResult> UpdateAsync([FromBody] VerzendingRequestDto verzendingRequest, Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateAsync(
+        [FromBody] Documenten.Contracts.v1._5.Requests.VerzendingRequestDto verzendingRequest,
+        Guid id,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(UpdateAsync), verzendingRequest);
 
         var verzending = _mapsterMapper.Map<Verzending>(verzendingRequest);
 
         var result = await _mediator.Send(
-            new UpdateVerzendingCommand
+            new Handlers.v1._5.UpdateVerzendingCommand
             {
                 Id = id,
                 InformatieObjectUrl = verzendingRequest.InformatieObject,
@@ -342,7 +402,7 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="409">Verzending was modified by another user</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPatch(ApiRoutes.Verzendingen.Update, Name = Operations.Verzendingen.PartialUpdate)]
+    [HttpPatch(Contracts.v1._5.ApiRoutes.Verzendingen.Update, Name = Contracts.v1._5.Operations.Verzendingen.PartialUpdate)]
     [Scope(AuthorizationScopes.Documenten.Update)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
@@ -353,7 +413,7 @@ public class VerzendingenController : ZGWControllerBase
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
 
         var result = await _mediator.Send(
-            new UpdateVerzendingCommand
+            new Handlers.v1._5.UpdateVerzendingCommand
             {
                 Id = id,
                 InformatieObjectUrl = GetValueFromPartial<string>(partialVerzendingRequest, "informatieObject"),
@@ -391,14 +451,14 @@ public class VerzendingenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpDelete(ApiRoutes.Verzendingen.Delete, Name = Operations.Verzendingen.Delete)]
+    [HttpDelete(Contracts.v1._5.ApiRoutes.Verzendingen.Delete, Name = Contracts.v1._5.Operations.Verzendingen.Delete)]
     [Scope(AuthorizationScopes.Documenten.Delete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new DeleteVerzendingCommand { Id = id }, cancellationToken);
+        var result = await _mediator.Send(new Handlers.v1._5.DeleteVerzendingCommand { Id = id }, cancellationToken);
 
         if (result.Status == CommandStatus.NotFound)
         {

@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services;
 
 namespace OneGround.ZGW.Common.Web.Controllers;
@@ -113,5 +115,48 @@ public abstract class ZGWControllerBase : ControllerBase
             title: $"Externe service '{serviceName}' niet beschikbaar",
             detail: $"De expand kon niet worden uitgevoerd omdat service '{serviceName}' niet bereikbaar is of een fout heeft teruggegeven voor URL '{serviceUrl}'."
         );
+    }
+
+    protected IActionResult InterneQueryHandlerFout(string resource, QueryStatus statuscode)
+    {
+        switch (statuscode)
+        {
+            case QueryStatus.NotFound:
+                return _errorResponseBuilder.NotFound([
+                    new ValidationError(
+                        name: resource,
+                        code: ErrorCode.NotFound,
+                        reason: "De expand kon niet worden uitgevoerd omdat de interne Query-handler een 'not found' fout heeft teruggegeven."
+                    ),
+                ]);
+
+            case QueryStatus.Forbidden:
+                return _errorResponseBuilder.Forbidden([
+                    new ValidationError(
+                        name: resource,
+                        code: ErrorCode.Forbidden,
+                        reason: "De expand kon niet worden uitgevoerd omdat de interne Query-handler een 'forbidden' fout heeft teruggegeven."
+                    ),
+                ]);
+        }
+        return _errorResponseBuilder.InternalServerError();
+    }
+
+    protected bool IsExpandEnabled(string allowedExpand, IList<string> specifiedExpands)
+    {
+        if (string.IsNullOrEmpty(allowedExpand))
+            return true;
+
+        switch (allowedExpand)
+        {
+            case "all":
+                return true;
+            case "none":
+                return false;
+        }
+
+        var allowedExpandsLookup = allowedExpand.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+
+        return specifiedExpands.All(expand => allowedExpandsLookup.ContainsAnyOf(expand));
     }
 }

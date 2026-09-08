@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
@@ -17,25 +17,24 @@ using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
-using OneGround.ZGW.Documenten.Contracts.v1.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.Web.Authorization;
-using OneGround.ZGW.Documenten.Web.Expands.v1._5;
-using OneGround.ZGW.Documenten.Web.Handlers.v1;
+using OneGround.ZGW.Documenten.Web.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
+namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 
 [ApiController]
 [Authorize]
-[ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class ObjectInformatieObjectenController : ZGWControllerBase
 {
-    private readonly IObjectExpander<InformatieObjectContext> _expander;
+    private readonly ApplicationConfiguration _applicationConfiguration;
+    private readonly ExpandValidator<ObjectInformatieObjectResponseDto> _expandValidator;
+    private readonly ExpandEngine<ObjectInformatieObjectResponseDto> _expandEngine;
     private readonly MapsterMapper.IMapper _mapsterMapper;
 
     public ObjectInformatieObjectenController(
@@ -44,13 +43,18 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         AutoMapper.IMapper mapper,
         MapsterMapper.IMapper mapsterMapper,
         IRequestMerger requestMerger,
+        IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
-        IExpanderFactory expanderFactory
+        ExpandValidator<ObjectInformatieObjectResponseDto> expandValidator,
+        ExpandEngine<ObjectInformatieObjectResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, requestMerger, errorResponseBuilder)
     {
-        _expander = expanderFactory.Create<InformatieObjectContext>("informatieobject");
         _mapsterMapper = mapsterMapper;
+        _expandValidator = expandValidator;
+        _expandEngine = expandEngine;
+
+        _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
     /// <summary>
@@ -61,9 +65,10 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// <response code="403">Forbidden</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1.ApiRoutes.ObjectInformatieObjecten.GetAll, Name = Contracts.v1.Operations.ObjectInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ObjectInformatieObjectResponseExpandedDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ObjectInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllObjectInformatieObjectenQueryParameters>))]
@@ -74,32 +79,56 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}", nameof(GetAllAsync), queryParameters);
 
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
         var filter = _mapsterMapper.Map<Models.v1.GetAllObjectInformatieObjectenFilter>(queryParameters);
 
         var result = await _mediator.Send(
-            new GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
+            new Handlers.v1.GetAllObjectInformatieObjectenQuery { GetAllObjectInformatieObjectenFilter = filter },
             cancellationToken
         );
 
         var objectInformatieObjectenResponse = _mapsterMapper.Map<List<ObjectInformatieObjectResponseDto>>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(objectInformatieObjectenResponse, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
-        var objectInformatieObjectenResponseWithOptionalExpand = objectInformatieObjectenResponse
-            .Select(g =>
-                _expander.ResolveAsync(expandLookup, new InformatieObjectContext { InformatieObject = g.InformatieObject, ObjectDto = g }).Result
-            )
-            .ToList();
-
-        // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
-        //await _mediator.Send(new LogAuditTrailGetObjectListCommand
-        //{
-        //    RetrieveCatagory = RetrieveCatagory.All,
-        //    TotalCount = result.Result.Count,
-        //    AuditTrailOptions = new AuditTrailOptions { Bron = "DRC", Resource = "objectinformatieobject" }
-        //});
-
-        return Ok(objectInformatieObjectenResponseWithOptionalExpand);
+        return Ok(objectInformatieObjectenResponse);
     }
 
     /// <summary>
@@ -111,12 +140,14 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1.ApiRoutes.ObjectInformatieObjecten.Get, Name = Contracts.v1.Operations.ObjectInformatieObjecten.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseExpandedDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetObjectInformatieObjectQueryParameters>))]
     public async Task<IActionResult> GetAsync(
         Guid id,
         [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters,
@@ -125,7 +156,23 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
+        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
+        if (expandError is not null)
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
+        var result = await _mediator.Send(new Handlers.v1.GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -139,12 +186,22 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
 
         var objectInformatieObject = _mapsterMapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        var objectInformatieObjectWithOptionalExpand = await _expander.ResolveAsync(
-            expandLookup,
-            new InformatieObjectContext { InformatieObject = objectInformatieObject.InformatieObject, ObjectDto = objectInformatieObject }
-        );
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveAsync(objectInformatieObject, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
         //await _mediator.Send(new LogAuditTrailGetObjectCommand
@@ -155,7 +212,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         //    AuditTrailOptions = new AuditTrailOptions { Bron = "DRC", Resource = "objectinformatieobject" }
         //});
 
-        return Ok(objectInformatieObjectWithOptionalExpand);
+        return Ok(objectInformatieObject);
     }
 
     /// <summary>
@@ -168,10 +225,12 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpHead(Contracts.v1.ApiRoutes.ObjectInformatieObjecten.Get, Name = Contracts.v1.Operations.ObjectInformatieObjecten.ReadHead)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetObjectInformatieObjectQueryParameters>))]
     public Task<IActionResult> HeadAsync(
         Guid id,
         [FromQuery] GetObjectInformatieObjectQueryParameters queryParameters,

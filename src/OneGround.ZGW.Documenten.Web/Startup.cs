@@ -9,7 +9,6 @@ using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Resilience;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -104,7 +103,7 @@ public class Startup
 
         services.AddExpandables(); // Note: Legacy Expand Engine v1.5
         services.AddDocumentenAPIExpands(); // Note: New Expand Engine v1.7
-        services.AddDocumentenAPIFieldsSelection(); // New field-selection at search endpoint
+        services.AddDocumentenAPIFieldsValidators(); // New field-selection at search endpoint
 
         services.AddSingleton<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
