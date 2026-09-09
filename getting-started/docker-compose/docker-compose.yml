@@ -89,7 +89,7 @@ services:
       - oneground
 
   keycloak-provider-downloader:
-    image: alpine:3.22
+    image: alpine:3.23
     command: >-
       sh -euc '
       JAR=/providers/zgw-token-introspection.jar;
