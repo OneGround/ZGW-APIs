@@ -113,13 +113,13 @@ services:
 
   keycloak-provider-downloader:
     image: alpine:3.22
-    command: sh -c "if [ -f /providers/zgw-token-introspection.jar ]; then echo 'JAR present'; else wget -q -O /providers/zgw-token-introspection.jar https://github.com/OneGround/Keycloak-ZGW-Token-Introspection/releases/download/v1/zgw-token-introspection.jar && chmod 644 /providers/zgw-token-introspection.jar; fi"
+    command: sh -c "if [ -f /providers/zgw-token-introspection.jar ]; then echo 'JAR present'; else wget -q -O /providers/zgw-token-introspection.jar https://github.com/OneGround/Keycloak-ZGW-Token-Introspection/releases/download/v2/zgw-token-introspection.jar && chmod 644 /providers/zgw-token-introspection.jar; fi"
     volumes:
       - kc-providers:/providers
     restart: "no"
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.3.1
+    image: quay.io/keycloak/keycloak:26.7
     restart: unless-stopped
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME}
