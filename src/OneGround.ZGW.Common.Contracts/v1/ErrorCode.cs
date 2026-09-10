@@ -67,6 +67,6 @@ public static class ErrorCode
     public const string Conflict = "conflict";
     public const string Other = "other";
     public const string ExternalServiceError = "external-service-error";
-    public const string IntenalQueryError = "interne-query-error";
+    public const string InternalQueryError = "internal-query-error";
     public const string Forbidden = "forbidden";
 }

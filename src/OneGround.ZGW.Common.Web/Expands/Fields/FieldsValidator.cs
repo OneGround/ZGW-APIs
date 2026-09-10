@@ -56,7 +56,7 @@ public class FieldsValidator<TEntity>
 
             // Een geneste sub-entiteit is alleen geldig als ze ook expandbaar is (er een resolver voor bestaat)
             // én het schema het onderliggende DTO-type kent om de diepere velden tegen te valideren.
-            Type? childType = null;
+            Type childType = null;
             foreach (var t in types)
             {
                 if (_schema.TryGetEntityType(t, name, out var ct))

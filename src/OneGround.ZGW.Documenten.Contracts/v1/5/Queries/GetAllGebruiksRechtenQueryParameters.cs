@@ -38,7 +38,7 @@ public class GetAllGebruiksRechtenQueryParameters : QueryParameters, IExpandPara
     /// <summary>
     /// Einddatum van de periode waarin de gebruiksrechtvoorwaarden van toepassing zijn.
     /// </summary>
-    [FromQuery(Name = "einddatumdatum__lt")]
+    [FromQuery(Name = "einddatum__lt")]
     public string Einddatum__lt { get; set; }
 
     /// <summary>

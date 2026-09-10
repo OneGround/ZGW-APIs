@@ -136,7 +136,7 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected bool IsExpandEnabled(string allowedExpand, IList<string> specifiedExpands)
     {
-        if (string.IsNullOrEmpty(allowedExpand))
+        if (specifiedExpands.Count == 0 || string.IsNullOrEmpty(allowedExpand))
             return true;
 
         switch (allowedExpand)

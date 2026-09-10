@@ -72,8 +72,8 @@ public static class FieldProjector
                     && entityValue.GetType() != typeof(object)
                 )
                 {
-                    if (entityValue is IEnumerable<object> enumerable)
-                        expandDict[entityName] = enumerable.Select(item => ProjectObject(item, subSelection)).ToList();
+                    if (entityValue is IEnumerable enumerable && entityValue is not string)
+                        expandDict[entityName] = enumerable.Cast<object>().Select(item => ProjectObject(item, subSelection)).ToList();
                     else
                         expandDict[entityName] = ProjectObject(entityValue, subSelection);
                 }

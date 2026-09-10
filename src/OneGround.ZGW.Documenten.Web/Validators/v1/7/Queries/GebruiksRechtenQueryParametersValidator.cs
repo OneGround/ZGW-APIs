@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
 
@@ -6,7 +5,7 @@ namespace OneGround.ZGW.Documenten.Web.Validators.v1._7.Queries;
 
 public class GebruiksRechtenQueryParametersValidator : ZGWValidator<GetAllGebruiksRechtenQueryParameters>
 {
-    public GebruiksRechtenQueryParametersValidator(IConfiguration configuration)
+    public GebruiksRechtenQueryParametersValidator()
     {
         CascadeRuleFor(p => p.InformatieObject).IsUri();
         CascadeRuleFor(p => p.Startdatum__lt).IsDateTime();

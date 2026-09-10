@@ -74,8 +74,8 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var expand = Assert.IsType<Dictionary<string, object?>>(result["_expand"]);
-        var zaaktype = Assert.IsType<Dictionary<string, object?>>(expand["zaaktype"]);
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        var zaaktype = Assert.IsType<Dictionary<string, object>>(expand["zaaktype"]);
         Assert.Equal("Vergunning", zaaktype["naam"]);
         Assert.False(zaaktype.ContainsKey("code"));
     }
@@ -98,8 +98,8 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var expand = Assert.IsType<Dictionary<string, object?>>(result["_expand"]);
-        var deelzaken = Assert.IsType<List<Dictionary<string, object?>>>(expand["deelzaken"]);
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        var deelzaken = Assert.IsType<List<Dictionary<string, object>>>(expand["deelzaken"]);
         Assert.Collection(
             deelzaken,
             d =>
@@ -123,7 +123,7 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var expand = Assert.IsType<Dictionary<string, object?>>(result["_expand"]);
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
         Assert.True(expand.ContainsKey("zaaktype"));
         // Niet opgelost → kale object-placeholder, geen geprojecteerde dictionary.
         Assert.NotNull(expand["zaaktype"]);
@@ -139,7 +139,7 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var expand = Assert.IsType<Dictionary<string, object?>>(result["_expand"]);
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
         Assert.Equal(typeof(object), expand["zaaktype"]!.GetType());
     }
 
@@ -162,7 +162,7 @@ public class FieldProjectorTests
         var result = FieldProjector.Project(entity, selection);
 
         Assert.Equal("u1", result["uuid"]);
-        var verlenging = Assert.IsType<Dictionary<string, object?>>(result["verlenging"]);
+        var verlenging = Assert.IsType<Dictionary<string, object>>(result["verlenging"]);
         Assert.Equal("1", verlenging["a"]);
         Assert.False(verlenging.ContainsKey("b"));
         // Inline object → geen _expand.
@@ -180,7 +180,7 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var verlenging = Assert.IsType<Dictionary<string, object?>>(result["verlenging"]);
+        var verlenging = Assert.IsType<Dictionary<string, object>>(result["verlenging"]);
         Assert.Equal("1", verlenging["a"]);
         Assert.Equal("2", verlenging["b"]);
     }
@@ -212,11 +212,11 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var kenmerken = Assert.IsType<List<object?>>(result["kenmerken"]);
+        var kenmerken = Assert.IsType<List<object>>(result["kenmerken"]);
         Assert.Collection(
             kenmerken,
-            d => Assert.Equal("1", Assert.IsType<Dictionary<string, object?>>(d)["a"]),
-            d => Assert.Equal("2", Assert.IsType<Dictionary<string, object?>>(d)["a"])
+            d => Assert.Equal("1", Assert.IsType<Dictionary<string, object>>(d)["a"]),
+            d => Assert.Equal("2", Assert.IsType<Dictionary<string, object>>(d)["a"])
         );
     }
 
@@ -229,7 +229,7 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var poly = Assert.IsType<Dictionary<string, object?>>(result["poly"]);
+        var poly = Assert.IsType<Dictionary<string, object>>(result["poly"]);
         Assert.Equal("waarde", poly["een"]);
         Assert.False(poly.ContainsKey("twee")); // hoort bij VariantTwo, niet aanwezig
     }
@@ -245,8 +245,8 @@ public class FieldProjectorTests
 
         var result = FieldProjector.Project(entity, selection);
 
-        var verlenging = Assert.IsType<Dictionary<string, object?>>(result["verlenging"]);
-        var diep = Assert.IsType<Dictionary<string, object?>>(verlenging["diep"]);
+        var verlenging = Assert.IsType<Dictionary<string, object>>(result["verlenging"]);
+        var diep = Assert.IsType<Dictionary<string, object>>(verlenging["diep"]);
         Assert.Equal("diep!", diep["x"]);
     }
 

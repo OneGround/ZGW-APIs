@@ -311,7 +311,7 @@ public class ErrorResponseBuilder : IErrorResponseBuilder
         return new JsonResult(
             new ErrorResponse
             {
-                Type = $"{BaseUrl}{ErrorCategory.ValidationError}",
+                Type = $"{BaseUrl}{ErrorCategory.InternalServerError}",
                 Code = code,
                 Title = title,
                 Status = statusCode,
