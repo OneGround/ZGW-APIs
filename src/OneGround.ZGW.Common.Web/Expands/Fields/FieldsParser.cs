@@ -17,7 +17,7 @@ public static class FieldsParser
         if (fieldsToken.Type != JTokenType.Array)
             return (null, [], "Het 'fields' veld moet een JSON array zijn.");
 
-        var (selection, error) = ParseArray((JArray)fieldsToken, prefix: "");
+        var (selection, error) = ParseArray((JArray)fieldsToken, prefix: "", depth: 0);
         if (error is not null)
             return (null, [], error);
 
@@ -27,8 +27,14 @@ public static class FieldsParser
         return (selection, expandPaths, null);
     }
 
-    private static (FieldSelection Result, string Error) ParseArray(JArray array, string prefix)
+    // Begrenst ook de nesting-diepte van geneste `{ "naam": [...] }`-objecten, om dezelfde reden als
+    // MaxPathDepth hierboven: zonder limiet kan een kwaadwillend diep-geneste 'fields' JSON-array
+    // onbeperkte recursie (en een StackOverflow) veroorzaken, los van de lengte van een los veldpad.
+    private static (FieldSelection Result, string Error) ParseArray(JArray array, string prefix, int depth)
     {
+        if (depth > MaxPathDepth)
+            return (null, NestingDepthError(prefix));
+
         var selection = new FieldSelection();
 
         foreach (var element in array)
@@ -49,7 +55,7 @@ public static class FieldsParser
                         return (null, $"De waarde van '{prop.Name}' in 'fields' moet een JSON array zijn.");
 
                     var childPrefix = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
-                    var (child, error) = ParseArray((JArray)prop.Value, childPrefix);
+                    var (child, error) = ParseArray((JArray)prop.Value, childPrefix, depth + 1);
                     if (error is not null)
                         return (null, error);
 
@@ -110,6 +116,12 @@ public static class FieldsParser
     {
         var location = string.IsNullOrEmpty(prefix) ? "'fields'" : $"'{prefix}'";
         return $"Ongeldig veldpad in {location}: '{path}'.";
+    }
+
+    private static string NestingDepthError(string prefix)
+    {
+        var location = string.IsNullOrEmpty(prefix) ? "'fields'" : $"'{prefix}'";
+        return $"Te diep geneste 'fields' selectie rond {location} (maximaal {MaxPathDepth} niveaus).";
     }
 
     private static void Merge(FieldSelection target, FieldSelection source)

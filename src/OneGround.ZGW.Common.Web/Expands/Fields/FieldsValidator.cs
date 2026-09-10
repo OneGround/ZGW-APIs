@@ -15,6 +15,10 @@ namespace OneGround.ZGW.Common.Web.Expands.Fields;
 /// </summary>
 public class FieldsValidator<TEntity>
 {
+    // Begrenst de recursiediepte van Walk zodat een pathologisch geneste FieldSelection (van welke
+    // bron dan ook) geen onbeperkte recursie (en uiteindelijk een StackOverflowException) kan veroorzaken.
+    private const int MaxDepth = 32;
+
     private readonly FieldsSchema _schema;
     private readonly HashSet<string> _expandablePaths;
 
@@ -35,15 +39,21 @@ public class FieldsValidator<TEntity>
             return [];
 
         var invalid = new List<string>();
-        Walk(selection, [typeof(TEntity)], prefix: "", invalid);
+        Walk(selection, [typeof(TEntity)], prefix: "", invalid, depth: 0);
         invalid.Sort(StringComparer.Ordinal);
         return invalid;
     }
 
     // Werkt op een lijst van types zodat een polymorf inline object (bv. betrokkeneIdentificatie)
     // tegen de unie van zijn varianten gevalideerd kan worden. Op concrete niveaus is dit één type.
-    private void Walk(FieldSelection selection, IReadOnlyList<Type> types, string prefix, List<string> invalid)
+    private void Walk(FieldSelection selection, IReadOnlyList<Type> types, string prefix, List<string> invalid, int depth)
     {
+        if (depth > MaxDepth)
+        {
+            invalid.Add(prefix);
+            return;
+        }
+
         foreach (var scalar in selection.ScalarFields)
         {
             if (!types.Any(t => _schema.ScalarsOf(t).Contains(scalar)))
@@ -72,7 +82,7 @@ public class FieldsValidator<TEntity>
                 continue;
             }
 
-            Walk(child, [childType], path, invalid);
+            Walk(child, [childType], path, invalid, depth + 1);
         }
 
         foreach (var (name, child) in selection.NestedObjects)
@@ -93,7 +103,7 @@ public class FieldsValidator<TEntity>
                 continue;
             }
 
-            Walk(child, childTypes, path, invalid);
+            Walk(child, childTypes, path, invalid, depth + 1);
         }
     }
 

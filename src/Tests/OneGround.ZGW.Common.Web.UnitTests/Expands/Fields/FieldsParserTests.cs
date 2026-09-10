@@ -204,6 +204,21 @@ public class FieldsParserTests
         Assert.StartsWith("Ongeldig veldpad", error);
     }
 
+    [Fact]
+    public void ParseAndValidate_ObjectNestingExceedingMaxDepth_ReturnsError()
+    {
+        // Te diep geneste { "naam": [...] } objecten worden geweigerd (bescherming tegen onbegrensde
+        // recursie in ParseArray zelf, los van de lengte van een los gepunt veldpad).
+        var json = "[\"x\"]";
+        for (var i = 0; i < 25; i++)
+            json = $"[{{\"a\":{json}}}]";
+
+        var (selection, _, error) = FieldsParser.ParseAndValidate(Json(json));
+
+        Assert.Null(selection);
+        Assert.StartsWith("Te diep geneste", error);
+    }
+
     // ---- Foutgevallen ----
 
     [Fact]
