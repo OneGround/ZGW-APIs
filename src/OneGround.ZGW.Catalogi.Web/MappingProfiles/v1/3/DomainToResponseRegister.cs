@@ -308,7 +308,8 @@ public class DomainToResponseRegister : IRegister
                         : MapsterUrlResolver.ResolveUrls(
                             src.InformatieObjectTypeBesluitTypen.Where(z => z.BesluitType != null).Select(b => b.BesluitType)
                         )
-            );
+            )
+            .Ignore(dest => dest.Expand);
 
         // Note: for PATCH operation
         config

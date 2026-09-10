@@ -55,7 +55,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._5;
 [ApiController]
 [Authorize]
 [ZgwApiVersion(Api.LatestVersion_1_5)]
-[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class VerzendingenController : ZGWControllerBase

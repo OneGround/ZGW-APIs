@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace OneGround.ZGW.Common.Web.Expands;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection mechanism instead.")]
 public static class DtoExpander
 {
     // Name properties the way MVC would: expand hands the client this JObject verbatim, so the

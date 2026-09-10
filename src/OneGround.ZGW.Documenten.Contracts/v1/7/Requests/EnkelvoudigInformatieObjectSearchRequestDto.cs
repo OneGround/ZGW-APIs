@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
@@ -25,4 +26,7 @@ public class EnkelvoudigInformatieObjectSearchRequestDto : IDocumentenCommonSear
 
     [JsonProperty("expand")]
     public string Expand { get; set; }
+
+    [JsonProperty("fields")]
+    public JToken Fields { get; set; }
 }

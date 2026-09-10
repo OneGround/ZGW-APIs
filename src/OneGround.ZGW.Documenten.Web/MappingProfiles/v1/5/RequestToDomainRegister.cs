@@ -16,6 +16,14 @@ public class RequestToDomainRegister : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config
+            .NewConfig<GetEnkelvoudigInformatieObjectQueryParameters, Models.v1.GetEnkelvoudigInformatieObjectFilter>()
+            .Map(dest => dest.RegistratieOp, src => ProfileHelper.DateTimeFromString(src.RegistratieOp));
+
+        config
+            .NewConfig<DownloadEnkelvoudigInformatieObjectQueryParameters, Models.v1.GetEnkelvoudigInformatieObjectFilter>()
+            .Map(dest => dest.RegistratieOp, src => ProfileHelper.DateTimeFromString(src.RegistratieOp));
+
+        config
             .NewConfig<GetAllEnkelvoudigInformatieObjectenQueryParameters, GetAllEnkelvoudigInformatieObjectenFilter>()
             .Map(dest => dest.Trefwoorden_In, src => ProfileHelper.ArrayFromString(src.Trefwoorden))
             // Not present on these query parameters -- only the search-request DTO config below has Uuid_In.

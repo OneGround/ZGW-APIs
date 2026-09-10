@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,35 +11,32 @@ namespace OneGround.ZGW.Common.Caching;
 /// <typeparam name="T">Generic object to be cached</typeparam>
 public interface IGenericCache<T>
 {
-    T GetOrCacheAndGet(string key, Func<T> factory);
     Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory);
 }
 
 /// <summary>
-/// Normally this cache will be use within scoped context without any expiration
+/// Normally this cache will be use within scoped context without any expiration.
+/// Thread-safe (single-flight per key: concurrent callers for the same key share one factory
+/// invocation instead of racing), so it can safely back resolvers invoked concurrently for
+/// different entities within the same scope.
 /// </summary>
 /// <typeparam name="T">Generic object to be cached</typeparam>
 public class GenericCache<T> : IGenericCache<T>
 {
-    private readonly Dictionary<string, T> _cache = [];
-
-    public T GetOrCacheAndGet(string key, Func<T> factory)
-    {
-        if (!_cache.TryGetValue(key, out var value))
-        {
-            value = factory();
-            _cache.Add(key, value);
-        }
-        return value;
-    }
+    private readonly ConcurrentDictionary<string, Lazy<Task<T>>> _cache = new();
 
     public async Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory)
     {
-        if (!_cache.TryGetValue(key, out var value))
+        var lazy = _cache.GetOrAdd(key, _ => new Lazy<Task<T>>(factory));
+        try
         {
-            value = await factory();
-            _cache.Add(key, value);
+            return await lazy.Value;
         }
-        return value;
+        catch
+        {
+            // Note: Don't cache a failed attempt, so the next call retries instead of failing forever.
+            _cache.TryRemove(KeyValuePair.Create(key, lazy));
+            throw;
+        }
     }
 }

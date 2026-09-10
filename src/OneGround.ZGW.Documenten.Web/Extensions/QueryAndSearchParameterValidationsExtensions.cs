@@ -9,16 +9,24 @@ public static class QueryAndSearchParameterValidationsExtensions
     {
         // Register the query parameter validation filters globally for v1.0 .. v1.x
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1.Queries.GetEnkelvoudigInformatieObjectQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetEnkelvoudigInformatieObjectQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1.Queries.GetAllEnkelvoudigInformatieObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.GetAllEnkelvoudigInformatieObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetAllEnkelvoudigInformatieObjectenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1.Queries.GetAllGebruiksRechtenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.GetAllGebruiksRechtenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetAllGebruiksRechtenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetGebruiksRechtQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1.Queries.GetAllObjectInformatieObjectenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetAllObjectInformatieObjectenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetObjectInformatieObjectQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.GetAllVerzendingenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetAllVerzendingenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Documenten.Contracts.v1._7.Queries.GetVerzendingQueryParameters>>();
 
         // Register the body parameter validation filters globally for v1.0 .. v1.x (HTTP POST /_zoek)
         services.AddScoped<ValidateBodyParametersFilter<Documenten.Contracts.v1._5.Requests.EnkelvoudigInformatieObjectSearchRequestDto>>();

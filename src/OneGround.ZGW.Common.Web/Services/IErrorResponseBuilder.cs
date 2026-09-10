@@ -97,7 +97,25 @@ public interface IErrorResponseBuilder
     /// <returns></returns>
     JsonResult InternalServerError(string message = "");
 
+    /// <summary>
+    /// Returns 409 Conflict response.
+    /// </summary>
+    /// <returns></returns>
     JsonResult Conflict();
 
+    /// <summary>
+    /// Returns 409 Conflict response.
+    /// </summary>
+    /// <param name="validationErrors"></param>
+    /// <returns></returns>
     JsonResult Conflict(IEnumerable<ValidationError> validationErrors);
+
+    /// <summary>
+    /// Returns 502 Bad gateway response.
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="title"></param>
+    /// <param name="detail"></param>
+    /// <returns></returns>
+    JsonResult BadGateway(string code, string title, string detail);
 }

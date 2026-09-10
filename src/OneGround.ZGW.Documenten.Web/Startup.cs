@@ -36,6 +36,7 @@ using OneGround.ZGW.Documenten.Web.BusinessRules.v1._5;
 using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Controllers;
 using OneGround.ZGW.Documenten.Web.Expands.v1._5;
+using OneGround.ZGW.Documenten.Web.Expands.v1._7;
 using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
@@ -70,7 +71,7 @@ public class Startup
         services.AddZGWApi(
             "Documenten",
             Configuration,
-            Api.LatestVersion_1_5, // TODO: If implemented all then we should set to 1.7
+            Api.LatestVersion_1_7,
             c =>
             {
                 c.MvcOptions = (o) =>
@@ -99,7 +100,11 @@ public class Startup
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
 
-        services.AddExpandables();
+        services.AddExpandables(); // Note: Legacy Expand Engine v1.5
+        services.AddDocumentenAPIExpands(); // Note: New Expand Engine v1.7
+        services.AddDocumentenAPIFieldsValidators(); // New field-selection at search endpoint
+
+        services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
         services.AddMassTransit(x =>
         {

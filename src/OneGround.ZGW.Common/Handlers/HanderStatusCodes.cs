@@ -9,4 +9,5 @@ public static class HanderStatusCodes
     public const int Failed = 4;
     public const int Forbidden = 5;
     public const int Conflict = 6;
+    public const int ExternalServiceFailure = 7;
 }

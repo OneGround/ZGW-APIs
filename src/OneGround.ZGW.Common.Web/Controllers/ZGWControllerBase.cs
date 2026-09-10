@@ -8,7 +8,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Extensions;
+using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services;
 
 namespace OneGround.ZGW.Common.Web.Controllers;
@@ -95,5 +98,91 @@ public abstract class ZGWControllerBase : ControllerBase
             return default;
 
         return value.ToObject<T>();
+    }
+
+    protected IActionResult ExterneServiceFout(string serviceName, string serviceUrl)
+    {
+        return _errorResponseBuilder.BadGateway(
+            code: ErrorCode.ExternalServiceError,
+            title: $"Externe service '{serviceName}' niet beschikbaar",
+            detail: $"De expand kon niet worden uitgevoerd omdat service '{serviceName}' niet bereikbaar is of een fout heeft teruggegeven voor URL '{serviceUrl}'."
+        );
+    }
+
+    protected IActionResult InterneQueryHandlerFout(string resource, QueryStatus statuscode)
+    {
+        switch (statuscode)
+        {
+            case QueryStatus.NotFound:
+                return _errorResponseBuilder.NotFound([
+                    new ValidationError(
+                        name: resource,
+                        code: ErrorCode.NotFound,
+                        reason: "De expand kon niet worden uitgevoerd omdat de interne Query-handler een 'not found' fout heeft teruggegeven."
+                    ),
+                ]);
+
+            case QueryStatus.Forbidden:
+                return _errorResponseBuilder.Forbidden([
+                    new ValidationError(
+                        name: resource,
+                        code: ErrorCode.Forbidden,
+                        reason: "De expand kon niet worden uitgevoerd omdat de interne Query-handler een 'forbidden' fout heeft teruggegeven."
+                    ),
+                ]);
+        }
+        return _errorResponseBuilder.InternalServerError();
+    }
+
+    protected bool IsExpandEnabled(string allowedExpand, IList<string> specifiedExpands)
+    {
+        if (specifiedExpands.Count == 0 || string.IsNullOrEmpty(allowedExpand))
+            return true;
+
+        switch (allowedExpand)
+        {
+            case "all":
+                return true;
+            case "none":
+                return false;
+        }
+
+        var allowedExpandsLookup = allowedExpand.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+
+        return specifiedExpands.All(expand => allowedExpandsLookup.ContainsAnyOf(expand));
+    }
+
+    /// <summary>
+    /// Parses and validates the "expand" query parameter, and checks whether the resulting paths are allowed on this operation.
+    /// Returns the error result to return to the caller, or null when validation succeeded (in which case <paramref name="expandPaths"/> is populated).
+    /// </summary>
+    protected IActionResult ValidateExpand<TEntity>(
+        ExpandValidator<TEntity> expandValidator,
+        string expand,
+        string allowedExpand,
+        out List<string> expandPaths
+    )
+    {
+        var (paths, expandError) = expandValidator.ParseAndValidate(expand);
+        if (expandError is not null)
+        {
+            expandPaths = [];
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+
+        expandPaths = paths;
+
+        if (!IsExpandEnabled(allowedExpand, paths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
+        return null;
     }
 }

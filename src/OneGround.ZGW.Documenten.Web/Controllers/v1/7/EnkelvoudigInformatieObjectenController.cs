@@ -18,6 +18,7 @@ using OneGround.ZGW.Common.MimeTypes;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Expands;
+using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
@@ -49,8 +50,9 @@ namespace OneGround.ZGW.Documenten.Web.Controllers.v1._7;
 public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
-
-    //private readonly IObjectExpander<EnkelvoudigInformatieObjectGetResponseDto> _expander; // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+    private readonly ExpandValidator<EnkelvoudigInformatieObjectGetResponseDto> _expandValidator;
+    private readonly FieldsValidator<EnkelvoudigInformatieObjectGetResponseDto> _fieldsValidator;
+    private readonly ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> _expandEngine;
     private readonly ApplicationConfiguration _applicationConfiguration;
 
     public EnkelvoudigInformatieObjectenController(
@@ -59,15 +61,18 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
         MapsterMapper.IMapper mapper,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
-        IErrorResponseBuilder errorResponseBuilder /*
-        IExpanderFactory expanderFactory*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
+        IErrorResponseBuilder errorResponseBuilder,
+        ExpandValidator<EnkelvoudigInformatieObjectGetResponseDto> expandValidator,
+        FieldsValidator<EnkelvoudigInformatieObjectGetResponseDto> fieldsValidator,
+        ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _paginationHelper = paginationHelper;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
-        // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
-        //_expander = expanderFactory.Create<EnkelvoudigInformatieObjectGetResponseDto>("enkelvoudiginformatieobject");
+        _expandValidator = expandValidator;
+        _fieldsValidator = fieldsValidator;
+        _expandEngine = expandEngine;
     }
 
     //
@@ -82,9 +87,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.GetAll, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.List)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseExpandedDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
     [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllEnkelvoudigInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
@@ -94,6 +100,17 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
+
+        var expandValidationResult = ValidateExpand(
+            _expandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.List,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
@@ -110,16 +127,27 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        var enkelvoudigInformatieObjectenWithOptionalExpand = enkelvoudigInformatieObjectenResponse
-        //.Select(e => _expander.ResolveAsync(expandLookup, e).Result) // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
-        .ToList();
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(enkelvoudigInformatieObjectenResponse, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,
             pagination,
-            enkelvoudigInformatieObjectenWithOptionalExpand,
+            enkelvoudigInformatieObjectenResponse,
             result.Result.Count
         );
 
@@ -151,19 +179,32 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.Read)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseExpandedDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EnkelvoudigInformatieObjectGetResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetEnkelvoudigInformatieObjectQueryParameters>))]
     public async Task<IActionResult> GetAsync(
         Guid id,
-        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
+
+        var expandValidationResult = ValidateExpand(
+            _expandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.Get,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
 
         var filter = _mapper.Map<Models.v1.GetEnkelvoudigInformatieObjectFilter>(queryParameters);
 
@@ -184,10 +225,22 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObject = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);
 
-        var expandLookup = ExpandLookup(queryParameters.Expand);
-
-        // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
-        //var enkelvoudigInformatieObjectWithOptionalExpand = await _expander.ResolveAsync(expandLookup, enkelvoudigInformatieObject);
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveAsync(enkelvoudigInformatieObject, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         await _mediator.Send(
             new LogAuditTrailGetObjectCommand
@@ -201,9 +254,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             cancellationToken
         );
 
-        return Ok( /*enkelvoudigInformatieObjectWithOptionalExpand*/ // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
-            enkelvoudigInformatieObject
-        );
+        return Ok(enkelvoudigInformatieObject);
     }
 
     /// <summary>
@@ -216,13 +267,15 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpHead(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Get, Name = Contracts.v1.Operations.EnkelvoudigInformatieObjecten.ReadHead)]
     [Scope(AuthorizationScopes.Documenten.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetEnkelvoudigInformatieObjectQueryParameters>))]
     public Task<IActionResult> HeadAsync(
         Guid id,
-        [FromQuery] Documenten.Contracts.v1._5.Queries.GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
+        [FromQuery] GetEnkelvoudigInformatieObjectQueryParameters queryParameters,
         CancellationToken cancellationToken
     )
     {
@@ -243,9 +296,10 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpPost(Contracts.v1._5.ApiRoutes.EnkelvoudigInformatieObjecten.Search, Name = Contracts.v1._5.Operations.EnkelvoudigInformatieObjecten.Search)]
     [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseExpandedDto>))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<EnkelvoudigInformatieObjectGetResponseDto>))]
     [Expand]
     [ServiceFilter(typeof(ValidateBodyParametersFilter<EnkelvoudigInformatieObjectSearchRequestDto>))]
     public async Task<IActionResult> SearchAsync(
@@ -255,6 +309,58 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Page}", nameof(SearchAsync), enkelvoudiginformatieobjectSearchRequest, page);
+
+        FieldSelection? fieldSelection = null;
+        List<string> expandPaths;
+
+        if (enkelvoudiginformatieobjectSearchRequest.Fields is not null)
+        {
+            // Use the new expand- and field-selection (> v1.5)
+            var (selection, impliedExpands, fieldsError) = FieldsParser.ParseAndValidate(enkelvoudiginformatieobjectSearchRequest.Fields);
+            if (fieldsError is not null)
+            {
+                return _errorResponseBuilder.BadRequest(
+                    new[] { new ValidationError("fields", ErrorCode.Invalid, fieldsError) },
+                    title: "Ongeldige fields parameter."
+                );
+            }
+
+            var invalidFields = _fieldsValidator.Validate(selection);
+            if (invalidFields.Count > 0)
+            {
+                var fieldErrors = invalidFields
+                    .Select(path => new ValidationError("fields", ErrorCode.Invalid, $"Ongeldige veldnaam in 'fields': {path}."))
+                    .ToArray();
+
+                return _errorResponseBuilder.BadRequest(fieldErrors, title: "Ongeldige fields parameter");
+            }
+
+            if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Search, impliedExpands))
+            {
+                return _errorResponseBuilder.BadRequest(
+                    new[] { new ValidationError("fields", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                    title: "Invalid input"
+                );
+            }
+
+            fieldSelection = selection;
+            expandPaths = impliedExpands;
+        }
+        else
+        {
+            // Use the old legacy expand (= v1.5)
+            var expandValidationResult = ValidateExpand(
+                _expandValidator,
+                enkelvoudiginformatieobjectSearchRequest.Expand,
+                _applicationConfiguration.ExpandSettings.Search,
+                out var paths
+            );
+            if (expandValidationResult is not null)
+            {
+                return expandValidationResult;
+            }
+            expandPaths = paths;
+        }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.EnkelvoudigInformatieObjectenPageSize));
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(enkelvoudiginformatieobjectSearchRequest);
@@ -271,17 +377,34 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
 
         var enkelvoudigInformatieObjectenResponse = _mapper.Map<List<EnkelvoudigInformatieObjectGetResponseDto>>(result.Result.PageResult);
 
-        var expandLookup = ExpandLookup(enkelvoudiginformatieobjectSearchRequest.Expand);
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(enkelvoudigInformatieObjectenResponse, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
-        var enkelvoudigInformatieObjectenWithOptionalExpand = enkelvoudigInformatieObjectenResponse
-        // .Select(e => _expander.ResolveAsync(expandLookup, e).Result) // TODO: Refactor in FUND-2655 DRC 1.7 (expand/field selection)
-        .ToList();
+        List<object> responseResults;
+        if (enkelvoudiginformatieobjectSearchRequest.Fields is not null)
+        {
+            responseResults = FieldProjector.ProjectList(enkelvoudigInformatieObjectenResponse, fieldSelection).Cast<object>().ToList();
+        }
+        else
+        {
+            responseResults = enkelvoudigInformatieObjectenResponse.Cast<object>().ToList();
+        }
 
-        var paginationResponse = _paginationHelper.CreatePaginatedResponse(
-            pagination,
-            enkelvoudigInformatieObjectenWithOptionalExpand,
-            result.Result.Count
-        );
+        var paginationResponse = _paginationHelper.CreatePaginatedResponse(pagination, responseResults, result.Result.Count);
 
         await _mediator.Send(
             new LogAuditTrailGetObjectListCommand
@@ -502,6 +625,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [Produces("application/octet-stream", "application/json")]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters>))]
     public async Task<IActionResult> DownloadAsync(
         Guid id,
         [FromQuery] Documenten.Contracts.v1._5.Queries.DownloadEnkelvoudigInformatieObjectQueryParameters queryParameters,
