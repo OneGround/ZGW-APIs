@@ -7,7 +7,7 @@ namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 public static partial class ExpandsServiceCollectionExtensions
 {
     /// <summary>
-    /// Bouwt het schema waartegen de <c>fields</c> selectie van POST /zaken/_zoek wordt gevalideerd.
+    /// Bouwt het schema waartegen de <c>fields</c> selectie van POST /documenten/_zoek wordt gevalideerd.
     /// De geneste sub-entiteiten volgen de DTO-graaf zoals het expand-mechanisme die ondersteunt.
     /// De toegestane scalaire velden per niveau worden automatisch afgeleid uit de <c>JsonPropertyName</c>
     /// attributen van de betreffende response-DTO's.

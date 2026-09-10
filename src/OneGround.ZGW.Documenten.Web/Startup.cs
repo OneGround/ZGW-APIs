@@ -71,7 +71,7 @@ public class Startup
         services.AddZGWApi(
             "Documenten",
             Configuration,
-            Api.LatestVersion_1_5, // TODO: If implemented all then we should set to 1.7
+            Api.LatestVersion_1_7,
             c =>
             {
                 c.MvcOptions = (o) =>
