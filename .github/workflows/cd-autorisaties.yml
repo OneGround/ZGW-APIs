@@ -37,7 +37,7 @@ jobs:
     with:
       git_tag_name: 'autorisaties'
       major_version: 1
-      minor_version: 0
+      minor_version: 1
       patch_version_starts_from: 100
       services: |
         [
