@@ -11,7 +11,6 @@ namespace OneGround.ZGW.Common.Caching;
 /// <typeparam name="T">Generic object to be cached</typeparam>
 public interface IGenericCache<T>
 {
-    T GetOrCacheAndGet(string key, Func<T> factory);
     Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory);
 }
 
@@ -24,27 +23,11 @@ public interface IGenericCache<T>
 /// <typeparam name="T">Generic object to be cached</typeparam>
 public class GenericCache<T> : IGenericCache<T>
 {
-    private readonly ConcurrentDictionary<string, Lazy<T>> _cache = new();
-    private readonly ConcurrentDictionary<string, Lazy<Task<T>>> _asyncCache = new();
-
-    public T GetOrCacheAndGet(string key, Func<T> factory)
-    {
-        var lazy = _cache.GetOrAdd(key, _ => new Lazy<T>(factory));
-        try
-        {
-            return lazy.Value;
-        }
-        catch
-        {
-            // Note: Don't cache a failed attempt, so the next call retries instead of failing forever.
-            _cache.TryRemove(KeyValuePair.Create(key, lazy));
-            throw;
-        }
-    }
+    private readonly ConcurrentDictionary<string, Lazy<Task<T>>> _cache = new();
 
     public async Task<T> GetOrCacheAndGetAsync(string key, Func<Task<T>> factory)
     {
-        var lazy = _asyncCache.GetOrAdd(key, _ => new Lazy<Task<T>>(factory));
+        var lazy = _cache.GetOrAdd(key, _ => new Lazy<Task<T>>(factory));
         try
         {
             return await lazy.Value;
@@ -52,7 +35,7 @@ public class GenericCache<T> : IGenericCache<T>
         catch
         {
             // Note: Don't cache a failed attempt, so the next call retries instead of failing forever.
-            _asyncCache.TryRemove(KeyValuePair.Create(key, lazy));
+            _cache.TryRemove(KeyValuePair.Create(key, lazy));
             throw;
         }
     }

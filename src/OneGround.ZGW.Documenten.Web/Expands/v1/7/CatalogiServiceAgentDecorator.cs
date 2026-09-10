@@ -10,6 +10,10 @@ using OneGround.ZGW.Common.Web.Expands;
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
 // TODO: Move to CatalogiServiceAgent class (later BRC/ZRC should reuse this class as well)
+
+/// <summary>
+/// This class intercepts calls to the <see cref="ICatalogiServiceAgent"/> and wraps exceptions in an <see cref="ExpandExternalServiceException"/>
+/// </summary>
 public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorator
 {
     private const string ServiceName = "ZTC";
