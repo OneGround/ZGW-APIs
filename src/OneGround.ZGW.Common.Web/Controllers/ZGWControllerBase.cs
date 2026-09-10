@@ -151,4 +151,38 @@ public abstract class ZGWControllerBase : ControllerBase
 
         return specifiedExpands.All(expand => allowedExpandsLookup.ContainsAnyOf(expand));
     }
+
+    /// <summary>
+    /// Parses and validates the "expand" query parameter, and checks whether the resulting paths are allowed on this operation.
+    /// Returns the error result to return to the caller, or null when validation succeeded (in which case <paramref name="expandPaths"/> is populated).
+    /// </summary>
+    protected IActionResult ValidateExpand<TEntity>(
+        ExpandValidator<TEntity> expandValidator,
+        string expand,
+        string allowedExpand,
+        out List<string> expandPaths
+    )
+    {
+        var (paths, expandError) = expandValidator.ParseAndValidate(expand);
+        if (expandError is not null)
+        {
+            expandPaths = [];
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
+                title: "Ongeldige expand parameter"
+            );
+        }
+
+        expandPaths = paths;
+
+        if (!IsExpandEnabled(allowedExpand, paths))
+        {
+            return _errorResponseBuilder.BadRequest(
+                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
+                title: "Invalid input"
+            );
+        }
+
+        return null;
+    }
 }

@@ -105,20 +105,15 @@ public class VerzendingenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
-        if (expandError is not null)
+        var expandValidationResult = ValidateExpand(
+            _expandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.List,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
         {
-            return _errorResponseBuilder.BadRequest(
-                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
-                title: "Ongeldige expand parameter"
-            );
-        }
-        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.List, expandPaths))
-        {
-            return _errorResponseBuilder.BadRequest(
-                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
-                title: "Invalid input"
-            );
+            return expandValidationResult;
         }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.VerzendingenPageSize));
@@ -194,20 +189,15 @@ public class VerzendingenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}, {@FromQuery}", nameof(GetAsync), id, queryParameters);
 
-        var (expandPaths, expandError) = _expandValidator.ParseAndValidate(queryParameters.Expand);
-        if (expandError is not null)
+        var expandValidationResult = ValidateExpand(
+            _expandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.Get,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
         {
-            return _errorResponseBuilder.BadRequest(
-                new[] { new ValidationError("expand", ErrorCode.Invalid, expandError) },
-                title: "Ongeldige expand parameter"
-            );
-        }
-        if (!IsExpandEnabled(_applicationConfiguration.ExpandSettings.Get, expandPaths))
-        {
-            return _errorResponseBuilder.BadRequest(
-                new[] { new ValidationError("expand", ErrorCode.DisabledExpand, "Expand is uitgeschakeld op deze operatie.") },
-                title: "Invalid input"
-            );
+            return expandValidationResult;
         }
 
         var result = await _mediator.Send(new Handlers.v1._5.GetVerzendingQuery { Id = id }, cancellationToken);
