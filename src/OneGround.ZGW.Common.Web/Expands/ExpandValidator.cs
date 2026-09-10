@@ -29,7 +29,7 @@ public class ExpandValidator<TEntity>
         }
     }
 
-    public (List<string> Paths, string? Error) ParseAndValidate(string? expand)
+    public (List<string> Paths, string Error) ParseAndValidate(string expand)
     {
         if (string.IsNullOrWhiteSpace(expand))
             return ([], null);

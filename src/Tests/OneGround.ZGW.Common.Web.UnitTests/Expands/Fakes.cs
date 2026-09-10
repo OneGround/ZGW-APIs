@@ -12,7 +12,7 @@ namespace OneGround.ZGW.Common.Web.UnitTests.Expands;
 /// </summary>
 public sealed class FakeExpandable : IExpandable
 {
-    public Dictionary<string, object?>? Expand { get; set; }
+    public Dictionary<string, object> Expand { get; set; }
 }
 
 /// <summary>
@@ -22,17 +22,17 @@ public sealed class FakeExpandable : IExpandable
 /// </summary>
 public sealed class FakeResolver : IExpandResolver<FakeExpandable>
 {
-    private readonly Func<FakeExpandable, IReadOnlyDictionary<string, object?>, IReadOnlySet<string>, object?> _resolve;
+    private readonly Func<FakeExpandable, IReadOnlyDictionary<string, object>, IReadOnlySet<string>, object> _resolve;
 
     /// <summary>Gedeelde lijst die de aanroepvolgorde van paden over alle resolvers vastlegt.</summary>
-    public List<string>? CallLog { get; set; }
+    public List<string> CallLog { get; set; }
 
     public FakeResolver(
         string path,
-        object? returnValue = null,
-        string? parent = null,
-        IEnumerable<(string Path, string? Parent)>? additionalPaths = null,
-        Func<FakeExpandable, IReadOnlyDictionary<string, object?>, IReadOnlySet<string>, object?>? resolve = null
+        object returnValue = null,
+        string parent = null,
+        IEnumerable<(string Path, string Parent)> additionalPaths = null,
+        Func<FakeExpandable, IReadOnlyDictionary<string, object>, IReadOnlySet<string>, object> resolve = null
     )
     {
         Path = path;
@@ -42,19 +42,19 @@ public sealed class FakeResolver : IExpandResolver<FakeExpandable>
     }
 
     public string Path { get; }
-    public string? Parent { get; }
-    public IEnumerable<(string Path, string? Parent)> AdditionalPaths { get; }
+    public string Parent { get; }
+    public IEnumerable<(string Path, string Parent)> AdditionalPaths { get; }
 
     // Vastgelegde context van de laatste aanroep.
     public int CallCount { get; private set; }
-    public IReadOnlyDictionary<string, object?>? LastResolved { get; private set; }
-    public IReadOnlySet<string>? LastRequestedPaths { get; private set; }
+    public IReadOnlyDictionary<string, object> LastResolved { get; private set; }
+    public IReadOnlySet<string> LastRequestedPaths { get; private set; }
 
-    public Task<object?> ResolveAsync(FakeExpandable entity, IReadOnlyDictionary<string, object?> resolved, IReadOnlySet<string> requestedPaths)
+    public Task<object> ResolveAsync(FakeExpandable entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
         CallCount++;
         // Snapshot van resolved zodat latere mutaties asserts niet beïnvloeden.
-        LastResolved = new Dictionary<string, object?>(resolved, StringComparer.Ordinal);
+        LastResolved = new Dictionary<string, object>(resolved, StringComparer.Ordinal);
         LastRequestedPaths = requestedPaths;
         CallLog?.Add(Path);
 

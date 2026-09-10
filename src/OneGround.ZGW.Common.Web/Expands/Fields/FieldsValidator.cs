@@ -33,7 +33,7 @@ public class FieldsValidator<TEntity>
     /// en retourneert elke ongeldige veldnaam als afzonderlijk (gepunt) pad. Een lege lijst betekent dat
     /// alles geldig is. De uitkomst is gesorteerd voor een voorspelbare volgorde.
     /// </summary>
-    public IReadOnlyList<string> Validate(FieldSelection? selection)
+    public IReadOnlyList<string> Validate(FieldSelection selection)
     {
         if (selection is null)
             return [];
