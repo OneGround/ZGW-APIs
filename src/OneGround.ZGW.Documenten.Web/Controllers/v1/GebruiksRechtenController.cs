@@ -147,6 +147,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> AddAsync([FromBody] GebruiksRechtRequestDto gebruiksRechtRequest, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), gebruiksRechtRequest);
@@ -190,6 +191,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> UpdateAsync(
         [FromBody] GebruiksRechtRequestDto gebruiksRechtRequest,
         Guid id,
@@ -248,6 +250,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialGebruiksRechtRequest, Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
@@ -262,6 +265,16 @@ public class GebruiksRechtenController : ZGWControllerBase
             },
             cancellationToken
         );
+
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
 
         if (result.Status == CommandStatus.ValidationError)
         {
@@ -291,6 +304,7 @@ public class GebruiksRechtenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
