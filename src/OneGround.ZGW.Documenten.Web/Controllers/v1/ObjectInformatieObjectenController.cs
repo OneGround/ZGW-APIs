@@ -145,6 +145,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> AddAsync(
         [FromBody] ObjectInformatieObjectRequestDto objectInformatieObjectRequest,
         CancellationToken cancellationToken
@@ -200,6 +201,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
