@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
 
 ARG Version=1.0.0
 
@@ -11,7 +11,7 @@ RUN dotnet restore src/OneGround.ZGW.Besluiten.WebApi/ZGW.Besluiten.WebApi.cspro
 RUN dotnet publish src/OneGround.ZGW.Besluiten.WebApi/ZGW.Besluiten.WebApi.csproj --self-contained false -c Release -o /app/publish --no-restore -p:Version=$Version /p:PublishReadyToRun=true -r linux-x64
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble
 
 LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
       org.opencontainers.image.description="OneGround implementation of ZGW Besluiten API (from Netherlands VNG standard)." \
