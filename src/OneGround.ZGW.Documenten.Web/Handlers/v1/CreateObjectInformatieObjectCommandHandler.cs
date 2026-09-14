@@ -102,7 +102,7 @@ class CreateObjectInformatieObjectCommandHandler
                 var error = new ValidationError(
                     "nonFieldErrors",
                     ErrorCode.InconsistentRelation,
-                    "De combinatie informatieobject en object bestaat al."
+                    "De combinatie informatieobject en object bestaat al (race-condition)."
                 );
                 return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
             }

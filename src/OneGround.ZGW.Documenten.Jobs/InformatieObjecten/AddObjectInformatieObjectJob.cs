@@ -2,6 +2,7 @@ using Hangfire.Console;
 using Hangfire.Server;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
+using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Jobs.Extensions;
@@ -57,7 +58,7 @@ public class AddObjectInformatieObjectJob : InformatieObjectHandlerBase<AddObjec
             var result = await _documentenServiceAgent.AddObjectInformatieObjectAsync(objectInformatieObject);
             if (!result.Success)
             {
-                if (result.Error.InvalidParams.Any(e => e.Code == "unique"))
+                if (result.Error.InvalidParams.Any(e => e.Code == ErrorCode.InconsistentRelation))
                 {
                     context.WriteLineColored(
                         ConsoleTextColor.Red,
