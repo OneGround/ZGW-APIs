@@ -69,6 +69,7 @@ public class Startup
     {
         services.AddSingleton(Log.Logger);
         services.AddSingleton<ILogEventFilter, ObjectInformatieObjectUniqueViolationLogFilter>();
+        services.AddSingleton<ILogEventFilter, EnkelvoudigInformatieObjectenCountTimeoutLogFilter>();
 
         services.AddZGWDbContext<DrcDbContext>(Configuration);
 
