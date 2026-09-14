@@ -21,6 +21,7 @@ using OneGround.ZGW.Documenten.Web.Logging;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using OneGround.ZGW.Documenten.Web.Services;
 using Serilog.Context;
+using Serilog.Events;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -106,7 +107,9 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // out - the catch below already handles it and logs a Warning instead, so EF's own log would just be
         // noise. Scoped by LogContext (see EnkelvoudigInformatieObjectenCountTimeoutLogFilter) rather than just
         // SourceContext/exception shape, so a timeout on a different DrcDbContext query is never hidden.
-        using (LogContext.PushProperty(EnkelvoudigInformatieObjectenCountTimeoutLogFilter.SuppressionPropertyName, true))
+        using (
+            LogContext.PushProperty(EnkelvoudigInformatieObjectenCountTimeoutLogFilter.SuppressionPropertyName, new ScalarValue(cancellationToken))
+        )
         {
             try
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Npgsql;
 using OneGround.ZGW.Documenten.Web.Logging;
 using Serilog.Events;
@@ -10,10 +11,12 @@ namespace OneGround.ZGW.Documenten.WebApi.UnitTests.LoggingTests;
 /// <summary>
 /// Covers the LogContext-based scoping: the filter must only suppress the known count-query timeout when the
 /// suppression property is present (i.e. only while GetAllEnkelvoudigInformatieObjectenQueryHandler's count call is
-/// on the stack). For the "Query" category (QueryIterationFailed, exception attached) it must additionally match
-/// the exact exception shape the handler's catch clause swallows - never for a same-looking Error from a different
-/// DrcDbContext query, and never for an unrelated exception even while the property happens to be pushed. For the
-/// "Database.Command" category (no exception attached) presence of the property is the only available signal.
+/// on the stack) and the request's CancellationToken hasn't itself been cancelled - a genuine caller/client
+/// cancellation must never be suppressed, mirroring IsCountTimeout's own cancellation check. For the "Query"
+/// category (QueryIterationFailed, exception attached) it must additionally match the exact exception shape the
+/// handler's catch clause swallows - never for a same-looking Error from a different DrcDbContext query, and never
+/// for an unrelated exception even while the property happens to be pushed. For the "Database.Command" category
+/// (no exception attached) presence of the (non-cancelled) property is the only available signal.
 /// </summary>
 public class EnkelvoudigInformatieObjectenCountTimeoutLogFilterTests
 {
@@ -113,11 +116,53 @@ public class EnkelvoudigInformatieObjectenCountTimeoutLogFilterTests
         Assert.True(_filter.IsEnabled(logEvent));
     }
 
+    [Fact]
+    public void IsEnabled_returns_true_for_a_timeout_exception_on_the_Query_event_when_the_request_was_cancelled()
+    {
+        // Mirrors IsCountTimeout: if the caller cancelled the request, Npgsql/EF can still surface the same
+        // TimeoutException/QueryCanceled shape, but the handler's catch-when does NOT swallow it in that case (it
+        // bubbles up and logs no replacement Warning) - so this Error log must stay visible too, or the failure
+        // would vanish silently.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var ex = new InvalidOperationException("boom", new TimeoutException("Timeout during reading attempt"));
+        var logEvent = CreateLogEvent(
+            LogEventLevel.Error,
+            "Microsoft.EntityFrameworkCore.Query",
+            ex,
+            withSuppressionProperty: true,
+            cancellationToken: cts.Token
+        );
+
+        Assert.True(_filter.IsEnabled(logEvent));
+    }
+
+    [Fact]
+    public void IsEnabled_returns_true_for_the_DbCommand_event_when_the_request_was_cancelled()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var logEvent = CreateLogEvent(
+            LogEventLevel.Error,
+            "Microsoft.EntityFrameworkCore.Database.Command",
+            exception: null,
+            withSuppressionProperty: true,
+            cancellationToken: cts.Token,
+            messageText: "Failed executing DbCommand (30010ms) [Parameters=[@___rsin_0='?'], CommandType='Text', CommandTimeout='30']\n"
+                + "SELECT count(*)::int\nFROM enkelvoudiginformatieobjecten AS e\nWHERE e.owner = @___rsin_0"
+        );
+
+        Assert.True(_filter.IsEnabled(logEvent));
+    }
+
     private static LogEvent CreateLogEvent(
         LogEventLevel level,
         string sourceContext,
         Exception exception,
         bool withSuppressionProperty,
+        CancellationToken cancellationToken = default,
         string messageText = "boom"
     )
     {
@@ -125,7 +170,7 @@ public class EnkelvoudigInformatieObjectenCountTimeoutLogFilterTests
             ? new[]
             {
                 new LogEventProperty("SourceContext", new ScalarValue(sourceContext)),
-                new LogEventProperty(EnkelvoudigInformatieObjectenCountTimeoutLogFilter.SuppressionPropertyName, new ScalarValue(true)),
+                new LogEventProperty(EnkelvoudigInformatieObjectenCountTimeoutLogFilter.SuppressionPropertyName, new ScalarValue(cancellationToken)),
             }
             : [new LogEventProperty("SourceContext", new ScalarValue(sourceContext))];
 

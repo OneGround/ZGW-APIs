@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Npgsql;
 using Serilog.Core;
 using Serilog.Events;
@@ -18,7 +19,12 @@ namespace OneGround.ZGW.Documenten.Web.Logging;
 /// </summary>
 public class EnkelvoudigInformatieObjectenCountTimeoutLogFilter : ILogEventFilter
 {
-    // Pushed by GetAllEnkelvoudigInformatieObjectenQueryHandler via LogContext.PushProperty around the count call.
+    // Pushed by GetAllEnkelvoudigInformatieObjectenQueryHandler via
+    // LogContext.PushProperty(SuppressionPropertyName, new ScalarValue(cancellationToken)) around the count call.
+    // The ScalarValue wrapper makes Serilog store the boxed CancellationToken verbatim instead of structurally
+    // capturing its properties (which would snapshot IsCancellationRequested=false at push time and go stale the
+    // moment the request is later cancelled mid-query). Reading .IsCancellationRequested back off that boxed copy
+    // still reflects the live, current state, since the struct only holds a reference to the shared source.
     public const string SuppressionPropertyName = "SuppressEnkelvoudigInformatieObjectenCountTimeoutLog";
 
     private const string EfQuerySourceContext = @"""Microsoft.EntityFrameworkCore.Query""";
@@ -29,8 +35,16 @@ public class EnkelvoudigInformatieObjectenCountTimeoutLogFilter : ILogEventFilte
         if (
             logEvent.Level != LogEventLevel.Error
             || !logEvent.Properties.TryGetValue("SourceContext", out var sourceContext)
-            || !logEvent.Properties.ContainsKey(SuppressionPropertyName)
+            || !logEvent.Properties.TryGetValue(SuppressionPropertyName, out var suppressionProperty)
         )
+        {
+            return true;
+        }
+
+        // Mirrors GetAllEnkelvoudigInformatieObjectenQueryHandler.IsCountTimeout: a genuine caller/client
+        // cancellation must keep bubbling up (and stays unlogged by the handler, which only warns on an actual
+        // timeout), so it must never be suppressed here either - otherwise it would vanish silently.
+        if (suppressionProperty is ScalarValue { Value: CancellationToken { IsCancellationRequested: true } })
         {
             return true;
         }
