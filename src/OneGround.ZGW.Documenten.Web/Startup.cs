@@ -41,11 +41,14 @@ using OneGround.ZGW.Documenten.Web.Extensions;
 using OneGround.ZGW.Documenten.Web.Handlers;
 using OneGround.ZGW.Documenten.Web.Handlers.v1._5.EntityUpdaters;
 using OneGround.ZGW.Documenten.Web.Handlers.v1.EntityUpdaters;
+using OneGround.ZGW.Documenten.Web.Logging;
 using OneGround.ZGW.Documenten.Web.Middleware;
 using OneGround.ZGW.Documenten.Web.Services;
 using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
+using Serilog;
+using Serilog.Core;
 
 namespace OneGround.ZGW.Documenten.Web;
 
@@ -64,7 +67,8 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton(Serilog.Log.Logger);
+        services.AddSingleton(Log.Logger);
+        services.AddSingleton<ILogEventFilter, ObjectInformatieObjectUniqueViolationLogFilter>();
 
         services.AddZGWDbContext<DrcDbContext>(Configuration);
 

@@ -24,6 +24,10 @@ public static class SerilogConfig
 
                 var logConfig = config
                     .ReadFrom.Configuration(builder.Configuration)
+                    // Picks up any Serilog.Core.ILogEventFilter (and ILogEventEnricher/ILogEventSink/etc.) registered by a
+                    // service's own DI container, so a service can register its own log-suppression rules (e.g. for a known,
+                    // already-handled race condition) without Common having to know about that service's specifics.
+                    .ReadFrom.Services(ctx)
                     .Enrich.FromLogContext()
                     .Enrich.WithMachineName()
                     .Enrich.WithProperty("assembly_version", versionString)
