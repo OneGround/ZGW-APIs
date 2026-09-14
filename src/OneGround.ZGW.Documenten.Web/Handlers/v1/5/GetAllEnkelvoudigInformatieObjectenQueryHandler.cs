@@ -17,8 +17,11 @@ using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.DataModel.Authorization;
+using OneGround.ZGW.Documenten.Web.Logging;
 using OneGround.ZGW.Documenten.Web.Models.v1._5;
 using OneGround.ZGW.Documenten.Web.Services;
+using Serilog.Context;
+using Serilog.Events;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._5;
 
@@ -100,19 +103,37 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         // GetAuthorizationCountCachedAsync forces enable_bitmapscan=off so it uses the
         // (owner, iot, vha) covering index as a single Index-Only Scan + aggregate — O(N), no heap.
         int totalCount;
-        try
+        // Suppress EF Core's Error-level "QueryIterationFailed" log for this specific count call when it times
+        // out - the catch below already handles it and logs a Warning instead, so EF's own log would just be
+        // noise. Scoped by LogContext (see EnkelvoudigInformatieObjectenCountTimeoutLogFilter) rather than just
+        // SourceContext/exception shape, so a timeout on a different DrcDbContext query is never hidden.
+        using (
+            LogContext.PushProperty(EnkelvoudigInformatieObjectenCountTimeoutLogFilter.SuppressionPropertyName, new ScalarValue(cancellationToken))
+        )
         {
-            totalCount = hasAuthorizationFilter
-                ? await GetAuthorizationCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
-                : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
-        }
-        catch (Exception ex) when (IsCountTimeout(ex, cancellationToken))
-        {
-            // Don't fail the whole listing because the count is too expensive on this tenant — return a
-            // sentinel count and still serve the page. The factory threw before caching, so nothing poisoned
-            // the cache and the next request retries the real count.
-            _logger.LogWarning(ex, "Count query timed out for rsin {Rsin}; returning sentinel count {Sentinel}.", _rsin, CountTimeoutSentinel);
-            totalCount = CountTimeoutSentinel;
+            try
+            {
+                totalCount = hasAuthorizationFilter
+                    ? await GetAuthorizationCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken)
+                    : await GetTotalCountCachedAsync(query, request.GetAllEnkelvoudigInformatieObjectenFilter, cancellationToken);
+            }
+            catch (Exception ex) when (IsCountTimeout(ex, cancellationToken))
+            {
+                // Don't fail the whole listing because the count is too expensive on this tenant — return a
+                // sentinel count and still serve the page. The factory threw before caching, so nothing poisoned
+                // the cache and the next request retries the real count.
+                // Deliberately not passing ex to LogWarning: this is the known, already-handled timeout - the
+                // full exception/stack trace would just be the same noise the EF log filter above already
+                // suppresses. GetBaseException().Message still tells you which shape it was (client-side Npgsql
+                // timeout vs. server-side statement_timeout) without the trace.
+                _logger.LogWarning(
+                    "Count query timed out for rsin {Rsin} ({Reason}); returning sentinel count {Sentinel}.",
+                    _rsin,
+                    ex.GetBaseException().Message,
+                    CountTimeoutSentinel
+                );
+                totalCount = CountTimeoutSentinel;
+            }
         }
 
         // Default 'enable_sort=off' but for some filters disabling sort will drop performance significantly
