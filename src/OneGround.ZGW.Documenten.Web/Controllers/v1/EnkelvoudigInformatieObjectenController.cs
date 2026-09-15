@@ -632,6 +632,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<AuditTrailRegelDto>))]
     public async Task<IActionResult> GetAllAuditTrailRegelsAsync(Guid enkelvoudiginformatieobject_uuid, CancellationToken cancellationToken)
     {
@@ -677,6 +678,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(AuditTrailRegelDto))]
     public async Task<IActionResult> GetAuditTrailRegelAsync(Guid enkelvoudiginformatieobject_uuid, Guid uuid, CancellationToken cancellationToken)
     {
