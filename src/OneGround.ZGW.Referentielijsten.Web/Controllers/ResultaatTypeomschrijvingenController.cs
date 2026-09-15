@@ -4,6 +4,7 @@ using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.Web.Contracts.v1;
@@ -16,6 +17,7 @@ namespace OneGround.ZGW.Referentielijsten.Web.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [ZgwApiVersion(Api.LatestVersion_1_0)]
+[ScopeNotRequired("RL serves static public reference-list data; this host registers no authentication.")]
 public class ResultaatTypeomschrijvingenController : ControllerBase
 {
     private readonly ILogger<ResultaatTypeomschrijvingenController> _logger;

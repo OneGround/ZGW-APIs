@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Messaging.Handlers;
 using OneGround.ZGW.Documenten.Messaging.Helper;
@@ -19,6 +20,7 @@ namespace OneGround.ZGW.Documenten.Messaging.Controllers;
 
 [Route("api/v1")]
 [Authorize]
+[ScopeNotRequired("Internal listener endpoint; authorises on the rsin claim against the route value instead of client scopes.")]
 public class NotificatieController : Controller
 {
     private readonly IMediator _mediator;
