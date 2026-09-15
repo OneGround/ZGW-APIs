@@ -12,9 +12,12 @@ public static class QueryParameterValidationExtensions
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllInformatieObjectTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllInformatieObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetInformatieObjectTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllBesluitTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllBesluitTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetBesluitTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllEigenschappenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllEigenschappenQueryParameters>>();
@@ -31,6 +34,8 @@ public static class QueryParameterValidationExtensions
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakObjectTypenQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllZaakTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetZaakTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters>>();

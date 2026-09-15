@@ -9,6 +9,7 @@ using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.BusinessRules;
 using OneGround.ZGW.Catalogi.Web.Controllers;
+using OneGround.ZGW.Catalogi.Web.Expands.v1._3;
 using OneGround.ZGW.Catalogi.Web.Extensions;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Catalogi.Web.Services;
@@ -107,6 +108,8 @@ public class Startup
         });
 
         services.AddCommonServices();
+
+        services.AddCatalogiAPIExpands(); // New Expand Engine v1.3.3
 
         services.AddNotificatiesService(Configuration);
         services.AddScoped<IZaakTypeInformatieObjectTypenBusinessRuleService, ZaakTypeInformatieObjectTypenBusinessRuleService>();

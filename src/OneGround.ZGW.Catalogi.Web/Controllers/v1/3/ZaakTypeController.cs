@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.DataModel;
@@ -19,6 +20,7 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
+using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
@@ -39,6 +41,8 @@ public class ZaakTypeController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IRequestMerger _requestMerger;
+    private readonly ExpandValidator<ZaakTypeResponseDto> _expandValidator;
+    private readonly ExpandEngine<ZaakTypeResponseDto> _expandEngine;
 
     public ZaakTypeController(
         ILogger<ZaakTypeController> logger,
@@ -48,13 +52,17 @@ public class ZaakTypeController : ZGWControllerBase
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
-        IErrorResponseBuilder errorResponseBuilder
+        IErrorResponseBuilder errorResponseBuilder,
+        ExpandValidator<ZaakTypeResponseDto> expandValidator,
+        ExpandEngine<ZaakTypeResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
+        _expandValidator = expandValidator;
+        _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
@@ -72,13 +80,16 @@ public class ZaakTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakTypen.GetAll, Name = Operations.ZaakTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakTypeResponseDto>))]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllZaakTypenQueryParameters>))]
-    public async Task<IActionResult> GetAllAsync(
-        [FromQuery] Catalogi.Contracts.v1.Queries.GetAllZaakTypenQueryParameters queryParameters,
-        int page = 1
-    )
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakTypenQueryParameters>))]
+    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
+
+        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakTypenPageSize));
         var filter = _mapper.Map<Models.v1.GetAllZaakTypenFilter>(queryParameters);
@@ -91,6 +102,19 @@ public class ZaakTypeController : ZGWControllerBase
         }
 
         var zaaktypenResponse = _mapper.Map<List<ZaakTypeResponseDto>>(result.Result.PageResult);
+
+        // Handle optional expands on the returned DTOs. This is done after the mapping to the DTOs, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveListAsync(zaaktypenResponse, expandPaths);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, zaaktypenResponse, result.Result.Count);
 
@@ -109,10 +133,17 @@ public class ZaakTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakTypen.Get, Name = Operations.ZaakTypen.Read)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeResponseDto))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakTypeQueryParameters>))]
     [ETagFilter]
-    public async Task<IActionResult> GetAsync(Guid id)
+    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetZaakTypeQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
+
+        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
 
         var result = await _mediator.Send(new GetZaakTypeQuery { Id = id });
 
@@ -122,6 +153,19 @@ public class ZaakTypeController : ZGWControllerBase
         }
 
         var zaaktypeResponse = _mapper.Map<ZaakTypeResponseDto>(result.Result);
+
+        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _expandEngine.ResolveAsync(zaaktypeResponse, expandPaths);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         return Ok(zaaktypeResponse);
     }
@@ -138,10 +182,11 @@ public class ZaakTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpHead(ApiRoutes.ZaakTypen.Get, Name = Operations.ZaakTypen.ReadHead)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakTypeQueryParameters>))]
     [ETagFilter]
-    public Task<IActionResult> HeadAsync(Guid id)
+    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakTypeQueryParameters queryParameters)
     {
-        return GetAsync(id);
+        return GetAsync(id, queryParameters);
     }
 
     /// <summary>

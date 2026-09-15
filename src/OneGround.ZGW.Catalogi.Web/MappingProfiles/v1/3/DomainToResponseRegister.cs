@@ -59,6 +59,7 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.InformatieObjectTypen)
             .Ignore(dest => dest.DeelZaakTypen)
             .Ignore(dest => dest.BesluitTypen)
+            .Ignore(dest => dest.Expand)
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -361,6 +362,7 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.ResultaatTypen)
             .Ignore(dest => dest.ResultaatTypenOmschrijving)
             .Ignore(dest => dest.VastgelegdIn)
+            .Ignore(dest => dest.Expand)
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
             .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
