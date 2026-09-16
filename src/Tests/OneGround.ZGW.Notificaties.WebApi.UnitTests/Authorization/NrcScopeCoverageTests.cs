@@ -36,6 +36,33 @@ public class NrcScopeCoverageTests
             $"{offenders.Count} Nrc controller action(s) carry neither a scope attribute nor "
                 + $"[ScopeNotRequired(\"...\")], so they are denied with a 403 at runtime: {string.Join(", ", offenders)}."
         );
+
+        // ScopeRequirement reads attribute metadata, which never runs ScopeNotRequiredAttribute's constructor,
+        // so [ScopeNotRequired("")] satisfies the check above. Materializing each exemption runs that constructor.
+        var malformed = new List<string>();
+
+        foreach (
+            var carrier in actions
+                .SelectMany(a => new MemberInfo[] { a.Action, a.Controller })
+                .Distinct()
+                .Where(m => m.IsDefined(typeof(ScopeNotRequiredAttribute), inherit: true))
+        )
+        {
+            try
+            {
+                _ = carrier.GetCustomAttribute<ScopeNotRequiredAttribute>(inherit: true);
+            }
+            catch (ArgumentException)
+            {
+                malformed.Add((carrier as Type)?.FullName ?? $"{carrier.DeclaringType?.FullName}.{carrier.Name}");
+            }
+        }
+
+        Assert.True(
+            malformed.Count == 0,
+            $"{malformed.Count} Nrc exemption(s) carry an empty or whitespace reason, which the attribute's constructor "
+                + $"rejects and a running host rejects while building its action descriptors: {string.Join(", ", malformed)}."
+        );
     }
 
     private static List<(Type Controller, MethodInfo Action)> ControllerActions() =>

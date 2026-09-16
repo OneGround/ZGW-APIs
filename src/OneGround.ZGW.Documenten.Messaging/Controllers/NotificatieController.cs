@@ -20,7 +20,6 @@ namespace OneGround.ZGW.Documenten.Messaging.Controllers;
 
 [Route("api/v1")]
 [Authorize]
-[ScopeNotRequired("Internal listener endpoint; authorises on the rsin claim against the route value instead of client scopes.")]
 public class NotificatieController : Controller
 {
     private readonly IMediator _mediator;
@@ -39,6 +38,7 @@ public class NotificatieController : Controller
     }
 
     [HttpPost("notificatie/{rsin}")]
+    [ScopeNotRequired("Internal listener endpoint; authorises on the rsin claim against the route value instead of client scopes.")]
     public async Task<IActionResult> ReceiveNotificatie([FromBody] NotificatieDto notificatie, string rsin, CancellationToken cancellationToken)
     {
         if (rsin != RsinFromClaims)
