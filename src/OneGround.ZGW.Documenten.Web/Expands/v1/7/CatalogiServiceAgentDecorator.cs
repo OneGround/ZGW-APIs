@@ -23,7 +23,7 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request) => throw new NotImplementedException();
 
-    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl)
+    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null)
     {
         throw new NotImplementedException();
     }
@@ -49,8 +49,10 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(string informatieObjectTypeUrl) =>
-        WrapAsync(informatieObjectTypeUrl, () => _inner.GetInformatieObjectTypeByUrlAsync(informatieObjectTypeUrl));
+    public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
+        string informatieObjectTypeUrl,
+        string expand = null
+    ) => WrapAsync(informatieObjectTypeUrl, () => _inner.GetInformatieObjectTypeByUrlAsync(informatieObjectTypeUrl, expand));
 
     public Task<ServiceAgentResponse<PagedResponse<InformatieObjectTypeResponseDto>>> GetInformatieObjectTypenAsync(
         Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters parameters,
@@ -88,7 +90,7 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl)
+    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null)
     {
         throw new NotImplementedException();
     }

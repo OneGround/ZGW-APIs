@@ -33,9 +33,11 @@ public class InformatieObjectTypeResolver<TEntity> : IExpandResolver<TEntity>
     {
         if (resolved.TryGetValue("informatieobject", out var obj) && obj is EnkelvoudigInformatieObjectGetResponseDto informatieobject)
         {
+            var expand = requestedPaths.Contains($"{Path}.catalogus") ? "catalogus" : null;
+
             var cachedInformatieObjectType = await _informatieobjecttypeCache.GetOrCacheAndGetAsync(
                 $"key_{informatieobject.InformatieObjectType}",
-                async () => (await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieobject.InformatieObjectType)).Response
+                async () => (await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(informatieobject.InformatieObjectType, expand)).Response
             );
 
             return cachedInformatieObjectType;

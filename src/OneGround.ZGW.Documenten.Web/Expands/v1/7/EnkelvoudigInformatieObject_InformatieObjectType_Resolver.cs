@@ -30,9 +30,11 @@ public class EnkelvoudigInformatieObject_InformatieObjectType_Resolver : IExpand
         IReadOnlySet<string> requestedPaths
     )
     {
+        var expand = requestedPaths.Contains($"{Path}.catalogus") ? "catalogus" : null;
+
         var cachedInformatieObjectType = await _informatieobjecttypeCache.GetOrCacheAndGetAsync(
             $"key_{entity.InformatieObjectType}",
-            async () => (await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(entity.InformatieObjectType)).Response
+            async () => (await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(entity.InformatieObjectType, expand)).Response
         );
 
         return cachedInformatieObjectType;
