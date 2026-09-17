@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
