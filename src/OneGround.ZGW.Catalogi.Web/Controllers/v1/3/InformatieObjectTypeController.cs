@@ -80,6 +80,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<InformatieObjectTypeResponseDto>))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllInformatieObjectTypenQueryParameters>))]
+    [Expand]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllInformatieObjectTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
@@ -141,6 +142,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetInformatieObjectTypeQueryParameters>))]
     [ETagFilter]
+    [Expand]
     public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetInformatieObjectTypeQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
@@ -190,6 +192,7 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetInformatieObjectTypeQueryParameters>))]
     [ETagFilter]
+    [Expand]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetInformatieObjectTypeQueryParameters queryParameters)
     {
         return GetAsync(id, queryParameters);

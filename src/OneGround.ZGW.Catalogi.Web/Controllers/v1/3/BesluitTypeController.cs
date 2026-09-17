@@ -81,6 +81,7 @@ public class BesluitTypeController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetBesluitTypeQueryParameters>))]
     [ETagFilter]
+    [Expand]
     public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetBesluitTypeQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
@@ -130,6 +131,7 @@ public class BesluitTypeController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetBesluitTypeQueryParameters>))]
     [ETagFilter]
+    [Expand]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetBesluitTypeQueryParameters queryParameters)
     {
         return GetAsync(id, queryParameters);
@@ -187,6 +189,7 @@ public class BesluitTypeController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<BesluitTypeResponseDto>))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitTypenQueryParameters>))]
+    [Expand]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
