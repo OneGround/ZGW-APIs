@@ -32,9 +32,7 @@ public static partial class ExpandsServiceCollectionExtensions
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>
         services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>, EnkelvoudigInformatieObject_InformatieObjectType_Resolver>();
         services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>>(
-            sp => new InformatieObjectTypeCatalogusResolver<EnkelvoudigInformatieObjectGetResponseDto>(
-                sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
-                sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+            _ => new InformatieObjectTypeCatalogusResolver<EnkelvoudigInformatieObjectGetResponseDto>(
                 path: "informatieobjecttype.catalogus",
                 parent: "informatieobjecttype"
             )
@@ -64,7 +62,6 @@ public static partial class ExpandsServiceCollectionExtensions
         // verwijderd wordt (zie de TODO bij de aanroep in Startup.cs).
         services.AddScoped<IGenericCache<EnkelvoudigInformatieObjectGetResponseDto>, GenericCache<EnkelvoudigInformatieObjectGetResponseDto>>();
         services.AddScoped<IGenericCache<InformatieObjectTypeResponseDto>, GenericCache<InformatieObjectTypeResponseDto>>();
-        services.AddScoped<IGenericCache<CatalogusResponseDto>, GenericCache<CatalogusResponseDto>>();
     }
 
     /// <summary>
@@ -83,9 +80,7 @@ public static partial class ExpandsServiceCollectionExtensions
             informatieObjectUrl
         ));
         services.AddScoped<IExpandResolver<TEntity>, InformatieObjectTypeResolver<TEntity>>();
-        services.AddScoped<IExpandResolver<TEntity>>(sp => new InformatieObjectTypeCatalogusResolver<TEntity>(
-            sp.GetRequiredService<ICatalogiServiceAgentDecorator>(),
-            sp.GetRequiredService<IGenericCache<CatalogusResponseDto>>(),
+        services.AddScoped<IExpandResolver<TEntity>>(_ => new InformatieObjectTypeCatalogusResolver<TEntity>(
             path: "informatieobject.informatieobjecttype.catalogus",
             parent: "informatieobject.informatieobjecttype"
         ));

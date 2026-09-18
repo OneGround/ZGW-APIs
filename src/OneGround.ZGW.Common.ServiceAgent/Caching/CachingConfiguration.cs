@@ -44,8 +44,10 @@ public class CachingConfiguration<T>
                         return $"ZGW:{cachedUri.Service}:{entity}:{clientId}:{apiVersion}";
                     }
 
-                    // example key: ZGW:ZTC:zaaktypen:123456789:12aee180-581c-47de-afd6-ea43fb3c1cd1
-                    return $"ZGW:{cachedUri.Service}:{entity}:{rsin}:{uuid}:{apiVersion}";
+                    // example key: ZGW:ZTC:zaaktypen:123456789:12aee180-581c-47de-afd6-ea43fb3c1cd1?expand=catalogus
+                    // Note: requestUri.Query includes the leading '?' (or is empty), so this stays
+                    // backward-compatible with existing cache entries for requests without a query string.
+                    return $"ZGW:{cachedUri.Service}:{entity}:{rsin}:{uuid}:{apiVersion}{requestUri.Query}";
                 }
             }
         }

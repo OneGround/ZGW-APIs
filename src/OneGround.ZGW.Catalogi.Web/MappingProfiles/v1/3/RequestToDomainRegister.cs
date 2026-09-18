@@ -14,6 +14,11 @@ public class RequestToDomainRegister : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config
+            .NewConfig<GetAllZaakTypenQueryParameters, Catalogi.Web.Models.v1.GetAllZaakTypenFilter>()
+            .Map(dest => dest.Trefwoorden, src => ProfileHelper.ArrayFromString(src.Trefwoorden))
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
             .NewConfig<ZaakTypeRequestDto, ZaakType>()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.CreatedBy)
@@ -181,6 +186,10 @@ public class RequestToDomainRegister : IRegister
 
         config
             .NewConfig<GetAllResultaatTypenQueryParameters, GetAllResultaatTypenFilter>()
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
+            .NewConfig<GetAllInformatieObjectTypenQueryParameters, Catalogi.Web.Models.v1.GetAllInformatieObjectTypenFilter>()
             .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
 
         config

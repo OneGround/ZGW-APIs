@@ -9,6 +9,7 @@ using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Resilience;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
