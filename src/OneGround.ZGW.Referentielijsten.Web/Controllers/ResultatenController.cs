@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -25,6 +26,7 @@ namespace OneGround.ZGW.Referentielijsten.Web.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [ZgwApiVersion(Api.LatestVersion_1_0)]
+[ScopeNotRequired("RL serves static public reference-list data; this host registers no authentication.")]
 public class ResultatenController : ControllerBase
 {
     private readonly ILogger<ResultatenController> _logger;

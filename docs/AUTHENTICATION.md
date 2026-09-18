@@ -17,6 +17,29 @@ This guide explains how to authenticate against the ZGW APIs during local develo
   - Supported only with Keycloak together with the custom token introspection plugin. See the project for details: [Keycloak-ZGW-Token-Introspection](https://github.com/OneGround/Keycloak-ZGW-Token-Introspection).
   - Use short token lifetimes. Tokens without an `exp` claim are treated as active, but it's not recommended to use non expiring access tokens.
 
+## Authorization: every controller action needs a scope, or an explicit exemption
+
+Authentication establishes *who* is calling; the per-action scope check establishes *what* they may do.
+That check is opt-in per action, so the rule is enforced rather than assumed:
+
+- Every controller action must carry either a `[Scope(...)]` attribute (the per-API subclass of
+  `BaseScopeAttribute`, which resolves the client's authorizations and builds the `AuthorizationContext`),
+  or an explicit `[ScopeNotRequired("<reason>")]` recording why the endpoint is deliberately unscoped.
+  The reason is mandatory and non-empty.
+- An action with neither is answered with **403 Forbidden** by `RequireScopeAuthorizationFilter`, a global
+  authorization filter registered in `AddZGWApi` (and in the DRC listener's own `ServiceConfiguration`).
+  The filter logs at error level naming the controller and the action, so the denial is never silent.
+- CI catches it before that: each API's `Tests/OneGround.ZGW.<Api>.WebApi.UnitTests/Authorization/`
+  holds a `*ScopeCoverageTests` that reflects over every controller action in that API and fails with the
+  offending `Controller.Action` names. Both the filter and the tests ask `ScopeRequirement.IsSatisfiedBy`,
+  so a red test means exactly the 403 the endpoint would return in production.
+
+`[ScopeNotRequired]` is an exemption, not a security control — it does not make an endpoint public or
+private, it only records a decision. Grep for it to review every exemption in one command.
+
+Health-check and Swagger endpoints need no attribute: they are middleware/minimal-API endpoints, not MVC
+actions, so an MVC filter never sees them.
+
 ## API Authentication using OAuth2 access tokens
 
 ### Get the Client Secret from Keycloak
