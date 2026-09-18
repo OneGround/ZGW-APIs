@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Documenten.Messaging.Handlers;
 using OneGround.ZGW.Documenten.Messaging.Helper;
@@ -37,6 +38,7 @@ public class NotificatieController : Controller
     }
 
     [HttpPost("notificatie/{rsin}")]
+    [ScopeNotRequired("Internal listener endpoint; authorises on the rsin claim against the route value instead of client scopes.")]
     public async Task<IActionResult> ReceiveNotificatie([FromBody] NotificatieDto notificatie, string rsin, CancellationToken cancellationToken)
     {
         if (rsin != RsinFromClaims)

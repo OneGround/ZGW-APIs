@@ -12,8 +12,12 @@ architecture (project layering, request flow, conventions) see [`../CLAUDE.md`](
 3. `*.Web/Handlers/v{X}/` — add the `*Command`/`*Query` + its `*Handler` (inherit the API's base handler, e.g. `ZakenBaseHandler<T>`).
 4. `*.Web/MappingProfiles/` — add Mapster `IRegister` entries if the handler maps between contract and entity.
 5. `*.Web/Controllers/v{X}/` — add the controller action, `Send`-ing the command/query.
-6. `*.Web/Controllers/Api.cs` — only if this changes what a version supports; otherwise skip.
-7. Add/extend a test in `Tests/OneGround.ZGW.<Api>.WebApi.UnitTests/`.
+6. **Put a `[Scope(...)]` on that action** — required, not optional. If the endpoint is deliberately
+   unscoped, mark it `[ScopeNotRequired("<reason>")]` instead; one of the two must be present. An action
+   with neither is answered 403 at runtime, and the API's `*ScopeCoverageTests` fails in CI first. See
+   [`AUTHENTICATION.md`](AUTHENTICATION.md).
+7. `*.Web/Controllers/Api.cs` — only if this changes what a version supports; otherwise skip.
+8. Add/extend a test in `Tests/OneGround.ZGW.<Api>.WebApi.UnitTests/`.
 
 ## Bump an API to a new minor version
 

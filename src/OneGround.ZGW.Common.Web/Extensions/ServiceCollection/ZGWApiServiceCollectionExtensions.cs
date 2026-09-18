@@ -73,6 +73,7 @@ public static class ZGWApiServiceCollectionExtensions
             {
                 options.Filters.Add<ApiExceptionFilter>();
                 options.Filters.Add<OneGroundFluentValidationActionFilter>();
+                options.Filters.Add<RequireScopeAuthorizationFilter>();
 
                 // asp.net core model binding validation and NetTopologySuite geometry does not like each other,
                 // so we ignore validation on Geometry type

@@ -11,6 +11,7 @@ using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.ServiceAgent;
+using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.HealthChecks;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.DataAccess;
@@ -90,7 +91,9 @@ public class ServiceConfiguration
         );
 
         services.AddOneGroundHealthChecks();
-        services.AddControllers();
+
+        // This host builds its own MVC stack instead of calling AddZGWApi, so the scope guard is registered here too.
+        services.AddControllers(options => options.Filters.Add<RequireScopeAuthorizationFilter>());
     }
 
     private AutomaticRetryAttribute GetRetryPolicyFromConfig()
