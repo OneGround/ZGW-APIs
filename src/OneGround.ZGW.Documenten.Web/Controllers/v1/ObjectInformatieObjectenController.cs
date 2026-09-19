@@ -52,7 +52,6 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ObjectInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllObjectInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync(
@@ -82,48 +81,6 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
         return Ok(objectInformatieObjectenResponse);
     }
 
-    /// <summary>
-    /// Een specifieke OBJECT-INFORMATIEOBJECT relatie opvragen.
-    /// </summary>
-    /// <response code="401">Unauthorized</response>
-    /// <response code="403">Forbidden</response>
-    /// <response code="404">Not found</response>
-    /// <response code="429">Too Many Requests</response>
-    /// <response code="500">Internal Server Error</response>
-    [HttpGet(ApiRoutes.ObjectInformatieObjecten.Get, Name = Operations.ObjectInformatieObjecten.Read)]
-    [Scope(AuthorizationScopes.Documenten.Read)]
-    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ObjectInformatieObjectResponseDto))]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
-    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
-
-        var result = await _mediator.Send(new GetObjectInformatieObjectQuery { Id = id }, cancellationToken);
-
-        if (result.Status == QueryStatus.NotFound)
-        {
-            return _errorResponseBuilder.NotFound();
-        }
-
-        if (result.Status == QueryStatus.Forbidden)
-        {
-            return _errorResponseBuilder.Forbidden();
-        }
-
-        var objectInformatieObjectResponse = _mapper.Map<ObjectInformatieObjectResponseDto>(result.Result);
-
-        // TODO: Still deciding if this makes sense (because can generate lot of audittrail logs)
-        //await _mediator.Send(new LogAuditTrailGetObjectCommand
-        //{
-        //    RetrieveCatagory = RetrieveCatagory.All,
-        //    BaseEntity = result.Result.InformatieObject,
-        //    SubEntity = result.Result,
-        //    AuditTrailOptions = new AuditTrailOptions { Bron = "DRC", Resource = "objectinformatieobject" }
-        //});
-
-        return Ok(objectInformatieObjectResponse);
-    }
-
     //
     // HTTP POST http://documenten.user.local:5007/api/v1/objectinformatieobjecten
 
@@ -142,7 +99,6 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Documenten.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ObjectInformatieObjectResponseDto))]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
     [ZgwApiVersion(Api.LatestVersion_1_7)]
@@ -198,7 +154,6 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     [HttpDelete(ApiRoutes.ObjectInformatieObjecten.Delete, Name = Operations.ObjectInformatieObjecten.Delete)]
     [Scope(AuthorizationScopes.Documenten.Delete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_1)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
     [ZgwApiVersion(Api.LatestVersion_1_7)]

@@ -13,6 +13,7 @@ public class RequestToPaginationRegister : IRegister
     {
         config.NewConfig<PaginationQuery, PaginationFilter>();
 
+        // Shared with v1.1, which reuses these base query parameters (it has its own request/response bodies).
         config
             .NewConfig<GetEnkelvoudigInformatieObjectQueryParameters, GetEnkelvoudigInformatieObjectFilter>()
             .Map(dest => dest.RegistratieOp, src => ProfileHelper.DateTimeFromString(src.RegistratieOp));
