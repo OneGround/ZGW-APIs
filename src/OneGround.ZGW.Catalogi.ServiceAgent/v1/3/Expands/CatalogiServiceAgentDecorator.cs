@@ -20,10 +20,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request) => throw new NotImplementedException();
 
-    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null) =>
+        WrapAsync(besluitTypeUrl, () => _inner.GetBesluitTypeByUrlAsync(besluitTypeUrl, expand));
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl) =>
         WrapAsync(catalogusUrl, () => _inner.GetCatalogusAsync(catalogusUrl));
@@ -87,10 +85,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null) =>
+        WrapAsync(zaakTypeUrl, () => _inner.GetZaakTypeByUrlAsync(zaakTypeUrl, expand));
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeInformatieObjectTypeResponseDto>>> GetZaakTypeInformatieObjectTypenAsync(
         Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters parameters,
