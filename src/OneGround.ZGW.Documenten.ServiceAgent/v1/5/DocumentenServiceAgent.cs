@@ -28,6 +28,18 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         Client.DefaultRequestHeaders.Add("Api-Version", "1.5");
     }
 
+    public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(
+        string enkelvoudigInformatieObjectUrl
+    )
+    {
+        if (!EnsureValidResource(ServiceRoleName.DRC, enkelvoudigInformatieObjectUrl, "enkelvoudiginformatieobjecten", out var errorResponse))
+            return new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(errorResponse);
+
+        Logger.LogDebug("Query EnkelvoudigInformatieObject {enkelvoudigInformatieObjectUrl}....", enkelvoudigInformatieObjectUrl);
+
+        return await GetAsync<EnkelvoudigInformatieObjectResponseDto>(new Uri(enkelvoudigInformatieObjectUrl));
+    }
+
     public async Task<
         ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject, object expandedEnkelvoudigInformatieObject)>
     > GetEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl, string expand)

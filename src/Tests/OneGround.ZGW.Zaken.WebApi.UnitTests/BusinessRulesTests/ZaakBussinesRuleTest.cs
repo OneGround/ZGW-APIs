@@ -4,7 +4,7 @@ using Moq;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Documenten.ServiceAgent.v1;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Notificaties.ServiceAgent;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;

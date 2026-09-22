@@ -7,10 +7,10 @@ namespace OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
 
 public static class DocumentenServiceAgentExtensions
 {
-    public static void AddServiceAuthDocumentenServiceAgent_v1_5(this IServiceCollection services, IConfiguration configuration)
+    public static void AddDocumentenServiceAgent_v1_5(this IServiceCollection services, IConfiguration configuration)
     {
-        // Service-account authorized ServiceAgent like "oneground-09435039" (for system cross-API like add/deleting mirrored zrc/brc relations)
         services.AddServiceAgent<IDocumentenServiceAgent, DocumentenServiceAgent>(ServiceRoleName.DRC, configuration);
+        services.AddScoped<ICachedDocumentenServiceAgent, CachedDocumentServiceAgent>();
     }
 
     public static void AddUserAuthDocumentenServiceAgent_v1_5(this IServiceCollection services, IConfiguration configuration)

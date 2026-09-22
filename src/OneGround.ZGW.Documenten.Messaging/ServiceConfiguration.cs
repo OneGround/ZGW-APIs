@@ -18,7 +18,7 @@ using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Jobs;
 using OneGround.ZGW.Documenten.Messaging.Configuration;
-using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 
 namespace OneGround.ZGW.Documenten.Messaging;
@@ -56,7 +56,7 @@ public class ServiceConfiguration
 
         services.AddSingleton<DocumentenHangfireConnectionFactory>();
 
-        services.AddDocumentenServiceAgent(_configuration);
+        services.AddDocumentenServiceAgent_v1_7(_configuration);
         services.AddNotificatiesServiceAgent(_configuration);
 
         services.AddScoped<IAutorisatiesServiceAgent, AutorisatiesServiceAgent>();
