@@ -688,6 +688,82 @@ public class AuditDeltaGeneratorTests
     }
 
     [Fact]
+    public void GenerateDelta_WhenObjectArrayWithoutIdHasDuplicateItemsAdded_DoesNotThrowAndReturnsAdded()
+    {
+        // Arrange - reproduces FUND-2753: PATCH payload with two identical "activiteiten" entries
+        // (no "Id" property, so items hash-collide) must not throw ArgumentException on duplicate key.
+        var original = new { Items = new[] { new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" } } };
+        var current = new
+        {
+            Items = new[]
+            {
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+            },
+        };
+
+        // Act
+        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
+
+        // Assert
+        var arrayDelta = delta["Items"]?.AsObject();
+        Assert.NotNull(arrayDelta);
+        var added = arrayDelta["added"]?.AsArray();
+        Assert.NotNull(added);
+        Assert.Single(added);
+        Assert.Null(arrayDelta["removed"]);
+        Assert.Null(arrayDelta["updated"]);
+    }
+
+    [Fact]
+    public void GenerateDelta_WhenArrayItemHasExplicitNullId_DoesNotThrowAndFallsBackToHash()
+    {
+        // Arrange - an explicit "Id": null (nullable Id not yet assigned) must not NRE in GetIdOrHash;
+        // it should be treated like "no Id" and fall back to content hashing.
+        var original = new { Items = new[] { new { Id = (int?)null, Name = "Item1" } } };
+        var current = new { Items = new[] { new { Id = (int?)null, Name = "Item1" }, new { Id = (int?)null, Name = "Item2" } } };
+
+        // Act
+        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
+
+        // Assert
+        var arrayDelta = delta["Items"]?.AsObject();
+        Assert.NotNull(arrayDelta);
+        var added = arrayDelta["added"]?.AsArray();
+        Assert.NotNull(added);
+        Assert.Single(added);
+        Assert.Equal("Item2", added[0]?["Name"]?.GetValue<string>());
+    }
+
+    [Fact]
+    public void GenerateDelta_WhenObjectArrayWithoutIdHasOnlyDuplicateItemsBothSides_DoesNotThrowAndReturnsEmptyDelta()
+    {
+        // Arrange - same duplicate content on both sides must not throw and must yield no delta.
+        var original = new
+        {
+            Items = new[]
+            {
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+            },
+        };
+        var current = new
+        {
+            Items = new[]
+            {
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+                new { Code = "Parkeergarage", Naam = "Parkeergelegenheid" },
+            },
+        };
+
+        // Act
+        var delta = AuditDeltaGenerator.GenerateDelta(original, current);
+
+        // Assert
+        Assert.Empty(delta);
+    }
+
+    [Fact]
     public void GenerateDelta_WhenObjectArrayHasMixedIdAndNonId_HandlesCorrectly()
     {
         // Arrange
