@@ -8,6 +8,7 @@ using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
 
@@ -74,14 +75,16 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return GetPagedResponseAsync<ZaakTypeResponseDto>("/zaaktypen", parameters, page);
     }
 
-    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl)
+    public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null)
     {
         if (!EnsureValidResource(ServiceRoleName.ZTC, zaakTypeUrl, "zaaktypen", out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<ZaakTypeResponseDto>(errorResponse));
 
         Logger.LogDebug("ZaakType bevragen op '{zaakTypeUrl}'....", zaakTypeUrl);
 
-        return GetAsync<ZaakTypeResponseDto>(new Uri(zaakTypeUrl));
+        var url = new Uri(zaakTypeUrl).AddQueryParameter("expand", expand);
+
+        return GetAsync<ZaakTypeResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl)
@@ -94,14 +97,16 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return GetAsync<RolTypeResponseDto>(new Uri(rolTypeUrl));
     }
 
-    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl)
+    public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null)
     {
         if (!EnsureValidResource(ServiceRoleName.ZTC, besluitTypeUrl, "besluittypen", out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<BesluitTypeResponseDto>(errorResponse));
 
         Logger.LogDebug("BesluitType bevragen op '{besluitTypeUrl}'....", besluitTypeUrl);
 
-        return GetAsync<BesluitTypeResponseDto>(new Uri(besluitTypeUrl));
+        var url = new Uri(besluitTypeUrl).AddQueryParameter("expand", expand);
+
+        return GetAsync<BesluitTypeResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl)
@@ -124,14 +129,19 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return GetAsync<ResultaatTypeResponseDto>(new Uri(resultaatTypeUrl));
     }
 
-    public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(string informatieObjectTypeUrl)
+    public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
+        string informatieObjectTypeUrl,
+        string expand = null
+    )
     {
         if (!EnsureValidResource(ServiceRoleName.ZTC, informatieObjectTypeUrl, "informatieobjecttypen", out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<InformatieObjectTypeResponseDto>(errorResponse));
 
         Logger.LogDebug("InformatieObjectType bevragen op '{informatieObjectTypeUrl}'....", informatieObjectTypeUrl);
 
-        return GetAsync<InformatieObjectTypeResponseDto>(new Uri(informatieObjectTypeUrl));
+        var url = new Uri(informatieObjectTypeUrl).AddQueryParameter("expand", expand);
+
+        return GetAsync<InformatieObjectTypeResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<PagedResponse<InformatieObjectTypeResponseDto>>> GetInformatieObjectTypenAsync(

@@ -3,25 +3,13 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 
-public class GetAllBesluitTypenQueryParameters : QueryParameters, IExpandParameter
+public class GetAllInformatieObjectTypenQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
-    /// URL-referentie naar de CATALOGUS waartoe dit BESLUITTYPE behoort.
+    /// URL-referentie naar de CATALOGUS waartoe dit INFORMATIEOBJECTTYPE behoort.
     /// </summary>
     [FromQuery(Name = "catalogus")]
     public string Catalogus { get; set; }
-
-    /// <summary>
-    /// ZAAKTYPE met ZAAKen die relevant kunnen zijn voor dit BESLUITTYPE.
-    /// </summary>
-    [FromQuery(Name = "zaaktypen")]
-    public string ZaakType { get; set; }
-
-    /// <summary>
-    /// Het INFORMATIEOBJECTTYPE van informatieobjecten waarin besluiten van dit BESLUITTYPE worden vastgelegd.
-    /// </summary>
-    [FromQuery(Name = "informatieobjecttypen")]
-    public string InformatieObjectType { get; set; }
 
     /// <summary>
     /// filter objects depending on their concept status:
@@ -33,16 +21,16 @@ public class GetAllBesluitTypenQueryParameters : QueryParameters, IExpandParamet
     public string Status { get; set; }
 
     /// <summary>
-    /// Omschrijving van de aard van BESLUITen van het BESLUITTYPE.
-    /// </summary>
-    [FromQuery(Name = "omschrijving")]
-    public string Omschrijving { get; set; }
-
-    /// <summary>
     /// Filter objecten op hun geldigheids datum.
     /// </summary>
     [FromQuery(Name = "datumGeldigheid")]
     public string DatumGeldigheid { get; set; }
+
+    /// <summary>
+    /// Omschrijving van de aard van informatieobjecten van dit INFORMATIEOBJECTTYPE.
+    /// </summary>
+    [FromQuery(Name = "omschrijving")]
+    public string Omschrijving { get; set; }
 
     /// <summary>
     /// Expand het respons met sub-types.

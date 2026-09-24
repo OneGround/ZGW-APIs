@@ -12,7 +12,7 @@ public class InformatieObjectTypeResponseDto : InformatieObjectTypeDto, IExpanda
     [JsonProperty("concept", Order = 10)]
     public bool Concept { get; set; }
 
-    // Note: This should later be moved to v1.3.3 (this is done to get expands working in DRC 1.7 and ZRC 1.7)
+    // Note: This field is valid for >= v1.3
     [JsonProperty("_expand", NullValueHandling = NullValueHandling.Ignore, Order = ExpandConstants.OrderLast)]
     public Dictionary<string, object> Expand { get; set; }
 }
