@@ -20,10 +20,10 @@ public interface ICatalogiServiceAgent
     Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request);
 
     // BesluitType
-    Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl);
+    Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null);
 
     // ZaakType
-    Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl);
+    Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null);
     Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
         Contracts.v1.Queries.GetAllZaakTypenQueryParameters parameters,
         int page = 1
@@ -40,7 +40,10 @@ public interface ICatalogiServiceAgent
     Task<ServiceAgentResponse<PagedResponse<RolTypeResponseDto>>> GetRolTypenAsync(GetAllRolTypenQueryParameters parameters, int page = 1);
 
     // InformatieObjectType
-    Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(string informatieObjectTypeUrl);
+    Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
+        string informatieObjectTypeUrl,
+        string expand = null
+    );
     Task<ServiceAgentResponse<PagedResponse<InformatieObjectTypeResponseDto>>> GetInformatieObjectTypenAsync(
         Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters parameters,
         int page = 1

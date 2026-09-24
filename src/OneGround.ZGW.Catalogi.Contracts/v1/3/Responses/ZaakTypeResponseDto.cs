@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
+using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 
-public class ZaakTypeResponseDto : ZaakTypeDto
+public class ZaakTypeResponseDto : ZaakTypeDto, IExpandable
 {
     [JsonProperty("url", Order = 1)]
     public string Url { get; set; }
@@ -29,4 +29,8 @@ public class ZaakTypeResponseDto : ZaakTypeDto
 
     [JsonProperty("concept", Order = 45)]
     public bool Concept { get; set; }
+
+    // Note: This field is valid for >= v1.3
+    [JsonProperty("_expand", NullValueHandling = NullValueHandling.Ignore, Order = ExpandConstants.OrderLast)]
+    public Dictionary<string, object> Expand { get; set; }
 }

@@ -91,36 +91,37 @@ public static class AuditDeltaGenerator
 
         if (hasObjects)
         {
-            var originalDict = original.OfType<JsonObject>().ToDictionary(GetIdOrHash);
+            // Group instead of a straight ToDictionary: items without an "Id" fall back to a full-content
+            // hash as key (see GetIdOrHash), so duplicate/identical objects in the array (a valid PATCH
+            // payload, e.g. two identical "activiteiten" entries) share a key and must not throw on insert.
+            var originalGroups = original.OfType<JsonObject>().GroupBy(GetIdOrHash).ToDictionary(g => g.Key, g => g.ToList());
+            var currentGroups = current.OfType<JsonObject>().GroupBy(GetIdOrHash).ToDictionary(g => g.Key, g => g.ToList());
 
-            var currentDict = current.OfType<JsonObject>().ToDictionary(GetIdOrHash);
-
-            foreach (var key in originalDict.Keys)
+            foreach (var key in originalGroups.Keys.Union(currentGroups.Keys))
             {
-                if (!currentDict.ContainsKey(key))
-                    removed.Add(originalDict[key].DeepClone());
-            }
+                var originalItems = originalGroups.TryGetValue(key, out var oItems) ? oItems : new List<JsonObject>();
+                var currentItems = currentGroups.TryGetValue(key, out var cItems) ? cItems : new List<JsonObject>();
 
-            foreach (var key in currentDict.Keys)
-            {
-                if (!originalDict.ContainsKey(key))
-                    added.Add(currentDict[key].DeepClone());
-            }
+                var pairCount = Math.Min(originalItems.Count, currentItems.Count);
 
-            foreach (var key in originalDict.Keys)
-            {
-                if (!currentDict.ContainsKey(key))
-                    continue;
-
-                var delta = CompareObjects(originalDict[key], currentDict[key], propertiesUsingCurrentValue);
-
-                if (delta.Count > 0)
+                for (int i = 0; i < pairCount; i++)
                 {
-                    if (currentDict[key].TryGetPropertyValue("Id", out var id))
-                        delta["Id"] = id!.DeepClone();
+                    var delta = CompareObjects(originalItems[i], currentItems[i], propertiesUsingCurrentValue);
 
-                    updated.Add(delta);
+                    if (delta.Count > 0)
+                    {
+                        if (currentItems[i].TryGetPropertyValue("Id", out var id))
+                            delta["Id"] = id!.DeepClone();
+
+                        updated.Add(delta);
+                    }
                 }
+
+                for (int i = pairCount; i < originalItems.Count; i++)
+                    removed.Add(originalItems[i].DeepClone());
+
+                for (int i = pairCount; i < currentItems.Count; i++)
+                    added.Add(currentItems[i].DeepClone());
             }
         }
         else
@@ -175,8 +176,8 @@ public static class AuditDeltaGenerator
 
     private static string GetIdOrHash(JsonObject obj)
     {
-        if (obj.TryGetPropertyValue("Id", out var id))
-            return id!.ToJsonString();
+        if (obj.TryGetPropertyValue("Id", out var id) && id != null)
+            return id.ToJsonString();
 
         return obj.ToJsonString();
     }

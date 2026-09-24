@@ -1,6 +1,6 @@
 using System;
 
-namespace OneGround.ZGW.Common.Web.Expands;
+namespace OneGround.ZGW.Common.ServiceAgent.Expands;
 
 public sealed class ExpandExternalServiceException : Exception
 {
