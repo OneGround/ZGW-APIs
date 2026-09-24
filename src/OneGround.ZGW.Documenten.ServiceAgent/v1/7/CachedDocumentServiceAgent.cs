@@ -15,20 +15,27 @@ namespace OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
 {
     private readonly IDocumentenServiceAgent _agent;
-    private readonly ConcurrentDictionary<string, ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> _cachedEnkelvoudigInformatieObjectUrl = new();
+    private readonly ConcurrentDictionary<
+        string,
+        ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>
+    > _cachedEnkelvoudigInformatieObjectUrl = new();
 
     public CachedDocumentServiceAgent(IDocumentenServiceAgent agent)
     {
         _agent = agent;
     }
 
-    public Task<ServiceAgentResponse<EnkelvoudigInformatieObjectCreateResponseDto>> AddEnkelvoudigInformatieObjectAsync(EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObject)
+    public Task<ServiceAgentResponse<EnkelvoudigInformatieObjectCreateResponseDto>> AddEnkelvoudigInformatieObjectAsync(
+        EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObject
+    )
     {
         // Note: Pass through agent (so no cache)
         return _agent.AddEnkelvoudigInformatieObjectAsync(enkelvoudigInformatieObject);
     }
 
-    public Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject)
+    public Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
+        Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject
+    )
     {
         // Note: Pass through agent (so no cache)
         return _agent.AddObjectInformatieObjectAsync(objectInformatieObject);
@@ -40,7 +47,10 @@ class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
         return _agent.GetEnkelvoudigInformatieObjectAsync(enkelvoudigInformatieObjectId);
     }
 
-    public Task<ServiceAgentResponse<Contracts.v1._1.Responses.BestandsDeelResponseDto>> AddBestandsdeelAsync(string bestandsdeelUrl, MultipartFormDataContent multipartFormDataContent)
+    public Task<ServiceAgentResponse<Contracts.v1._1.Responses.BestandsDeelResponseDto>> AddBestandsdeelAsync(
+        string bestandsdeelUrl,
+        MultipartFormDataContent multipartFormDataContent
+    )
     {
         // Note: Pass through agent (so no cache)
         return _agent.AddBestandsdeelAsync(bestandsdeelUrl, multipartFormDataContent);
@@ -64,7 +74,10 @@ class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
         return _agent.DeleteObjectInformatieObjectByUrlAsync(objectInformatieObjectUrl);
     }
 
-    public Task<ServiceAgentResponse<Stream>> DownloadEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl, int? version = null)
+    public Task<ServiceAgentResponse<Stream>> DownloadEnkelvoudigInformatieObjectByUrlAsync(
+        string enkelvoudigInformatieObjectUrl,
+        int? version = null
+    )
     {
         // Note: Pass through agent (so no cache)
         return _agent.DownloadEnkelvoudigInformatieObjectByUrlAsync(enkelvoudigInformatieObjectUrl, version);
@@ -76,7 +89,9 @@ class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
         return _agent.GetAuditTrailRegelsAsync(enkelvoudigInformatieObjectUrl);
     }
 
-    public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl)
+    public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(
+        string enkelvoudigInformatieObjectUrl
+    )
     {
         if (_cachedEnkelvoudigInformatieObjectUrl.TryGetValue(enkelvoudigInformatieObjectUrl, out var cachedEnkelvoudigInformatieObject))
         {
@@ -92,20 +107,27 @@ class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
 
         return result;
     }
- 
-    public Task<ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject, object expandedEnkelvoudigInformatieObject)>> GetEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl, string expand)
+
+    public Task<
+        ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject, object expandedEnkelvoudigInformatieObject)>
+    > GetEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl, string expand)
     {
         // Note: Pass through agent (so no cache)
         return _agent.GetEnkelvoudigInformatieObjectByUrlAsync(enkelvoudigInformatieObjectUrl, expand);
     }
 
-    public Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectsByInformatieObjectAndObjectAsync(string informatieObject, string @object)
+    public Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectsByInformatieObjectAndObjectAsync(
+        string informatieObject,
+        string @object
+    )
     {
         // Note: Pass through agent for now (so no cache yet due to too many memory resources kept in cache; or limit amount of cache-entries)
         return _agent.GetObjectInformatieObjectsByInformatieObjectAndObjectAsync(informatieObject, @object);
     }
 
-    public Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectenAsync(GetAllObjectInformatieObjectenQueryParameters parameters)
+    public Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectenAsync(
+        GetAllObjectInformatieObjectenQueryParameters parameters
+    )
     {
         // Note: Pass through agent (so no cache)
         return _agent.GetObjectInformatieObjectenAsync(parameters);

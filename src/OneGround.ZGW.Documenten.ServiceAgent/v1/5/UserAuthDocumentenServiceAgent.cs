@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using OneGround.ZGW.Common.Services;
 
 namespace OneGround.ZGW.Documenten.ServiceAgent.v1._5;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection and registration mechanism instead.")]
 public class UserAuthDocumentenServiceAgent : DocumentenServiceAgent, IUserAuthDocumentenServiceAgent
 {
     public UserAuthDocumentenServiceAgent(
