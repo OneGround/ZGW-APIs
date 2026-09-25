@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -35,6 +36,7 @@ using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using OneGround.ZGW.Zaken.Web.Expands.v1._5;
+using OneGround.ZGW.Zaken.Web.Expands.v1._7;
 using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.Web.Handlers;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
@@ -107,7 +109,11 @@ public class Startup
         services.AddBesluitenServiceAgent(Configuration);
 
         // Expanders support _expand in responses (>= v1.5)
-        services.AddExpandables();
+        services.AddExpandables(); // Note: Legacy Expand Engine v1.5
+        services.AddZakenAPIExpands(); // Note: New Expand Engine v1.7
+        services.AddZakenAPIFieldsValidators(); // Note: New field-selection (fields) v1.7
+
+        services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
         services.AddMassTransit(x =>
         {

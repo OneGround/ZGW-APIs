@@ -23,5 +23,6 @@ public static class QueryAndSearchParameterValidationsExtensions
         // Register the body parameter validation filters globally for v1.0 .. v1.x (HTTP POST /_zoek)
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1.Requests.ZaakSearchRequestDto>>();
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1._5.Requests.ZaakSearchRequestDto>>();
+        services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1._7.Requests.ZaakSearchRequestDto>>();
     }
 }
