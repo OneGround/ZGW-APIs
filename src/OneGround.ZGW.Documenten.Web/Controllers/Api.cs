@@ -5,7 +5,6 @@ namespace OneGround.ZGW.Documenten.Web.Controllers;
 
 public static class Api
 {
-    public const string LatestVersion_1_0 = "1.0.1";
     public const string LatestVersion_1_1 = "1.1.0";
     public const string LatestVersion_1_5 = "1.5.0";
     public const string LatestVersion_1_7 = "1.7.0";
@@ -17,8 +16,6 @@ public class ApiMetaData : IApiMetaData
     {
         get
         {
-            yield return "1.0.0";
-            yield return "1.0.1";
             yield return "1.1.0";
             yield return "1.5.0";
             yield return "1.7.0";

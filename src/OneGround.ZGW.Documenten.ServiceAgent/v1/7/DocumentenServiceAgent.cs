@@ -5,15 +5,17 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
-using OneGround.ZGW.Documenten.Contracts.v1.Requests;
-using OneGround.ZGW.Documenten.Contracts.v1.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 
-namespace OneGround.ZGW.Documenten.ServiceAgent.v1;
+namespace OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 
 public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, IDocumentenServiceAgent
 {
@@ -24,7 +26,10 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         IServiceAgentResponseBuilder responseBuilder,
         IConfiguration configuration
     )
-        : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.DRC) { }
+        : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.DRC, "v1")
+    {
+        Client.DefaultRequestHeaders.Add("Api-Version", "1.7");
+    }
 
     public Task<ServiceAgentResponse<EnkelvoudigInformatieObjectCreateResponseDto>> AddEnkelvoudigInformatieObjectAsync(
         EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObject
@@ -51,8 +56,15 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         return await GetAsync<IEnumerable<ObjectInformatieObjectResponseDto>>(url);
     }
 
+    public async Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectenAsync(
+        GetAllObjectInformatieObjectenQueryParameters parameters
+    )
+    {
+        return await GetAsync<ObjectInformatieObjectResponseDto>("/objectinformatieobjecten", parameters);
+    }
+
     public Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
-        ObjectInformatieObjectRequestDto objectInformatieObject
+        Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject
     )
     {
         ArgumentNullException.ThrowIfNull(objectInformatieObject);
@@ -61,7 +73,7 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
 
         var url = new Uri("/objectinformatieobjecten", UriKind.Relative);
 
-        return PostAsync<ObjectInformatieObjectRequestDto, ObjectInformatieObjectResponseDto>(url, objectInformatieObject);
+        return PostAsync<Contracts.v1.Requests.ObjectInformatieObjectRequestDto, ObjectInformatieObjectResponseDto>(url, objectInformatieObject);
     }
 
     public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(
@@ -74,6 +86,75 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         Logger.LogDebug("Query EnkelvoudigInformatieObject {enkelvoudigInformatieObjectUrl}....", enkelvoudigInformatieObjectUrl);
 
         return await GetAsync<EnkelvoudigInformatieObjectResponseDto>(new Uri(enkelvoudigInformatieObjectUrl));
+    }
+
+    public async Task<
+        ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject, object expandedEnkelvoudigInformatieObject)>
+    > GetEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl, string expand)
+    {
+        if (!EnsureValidResource(ServiceRoleName.DRC, enkelvoudigInformatieObjectUrl, "enkelvoudiginformatieobjecten", out var errorResponse))
+            return new ServiceAgentResponse<(
+                EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject,
+                object expandedEnkelvoudigInformatieObject
+            )>(errorResponse);
+
+        Logger.LogDebug("EnkelvoudigInformatieObject bevragen op '{enkelvoudigInformatieObjectUrl}'....", enkelvoudigInformatieObjectUrl);
+
+        var url = new Uri(enkelvoudigInformatieObjectUrl);
+
+        if (!string.IsNullOrEmpty(expand))
+        {
+            var result = await GetAsync<object>(url.AddQueryParameter("expand", expand));
+            if (!result.Success)
+            {
+                return new ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto, object)>(result.Error, null);
+            }
+            var enkelvoudiginformatieobjectBase = JsonConvert.DeserializeObject<EnkelvoudigInformatieObjectResponseDto>(result.Response.ToString());
+
+            return new ServiceAgentResponse<(
+                EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject,
+                object expandedEnkelvoudigInformatieObject
+            )>((enkelvoudiginformatieobjectBase, result.Response));
+        }
+        else
+        {
+            var result = await GetAsync<EnkelvoudigInformatieObjectResponseDto>(url);
+            if (!result.Success)
+            {
+                return new ServiceAgentResponse<(EnkelvoudigInformatieObjectResponseDto, object)>(result.Error, null);
+            }
+            return new ServiceAgentResponse<(
+                EnkelvoudigInformatieObjectResponseDto enkelvoudigInformatieObject,
+                object expandedEnkelvoudigInformatieObject
+            )>((result.Response, result.Response));
+        }
+    }
+
+    public Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectAsync(Guid enkelvoudigInformatieObjectId)
+    {
+        if (enkelvoudigInformatieObjectId == Guid.Empty)
+            throw new ArgumentNullException(nameof(enkelvoudigInformatieObjectId));
+
+        Logger.LogDebug("Getting document by id: {enkelvoudigInformatieObjectId}", enkelvoudigInformatieObjectId);
+
+        var url = new Uri($"/enkelvoudiginformatieobjecten/{enkelvoudigInformatieObjectId}", UriKind.Relative);
+
+        return GetAsync<EnkelvoudigInformatieObjectResponseDto>(url);
+    }
+
+    public async Task<ServiceAgentResponse<Contracts.v1._1.Responses.BestandsDeelResponseDto>> AddBestandsdeelAsync(
+        string bestandsdeelUrl,
+        MultipartFormDataContent multipartFormDataContent
+    )
+    {
+        return await PutAsync<Contracts.v1._1.Responses.BestandsDeelResponseDto>(new Uri(bestandsdeelUrl), multipartFormDataContent);
+    }
+
+    public async Task<ServiceAgentResponse> UnlockAsync(string enkelvoudigInformatieObjectUrl)
+    {
+        var unlockEnkelvoudigInformatieObjectUrl = enkelvoudigInformatieObjectUrl + "/unlock";
+
+        return await PostAsync(new Uri(unlockEnkelvoudigInformatieObjectUrl));
     }
 
     public async Task<ServiceAgentResponse> DeleteEnkelvoudigInformatieObjectByUrlAsync(string enkelvoudigInformatieObjectUrl)

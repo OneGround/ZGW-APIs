@@ -6,7 +6,7 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Documenten.Contracts.v1.Requests;
 using OneGround.ZGW.Documenten.Jobs.Extensions;
-using OneGround.ZGW.Documenten.ServiceAgent.v1;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 
 namespace OneGround.ZGW.Documenten.Jobs.InformatieObjecten;
 

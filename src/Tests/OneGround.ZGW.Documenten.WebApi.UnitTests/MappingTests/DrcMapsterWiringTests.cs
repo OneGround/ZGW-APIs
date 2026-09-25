@@ -8,7 +8,7 @@ using Moq;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Documenten.Contracts.v1.Responses;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web;
 using OneGround.ZGW.Documenten.Web.MappingProfiles.v1;
@@ -33,7 +33,12 @@ public class DrcMapsterWiringTests
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
         var latestInformatieObject = new EnkelvoudigInformatieObject { Id = Guid.NewGuid(), InformatieObjectType = "https://example.test/iot" };
-        var latestVersion = new EnkelvoudigInformatieObjectVersie { Id = Guid.NewGuid(), LatestInformatieObject = latestInformatieObject };
+        var latestVersion = new EnkelvoudigInformatieObjectVersie
+        {
+            Id = Guid.NewGuid(),
+            LatestInformatieObject = latestInformatieObject,
+            BestandsDelen = [],
+        };
         var source = new EnkelvoudigInformatieObject
         {
             Id = Guid.NewGuid(),

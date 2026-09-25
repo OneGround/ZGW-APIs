@@ -14,6 +14,7 @@ using OneGround.ZGW.Documenten.Contracts.v1.Queries;
 
 namespace OneGround.ZGW.Documenten.ServiceAgent.v1._5;
 
+[Obsolete("This class is obsolete. Use the new expand/field-selection and registration mechanism instead.")]
 public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, IDocumentenServiceAgent
 {
     public DocumentenServiceAgent(
@@ -26,6 +27,18 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.DRC, "v1")
     {
         Client.DefaultRequestHeaders.Add("Api-Version", "1.5");
+    }
+
+    public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(
+        string enkelvoudigInformatieObjectUrl
+    )
+    {
+        if (!EnsureValidResource(ServiceRoleName.DRC, enkelvoudigInformatieObjectUrl, "enkelvoudiginformatieobjecten", out var errorResponse))
+            return new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(errorResponse);
+
+        Logger.LogDebug("Query EnkelvoudigInformatieObject {enkelvoudigInformatieObjectUrl}....", enkelvoudigInformatieObjectUrl);
+
+        return await GetAsync<EnkelvoudigInformatieObjectResponseDto>(new Uri(enkelvoudigInformatieObjectUrl));
     }
 
     public async Task<
