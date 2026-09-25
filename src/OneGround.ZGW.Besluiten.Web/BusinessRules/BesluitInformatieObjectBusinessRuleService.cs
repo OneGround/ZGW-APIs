@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
-using OneGround.ZGW.Documenten.ServiceAgent.v1;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 
 namespace OneGround.ZGW.Besluiten.Web.BusinessRules;
 

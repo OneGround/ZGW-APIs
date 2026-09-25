@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Authentication;
 using OneGround.ZGW.Common.ServiceAgent.Extensions;
 using OneGround.ZGW.Documenten.Jobs.Extensions;
-using OneGround.ZGW.Documenten.ServiceAgent.v1;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 
 namespace OneGround.ZGW.Documenten.Jobs.InformatieObjecten;
 

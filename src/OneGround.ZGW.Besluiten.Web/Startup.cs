@@ -31,8 +31,8 @@ using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions;
-using OneGround.ZGW.Documenten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._5.Extensions; // For ZRC/BRC v1.5 expands only
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7.Extensions;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 
@@ -88,9 +88,8 @@ public class Startup
         services.AddBesluitenServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
-        services.AddDocumentenServiceAgent(Configuration);
-        services.AddServiceAuthDocumentenServiceAgent_v1_5(Configuration);
-        services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration);
+        services.AddDocumentenServiceAgent_v1_7(Configuration);
+        services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
 
         // Expanders support _expand in responses
         services.AddExpandables();

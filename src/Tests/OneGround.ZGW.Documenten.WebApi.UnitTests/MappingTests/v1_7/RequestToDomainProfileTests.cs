@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using MapsterMapper;
+using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Documenten.Contracts.v1;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Requests;
 using OneGround.ZGW.Documenten.DataModel;
@@ -64,6 +66,83 @@ public class RequestToDomainProfileTests : IDisposable
 
         Assert.Null(filter.Trefwoorden_In);
         Assert.Null(filter.Uuid_In);
+    }
+
+    /// <summary>
+    /// The comprehensive counterpart to v1.1's/v1.5's identically-named fact: every scalar and nested
+    /// member the create map carries onto EnkelvoudigInformatieObjectVersie in one request, including
+    /// the two members added to this DTO since 1.5 -- IsGereedVoorPublicatie and TonenAanInitiator --
+    /// which carry through on Mapster's name/type convention alone (no explicit .Map in the register).
+    /// </summary>
+    [Fact]
+    public void EnkelvoudigInformatieObjectCreateRequestDto_Maps_To_EnkelvoudigInformatieObjectVersie()
+    {
+        var value = new EnkelvoudigInformatieObjectCreateRequestDto
+        {
+            Identificatie = "DOC-2020-0000001",
+            Bronorganisatie = TestBronorganisatie,
+            CreatieDatum = "2020-11-12",
+            Titel = "My document",
+            Auteur = "somebody",
+            Formaat = "",
+            Taal = "eng",
+            Bestandsnaam = "document.pdf",
+            Bestandsomvang = 12345,
+            Inhoud = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCAuLi4=",
+            Link = "(no link)",
+            Beschrijving = "My description of the document",
+            OntvangstDatum = "2020-11-13",
+            VerzendDatum = "2020-11-14",
+            IndicatieGebruiksrecht = true,
+            Ondertekening = new OndertekeningDto { Soort = Soort.digitaal.ToString(), Datum = "2020-11-18" },
+            Integriteit = new IntegriteitDto
+            {
+                Algoritme = Algoritme.crc_32.ToString(),
+                Waarde = "123",
+                Datum = "2020-11-17",
+            },
+            InformatieObjectType = "https://some-informatieobjecttype",
+            Vertrouwelijkheidaanduiding = VertrouwelijkheidAanduiding.openbaar.ToString(),
+            Status = Status.definitief.ToString(),
+            Verschijningsvorm = "some-verschijningsvorm",
+            Trefwoorden = ["bouwtekening", "vergunning"],
+            IsGereedVoorPublicatie = true,
+            TonenAanInitiator = true,
+            InhoudIsVervallen = true,
+        };
+
+        var result = _mapper.Map<EnkelvoudigInformatieObjectVersie>(value);
+
+        Assert.Equal(value.Identificatie, result.Identificatie);
+        Assert.Equal(value.Bronorganisatie, result.Bronorganisatie);
+        Assert.Equal(value.CreatieDatum, result.CreatieDatum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(value.Titel, result.Titel);
+        Assert.Equal(value.Vertrouwelijkheidaanduiding, result.Vertrouwelijkheidaanduiding.ToString());
+        Assert.Equal(value.Auteur, result.Auteur);
+        Assert.Equal(value.Status, result.Status.ToString());
+        Assert.Equal(value.Formaat, result.Formaat);
+        Assert.Equal(value.Taal, result.Taal);
+        Assert.Equal(value.Bestandsnaam, result.Bestandsnaam);
+        Assert.Equal(value.Bestandsomvang, result.Bestandsomvang);
+        Assert.Equal(value.Inhoud, result.Inhoud);
+        Assert.Equal(value.Link, result.Link);
+        Assert.Equal(value.Beschrijving, result.Beschrijving);
+        Assert.Equal(value.IndicatieGebruiksrecht, result.InformatieObject.IndicatieGebruiksrecht);
+        Assert.Equal(value.OntvangstDatum, result.OntvangstDatum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(value.VerzendDatum, result.VerzendDatum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(value.Ondertekening.Datum, result.Ondertekening_Datum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(value.Ondertekening.Soort, result.Ondertekening_Soort.ToString());
+        Assert.Equal(value.Integriteit.Algoritme, result.Integriteit_Algoritme.ToString());
+        Assert.Equal(value.Integriteit.Waarde, result.Integriteit_Waarde);
+        Assert.Equal(value.Integriteit.Datum, result.Integriteit_Datum.Value.ToString("yyyy-MM-dd"));
+        Assert.Equal(value.Verschijningsvorm, result.Verschijningsvorm);
+        Assert.Equal(value.Trefwoorden, result.Trefwoorden);
+        Assert.Equal(value.IsGereedVoorPublicatie, result.IsGereedVoorPublicatie);
+        Assert.Equal(value.TonenAanInitiator, result.TonenAanInitiator);
+        Assert.Equal(value.InhoudIsVervallen, result.InhoudIsVervallen);
+        // Create-map InformatieObject: InformatieObjectType is TrimEnd('/')'d - source has no trailing slash here,
+        // dedicated trim-behavior test above proves the trimming itself.
+        Assert.Equal(value.InformatieObjectType, result.InformatieObject.InformatieObjectType);
     }
 
     /// <summary>
