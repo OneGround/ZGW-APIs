@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 // silent validation gap if a future v1._7 input type were ever added without its own validator.
 // Note: Must be fully qualified -- OneGround.ZGW.Zaken.Contracts.v1 (the enclosing namespace) has
 // its own older ZaakDto, which would otherwise silently shadow the "using"-imported v1._5 one.
-public class ZaakResponseDto : OneGround.ZGW.Zaken.Contracts.v1._5.ZaakDto, IExpandable
+public class ZaakResponseDto : _5.ZaakDto, IExpandable
 {
     [JsonProperty("url", Order = 1)]
     public string Url { get; set; }

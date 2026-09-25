@@ -4,7 +4,6 @@ using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Models.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._7;
 
@@ -17,7 +16,7 @@ public class RequestToDomainRegister : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config
-            .NewConfig<ZaakSearchRequestDto, GetAllZakenFilter>()
+            .NewConfig<ZaakSearchRequestDto, Models.v1._5.GetAllZakenFilter>()
             .Map(dest => dest.Archiefactiedatum, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum))
             .Map(dest => dest.Archiefactiedatum__gt, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__gt))
             .Map(dest => dest.Archiefactiedatum__lt, src => ProfileHelper.DateFromStringOptional(src.Archiefactiedatum__lt))

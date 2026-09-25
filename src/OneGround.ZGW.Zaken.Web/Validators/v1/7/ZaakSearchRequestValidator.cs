@@ -5,7 +5,6 @@ using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.DataModel;
-using OneGround.ZGW.Zaken.Web.Validators.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Validators.v1._7;
 
@@ -35,7 +34,7 @@ public class ZaakSearchRequestValidator : ZGWValidator<ZaakSearchRequestDto>
             );
 
         // Add validation for the common search fields
-        Include(new ZakenCommonSearchableFields());
+        Include(new _5.ZakenCommonSearchableFields());
 
         CascadeRuleFor(r => r.ZaakGeometry)
             .ChildRules(v =>
