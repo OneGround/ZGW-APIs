@@ -50,5 +50,17 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.OpdrachtgevendeOrganisatie, src => ProfileHelper.EmptyWhenNull(src.OpdrachtgevendeOrganisatie))
             .Map(dest => dest.Processobjectaard, src => ProfileHelper.EmptyWhenNull(src.Processobjectaard))
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakStatus->v1._7.StatusResponseDto is genuinely new for v1.7 -- same reasoning
+        // as Zaak->ZaakResponseDto above: it exists so the response DTO can implement IExpandable.
+        // Field mapping mirrors v1._5.DomainToResponseRegister's ZaakStatus->ZaakStatusGetResponseDto config.
+        config
+            .NewConfig<ZaakStatus, StatusResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Map(dest => dest.DatumStatusGezet, src => ProfileHelper.StringDateFromDateTime(src.DatumStatusGezet, true))
+            .Map(dest => dest.ZaakInformatieObjecten, src => MapsterUrlResolver.ResolveUrls(src.Zaak.ZaakInformatieObjecten))
+            .Ignore(dest => dest.Expand);
     }
 }

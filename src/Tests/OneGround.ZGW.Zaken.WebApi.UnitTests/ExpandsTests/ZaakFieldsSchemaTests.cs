@@ -8,7 +8,10 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ExpandsTests;
 
 public class ZaakFieldsSchemaTests
 {
-    private readonly FieldsValidator<ZaakResponseDto> _validator = new(ZaakFieldsSchema.Build(), ["zaaktype", "zaaktype.catalogus"]);
+    private readonly FieldsValidator<ZaakResponseDto> _validator = new(
+        ZaakFieldsSchema.Build(),
+        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype"]
+    );
 
     [Fact]
     public void Validate_ZaaktypeCatalogusNestedSelection_IsValid()
@@ -33,11 +36,31 @@ public class ZaakFieldsSchemaTests
     [Fact]
     public void Validate_NonExpandableSubEntity_IsInvalid()
     {
-        // "status" is not registered as an expand resolver/entity for ZaakResponseDto yet (only
-        // zaaktype/zaaktype.catalogus are, in this increment), so it must be rejected here too.
-        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"status": ["url"]}]"""));
+        // "resultaat" is not registered as an expand resolver/entity for ZaakResponseDto yet (only
+        // zaaktype/zaaktype.catalogus/status are, in this increment), so it must be rejected here too.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"resultaat": ["url"]}]"""));
 
         Assert.Null(error);
-        Assert.Equal(["status"], _validator.Validate(selection));
+        Assert.Equal(["resultaat"], _validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_StatusFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"status": ["url", "datumStatusGezet"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_StatusStatustypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"status": ["url", {"statustype": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
     }
 }

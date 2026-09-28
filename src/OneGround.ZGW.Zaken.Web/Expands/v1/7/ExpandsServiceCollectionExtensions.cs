@@ -26,6 +26,10 @@ public static class ExpandsServiceCollectionExtensions
         // Expand resolvers -- one per expand path, registered as IExpandResolver<ZaakResponseDto>
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeCatalogusResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusResolver>();
+        // Note: reuses IGenericCache<StatusTypeResponseDto>, registered below by AddStatussenAPIExpands
+        // (both are called together in Startup.cs) -- see ZaakStatusStatusTypeResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusStatusTypeResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -37,5 +41,21 @@ public static class ExpandsServiceCollectionExtensions
         // rely on that, or it breaks the moment AddExpandables() is ever removed.
         services.AddScoped<IGenericCache<ZaakTypeResponseDto>, GenericCache<ZaakTypeResponseDto>>();
         services.AddScoped<IGenericCache<CatalogusResponseDto>, GenericCache<CatalogusResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the STATUS resource itself (GET /statussen, GET /statussen/{uuid}).
+    /// No <c>fields</c>/field-selection mechanism here -- unlike Zaken, the ZRC 1.7.0 spec doesn't add
+    /// one for statussen, only "expand".
+    /// </summary>
+    public static void AddStatussenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakResolver>();
+        services.AddScoped<IExpandResolver<StatusResponseDto>, StatusStatusTypeResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<StatusResponseDto>(sp.GetServices<IExpandResolver<StatusResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<StatusResponseDto>(sp.GetServices<IExpandResolver<StatusResponseDto>>()));
+
+        services.AddScoped<IGenericCache<StatusTypeResponseDto>, GenericCache<StatusTypeResponseDto>>();
     }
 }

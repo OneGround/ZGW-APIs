@@ -14,5 +14,7 @@ public static class ZaakFieldsSchema
         new FieldsSchemaBuilder()
             .Entity<ZaakResponseDto, ZaakTypeResponseDto>("zaaktype")
             .Entity<ZaakTypeResponseDto, CatalogusResponseDto>("catalogus")
+            .Entity<ZaakResponseDto, StatusResponseDto>("status")
+            .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
             .Build();
 }

@@ -1,6 +1,7 @@
 using System;
 using MapsterMapper;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Models.v1._5;
@@ -67,5 +68,37 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Empty(result.Archiefnominatie__in);
         Assert.NotNull(result.Uuid__in);
         Assert.Empty(result.Uuid__in);
+    }
+
+    // Discriminates that MappingProfiles.v1._7.RequestToDomainRegister also registers its own
+    // GetAllZaakStatussenQueryParameters->GetAllZaakStatussenFilter config for the v1._7 concrete
+    // type -- without it, Mapster's naive convention mapping calls bool.Parse on an empty string
+    // (a normal query-string value for an unset filter) and throws, instead of returning null the
+    // way the custom ProfileHelper.BooleanFromString(...) call does.
+    [Fact]
+    public void GetAllZaakStatussenQueryParameters_v1_7_with_empty_IndicatieLaatstGezetteStatus_Maps_To_null()
+    {
+        var source = new GetAllZaakStatussenQueryParameters { IndicatieLaatstGezetteStatus = "" };
+
+        var result = _mapper.Map<GetAllZaakStatussenFilter>(source);
+
+        Assert.Null(result.IndicatieLaatstGezetteStatus);
+    }
+
+    [Fact]
+    public void GetAllZaakStatussenQueryParameters_v1_7_Maps_To_GetAllZaakStatussenFilter()
+    {
+        var source = new GetAllZaakStatussenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            StatusType = "https://example.test/statustypen/1",
+            IndicatieLaatstGezetteStatus = "true",
+        };
+
+        var result = _mapper.Map<GetAllZaakStatussenFilter>(source);
+
+        Assert.Equal(source.Zaak, result.Zaak);
+        Assert.Equal(source.StatusType, result.StatusType);
+        Assert.True(result.IndicatieLaatstGezetteStatus);
     }
 }

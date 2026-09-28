@@ -2,6 +2,7 @@ using System;
 using Mapster;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.DataModel;
 
@@ -85,5 +86,12 @@ public class RequestToDomainRegister : IRegister
                 dest => dest.Rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie,
                 src => src.Rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie
             );
+
+        // Note: Same reasoning as ZaakSearchRequestDto above -- re-registers the v1._5
+        // GetAllZaakStatussenQueryParameters->GetAllZaakStatussenFilter mapping for the new (v1._7)
+        // concrete query-parameters type, since Mapster's NewConfig is keyed by concrete type pair.
+        config
+            .NewConfig<GetAllZaakStatussenQueryParameters, Models.v1._5.GetAllZaakStatussenFilter>()
+            .Map(dest => dest.IndicatieLaatstGezetteStatus, src => ProfileHelper.BooleanFromString(src.IndicatieLaatstGezetteStatus));
     }
 }

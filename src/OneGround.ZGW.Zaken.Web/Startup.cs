@@ -111,6 +111,7 @@ public class Startup
         services.AddExpandables(); // Note: Legacy Expand Engine v1.5
         services.AddZakenAPIExpands(); // Note: New Expand Engine v1.7
         services.AddZakenAPIFieldsValidators(); // Note: New field-selection (fields) v1.7
+        services.AddStatussenAPIExpands(); // Note: New Expand Engine v1.7 for the STATUS resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
