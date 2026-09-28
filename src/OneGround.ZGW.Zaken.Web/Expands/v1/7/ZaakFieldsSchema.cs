@@ -16,5 +16,7 @@ public static class ZaakFieldsSchema
             .Entity<ZaakTypeResponseDto, CatalogusResponseDto>("catalogus")
             .Entity<ZaakResponseDto, StatusResponseDto>("status")
             .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
+            .Entity<ZaakResponseDto, ResultaatResponseDto>("resultaat")
+            .Entity<ResultaatResponseDto, ResultaatTypeResponseDto>("resultaattype")
             .Build();
 }

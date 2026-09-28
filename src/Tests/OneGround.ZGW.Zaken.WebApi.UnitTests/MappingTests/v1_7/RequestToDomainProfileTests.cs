@@ -101,4 +101,24 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Equal(source.StatusType, result.StatusType);
         Assert.True(result.IndicatieLaatstGezetteStatus);
     }
+
+    // Discriminates that MappingProfiles.v1._7.RequestToDomainRegister also registers its own
+    // GetAllZaakResultatenQueryParameters->GetAllZaakResultatenFilter config for the v1._7 concrete
+    // type -- unlike the Status pair, no field needs a custom transform here, but the pair must
+    // still be registered explicitly (this is exactly the class of gap the missing Status
+    // registration fell into).
+    [Fact]
+    public void GetAllZaakResultatenQueryParameters_v1_7_Maps_To_GetAllZaakResultatenFilter()
+    {
+        var source = new GetAllZaakResultatenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            ResultaatType = "https://example.test/resultaattypen/1",
+        };
+
+        var result = _mapper.Map<OneGround.ZGW.Zaken.Web.Models.v1.GetAllZaakResultatenFilter>(source);
+
+        Assert.Equal(source.Zaak, result.Zaak);
+        Assert.Equal(source.ResultaatType, result.ResultaatType);
+    }
 }

@@ -93,5 +93,11 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllZaakStatussenQueryParameters, Models.v1._5.GetAllZaakStatussenFilter>()
             .Map(dest => dest.IndicatieLaatstGezetteStatus, src => ProfileHelper.BooleanFromString(src.IndicatieLaatstGezetteStatus));
+
+        // Note: Same reasoning -- re-registers the v1 GetAllZaakResultatenQueryParameters->
+        // GetAllZaakResultatenFilter mapping for the new (v1._7) concrete query-parameters type. No
+        // field needs a custom transform here (unlike the Status pair above), but the pair must
+        // still be registered explicitly, or it silently falls through to convention mapping.
+        config.NewConfig<GetAllZaakResultatenQueryParameters, Models.v1.GetAllZaakResultatenFilter>();
     }
 }

@@ -51,4 +51,27 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal([ZrcMapperTestHost.Resolved(zaak.ZaakInformatieObjecten[0])], result.ZaakInformatieObjecten);
         Assert.Null(result.Expand);
     }
+
+    [Fact]
+    public void ZaakResultaat_Maps_To_v1_7_ResultaatResponseDto()
+    {
+        var zaak = new Zaak { Id = Guid.NewGuid() };
+        var zaakResultaat = new ZaakResultaat
+        {
+            Id = Guid.NewGuid(),
+            Zaak = zaak,
+            ZaakId = zaak.Id,
+            ResultaatType = "https://catalogi.test/resultaattypen/1",
+            Toelichting = "Toelichting",
+        };
+
+        var result = _mapper.Map<ResultaatResponseDto>(zaakResultaat);
+
+        Assert.Equal(ZrcMapperTestHost.Resolved(zaakResultaat), result.Url);
+        Assert.Equal(zaakResultaat.Id.ToString(), result.Uuid);
+        Assert.Equal(ZrcMapperTestHost.Resolved(zaak), result.Zaak);
+        Assert.Equal(zaakResultaat.ResultaatType, result.ResultaatType);
+        Assert.Equal(zaakResultaat.Toelichting, result.Toelichting);
+        Assert.Null(result.Expand);
+    }
 }

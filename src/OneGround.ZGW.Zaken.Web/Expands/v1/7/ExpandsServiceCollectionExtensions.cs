@@ -30,6 +30,10 @@ public static class ExpandsServiceCollectionExtensions
         // Note: reuses IGenericCache<StatusTypeResponseDto>, registered below by AddStatussenAPIExpands
         // (both are called together in Startup.cs) -- see ZaakStatusStatusTypeResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusStatusTypeResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResolver>();
+        // Note: reuses IGenericCache<ResultaatTypeResponseDto>, registered below by
+        // AddResultatenAPIExpands (both are called together in Startup.cs).
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResultaatTypeResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -57,5 +61,21 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<StatusResponseDto>(sp.GetServices<IExpandResolver<StatusResponseDto>>()));
 
         services.AddScoped<IGenericCache<StatusTypeResponseDto>, GenericCache<StatusTypeResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the RESULTAAT resource itself (GET /resultaten, GET /resultaten/{uuid}).
+    /// No <c>fields</c>/field-selection mechanism here -- same reasoning as
+    /// <see cref="AddStatussenAPIExpands"/>.
+    /// </summary>
+    public static void AddResultatenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<ResultaatResponseDto>, ResultaatZaakResolver>();
+        services.AddScoped<IExpandResolver<ResultaatResponseDto>, ResultaatResultaatTypeResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ResultaatResponseDto>(sp.GetServices<IExpandResolver<ResultaatResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ResultaatResponseDto>(sp.GetServices<IExpandResolver<ResultaatResponseDto>>()));
+
+        services.AddScoped<IGenericCache<ResultaatTypeResponseDto>, GenericCache<ResultaatTypeResponseDto>>();
     }
 }

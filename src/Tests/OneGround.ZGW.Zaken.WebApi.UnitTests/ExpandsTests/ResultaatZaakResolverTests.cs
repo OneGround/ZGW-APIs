@@ -14,7 +14,7 @@ using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ExpandsTests;
 
-public class StatusZaakResolverTests
+public class ResultaatZaakResolverTests
 {
     private const string ZaakUrl = "https://zrc.test/zaken/11111111-1111-1111-1111-111111111111";
 
@@ -30,8 +30,8 @@ public class StatusZaakResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(zaak)).Returns(mappedZaak);
 
-        var resolver = new StatusZaakResolver(mediatorMock.Object, mapperMock.Object);
-        var entity = new StatusResponseDto { Zaak = ZaakUrl };
+        var resolver = new ResultaatZaakResolver(mediatorMock.Object, mapperMock.Object);
+        var entity = new ResultaatResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
 
@@ -46,8 +46,8 @@ public class StatusZaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.NotFound));
 
-        var resolver = new StatusZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
-        var entity = new StatusResponseDto { Zaak = ZaakUrl };
+        var resolver = new ResultaatZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var entity = new ResultaatResponseDto { Zaak = ZaakUrl };
 
         var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
             resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" })
@@ -65,8 +65,8 @@ public class StatusZaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.Forbidden));
 
-        var resolver = new StatusZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
-        var entity = new StatusResponseDto { Zaak = ZaakUrl };
+        var resolver = new ResultaatZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var entity = new ResultaatResponseDto { Zaak = ZaakUrl };
 
         var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
             resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" })
@@ -81,8 +81,8 @@ public class StatusZaakResolverTests
     {
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new StatusZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
-        var entity = new StatusResponseDto { Zaak = null };
+        var resolver = new ResultaatZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var entity = new ResultaatResponseDto { Zaak = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
 
@@ -93,7 +93,7 @@ public class StatusZaakResolverTests
     [Fact]
     public void Path_IsZaak_AndHasNoParent()
     {
-        var resolver = new StatusZaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>());
+        var resolver = new ResultaatZaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>());
 
         Assert.Equal("zaak", resolver.Path);
         Assert.Null(resolver.Parent);

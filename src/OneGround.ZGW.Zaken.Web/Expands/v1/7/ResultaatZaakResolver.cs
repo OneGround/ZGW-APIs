@@ -6,24 +6,23 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaak" expand path on a STATUS. Unlike <see cref="StatusStatusTypeResolver"/>
-/// (a remote ZTC lookup), the ZAAK lives in this same service, so this goes through the existing
-/// <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. Deliberately not cached and not
-/// batched across a list (see FUND-2456 design discussion) -- a local, indexed DB lookup is cheap
-/// enough per row that the added complexity isn't worth it yet. Mirrors Documenten's
-/// InformatieObjectResolver: a non-OK query result throws rather than resolving to null (see
-/// ZaakStatusResolver's remarks for why).
+/// Resolves the top-level "zaak" expand path on a RESULTAAT. Mirrors <see cref="StatusZaakResolver"/>:
+/// the ZAAK lives in this same service, so this goes through the existing <c>GetZaakQuery</c> via
+/// MediatR rather than a ServiceAgent, and is deliberately not cached or batched across a list.
+/// Mirrors Documenten's InformatieObjectResolver: a non-OK query result throws rather than
+/// resolving to null (see ZaakStatusResolver's remarks for why).
 /// </summary>
-public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
+public class ResultaatZaakResolver : IExpandResolver<ResultaatResponseDto>
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
 
-    public StatusZaakResolver(IMediator mediator, IMapper mapper)
+    public ResultaatZaakResolver(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
         _mapper = mapper;
@@ -33,7 +32,7 @@ public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
     public string Parent => null;
 
     public async Task<object> ResolveAsync(
-        StatusResponseDto entity,
+        ResultaatResponseDto entity,
         IReadOnlyDictionary<string, object> resolved,
         IReadOnlySet<string> requestedPaths
     )
@@ -43,7 +42,7 @@ public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
             return null;
         }
 
-        var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
+        var result = await _mediator.Send(new GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
 
         if (result.Status != QueryStatus.OK)
         {

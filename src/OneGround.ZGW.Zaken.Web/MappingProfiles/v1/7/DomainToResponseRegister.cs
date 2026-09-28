@@ -62,5 +62,15 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.DatumStatusGezet, src => ProfileHelper.StringDateFromDateTime(src.DatumStatusGezet, true))
             .Map(dest => dest.ZaakInformatieObjecten, src => MapsterUrlResolver.ResolveUrls(src.Zaak.ZaakInformatieObjecten))
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakResultaat->v1._7.ResultaatResponseDto is genuinely new for v1.7 -- same
+        // reasoning as above. Field mapping mirrors v1.DomainToResponseRegister's
+        // ZaakResultaat->ZaakResultaatResponseDto config.
+        config
+            .NewConfig<ZaakResultaat, ResultaatResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Ignore(dest => dest.Expand);
     }
 }

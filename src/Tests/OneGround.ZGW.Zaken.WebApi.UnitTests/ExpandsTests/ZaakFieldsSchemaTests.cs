@@ -10,7 +10,7 @@ public class ZaakFieldsSchemaTests
 {
     private readonly FieldsValidator<ZaakResponseDto> _validator = new(
         ZaakFieldsSchema.Build(),
-        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype"]
+        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype", "resultaat", "resultaat.resultaattype"]
     );
 
     [Fact]
@@ -36,12 +36,13 @@ public class ZaakFieldsSchemaTests
     [Fact]
     public void Validate_NonExpandableSubEntity_IsInvalid()
     {
-        // "resultaat" is not registered as an expand resolver/entity for ZaakResponseDto yet (only
-        // zaaktype/zaaktype.catalogus/status are, in this increment), so it must be rejected here too.
-        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"resultaat": ["url"]}]"""));
+        // "hoofdzaak" is not registered as an expand resolver/entity for ZaakResponseDto yet (only
+        // zaaktype/zaaktype.catalogus/status/resultaat and their nested types are, in this
+        // increment), so it must be rejected here too.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"hoofdzaak": ["url"]}]"""));
 
         Assert.Null(error);
-        Assert.Equal(["resultaat"], _validator.Validate(selection));
+        Assert.Equal(["hoofdzaak"], _validator.Validate(selection));
     }
 
     [Fact]
@@ -58,6 +59,26 @@ public class ZaakFieldsSchemaTests
     {
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse("""["identificatie", {"status": ["url", {"statustype": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ResultaatFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"resultaat": ["url", "toelichting"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ResultaatResultaattypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"resultaat": ["url", {"resultaattype": ["url"]}]}]""")
         );
 
         Assert.Null(error);
