@@ -5,6 +5,7 @@ using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -34,6 +35,9 @@ public static class ExpandsServiceCollectionExtensions
         // Note: reuses IGenericCache<ResultaatTypeResponseDto>, registered below by
         // AddResultatenAPIExpands (both are called together in Startup.cs).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResultaatTypeResolver>();
+        // Note: reuses ExpandEngine<RolResponseDto>, registered below by AddRollenAPIExpands (both
+        // are called together in Startup.cs) -- see ZaakRollenResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRollenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -77,5 +81,22 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<ResultaatResponseDto>(sp.GetServices<IExpandResolver<ResultaatResponseDto>>()));
 
         services.AddScoped<IGenericCache<ResultaatTypeResponseDto>, GenericCache<ResultaatTypeResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ROL resource itself (GET /rollen, GET /rollen/{uuid}). No <c>fields</c>
+    /// mechanism here -- same reasoning as <see cref="AddStatussenAPIExpands"/>. This
+    /// <see cref="ExpandEngine{TEntity}"/> is also reused directly by <see cref="ZaakRollenResolver"/>
+    /// to resolve "rollen.roltype" per item of the "rollen" list on a ZAAK.
+    /// </summary>
+    public static void AddRollenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<RolResponseDto>, RolZaakResolver>();
+        services.AddScoped<IExpandResolver<RolResponseDto>, RolRolTypeResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<RolResponseDto>(sp.GetServices<IExpandResolver<RolResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<RolResponseDto>(sp.GetServices<IExpandResolver<RolResponseDto>>()));
+
+        services.AddScoped<IGenericCache<RolTypeResponseDto>, GenericCache<RolTypeResponseDto>>();
     }
 }

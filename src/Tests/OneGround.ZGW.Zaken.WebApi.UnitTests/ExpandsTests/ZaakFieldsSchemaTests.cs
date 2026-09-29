@@ -10,7 +10,7 @@ public class ZaakFieldsSchemaTests
 {
     private readonly FieldsValidator<ZaakResponseDto> _validator = new(
         ZaakFieldsSchema.Build(),
-        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype", "resultaat", "resultaat.resultaattype"]
+        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype", "resultaat", "resultaat.resultaattype", "rollen", "rollen.roltype"]
     );
 
     [Fact]
@@ -79,6 +79,46 @@ public class ZaakFieldsSchemaTests
     {
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse("""["identificatie", {"resultaat": ["url", {"resultaattype": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RollenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"rollen": ["url", "betrokkene"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RollenRoltypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"rollen": ["url", {"roltype": ["url"]}]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    // Discriminates that "betrokkeneIdentificatie" (an inline, polymorphic nested object -- its
+    // shape depends on the ROL's betrokkeneType) is registered for every possible variant, not just
+    // reflectable off the single RolResponseDto base type registered for "rollen" (which doesn't
+    // declare BetrokkeneIdentificatie at all -- only its five concrete subtypes do).
+    [Theory]
+    [InlineData("vestigingsNummer")] // Vestiging
+    [InlineData("kvknummer")] // Vestiging -- only on v1._5's VestigingZaakRolDto, not the v1 (base) one
+    [InlineData("identificatie")] // Medewerker/NatuurlijkPersoon/NietNatuurlijkPersoon/OrganisatorischeEenheid
+    public void Validate_RollenBetrokkeneIdentificatieNestedSelection_IsValid(string fieldName)
+    {
+        // Geneste velden van een inline object (niet-expandbaar, zoals betrokkeneIdentificatie) worden
+        // geselecteerd via een gepunt pad ("betrokkeneIdentificatie.veld"), niet via object-syntax
+        // ({"betrokkeneIdentificatie": [...]}) -- dat laatste is voorbehouden aan expandbare sub-entiteiten
+        // (zoals "roltype"), zie FieldsParserTests.ParseAndValidate_DottedPath_PopulatesNestedObject_NoExpandPath.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse($$"""["identificatie", {"rollen": ["url", "betrokkeneIdentificatie.{{fieldName}}"]}]""")
         );
 
         Assert.Null(error);

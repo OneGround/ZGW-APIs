@@ -80,7 +80,11 @@ public sealed class FieldsSchema
     {
         var prop = parent
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(p => p.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == name);
+            .FirstOrDefault(p =>
+            {
+                var attr = p.GetCustomAttribute<JsonPropertyAttribute>();
+                return attr is not null && JsonPropertyNames.Resolve(attr, p) == name;
+            });
         if (prop is null)
             return Array.Empty<Type>();
 
@@ -112,9 +116,10 @@ public sealed class FieldsSchema
 
     private static HashSet<string> Reflect(Type type) =>
         type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Select(p => p.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName)
-            .Where(name => name is not null && name != "_expand")
-            .Select(name => name!)
+            .Select(p => (attr: p.GetCustomAttribute<JsonPropertyAttribute>(), prop: p))
+            .Where(x => x.attr is not null)
+            .Select(x => JsonPropertyNames.Resolve(x.attr, x.prop))
+            .Where(name => name != "_expand")
             .ToHashSet(StringComparer.Ordinal);
 }
 

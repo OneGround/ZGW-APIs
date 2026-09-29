@@ -60,10 +60,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
     public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl) =>
         WrapAsync(resultaatTypeUrl, () => _inner.GetResultaatTypeByUrlAsync(resultaatTypeUrl));
 
-    public Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl) =>
+        WrapAsync(rolTypeUrl, () => _inner.GetRolTypeByUrlAsync(rolTypeUrl));
 
     public Task<ServiceAgentResponse<PagedResponse<RolTypeResponseDto>>> GetRolTypenAsync(
         Contracts.v1._3.Queries.GetAllRolTypenQueryParameters parameters,

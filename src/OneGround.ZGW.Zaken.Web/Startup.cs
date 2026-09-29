@@ -113,6 +113,7 @@ public class Startup
         services.AddZakenAPIFieldsValidators(); // Note: New field-selection (fields) v1.7
         services.AddStatussenAPIExpands(); // Note: New Expand Engine v1.7 for the STATUS resource itself
         services.AddResultatenAPIExpands(); // Note: New Expand Engine v1.7 for the RESULTAAT resource itself
+        services.AddRollenAPIExpands(); // Note: New Expand Engine v1.7 for the ROL resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 

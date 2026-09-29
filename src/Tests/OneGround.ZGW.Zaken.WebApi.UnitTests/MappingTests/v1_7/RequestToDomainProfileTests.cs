@@ -121,4 +121,24 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Equal(source.Zaak, result.Zaak);
         Assert.Equal(source.ResultaatType, result.ResultaatType);
     }
+
+    // Discriminates that MappingProfiles.v1._7.RequestToDomainRegister also registers its own
+    // GetAllZaakRollenQueryParameters->GetAllZaakRollenFilter config for the v1._7 concrete type --
+    // same class of gap as Status/Resultaat above.
+    [Fact]
+    public void GetAllZaakRollenQueryParameters_v1_7_Maps_To_GetAllZaakRollenFilter()
+    {
+        var source = new GetAllZaakRollenQueryParameters
+        {
+            Zaak = "https://example.test/zaken/1",
+            RolType = "https://example.test/roltypen/1",
+            BetrokkeneIdentificatie__medewerker__identificatie = "medewerker-123",
+        };
+
+        var result = _mapper.Map<OneGround.ZGW.Zaken.Web.Models.v1.GetAllZaakRollenFilter>(source);
+
+        Assert.Equal(source.Zaak, result.Zaak);
+        Assert.Equal(source.RolType, result.RolType);
+        Assert.Equal(source.BetrokkeneIdentificatie__medewerker__identificatie, result.MedewerkerIdentificatie);
+    }
 }

@@ -3,7 +3,9 @@ using Mapster;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._7;
 
@@ -72,5 +74,53 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Uuid, src => src.Id)
             .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakRol->v1._7.RolResponseDto is genuinely new for v1.7 -- same reasoning as
+        // above. Field mapping (including the ConstructUsing subtype-dispatch factory) mirrors
+        // v1._5.DomainToResponseRegister's ZaakRol->ZaakRolResponseDto config exactly.
+        config
+            .NewConfig<ZaakRol, RolResponseDto>()
+            .ConstructUsing(src => CreateRolResponseDto(src, config))
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Map(dest => dest.IndicatieMachtiging, src => !src.IndicatieMachtiging.HasValue ? "" : src.IndicatieMachtiging.ToString())
+            .Map(dest => dest.Registratiedatum, src => ProfileHelper.StringDateFromDateTime(src.Registratiedatum, true))
+            .Map(
+                dest => dest.Statussen,
+                src =>
+                    src.Zaak.ZaakStatussen == null
+                        ? null
+                        : MapsterUrlResolver.ResolveUrls(
+                            src.Zaak.ZaakStatussen.Where(s => s.GezetDoor == src.Betrokkene).OrderBy(s => s.DatumStatusGezet)
+                        )
+            )
+            .Ignore(dest => dest.Expand);
     }
+
+    private static RolResponseDto CreateRolResponseDto(ZaakRol source, TypeAdapterConfig config) =>
+        source.BetrokkeneType switch
+        {
+            BetrokkeneType.natuurlijk_persoon => new NatuurlijkPersoonRolResponseDto
+            {
+                BetrokkeneIdentificatie = source.NatuurlijkPersoon.Adapt<Zaken.Contracts.v1.NatuurlijkPersoonZaakRolDto>(config),
+            },
+            BetrokkeneType.niet_natuurlijk_persoon => new NietNatuurlijkPersoonRolResponseDto
+            {
+                BetrokkeneIdentificatie = source.NietNatuurlijkPersoon.Adapt<Zaken.Contracts.v1.NietNatuurlijkPersoonZaakRolDto>(config),
+            },
+            BetrokkeneType.vestiging => new VestigingRolResponseDto
+            {
+                BetrokkeneIdentificatie = source.Vestiging.Adapt<Zaken.Contracts.v1._5.VestigingZaakRolDto>(config),
+            },
+            BetrokkeneType.organisatorische_eenheid => new OrganisatorischeEenheidRolResponseDto
+            {
+                BetrokkeneIdentificatie = source.OrganisatorischeEenheid.Adapt<Zaken.Contracts.v1.OrganisatorischeEenheidZaakRolDto>(config),
+            },
+            BetrokkeneType.medewerker => new MedewerkerRolResponseDto
+            {
+                BetrokkeneIdentificatie = source.Medewerker.Adapt<Zaken.Contracts.v1.MedewerkerZaakRolDto>(config),
+            },
+            _ => new RolResponseDto(),
+        };
 }

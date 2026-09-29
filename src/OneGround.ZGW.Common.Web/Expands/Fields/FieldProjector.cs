@@ -33,7 +33,7 @@ public static class FieldProjector
                 continue;
             }
 
-            scalarLookup[jsonAttr.PropertyName] = prop;
+            scalarLookup[JsonPropertyNames.Resolve(jsonAttr, prop)] = prop;
         }
 
         if (selection.IncludeAllScalars)

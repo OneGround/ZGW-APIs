@@ -250,6 +250,19 @@ public class FieldProjectorTests
         Assert.Equal("diep!", diep["x"]);
     }
 
+    // ---- [JsonProperty] zonder expliciete naam ----
+
+    [Fact]
+    public void Project_PropertyWithoutExplicitJsonPropertyName_FallsBackToCamelCasedMemberName()
+    {
+        var entity = new NamelessJsonPropertyDto { BetrokkeneIdentificatie = "waarde" };
+        var selection = new FieldSelection { IncludeAllScalars = true };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        Assert.Equal("waarde", result["betrokkeneIdentificatie"]);
+    }
+
     // ---- ProjectList ----
 
     [Fact]

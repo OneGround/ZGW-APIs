@@ -15,6 +15,8 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZaakContactmomentenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakInformatieObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakRollenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakRollenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakRolQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakStatussenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZaakStatussenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakStatussenQueryParameters>>();

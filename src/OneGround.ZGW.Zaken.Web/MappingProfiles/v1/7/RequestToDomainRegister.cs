@@ -99,5 +99,21 @@ public class RequestToDomainRegister : IRegister
         // field needs a custom transform here (unlike the Status pair above), but the pair must
         // still be registered explicitly, or it silently falls through to convention mapping.
         config.NewConfig<GetAllZaakResultatenQueryParameters, Models.v1.GetAllZaakResultatenFilter>();
+
+        // Note: Same reasoning -- re-registers the v1 GetAllZaakRollenQueryParameters->
+        // GetAllZaakRollenFilter mapping for the new (v1._7) concrete query-parameters type. The
+        // betrokkeneIdentificatie__* fields don't share a name with their filter counterpart, so
+        // they need the same explicit .Map calls as the v1 config; BetrokkeneType/OmschrijvingGeneriek
+        // convert via Mapster's own string->enum? convention, same as the v1 config relies on.
+        config
+            .NewConfig<GetAllZaakRollenQueryParameters, Models.v1.GetAllZaakRollenFilter>()
+            .Map(dest => dest.NatuurlijkPersoonInpBsn, src => src.BetrokkeneIdentificatie__natuurlijkPersoon__inpBsn)
+            .Map(dest => dest.NatuurlijkPersoonInpANummer, src => src.BetrokkeneIdentificatie__natuurlijkPersoon__inpA_nummer)
+            .Map(dest => dest.NatuurlijkPersoonAnpIdentificatie, src => src.BetrokkeneIdentificatie__natuurlijkPersoon__anpIdentificatie)
+            .Map(dest => dest.NietNatuurlijkPersoonAnnIdentificatie, src => src.BetrokkeneIdentificatie__nietNatuurlijkPersoon__annIdentificatie)
+            .Map(dest => dest.NietNatuurlijkPersoonInnNnpId, src => src.BetrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId)
+            .Map(dest => dest.VestigingNummer, src => src.BetrokkeneIdentificatie__vestiging__vestigingsNummer)
+            .Map(dest => dest.OrganisatorischeEenheidIdentificatie, src => src.BetrokkeneIdentificatie__organisatorischeEenheid__identificatie)
+            .Map(dest => dest.MedewerkerIdentificatie, src => src.BetrokkeneIdentificatie__medewerker__identificatie);
     }
 }
