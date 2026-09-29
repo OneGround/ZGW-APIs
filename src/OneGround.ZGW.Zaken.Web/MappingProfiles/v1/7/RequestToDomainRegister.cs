@@ -115,5 +115,11 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.VestigingNummer, src => src.BetrokkeneIdentificatie__vestiging__vestigingsNummer)
             .Map(dest => dest.OrganisatorischeEenheidIdentificatie, src => src.BetrokkeneIdentificatie__organisatorischeEenheid__identificatie)
             .Map(dest => dest.MedewerkerIdentificatie, src => src.BetrokkeneIdentificatie__medewerker__identificatie);
+
+        // Note: Same reasoning -- re-registers the v1 GetAllZaakObjectenQueryParameters->
+        // GetAllZaakObjectenFilter mapping for the new (v1._7) concrete query-parameters type. No
+        // field needs a custom transform here (same as the Resultaat pair above), but the pair must
+        // still be registered explicitly, or it silently falls through to convention mapping.
+        config.NewConfig<GetAllZaakObjectenQueryParameters, Models.v1.GetAllZaakObjectenFilter>();
     }
 }

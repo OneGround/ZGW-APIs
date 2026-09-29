@@ -177,7 +177,7 @@ public class ZaakRollenController : ZGWControllerBase
             return expandValidationResult;
         }
 
-        var result = await _mediator.Send(new OneGround.ZGW.Zaken.Web.Handlers.v1._5.GetZaakRolQuery { Id = id });
+        var result = await _mediator.Send(new Handlers.v1._5.GetZaakRolQuery { Id = id });
 
         if (result.Status == QueryStatus.NotFound)
         {
@@ -230,7 +230,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpHead(ApiRoutes.ZaakRollen.Get, Name = OneGround.ZGW.Zaken.Web.Contracts.v1._5.Operations.ZaakRollen.ReadHead)]
+    [HttpHead(ApiRoutes.ZaakRollen.Get, Name = Contracts.v1._5.Operations.ZaakRollen.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakRolQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakRolQueryParameters queryParameters)
@@ -255,9 +255,7 @@ public class ZaakRollenController : ZGWControllerBase
 
         ZaakRol zaakrol = _mapper.Map<ZaakRol>(zaakRolRequest);
 
-        var result = await _mediator.Send(
-            new OneGround.ZGW.Zaken.Web.Handlers.v1.CreateZaakRolCommand { ZaakRol = zaakrol, ZaakUrl = zaakRolRequest.Zaak }
-        );
+        var result = await _mediator.Send(new Handlers.v1.CreateZaakRolCommand { ZaakRol = zaakrol, ZaakUrl = zaakRolRequest.Zaak });
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -295,7 +293,7 @@ public class ZaakRollenController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
 
-        var result = await _mediator.Send(new OneGround.ZGW.Zaken.Web.Handlers.v1.DeleteZaakRolCommand { Id = id });
+        var result = await _mediator.Send(new Handlers.v1.DeleteZaakRolCommand { Id = id });
 
         if (result.Status == CommandStatus.NotFound)
         {

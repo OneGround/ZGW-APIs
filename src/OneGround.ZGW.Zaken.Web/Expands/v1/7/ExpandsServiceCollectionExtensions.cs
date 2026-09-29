@@ -5,6 +5,7 @@ using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
@@ -38,6 +39,10 @@ public static class ExpandsServiceCollectionExtensions
         // Note: reuses ExpandEngine<RolResponseDto>, registered below by AddRollenAPIExpands (both
         // are called together in Startup.cs) -- see ZaakRollenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRollenResolver>();
+        // Note: reuses ExpandEngine<ZaakObjectResponseDto>, registered below by
+        // AddZaakObjectenAPIExpands (both are called together in Startup.cs) -- see
+        // ZaakZaakObjectenResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -98,5 +103,23 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<RolResponseDto>(sp.GetServices<IExpandResolver<RolResponseDto>>()));
 
         services.AddScoped<IGenericCache<RolTypeResponseDto>, GenericCache<RolTypeResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKOBJECT resource itself (GET /zaakobjecten, GET /zaakobjecten/{uuid}).
+    /// No <c>fields</c> mechanism here -- same reasoning as <see cref="AddStatussenAPIExpands"/>. This
+    /// <see cref="ExpandEngine{TEntity}"/> is also reused directly by
+    /// <see cref="ZaakZaakObjectenResolver"/> to resolve "zaakobjecten.zaakobjecttype" per item of the
+    /// "zaakobjecten" list on a ZAAK.
+    /// </summary>
+    public static void AddZaakObjectenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<ZaakObjectResponseDto>, ZaakObjectZaakResolver>();
+        services.AddScoped<IExpandResolver<ZaakObjectResponseDto>, ZaakObjectZaakObjectTypeResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakObjectResponseDto>(sp.GetServices<IExpandResolver<ZaakObjectResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ZaakObjectResponseDto>(sp.GetServices<IExpandResolver<ZaakObjectResponseDto>>()));
+
+        services.AddScoped<IGenericCache<ZaakObjectTypeResponseDto>, GenericCache<ZaakObjectTypeResponseDto>>();
     }
 }

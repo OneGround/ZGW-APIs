@@ -114,6 +114,7 @@ public class Startup
         services.AddStatussenAPIExpands(); // Note: New Expand Engine v1.7 for the STATUS resource itself
         services.AddResultatenAPIExpands(); // Note: New Expand Engine v1.7 for the RESULTAAT resource itself
         services.AddRollenAPIExpands(); // Note: New Expand Engine v1.7 for the ROL resource itself
+        services.AddZaakObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKOBJECT resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 

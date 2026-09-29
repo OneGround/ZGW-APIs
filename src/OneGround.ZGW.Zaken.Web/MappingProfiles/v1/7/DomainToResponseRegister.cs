@@ -3,8 +3,10 @@ using Mapster;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._7;
@@ -96,6 +98,22 @@ public class DomainToResponseRegister : IRegister
                         )
             )
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakObject->v1._7.ZaakObjectResponseDto is genuinely new for v1.7 -- same
+        // reasoning as above. Field mapping (including the ConstructUsing subtype-dispatch factory)
+        // mirrors v1._5.DomainToResponseRegister's ZaakObject->ZaakObjectResponseDto config exactly.
+        // Note: v1._5.Responses.ZaakObject.ZaakObjectResponseDto (which this extends) derives from the
+        // INDEPENDENT v1._5.ZaakObjectDto, not the shared v1.ZaakObjectDto -- it has its own
+        // ZaakObjectType field and, unlike v1.ZaakObjectDto, no Version-gated
+        // ShouldSerializeObjectTypeOverigeDefinitie: ObjectTypeOverigeDefinitie always serializes here.
+        // No "Version" property exists on this DTO chain at all, so there is nothing to set for it.
+        config
+            .NewConfig<ZaakObject, ZaakObjectResponseDto>()
+            .ConstructUsing(src => CreateZaakObjectResponseDto(src, config))
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Ignore(dest => dest.Expand);
     }
 
     private static RolResponseDto CreateRolResponseDto(ZaakRol source, TypeAdapterConfig config) =>
@@ -122,5 +140,43 @@ public class DomainToResponseRegister : IRegister
                 BetrokkeneIdentificatie = source.Medewerker.Adapt<Zaken.Contracts.v1.MedewerkerZaakRolDto>(config),
             },
             _ => new RolResponseDto(),
+        };
+
+    private static ZaakObjectResponseDto CreateZaakObjectResponseDto(ZaakObject source, TypeAdapterConfig config) =>
+        source.ObjectType switch
+        {
+            ObjectType.adres => new AdresZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.Adres.Adapt<Zaken.Contracts.v1.AdresZaakObjectDto>(config),
+            },
+            ObjectType.buurt => new BuurtZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.Buurt.Adapt<Zaken.Contracts.v1.BuurtZaakObjectDto>(config),
+            },
+            ObjectType.pand => new PandZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.Pand.Adapt<Zaken.Contracts.v1.PandZaakObjectDto>(config),
+            },
+            ObjectType.kadastrale_onroerende_zaak => new KadastraleOnroerendeZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.KadastraleOnroerendeZaak.Adapt<Zaken.Contracts.v1.KadastraleOnroerendeZaakObjectDto>(config),
+            },
+            ObjectType.gemeente => new GemeenteZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.Gemeente.Adapt<Zaken.Contracts.v1.GemeenteZaakObjectDto>(config),
+            },
+            ObjectType.terrein_gebouwd_object => new TerreinGebouwdObjectZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.TerreinGebouwdObject.Adapt<Zaken.Contracts.v1.TerreinGebouwdObjectZaakObjectDto>(config),
+            },
+            ObjectType.overige => new OverigeZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.Overige.Adapt<Zaken.Contracts.v1.OverigeZaakObjectDto>(config),
+            },
+            ObjectType.woz_waarde => new WozWaardeZaakObjectResponseDto
+            {
+                ObjectIdentificatie = source.WozWaardeObject.Adapt<Zaken.Contracts.v1.WozWaardeZaakObjectDto>(config),
+            },
+            _ => new ZaakObjectResponseDto(),
         };
 }

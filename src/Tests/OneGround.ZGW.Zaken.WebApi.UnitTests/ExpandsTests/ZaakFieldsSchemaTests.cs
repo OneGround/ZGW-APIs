@@ -10,7 +10,18 @@ public class ZaakFieldsSchemaTests
 {
     private readonly FieldsValidator<ZaakResponseDto> _validator = new(
         ZaakFieldsSchema.Build(),
-        ["zaaktype", "zaaktype.catalogus", "status", "status.statustype", "resultaat", "resultaat.resultaattype", "rollen", "rollen.roltype"]
+        [
+            "zaaktype",
+            "zaaktype.catalogus",
+            "status",
+            "status.statustype",
+            "resultaat",
+            "resultaat.resultaattype",
+            "rollen",
+            "rollen.roltype",
+            "zaakobjecten",
+            "zaakobjecten.zaakobjecttype",
+        ]
     );
 
     [Fact]
@@ -119,6 +130,43 @@ public class ZaakFieldsSchemaTests
         // (zoals "roltype"), zie FieldsParserTests.ParseAndValidate_DottedPath_PopulatesNestedObject_NoExpandPath.
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse($$"""["identificatie", {"rollen": ["url", "betrokkeneIdentificatie.{{fieldName}}"]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakobjectenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"zaakobjecten": ["url", "object"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakobjectenZaakobjecttypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"zaakobjecten": ["url", {"zaakobjecttype": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    // Discriminates that "objectIdentificatie" (an inline, polymorphic nested object -- its shape
+    // depends on the ZAAKOBJECT's objectType) is registered for every possible variant, not just
+    // reflectable off the single ZaakObjectResponseDto base type registered for "zaakobjecten" (which
+    // doesn't declare ObjectIdentificatie at all -- only its eight concrete subtypes do).
+    [Theory]
+    [InlineData("identificatie")] // Adres/Buurt/Gemeente/KadastraleOnroerendeZaak/Pand/TerreinGebouwdObject
+    [InlineData("waardepeildatum")] // WozWaarde
+    public void Validate_ZaakobjectenObjectIdentificatieNestedSelection_IsValid(string fieldName)
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse($$"""["identificatie", {"zaakobjecten": ["url", "objectIdentificatie.{{fieldName}}"]}]""")
         );
 
         Assert.Null(error);

@@ -74,10 +74,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
     public Task<ServiceAgentResponse<StatusTypeResponseDto>> GetStatusTypeByUrlAsync(string statusTypeUrl) =>
         WrapAsync(statusTypeUrl, () => _inner.GetStatusTypeByUrlAsync(statusTypeUrl));
 
-    public Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl) =>
+        WrapAsync(zaakObjectTypeUrl, () => _inner.GetZaakObjectTypeByUrlAsync(zaakObjectTypeUrl));
 
     public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null) =>
         WrapAsync(zaakTypeUrl, () => _inner.GetZaakTypeByUrlAsync(zaakTypeUrl, expand));

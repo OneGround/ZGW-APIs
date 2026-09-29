@@ -27,8 +27,6 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.Configuration;
-using OneGround.ZGW.Zaken.Web.Contracts.v1._5;
-using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace OneGround.ZGW.Zaken.Web.Controllers.v1._7;
@@ -78,7 +76,7 @@ public class ZaakStatussenController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     /// <response code="502">Bad Gateway</response>
-    [HttpGet(ApiRoutes.ZaakStatussen.GetAll, Name = Operations.ZaakStatussen.List)]
+    [HttpGet(Contracts.v1._5.ApiRoutes.ZaakStatussen.GetAll, Name = Contracts.v1._5.Operations.ZaakStatussen.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<StatusResponseDto>))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakStatussenQueryParameters>))]
@@ -153,7 +151,7 @@ public class ZaakStatussenController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     /// <response code="502">Bad Gateway</response>
-    [HttpGet(ApiRoutes.ZaakStatussen.Get, Name = Operations.ZaakStatussen.Read)]
+    [HttpGet(Contracts.v1._5.ApiRoutes.ZaakStatussen.Get, Name = Contracts.v1._5.Operations.ZaakStatussen.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(StatusResponseDto))]
     [ETagFilter]
@@ -227,7 +225,7 @@ public class ZaakStatussenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpHead(ApiRoutes.ZaakStatussen.Get, Name = Operations.ZaakStatussen.ReadHead)]
+    [HttpHead(Contracts.v1._5.ApiRoutes.ZaakStatussen.Get, Name = Contracts.v1._5.Operations.ZaakStatussen.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ETagFilter]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakStatusQueryParameters>))]
@@ -243,7 +241,7 @@ public class ZaakStatussenController : ZGWControllerBase
     /// <response code="403">Forbidden</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpPost(ApiRoutes.ZaakStatussen.Create, Name = Operations.ZaakStatussen.Create)]
+    [HttpPost(Contracts.v1._5.ApiRoutes.ZaakStatussen.Create, Name = Contracts.v1._5.Operations.ZaakStatussen.Create)]
     [Scope(AuthorizationScopes.Zaken.Create, AuthorizationScopes.Zaken.Statuses.Add, AuthorizationScopes.Zaken.Reopen)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(Zaken.Contracts.v1._5.Responses.ZaakStatusCreateResponseDto))]
