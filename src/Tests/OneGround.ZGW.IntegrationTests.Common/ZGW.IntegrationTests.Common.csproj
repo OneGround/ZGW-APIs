@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <AssemblyName>OneGround.ZGW.IntegrationTests.Common</AssemblyName>
+    <RootNamespace>OneGround.ZGW.IntegrationTests.Common</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+  </ItemGroup>
+</Project>

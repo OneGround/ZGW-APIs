@@ -30,3 +30,5 @@ await app.MigrateDataProtectionDatabaseAsync();
 Startup.Configure(app, builder.Environment);
 
 app.Run();
+
+public partial class Program;

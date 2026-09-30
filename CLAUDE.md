@@ -28,11 +28,15 @@ dotnet test Tests/OneGround.ZGW.Zaken.WebApi.UnitTests/ZGW.Zaken.WebApi.UnitTest
 # Run a single test by name
 dotnet test ZGW.UnitTests.slnf --filter "FullyQualifiedName~CreateZaak"
 
+# Run the integration tests - requires Docker. They boot the APIs in-process and start their own
+# PostgreSQL/PostGIS and Redis containers (Testcontainers); no localdev stack is needed.
+dotnet test ZGW.IntegrationTests.slnf
+
 # Run a service locally (from its WebApi dir)
 dotnet run --project OneGround.ZGW.Zaken.WebApi
 ```
 
-CI (`.github/workflows/ci-dotnet-build-and-test.yml`) builds `ZGW.Backend.slnf` and tests `ZGW.UnitTests.slnf` in **Release**. Match that before claiming green.
+CI (`.github/workflows/ci-dotnet-build-and-test.yml`) builds `ZGW.Backend.slnf` and tests `ZGW.UnitTests.slnf` and `ZGW.IntegrationTests.slnf` in **Release**. Match that before claiming green.
 
 Full local stack (Postgres, RabbitMQ, Keycloak, Ceph, HAProxy) via Docker Compose — see `localdev/README.md`:
 
