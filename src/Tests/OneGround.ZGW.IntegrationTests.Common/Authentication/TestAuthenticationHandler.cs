@@ -8,17 +8,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OneGround.ZGW.Common.Authentication;
 
 namespace OneGround.ZGW.IntegrationTests.Common.Authentication;
 
 /// <summary>
-/// Authenticates a request from a <c>Test</c> Authorization header instead of a real access token.
-/// <para>
-/// A request without an Authorization header (or with a header for another scheme) gets no identity, exactly like an
-/// anonymous request. <c>Authorization: Test client_id=my-client;rsin=123456789</c> gets an identity with those claims;
-/// leave a claim out to test what the API does without it. Use <see cref="TestIdentity"/> to build the header.
-/// </para>
+/// Turns an <c>Authorization: Test type=value;type=value</c> header (see <see cref="TestIdentity"/>) into an identity with those claims.
 /// </summary>
 public sealed class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
@@ -56,13 +50,7 @@ public sealed class TestAuthenticationHandler : AuthenticationHandler<Authentica
             if (separator <= 0)
                 continue;
 
-            var type = pair[..separator];
-            var value = pair[(separator + 1)..];
-
-            if (type == CustomClaimTypes.ClientId || type == CustomClaimTypes.Rsin)
-            {
-                yield return new Claim(type, value);
-            }
+            yield return new Claim(pair[..separator], pair[(separator + 1)..]);
         }
     }
 }

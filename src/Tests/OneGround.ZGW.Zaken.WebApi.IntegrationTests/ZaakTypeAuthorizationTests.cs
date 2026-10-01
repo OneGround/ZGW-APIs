@@ -7,21 +7,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.DataModel;
 using Xunit;
+using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// GET /zaken only returns zaken of the zaaktypes the client is authorized for. This only passes when the API's own
-/// query handler filters on the authorization context the scope filter built.
+/// Which zaken a client gets, decided by the API's query handlers from the authorizations its resolver returned.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
 public class ZaakTypeAuthorizationTests
 {
-    // An rsin of its own, so zaken seeded by other tests cannot show up here
-    private const string Rsin = "444555666";
-
     private readonly ZakenWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -34,43 +32,107 @@ public class ZaakTypeAuthorizationTests
     [Fact]
     public async Task Zaken_are_only_listed_for_the_zaaktypes_the_client_is_authorized_for()
     {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
+        const string rsin = TestRsins.B;
+        var zaakId = await SeedZaakAsync(rsin, ZaakTypes.A);
 
-        var clientForB = NewClientAuthorizedToReadZaakType(ZaakTypes.B);
-        var clientForA = NewClientAuthorizedToReadZaakType(ZaakTypes.A);
+        var zakenForB = await GetAllZakenAsync(NewClientAuthorizedToRead(ZaakTypes.B), rsin);
+        var zakenForA = await GetAllZakenAsync(NewClientAuthorizedToRead(ZaakTypes.A), rsin);
 
-        var responseForB = await _client.SendAsync(ZakenRequests.GetAllZaken(clientForB, Rsin));
-        var responseForA = await _client.SendAsync(ZakenRequests.GetAllZaken(clientForA, Rsin));
-
-        Assert.Equal(HttpStatusCode.OK, responseForB.StatusCode);
-        var zakenForB = await ReadResultsAsync(responseForB);
         Assert.Empty(zakenForB);
-
-        Assert.Equal(HttpStatusCode.OK, responseForA.StatusCode);
-        var zakenForA = await ReadResultsAsync(responseForA);
         var zaak = Assert.Single(zakenForA);
         Assert.EndsWith($"/zaken/{zaakId}", zaak.Value<string>("url"));
         Assert.Equal(ZaakTypes.A, zaak.Value<string>("zaaktype"));
     }
 
-    private string NewClientAuthorizedToReadZaakType(string zaakType)
+    [Fact]
+    public async Task Zaken_above_the_clients_maximum_vertrouwelijkheidaanduiding_are_not_listed()
     {
-        var clientId = $"integration-test-{Guid.NewGuid():N}";
+        const string rsin = TestRsins.C;
+        await SeedZaakAsync(rsin, ZaakTypes.A, VertrouwelijkheidAanduiding.geheim);
 
-        _factory.AuthorizationResolver.GrantPermissions(
+        var belowMaximum = await GetAllZakenAsync(NewClientAuthorizedToRead(ZaakTypes.A, VertrouwelijkheidAanduiding.vertrouwelijk), rsin);
+        var atMaximum = await GetAllZakenAsync(NewClientAuthorizedToRead(ZaakTypes.A, VertrouwelijkheidAanduiding.geheim), rsin);
+
+        Assert.Empty(belowMaximum);
+        Assert.Single(atMaximum);
+    }
+
+    [Fact]
+    public async Task Client_with_all_authorizations_gets_zaken_of_every_zaaktype()
+    {
+        const string rsin = TestRsins.D;
+        await SeedZaakAsync(rsin, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim);
+        await SeedZaakAsync(rsin, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim);
+
+        var zaken = await GetAllZakenAsync(NewClientWithAllAuthorizations(), rsin);
+
+        Assert.Equal([ZaakTypes.A, ZaakTypes.B], zaken.Select(z => z.Value<string>("zaaktype")).Order());
+    }
+
+    [Fact]
+    public async Task Zaken_of_another_organisation_are_not_listed()
+    {
+        await SeedZaakAsync(TestRsins.E, ZaakTypes.A);
+
+        var zaken = await GetAllZakenAsync(NewClientWithAllAuthorizations(), TestRsins.F);
+
+        Assert.Empty(zaken);
+    }
+
+    [Fact]
+    public async Task Zaak_of_a_zaaktype_the_client_is_not_authorized_for_is_forbidden()
+    {
+        const string rsin = TestRsins.G;
+        var zaakId = await SeedZaakAsync(rsin, ZaakTypes.A);
+
+        var responseForB = await _client.SendAsync(ZakenRequests.GetZaak(zaakId, NewClientAuthorizedToRead(ZaakTypes.B), rsin));
+        var responseForA = await _client.SendAsync(ZakenRequests.GetZaak(zaakId, NewClientAuthorizedToRead(ZaakTypes.A), rsin));
+
+        Assert.Equal(HttpStatusCode.Forbidden, responseForB.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, responseForA.StatusCode);
+    }
+
+    private string NewClientAuthorizedToRead(string zaakType, VertrouwelijkheidAanduiding maximum = VertrouwelijkheidAanduiding.zeer_geheim)
+    {
+        var clientId = NewClientId();
+
+        _factory.AutorisatiesApi.Grant(
             clientId,
-            new AuthorizationPermission
+            new AutorisatieResponseDto
             {
-                ZaakType = zaakType,
+                Component = "zrc",
                 Scopes = [AuthorizationScopes.Zaken.Read],
-                MaximumVertrouwelijkheidAanduiding = (int)VertrouwelijkheidAanduiding.zeer_geheim,
+                ZaakType = zaakType,
+                MaxVertrouwelijkheidaanduiding = maximum.ToString(),
             }
         );
 
         return clientId;
     }
 
-    private async Task<Guid> SeedZaakAsync(string zaakType)
+    private string NewClientWithAllAuthorizations()
+    {
+        var clientId = NewClientId();
+        _factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
+
+        return clientId;
+    }
+
+    private async Task<JToken[]> GetAllZakenAsync(string clientId, string rsin)
+    {
+        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, rsin));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+        return body["results"]!.ToArray();
+    }
+
+    private async Task<Guid> SeedZaakAsync(
+        string rsin,
+        string zaakType,
+        VertrouwelijkheidAanduiding vertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar
+    )
     {
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
@@ -78,15 +140,15 @@ public class ZaakTypeAuthorizationTests
         var zaak = new Zaak
         {
             Id = Guid.NewGuid(),
-            Owner = Rsin,
-            Bronorganisatie = Rsin,
-            VerantwoordelijkeOrganisatie = Rsin,
+            Owner = rsin,
+            Bronorganisatie = rsin,
+            VerantwoordelijkeOrganisatie = rsin,
             Identificatie = $"ZAAK-{Guid.NewGuid():N}",
             Zaaktype = zaakType,
             Startdatum = DateOnly.FromDateTime(DateTime.UtcNow),
             Communicatiekanaal = "",
             Selectielijstklasse = "",
-            VertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
+            VertrouwelijkheidAanduiding = vertrouwelijkheidAanduiding,
         };
 
         context.Zaken.Add(zaak);
@@ -95,10 +157,5 @@ public class ZaakTypeAuthorizationTests
         return zaak.Id;
     }
 
-    private static async Task<JToken[]> ReadResultsAsync(HttpResponseMessage response)
-    {
-        var body = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-        return body["results"]!.ToArray();
-    }
+    private static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 }

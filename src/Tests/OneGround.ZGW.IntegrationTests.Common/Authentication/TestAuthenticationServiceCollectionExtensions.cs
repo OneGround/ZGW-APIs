@@ -6,10 +6,7 @@ namespace OneGround.ZGW.IntegrationTests.Common.Authentication;
 public static class TestAuthenticationServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="TestAuthenticationHandler"/> and makes it the default scheme for authenticating, challenging and
-    /// forbidding. Call it from <c>ConfigureTestServices</c>, so it runs after the API registered its own schemes.
-    /// Only the authentication scheme is replaced: authorization (the <c>[Authorize]</c> attribute and the scope filters)
-    /// still runs as it does in production.
+    /// Makes <see cref="TestAuthenticationHandler"/> the default scheme; call it from <c>ConfigureTestServices</c>, after the API's own schemes.
     /// </summary>
     public static IServiceCollection AddTestAuthentication(this IServiceCollection services)
     {
