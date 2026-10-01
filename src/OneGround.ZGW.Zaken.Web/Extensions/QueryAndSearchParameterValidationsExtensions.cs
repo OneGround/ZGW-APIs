@@ -10,6 +10,7 @@ public static class QueryAndSearchParameterValidationsExtensions
         // Register the query parameter validation filters globally for v1.0 .. v1.x
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZakenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZakenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZakenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZaakContactmomentenQueryParameters>>();
@@ -19,6 +20,8 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakRolQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakObjectQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakContactmomentenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakContactmomentQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakStatussenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZaakStatussenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakStatussenQueryParameters>>();

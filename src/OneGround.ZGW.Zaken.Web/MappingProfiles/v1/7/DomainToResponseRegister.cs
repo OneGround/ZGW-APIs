@@ -114,6 +114,16 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Uuid, src => src.Id)
             .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakContactmoment->v1._7.ZaakContactmomentResponseDto is genuinely new for v1.7
+        // -- same reasoning as above. Not polymorphic, so field mapping mirrors v1._5's
+        // ZaakContactmoment->ZaakContactmomentResponseDto config exactly, with no ConstructUsing needed.
+        config
+            .NewConfig<ZaakContactmoment, ZaakContactmomentResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Ignore(dest => dest.Expand);
     }
 
     private static RolResponseDto CreateRolResponseDto(ZaakRol source, TypeAdapterConfig config) =>

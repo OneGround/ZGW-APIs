@@ -55,5 +55,6 @@ public static class ZaakFieldsSchema
             .NestedObject<ZaakObjectResponseDto, TerreinGebouwdObjectZaakObjectDto>("objectIdentificatie")
             .NestedObject<ZaakObjectResponseDto, OverigeZaakObjectDto>("objectIdentificatie")
             .NestedObject<ZaakObjectResponseDto, WozWaardeZaakObjectDto>("objectIdentificatie")
+            .Entity<ZaakResponseDto, ZaakContactmomentResponseDto>("zaakcontactmomenten")
             .Build();
 }

@@ -1,8 +1,10 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Validations;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.DataModel;
 
@@ -49,5 +51,20 @@ public class ZaakSearchRequestValidator : ZGWValidator<ZaakSearchRequestDto>
 
         CascadeRuleForEach(p => p.Zaaktype__in).IsUri().WithName("zaaktype__in");
         CascadeRuleForEach(p => p.Uuid__in).IsGuid().WithName("uuid__in");
+    }
+}
+
+// 2. GetAllZakenQueryParameters is used in the regular GET /api/v1/zaken?<query-parameters>
+public class ZakenQueryParametersValidator : ZGWValidator<GetAllZakenQueryParameters>
+{
+    public ZakenQueryParametersValidator(IConfiguration configuration)
+    {
+        // Add validation for the common search fields
+        Include(new _5.ZakenCommonSearchableFields());
+
+        // Note: The "<*>__in" search fields are single strings with comma separated strings
+        CascadeRuleForEach(p => TryList(p.Archiefnominatie__in)).IsEnumName(typeof(ArchiefNominatie)).WithName("archiefnominatie__in");
+        CascadeRuleForEach(p => TryList(p.Archiefstatus__in)).IsEnumName(typeof(ArchiefStatus)).WithName("archiefstatus__in");
+        CascadeRuleForEach(p => TryList(p.Bronorganisatie__in)).IsRsin().WithName("bronorganisatie__in");
     }
 }

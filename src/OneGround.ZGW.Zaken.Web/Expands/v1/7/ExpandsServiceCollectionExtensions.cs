@@ -43,6 +43,7 @@ public static class ExpandsServiceCollectionExtensions
         // AddZaakObjectenAPIExpands (both are called together in Startup.cs) -- see
         // ZaakZaakObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakContactmomentenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -121,5 +122,19 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<ZaakObjectResponseDto>(sp.GetServices<IExpandResolver<ZaakObjectResponseDto>>()));
 
         services.AddScoped<IGenericCache<ZaakObjectTypeResponseDto>, GenericCache<ZaakObjectTypeResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKCONTACTMOMENT resource itself (GET /zaakcontactmomenten, GET
+    /// /zaakcontactmomenten/{uuid}). No <c>fields</c> mechanism here -- same reasoning as
+    /// <see cref="AddStatussenAPIExpands"/>. Unlike ROL/ZAAKOBJECT, <see cref="ZaakZaakContactmomentenResolver"/>
+    /// has no nested expand to resolve, so it does not reuse this <see cref="ExpandEngine{TEntity}"/>.
+    /// </summary>
+    public static void AddZaakContactmomentenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<ZaakContactmomentResponseDto>, ZaakContactmomentZaakResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakContactmomentResponseDto>(sp.GetServices<IExpandResolver<ZaakContactmomentResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ZaakContactmomentResponseDto>(sp.GetServices<IExpandResolver<ZaakContactmomentResponseDto>>()));
     }
 }

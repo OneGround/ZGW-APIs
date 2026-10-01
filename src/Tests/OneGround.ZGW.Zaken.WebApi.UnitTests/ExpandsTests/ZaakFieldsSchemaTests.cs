@@ -21,6 +21,7 @@ public class ZaakFieldsSchemaTests
             "rollen.roltype",
             "zaakobjecten",
             "zaakobjecten.zaakobjecttype",
+            "zaakcontactmomenten",
         ]
     );
 
@@ -167,6 +168,17 @@ public class ZaakFieldsSchemaTests
     {
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse($$"""["identificatie", {"zaakobjecten": ["url", "objectIdentificatie.{{fieldName}}"]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakcontactmomentenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"zaakcontactmomenten": ["url", "contactmoment"]}]""")
         );
 
         Assert.Null(error);

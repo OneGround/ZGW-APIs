@@ -25,6 +25,7 @@ using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
@@ -96,12 +97,8 @@ public class ZakenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakResponseDto>))]
     [RequiresAcceptCrs]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZakenQueryParameters>))]
-    public async Task<IActionResult> GetAllAsync(
-        [FromQuery] Zaken.Contracts.v1._5.Queries.GetAllZakenQueryParameters queryParameters,
-        int page = 1,
-        string ordering = null
-    )
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZakenQueryParameters>))]
+    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZakenQueryParameters queryParameters, int page = 1, string ordering = null)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}, {Ordering}", nameof(GetAllAsync), queryParameters, page, ordering);
 
