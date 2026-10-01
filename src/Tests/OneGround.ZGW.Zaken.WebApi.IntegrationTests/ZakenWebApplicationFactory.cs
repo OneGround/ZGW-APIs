@@ -10,7 +10,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// <summary>
 /// Boots the Zaken API in-process, with the RabbitMQ bus on the in-memory transport and the BSN backfill service not started.
 /// </summary>
-public sealed class ZakenWebApplicationFactory : ZgwWebApplicationFactory<Program>
+internal sealed class ZakenWebApplicationFactory : ZgwWebApplicationFactory<Program>
 {
     public ZakenWebApplicationFactory(IntegrationTestContainers containers)
         : base(containers) { }

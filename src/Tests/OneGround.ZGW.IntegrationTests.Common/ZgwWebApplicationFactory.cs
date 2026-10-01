@@ -159,7 +159,7 @@ public abstract class ZgwWebApplicationFactory<TProgram> : WebApplicationFactory
 }
 
 /// <summary>
-/// RvIG-reserved test numbers that fail the elfproef, so none can be a real organisation's RSIN.
+/// RvIG-reserved test numbers with a zero elfproef sum, which the specification rejects, so none can be a real organisation's RSIN.
 /// </summary>
 public static class TestRsins
 {

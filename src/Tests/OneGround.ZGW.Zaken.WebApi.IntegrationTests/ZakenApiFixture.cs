@@ -11,7 +11,7 @@ public sealed class ZakenApiFixture : IAsyncLifetime
 {
     private readonly IntegrationTestContainers _containers = new();
 
-    public ZakenWebApplicationFactory Factory { get; private set; }
+    internal ZakenWebApplicationFactory Factory { get; private set; }
 
     public async Task InitializeAsync()
     {
