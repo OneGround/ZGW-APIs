@@ -116,6 +116,7 @@ public class Startup
         services.AddRollenAPIExpands(); // Note: New Expand Engine v1.7 for the ROL resource itself
         services.AddZaakObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKOBJECT resource itself
         services.AddZaakContactmomentenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKCONTACTMOMENT resource itself
+        services.AddZaakEigenschappenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKEIGENSCHAP resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 

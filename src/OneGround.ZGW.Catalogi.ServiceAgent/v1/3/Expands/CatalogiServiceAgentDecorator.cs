@@ -39,10 +39,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ServiceAgentResponse<EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl) =>
+        WrapAsync(eigenschapUrl, () => _inner.GetEigenschapByUrlAsync(eigenschapUrl));
 
     public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
         string informatieObjectTypeUrl,

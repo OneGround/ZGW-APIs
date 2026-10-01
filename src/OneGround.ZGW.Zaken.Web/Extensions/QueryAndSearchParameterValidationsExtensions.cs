@@ -31,6 +31,8 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakResultatenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakResultatenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakResultaatQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakEigenschappenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakEigenschapQueryParameters>>();
 
         // Register the body parameter validation filters globally for v1.0 .. v1.x (HTTP POST /_zoek)
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1.Requests.ZaakSearchRequestDto>>();

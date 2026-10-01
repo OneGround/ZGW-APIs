@@ -22,6 +22,8 @@ public class ZaakFieldsSchemaTests
             "zaakobjecten",
             "zaakobjecten.zaakobjecttype",
             "zaakcontactmomenten",
+            "eigenschappen",
+            "eigenschappen.eigenschap",
         ]
     );
 
@@ -179,6 +181,26 @@ public class ZaakFieldsSchemaTests
     {
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse("""["identificatie", {"zaakcontactmomenten": ["url", "contactmoment"]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_EigenschappenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"eigenschappen": ["url", "waarde"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_EigenschappenEigenschapNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"eigenschappen": ["url", {"eigenschap": ["url"]}]}]""")
         );
 
         Assert.Null(error);

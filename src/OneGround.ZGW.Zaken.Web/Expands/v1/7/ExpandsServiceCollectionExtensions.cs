@@ -44,6 +44,10 @@ public static class ExpandsServiceCollectionExtensions
         // ZaakZaakObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakContactmomentenResolver>();
+        // Note: reuses ExpandEngine<ZaakEigenschapResponseDto>, registered below by
+        // AddZaakEigenschappenAPIExpands (both are called together in Startup.cs) -- see
+        // ZaakEigenschappenResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakEigenschappenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -136,5 +140,24 @@ public static class ExpandsServiceCollectionExtensions
 
         services.AddScoped(sp => new ExpandValidator<ZaakContactmomentResponseDto>(sp.GetServices<IExpandResolver<ZaakContactmomentResponseDto>>()));
         services.AddScoped(sp => new ExpandEngine<ZaakContactmomentResponseDto>(sp.GetServices<IExpandResolver<ZaakContactmomentResponseDto>>()));
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKEIGENSCHAP resource itself (GET
+    /// /zaken/{zaak_uuid}/zaakeigenschappen, GET /zaken/{zaak_uuid}/zaakeigenschappen/{uuid} -- both
+    /// actions live on ZakenController, not a dedicated controller). No <c>fields</c> mechanism here --
+    /// same reasoning as <see cref="AddStatussenAPIExpands"/>. This <see cref="ExpandEngine{TEntity}"/>
+    /// is also reused directly by <see cref="ZaakEigenschappenResolver"/> to resolve
+    /// "eigenschappen.eigenschap" per item of the "eigenschappen" list on a ZAAK.
+    /// </summary>
+    public static void AddZaakEigenschappenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<ZaakEigenschapResponseDto>, ZaakEigenschapZaakResolver>();
+        services.AddScoped<IExpandResolver<ZaakEigenschapResponseDto>, ZaakEigenschapEigenschapResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakEigenschapResponseDto>(sp.GetServices<IExpandResolver<ZaakEigenschapResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ZaakEigenschapResponseDto>(sp.GetServices<IExpandResolver<ZaakEigenschapResponseDto>>()));
+
+        services.AddScoped<IGenericCache<EigenschapResponseDto>, GenericCache<EigenschapResponseDto>>();
     }
 }

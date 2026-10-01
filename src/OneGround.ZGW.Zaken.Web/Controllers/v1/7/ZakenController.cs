@@ -54,6 +54,8 @@ public class ZakenController : ZGWControllerBase
     private readonly ExpandValidator<ZaakResponseDto> _expandValidator;
     private readonly FieldsValidator<ZaakResponseDto> _fieldsValidator;
     private readonly ExpandEngine<ZaakResponseDto> _expandEngine;
+    private readonly ExpandValidator<ZaakEigenschapResponseDto> _zaakEigenschapExpandValidator;
+    private readonly ExpandEngine<ZaakEigenschapResponseDto> _zaakEigenschapExpandEngine;
 
     public ZakenController(
         ILogger<ZakenController> logger,
@@ -66,7 +68,9 @@ public class ZakenController : ZGWControllerBase
         IErrorResponseBuilder errorResponseBuilder,
         ExpandValidator<ZaakResponseDto> expandValidator,
         FieldsValidator<ZaakResponseDto> fieldsValidator,
-        ExpandEngine<ZaakResponseDto> expandEngine
+        ExpandEngine<ZaakResponseDto> expandEngine,
+        ExpandValidator<ZaakEigenschapResponseDto> zaakEigenschapExpandValidator,
+        ExpandEngine<ZaakEigenschapResponseDto> zaakEigenschapExpandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
@@ -77,6 +81,8 @@ public class ZakenController : ZGWControllerBase
         _expandValidator = expandValidator;
         _fieldsValidator = fieldsValidator;
         _expandEngine = expandEngine;
+        _zaakEigenschapExpandValidator = zaakEigenschapExpandValidator;
+        _zaakEigenschapExpandEngine = zaakEigenschapExpandEngine;
     }
 
     /// <summary>
@@ -625,6 +631,77 @@ public class ZakenController : ZGWControllerBase
     }
 
     /// <summary>
+    /// Alle ZAAKEIGENSCHAPpen opvragen.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
+    [HttpGet(Contracts.v1.ApiRoutes.ZaakEigenschappen.GetAll, Name = Contracts.v1.Operations.ZaakEigenschappen.List)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(List<ZaakEigenschapResponseDto>))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakEigenschappenQueryParameters>))]
+    public async Task<IActionResult> GetAllZaakEigenschappenAsync(Guid zaak_uuid, [FromQuery] GetAllZaakEigenschappenQueryParameters queryParameters)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {@FromQuery}", nameof(GetAllZaakEigenschappenAsync), zaak_uuid, queryParameters);
+
+        var expandValidationResult = ValidateExpand(
+            _zaakEigenschapExpandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.List,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
+
+        var result = await _mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = zaak_uuid });
+
+        if (result.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
+        var response = _mapper.Map<List<ZaakEigenschapResponseDto>>(result.Result);
+
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _zaakEigenschapExpandEngine.ResolveListAsync(response, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
+
+        await _mediator.Send(
+            new LogAuditTrailGetObjectListCommand
+            {
+                RetrieveCatagory = RetrieveCatagory.All,
+                TotalCount = response.Count,
+                AuditTrailOptions = new AuditTrailOptions { Bron = ServiceRoleName.ZRC, Resource = "zaakeigenschap" },
+            }
+        );
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Een specifieke ZAAKEIGENSCHAP opvragen.
     /// </summary>
     /// <response code="401">Unauthorized</response>
@@ -632,12 +709,26 @@ public class ZakenController : ZGWControllerBase
     /// <response code="404">Not found</response>
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
+    /// <response code="502">Bad Gateway</response>
     [HttpGet(Contracts.v1._5.ApiRoutes.ZaakEigenschappen.Get, Name = Contracts.v1._5.Operations.ZaakEigenschappen.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
-    public async Task<IActionResult> GetZaakEigenschapAsync(Guid zaak_uuid, Guid uuid)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakEigenschapQueryParameters>))]
+    public async Task<IActionResult> GetZaakEigenschapAsync(Guid zaak_uuid, Guid uuid, [FromQuery] GetZaakEigenschapQueryParameters queryParameters)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", nameof(GetZaakEigenschapAsync), zaak_uuid, uuid);
+
+        var expandValidationResult = ValidateExpand(
+            _zaakEigenschapExpandValidator,
+            queryParameters.Expand,
+            _applicationConfiguration.ExpandSettings.Get,
+            out var expandPaths
+        );
+        if (expandValidationResult is not null)
+        {
+            return expandValidationResult;
+        }
 
         var result = await _mediator.Send(new Handlers.v1.GetZaakEigenschapQuery { Zaak = zaak_uuid, Eigenschap = uuid });
 
@@ -651,7 +742,23 @@ public class ZakenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<Zaken.Contracts.v1.Responses.ZaakEigenschapResponseDto>(result.Result);
+        var response = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
+
+        if (expandPaths is { Count: > 0 })
+        {
+            try
+            {
+                await _zaakEigenschapExpandEngine.ResolveAsync(response, expandPaths);
+            }
+            catch (ExpandExternalServiceException ex)
+            {
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+            }
+            catch (ExpandInternalQueryHandlerException ex)
+            {
+                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
+            }
+        }
 
         // Note: Should this action to be recorded in audittrail?
         await _mediator.Send(
@@ -681,8 +788,9 @@ public class ZakenController : ZGWControllerBase
     [HttpHead(Contracts.v1._5.ApiRoutes.ZaakEigenschappen.Get, Name = Contracts.v1._5.Operations.ZaakEigenschappen.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ETagFilter]
-    public Task<IActionResult> HeadZaakEigenschapAsync(Guid zaak_uuid, Guid uuid)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakEigenschapQueryParameters>))]
+    public Task<IActionResult> HeadZaakEigenschapAsync(Guid zaak_uuid, Guid uuid, [FromQuery] GetZaakEigenschapQueryParameters queryParameters)
     {
-        return GetZaakEigenschapAsync(zaak_uuid, uuid);
+        return GetZaakEigenschapAsync(zaak_uuid, uuid, queryParameters);
     }
 }
