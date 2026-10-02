@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>OneGround.ZGW.Zaken.WebApi.IntegrationTests</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Zaken.WebApi.IntegrationTests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\OneGround.ZGW.Zaken.WebApi\ZGW.Zaken.WebApi.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.IntegrationTests.Common\ZGW.IntegrationTests.Common.csproj" />
+  </ItemGroup>
+</Project>
