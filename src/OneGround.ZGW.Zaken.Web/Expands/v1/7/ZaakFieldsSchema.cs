@@ -77,5 +77,11 @@ public static class ZaakFieldsSchema
             // intentionally not registered yet (not implemented).
             .Entity<ZaakResponseDto, ZaakResponseDto>("hoofdzaak")
             .Entity<ZaakResponseDto, ZaakResponseDto>("deelzaken")
+            // Note: also self-referential, like hoofdzaak/deelzaken above. The narrower nested scope
+            // (no catalogus/rollen/zaakobjecten/zaakinformatieobjecten under "relevanteanderezaken") is
+            // enforced by ZaakRelevanteAndereZakenResolver's own (deliberately smaller) AdditionalPaths,
+            // not by this schema entry -- the entity-type registration itself is necessarily the same
+            // ZaakResponseDto graph shared by every "Zaak-shaped" expand root.
+            .Entity<ZaakResponseDto, ZaakResponseDto>("relevanteanderezaken")
             .Build();
 }

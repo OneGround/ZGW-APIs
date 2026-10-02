@@ -62,6 +62,9 @@ public static class ExpandsServiceCollectionExtensions
         // dependency, since IServiceProvider is already needed here for CreateScope (see
         // ZaakDeelzakenResolver's own remarks).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakDeelzakenResolver>();
+        // Note: same ExpandEngine<ZaakResponseDto> reuse/IServiceProvider style as ZaakDeelzakenResolver,
+        // for "relevanteanderezaken.*" -- see ZaakRelevanteAndereZakenResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRelevanteAndereZakenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));

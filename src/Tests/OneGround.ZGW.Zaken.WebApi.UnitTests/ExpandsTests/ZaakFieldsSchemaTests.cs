@@ -53,6 +53,12 @@ public class ZaakFieldsSchemaTests
             "deelzaken.zaakobjecten.zaakobjecttype",
             "deelzaken.zaakinformatieobjecten",
             "deelzaken.zaakinformatieobjecten.informatieobject",
+            "relevanteanderezaken",
+            "relevanteanderezaken.zaaktype",
+            "relevanteanderezaken.status",
+            "relevanteanderezaken.status.statustype",
+            "relevanteanderezaken.resultaat",
+            "relevanteanderezaken.resultaat.resultaattype",
         ]
     );
 
@@ -364,5 +370,53 @@ public class ZaakFieldsSchemaTests
 
         Assert.Null(error);
         Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RelevanteanderezakenStatusStatustypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"relevanteanderezaken": ["url", {"status": ["url", {"statustype": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RelevanteanderezakenResultaatResultaattypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"relevanteanderezaken": ["url", {"resultaat": ["url", {"resultaattype": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RelevanteanderezakenZaaktypeCatalogusNestedSelection_IsInvalid()
+    {
+        // Unlike hoofdzaak/deelzaken, "relevanteanderezaken" deliberately does NOT support
+        // ".zaaktype.catalogus" (matches the old v1._5 SupportedExpands scope for this resource).
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"relevanteanderezaken": ["url", {"zaaktype": ["url", {"catalogus": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Equal(["relevanteanderezaken.zaaktype.catalogus"], _validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_RelevanteanderezakenRollenNestedSelection_IsInvalid()
+    {
+        // Unlike hoofdzaak/deelzaken, "relevanteanderezaken" deliberately does NOT support "rollen"
+        // (nor zaakobjecten/zaakinformatieobjecten) -- matches the old v1._5 SupportedExpands scope.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"relevanteanderezaken": ["url", {"rollen": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Equal(["relevanteanderezaken.rollen"], _validator.Validate(selection));
     }
 }
