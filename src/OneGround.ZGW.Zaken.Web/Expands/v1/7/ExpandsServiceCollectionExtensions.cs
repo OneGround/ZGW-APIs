@@ -53,6 +53,9 @@ public static class ExpandsServiceCollectionExtensions
         // AddZaakInformatieObjectenAPIExpands (both are called together in Startup.cs) -- see
         // ZaakZaakInformatieObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakInformatieObjectenResolver>();
+        // Note: reuses the ExpandEngine<ZaakResponseDto> registered right below (resolved lazily via
+        // IServiceProvider, not constructor-injected -- see ZaakHoofdzaakResolver's own remarks for why).
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakHoofdzaakResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));

@@ -27,6 +27,19 @@ public class ZaakFieldsSchemaTests
             "zaakinformatieobjecten",
             "zaakinformatieobjecten.informatieobject",
             "zaakinformatieobjecten.informatieobject.informatieobjecttype",
+            "hoofdzaak",
+            "hoofdzaak.zaaktype",
+            "hoofdzaak.zaaktype.catalogus",
+            "hoofdzaak.status",
+            "hoofdzaak.status.statustype",
+            "hoofdzaak.resultaat",
+            "hoofdzaak.resultaat.resultaattype",
+            "hoofdzaak.rollen",
+            "hoofdzaak.rollen.roltype",
+            "hoofdzaak.zaakobjecten",
+            "hoofdzaak.zaakobjecten.zaakobjecttype",
+            "hoofdzaak.zaakinformatieobjecten",
+            "hoofdzaak.zaakinformatieobjecten.informatieobject",
         ]
     );
 
@@ -53,13 +66,12 @@ public class ZaakFieldsSchemaTests
     [Fact]
     public void Validate_NonExpandableSubEntity_IsInvalid()
     {
-        // "hoofdzaak" is not registered as an expand resolver/entity for ZaakResponseDto yet (only
-        // zaaktype/zaaktype.catalogus/status/resultaat and their nested types are, in this
-        // increment), so it must be rejected here too.
-        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"hoofdzaak": ["url"]}]"""));
+        // "deelzaken" is deliberately not registered as an expand resolver/entity for ZaakResponseDto
+        // yet (TODO, held back on purpose), so it must be rejected here.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"deelzaken": ["url"]}]"""));
 
         Assert.Null(error);
-        Assert.Equal(["hoofdzaak"], _validator.Validate(selection));
+        Assert.Equal(["deelzaken"], _validator.Validate(selection));
     }
 
     [Fact]
@@ -259,5 +271,51 @@ public class ZaakFieldsSchemaTests
 
         Assert.Null(error);
         Assert.Equal(["zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"], _validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_HoofdzaakFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"hoofdzaak": ["url", "identificatie"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_HoofdzaakStatusStatustypeNestedSelection_IsValid()
+    {
+        // Self-referential: "hoofdzaak" is itself a ZAAK, so its nested selections follow the exact
+        // same schema as the top-level ZAAK (see Validate_StatusStatustypeNestedSelection_IsValid).
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"status": ["url", {"statustype": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_HoofdzaakZaaktypeCatalogusNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"zaaktype": ["url", {"catalogus": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_HoofdzaakDeelzakenNestedSelection_IsInvalid()
+    {
+        // "hoofdzaak.deelzaken" is deliberately not implemented yet, same as the plain "deelzaken"
+        // case above -- must be rejected under "hoofdzaak" too.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"deelzaken": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Equal(["hoofdzaak.deelzaken"], _validator.Validate(selection));
     }
 }

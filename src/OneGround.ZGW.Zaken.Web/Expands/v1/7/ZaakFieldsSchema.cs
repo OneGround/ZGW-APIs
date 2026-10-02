@@ -70,5 +70,10 @@ public static class ZaakFieldsSchema
             // nesting level from ZAAK, which exceeds the VNG ZGW spec's 3-level expand cap (see
             // SupportedExpands's own remark).
             .Entity<EnkelvoudigInformatieObjectResponseDto, InformatieObjectTypeResponseDto>("informatieobjecttype")
+            // Note: self-referential -- HOOFDZAAK is itself a ZAAK. ZaakHoofdzaakResolver reuses the
+            // same ExpandEngine<ZaakResponseDto> for "hoofdzaak.*", so this schema entry is what lets
+            // the FieldsValidator follow that same recursive graph. "hoofdzaak.deelzaken" is
+            // intentionally not registered yet (not implemented).
+            .Entity<ZaakResponseDto, ZaakResponseDto>("hoofdzaak")
             .Build();
 }
