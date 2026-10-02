@@ -40,6 +40,19 @@ public class ZaakFieldsSchemaTests
             "hoofdzaak.zaakobjecten.zaakobjecttype",
             "hoofdzaak.zaakinformatieobjecten",
             "hoofdzaak.zaakinformatieobjecten.informatieobject",
+            "deelzaken",
+            "deelzaken.zaaktype",
+            "deelzaken.zaaktype.catalogus",
+            "deelzaken.status",
+            "deelzaken.status.statustype",
+            "deelzaken.resultaat",
+            "deelzaken.resultaat.resultaattype",
+            "deelzaken.rollen",
+            "deelzaken.rollen.roltype",
+            "deelzaken.zaakobjecten",
+            "deelzaken.zaakobjecten.zaakobjecttype",
+            "deelzaken.zaakinformatieobjecten",
+            "deelzaken.zaakinformatieobjecten.informatieobject",
         ]
     );
 
@@ -66,12 +79,14 @@ public class ZaakFieldsSchemaTests
     [Fact]
     public void Validate_NonExpandableSubEntity_IsInvalid()
     {
-        // "deelzaken" is deliberately not registered as an expand resolver/entity for ZaakResponseDto
-        // yet (TODO, held back on purpose), so it must be rejected here.
-        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"deelzaken": ["url"]}]"""));
+        // "verlenging" is a real ZaakResponseDto property (an inline nested object, like
+        // "betrokkeneIdentificatie"), but it's never registered as a FieldsSchema entity -- it's only
+        // ever selected via dotted scalar paths ("verlenging.reden"), not object-entity syntax. So it
+        // must be rejected here as a known-but-non-expandable field.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""[{"verlenging": ["reden"]}]"""));
 
         Assert.Null(error);
-        Assert.Equal(["deelzaken"], _validator.Validate(selection));
+        Assert.Equal(["verlenging"], _validator.Validate(selection));
     }
 
     [Fact]
@@ -317,5 +332,37 @@ public class ZaakFieldsSchemaTests
 
         Assert.Null(error);
         Assert.Equal(["hoofdzaak.deelzaken"], _validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_DeelzakenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse("""["identificatie", {"deelzaken": ["url", "identificatie"]}]"""));
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_DeelzakenStatusStatustypeNestedSelection_IsValid()
+    {
+        // Self-referential, same reasoning as Validate_HoofdzaakStatusStatustypeNestedSelection_IsValid.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"deelzaken": ["url", {"status": ["url", {"statustype": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_DeelzakenZaakobjectenZaakobjecttypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"deelzaken": ["url", {"zaakobjecten": ["url", {"zaakobjecttype": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
     }
 }

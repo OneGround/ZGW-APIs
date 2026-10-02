@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
@@ -53,15 +54,26 @@ public static class ExpandsServiceCollectionExtensions
         // AddZaakInformatieObjectenAPIExpands (both are called together in Startup.cs) -- see
         // ZaakZaakInformatieObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakInformatieObjectenResolver>();
-        // Note: reuses the ExpandEngine<ZaakResponseDto> registered right below (resolved lazily via
-        // IServiceProvider, not constructor-injected -- see ZaakHoofdzaakResolver's own remarks for why).
+        // Note: reuses the ExpandEngine<ZaakResponseDto> registered right below, as a Lazy<T> -- see
+        // ZaakHoofdzaakResolver's own remarks for why.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakHoofdzaakResolver>();
+        // Note: reuses the same ExpandEngine<ZaakResponseDto> as ZaakHoofdzaakResolver, for
+        // "deelzaken.*" -- but resolved lazily via IServiceProvider, not as a Lazy<T> constructor
+        // dependency, since IServiceProvider is already needed here for CreateScope (see
+        // ZaakDeelzakenResolver's own remarks).
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakDeelzakenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
 
         // Generic dispatcher for use in the controller
         services.AddScoped(sp => new ExpandEngine<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
+
+        // Lazy wrapper for ZaakHoofdzaakResolver: defers resolving this same engine until first
+        // actually needed, so it can be a plain constructor dependency instead of a service-locator
+        // call (the engine's own construction needs every IExpandResolver<ZaakResponseDto>, including
+        // ZaakHoofdzaakResolver, so a direct, eager dependency would be circular).
+        services.AddScoped(sp => new Lazy<ExpandEngine<ZaakResponseDto>>(() => sp.GetRequiredService<ExpandEngine<ZaakResponseDto>>()));
 
         // Note: Also registered by the [Obsolete] v1.5 AddExpandables() -- v1.7 must not silently
         // rely on that, or it breaks the moment AddExpandables() is ever removed.

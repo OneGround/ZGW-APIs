@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
@@ -25,43 +23,32 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Reuses the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>
 /// itself to resolve "hoofdzaak.*" nested paths on the fetched hoofdzaak -- the exact same resolvers
 /// (<see cref="ZaakTypeResolver"/>, <see cref="ZaakStatusResolver"/>, <see cref="ZaakRollenResolver"/>,
-/// etc.) already used for the top-level ZAAK, no duplication. That engine is injected lazily via
-/// <see cref="IServiceProvider"/> rather than by constructor, because the engine's own construction
-/// resolves every registered <see cref="IExpandResolver{TEntity}"/> of <see cref="ZaakResponseDto"/> --
-/// including this resolver itself, so a direct constructor dependency would be circular. "hoofdzaak.deelzaken"
-/// is intentionally not supported yet.
+/// etc.) already used for the top-level ZAAK, no duplication. That engine is injected as a
+/// <see cref="Lazy{T}"/> rather than directly, because the engine's own construction resolves every
+/// registered <see cref="IExpandResolver{TEntity}"/> of <see cref="ZaakResponseDto"/> -- including this
+/// resolver itself, so a direct constructor dependency would be circular; <see cref="Lazy{T}"/> defers
+/// that resolution until <c>.Value</c> is first touched, by which point construction has finished.
+/// "hoofdzaak.deelzaken" is intentionally not supported yet. The nested "hoofdzaak.*" tuples themselves
+/// come from <see cref="ZaakSelfReferenceExpandPaths"/>, shared with <see cref="ZaakDeelzakenResolver"/>
+/// (the exact same nested graph, just under a different root path) so the two can't silently drift apart.
 /// </para>
 /// </summary>
 public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly Lazy<ExpandEngine<ZaakResponseDto>> _zaakExpandEngine;
 
-    public ZaakHoofdzaakResolver(IMediator mediator, IMapper mapper, IServiceProvider serviceProvider)
+    public ZaakHoofdzaakResolver(IMediator mediator, IMapper mapper, Lazy<ExpandEngine<ZaakResponseDto>> zaakExpandEngine)
     {
         _mediator = mediator;
         _mapper = mapper;
-        _serviceProvider = serviceProvider;
+        _zaakExpandEngine = zaakExpandEngine;
     }
 
     public string Path => "hoofdzaak";
     public string Parent => null;
-    public IEnumerable<(string Path, string Parent)> AdditionalPaths =>
-        [
-            ($"{Path}.zaaktype", Path),
-            ($"{Path}.zaaktype.catalogus", $"{Path}.zaaktype"),
-            ($"{Path}.status", Path),
-            ($"{Path}.status.statustype", $"{Path}.status"),
-            ($"{Path}.resultaat", Path),
-            ($"{Path}.resultaat.resultaattype", $"{Path}.resultaat"),
-            ($"{Path}.rollen", Path),
-            ($"{Path}.rollen.roltype", $"{Path}.rollen"),
-            ($"{Path}.zaakobjecten", Path),
-            ($"{Path}.zaakobjecten.zaakobjecttype", $"{Path}.zaakobjecten"),
-            ($"{Path}.zaakinformatieobjecten", Path),
-            ($"{Path}.zaakinformatieobjecten.informatieobject", $"{Path}.zaakinformatieobjecten"),
-        ];
+    public IEnumerable<(string Path, string Parent)> AdditionalPaths => ZaakSelfReferenceExpandPaths.Build(Path);
 
     public async Task<object> ResolveAsync(ZaakResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
@@ -79,12 +66,11 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
 
         var hoofdzaak = _mapper.Map<ZaakResponseDto>(result.Result);
 
-        var nestedPaths = requestedPaths.Where(p => p.StartsWith($"{Path}.", StringComparison.Ordinal)).Select(p => p[(Path.Length + 1)..]).ToList();
+        var nestedPaths = ZaakSelfReferenceExpandPaths.ExtractNestedPaths(requestedPaths, Path);
 
         if (nestedPaths.Count > 0)
         {
-            var zaakExpandEngine = _serviceProvider.GetRequiredService<ExpandEngine<ZaakResponseDto>>();
-            await zaakExpandEngine.ResolveAsync(hoofdzaak, nestedPaths);
+            await _zaakExpandEngine.Value.ResolveAsync(hoofdzaak, nestedPaths);
         }
 
         return hoofdzaak;
