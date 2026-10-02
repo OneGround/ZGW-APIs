@@ -4,6 +4,7 @@ using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
@@ -48,6 +49,10 @@ public static class ExpandsServiceCollectionExtensions
         // AddZaakEigenschappenAPIExpands (both are called together in Startup.cs) -- see
         // ZaakEigenschappenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakEigenschappenResolver>();
+        // Note: reuses ExpandEngine<ZaakInformatieObjectResponseDto>, registered below by
+        // AddZaakInformatieObjectenAPIExpands (both are called together in Startup.cs) -- see
+        // ZaakZaakInformatieObjectenResolver's own remarks.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakInformatieObjectenResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
@@ -159,5 +164,48 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<ZaakEigenschapResponseDto>(sp.GetServices<IExpandResolver<ZaakEigenschapResponseDto>>()));
 
         services.AddScoped<IGenericCache<EigenschapResponseDto>, GenericCache<EigenschapResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKINFORMATIEOBJECT resource itself (GET /zaakinformatieobjecten, GET
+    /// /zaakinformatieobjecten/{uuid}). No <c>fields</c> mechanism here -- same reasoning as
+    /// <see cref="AddStatussenAPIExpands"/>. This <see cref="ExpandEngine{TEntity}"/> is also reused
+    /// directly by <see cref="ZaakZaakInformatieObjectenResolver"/> to resolve
+    /// "zaakinformatieobjecten.informatieobject" per item of the "zaakinformatieobjecten" list on a
+    /// ZAAK. Unlike every other resource this session, "informatieobject" itself is DRC-backed (not
+    /// ZTC) and calls the user-authenticated
+    /// <see cref="OneGround.ZGW.Documenten.ServiceAgent.v1._7.IUserAuthDocumentenServiceAgent"/>
+    /// (registered by AddUserAuthDocumentenServiceAgent_v1_7 in Startup.cs, not the obsolete v1._5
+    /// variant used elsewhere specifically for v1._5 expands) rather than a ZTC-style decorator -- see
+    /// ZaakInformatieObjectInformatieObjectResolver's own remarks for why.
+    /// No <see cref="IGenericCache{T}"/> registration for that agent: it does not cache per-url like
+    /// the plain (service-account-authenticated) v1._7 one does, so every "informatieobject" expand
+    /// hits DRC fresh -- an accepted, un-optimized starting point (matches this session's "known, not
+    /// yet fixed" N+1 precedent for ZaakContactmomenten's "zaak" expand). "informatieobject.informatieobjecttype"
+    /// (one level deeper still) IS ZTC-backed though, exactly like every other "...type" expand this
+    /// session -- see <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>'s own remarks.
+    /// </summary>
+    public static void AddZaakInformatieObjectenAPIExpands(this IServiceCollection services)
+    {
+        services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectZaakResolver>();
+        services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectInformatieObjectResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakInformatieObjectResponseDto>(
+            sp.GetServices<IExpandResolver<ZaakInformatieObjectResponseDto>>()
+        ));
+        services.AddScoped(sp => new ExpandEngine<ZaakInformatieObjectResponseDto>(
+            sp.GetServices<IExpandResolver<ZaakInformatieObjectResponseDto>>()
+        ));
+
+        // "informatieobject.informatieobjecttype" -- ZTC-backed, resolved by
+        // ZaakInformatieObjectInformatieObjectResolver via this engine, same shape as
+        // ZaakTypeResolver's own ExpandEngine<ZaakResponseDto> reuse. No "...catalogus" sibling --
+        // that would be a 4th nesting level from ZAAK, which exceeds the VNG ZGW spec's 3-level cap.
+        services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>, EnkelvoudigInformatieObjectInformatieObjectTypeResolver>();
+        services.AddScoped(sp => new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>(
+            sp.GetServices<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>>()
+        ));
+
+        services.AddScoped<IGenericCache<InformatieObjectTypeResponseDto>, GenericCache<InformatieObjectTypeResponseDto>>();
     }
 }

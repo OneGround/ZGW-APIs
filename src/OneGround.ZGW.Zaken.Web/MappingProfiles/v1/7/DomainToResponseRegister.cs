@@ -134,7 +134,32 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Uuid, src => src.Id)
             .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
             .Ignore(dest => dest.Expand);
+
+        // Note: Only ZaakInformatieObject->v1._7.ZaakInformatieObjectResponseDto is genuinely new for
+        // v1.7 -- same reasoning as above. Not polymorphic, so field mapping mirrors v1._5's
+        // ZaakInformatieObject->ZaakInformatieObjectResponseDto config exactly, with no ConstructUsing
+        // needed. AardRelatieWeergaveToString is duplicated per-version-register rather than shared --
+        // matches the existing v1/v1._5 precedent (each DomainToResponseRegister already has its own
+        // private copy).
+        config
+            .NewConfig<ZaakInformatieObject, ZaakInformatieObjectResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
+            .Map(dest => dest.AardRelatieWeergave, src => AardRelatieWeergaveToString(src.AardRelatieWeergave))
+            .Map(dest => dest.RegistratieDatum, src => ProfileHelper.StringDateFromDateTime(src.RegistratieDatum, true))
+            .Map(dest => dest.VernietigingsDatum, src => ProfileHelper.StringDateFromDateTime(src.VernietigingsDatum, true))
+            .Map(dest => dest.Status, src => MapsterUrlResolver.ResolveUrl(src.Status))
+            .Ignore(dest => dest.Expand);
     }
+
+    private static string AardRelatieWeergaveToString(AardRelatieWeergave aardRelatieWeergave) =>
+        aardRelatieWeergave switch
+        {
+            AardRelatieWeergave.hoort_bij_omgekeerd_kent => "Hoort bij, omgekeerd: kent",
+            AardRelatieWeergave.legt_vast_omgekeerd_kan_vastgelegd_zijn_als => "Legt vast, omgekeerd: kan vastgelegd zijn als",
+            _ => throw new System.InvalidOperationException($"{aardRelatieWeergave} not handled."),
+        };
 
     private static RolResponseDto CreateRolResponseDto(ZaakRol source, TypeAdapterConfig config) =>
         source.BetrokkeneType switch

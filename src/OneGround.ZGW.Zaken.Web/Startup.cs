@@ -103,6 +103,7 @@ public class Startup
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddDocumentenServiceAgent_v1_7(Configuration);
         services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
+        services.AddUserAuthDocumentenServiceAgent_v1_7(Configuration); // For ZRC v1.7 expands (zaakinformatieobjecten.informatieobject)
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
         services.AddBesluitenServiceAgent(Configuration);
@@ -117,6 +118,7 @@ public class Startup
         services.AddZaakObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKOBJECT resource itself
         services.AddZaakContactmomentenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKCONTACTMOMENT resource itself
         services.AddZaakEigenschappenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKEIGENSCHAP resource itself
+        services.AddZaakInformatieObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKINFORMATIEOBJECT resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 

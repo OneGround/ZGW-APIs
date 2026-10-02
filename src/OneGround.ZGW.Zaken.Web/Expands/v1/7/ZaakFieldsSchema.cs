@@ -1,5 +1,6 @@
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Web.Expands.Fields;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
@@ -58,5 +59,16 @@ public static class ZaakFieldsSchema
             .Entity<ZaakResponseDto, ZaakContactmomentResponseDto>("zaakcontactmomenten")
             .Entity<ZaakResponseDto, ZaakEigenschapResponseDto>("eigenschappen")
             .Entity<ZaakEigenschapResponseDto, EigenschapResponseDto>("eigenschap")
+            .Entity<ZaakResponseDto, ZaakInformatieObjectResponseDto>("zaakinformatieobjecten")
+            // Note: registered against the base EnkelvoudigInformatieObjectResponseDto, not the
+            // IExpandable EnkelvoudigInformatieObjectGetResponseDto that ZaakInformatieObjectInformatieObjectResolver
+            // actually returns at runtime -- the schema only needs the scalar/entity graph for
+            // validation, and GetResponseDto's scalars are identical (it only adds "_expand", already
+            // excluded by FieldsSchema).
+            .Entity<ZaakInformatieObjectResponseDto, EnkelvoudigInformatieObjectResponseDto>("informatieobject")
+            // Note: no "informatieobjecttype.catalogus" registration here -- that would be a 4th
+            // nesting level from ZAAK, which exceeds the VNG ZGW spec's 3-level expand cap (see
+            // SupportedExpands's own remark).
+            .Entity<EnkelvoudigInformatieObjectResponseDto, InformatieObjectTypeResponseDto>("informatieobjecttype")
             .Build();
 }

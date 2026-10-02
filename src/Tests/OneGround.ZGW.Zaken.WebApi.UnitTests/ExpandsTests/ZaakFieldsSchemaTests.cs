@@ -24,6 +24,9 @@ public class ZaakFieldsSchemaTests
             "zaakcontactmomenten",
             "eigenschappen",
             "eigenschappen.eigenschap",
+            "zaakinformatieobjecten",
+            "zaakinformatieobjecten.informatieobject",
+            "zaakinformatieobjecten.informatieobject.informatieobjecttype",
         ]
     );
 
@@ -205,5 +208,56 @@ public class ZaakFieldsSchemaTests
 
         Assert.Null(error);
         Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakinformatieobjectenFieldSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"zaakinformatieobjecten": ["url", "titel"]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakinformatieobjectenInformatieobjectNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"zaakinformatieobjecten": ["url", {"informatieobject": ["url"]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakinformatieobjectenInformatieobjectInformatieobjecttypeNestedSelection_IsValid()
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse(
+                """["identificatie", {"zaakinformatieobjecten": ["url", {"informatieobject": ["url", {"informatieobjecttype": ["url"]}]}]}]"""
+            )
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ZaakinformatieobjectenInformatieobjectInformatieobjecttypeCatalogusNestedSelection_IsInvalid()
+    {
+        // "...informatieobjecttype.catalogus" would be a 4th nesting level from ZAAK, which exceeds
+        // the VNG ZGW spec's 3-level expand cap -- so it must be rejected here too, same as
+        // Validate_NonExpandableSubEntity_IsInvalid above.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse(
+                """["identificatie", {"zaakinformatieobjecten": ["url", {"informatieobject": ["url", {"informatieobjecttype": ["url", {"catalogus": ["url"]}]}]}]}]"""
+            )
+        );
+
+        Assert.Null(error);
+        Assert.Equal(["zaakinformatieobjecten.informatieobject.informatieobjecttype.catalogus"], _validator.Validate(selection));
     }
 }

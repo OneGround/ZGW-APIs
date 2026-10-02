@@ -196,5 +196,11 @@ public class RequestToDomainRegister : IRegister
         // No field needs a custom transform here, but the pair must still be registered explicitly, or
         // it silently falls through to convention mapping.
         config.NewConfig<GetAllZaakContactmomentenQueryParameters, Models.v1._5.GetAllZaakContactmomentenFilter>();
+
+        // Note: Same reasoning -- re-registers the v1 GetAllZaakInformatieObjectenQueryParameters->
+        // GetAllZaakInformatieObjectenFilter mapping for the new (v1._7) concrete query-parameters
+        // type. No field needs a custom transform here, but the pair must still be registered
+        // explicitly, or it silently falls through to convention mapping.
+        config.NewConfig<GetAllZaakInformatieObjectenQueryParameters, Models.v1.GetAllZaakInformatieObjectenFilter>();
     }
 }

@@ -12,6 +12,7 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZakenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZakenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakObjectenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetAllZaakContactmomentenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1.Queries.GetAllZaakInformatieObjectenQueryParameters>>();
@@ -33,6 +34,8 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakResultaatQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakEigenschappenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakEigenschapQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetAllZaakInformatieObjectenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Zaken.Contracts.v1._7.Queries.GetZaakInformatieObjectQueryParameters>>();
 
         // Register the body parameter validation filters globally for v1.0 .. v1.x (HTTP POST /_zoek)
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1.Requests.ZaakSearchRequestDto>>();

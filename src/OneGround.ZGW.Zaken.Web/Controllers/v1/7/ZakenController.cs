@@ -384,8 +384,8 @@ public class ZakenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [RequiresAcceptCrs]
     [ETagFilter]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters>))]
-    public async Task<IActionResult> GetAsync([FromQuery] Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters queryParameters, Guid id)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
+    public async Task<IActionResult> GetAsync([FromQuery] GetZaakQueryParameters queryParameters, Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
@@ -459,8 +459,8 @@ public class ZakenController : ZGWControllerBase
     [HttpHead(Contracts.v1._5.ApiRoutes.Zaken.Get, Name = Contracts.v1._5.Operations.Zaken.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ETagFilter]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters>))]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] Zaken.Contracts.v1._5.Queries.GetZaakQueryParameters queryParameters)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
+    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakQueryParameters queryParameters)
     {
         return GetAsync(queryParameters, id);
     }
