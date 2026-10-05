@@ -201,6 +201,10 @@ public class RequestToDomainRegister : IRegister
         // GetAllZaakInformatieObjectenFilter mapping for the new (v1._7) concrete query-parameters
         // type. No field needs a custom transform here, but the pair must still be registered
         // explicitly, or it silently falls through to convention mapping.
-        config.NewConfig<GetAllZaakInformatieObjectenQueryParameters, Models.v1.GetAllZaakInformatieObjectenFilter>();
+        config
+            .NewConfig<GetAllZaakInformatieObjectenQueryParameters, Models.v1.GetAllZaakInformatieObjectenFilter>()
+            // Status has no query parameter on this endpoint either -- only set internally by
+            // StatusZaakInformatieObjectenResolver, which constructs the filter itself.
+            .Ignore(dest => dest.Status);
     }
 }

@@ -87,12 +87,17 @@ public static class ExpandsServiceCollectionExtensions
     /// <summary>
     /// Expand support for the STATUS resource itself (GET /statussen, GET /statussen/{uuid}).
     /// No <c>fields</c>/field-selection mechanism here -- unlike Zaken, the ZRC 1.7.0 spec doesn't add
-    /// one for statussen, only "expand".
+    /// one for statussen, only "expand". "zaakinformatieobjecten" is same-service (via the existing
+    /// <c>GetAllZaakInformatieObjectenQuery</c>, extended with a <c>Status</c> filter option) cross-checked
+    /// against DRC's authorization model, and forwards "...informatieobject"/"...informatieobjecttype" to
+    /// the <see cref="ExpandEngine{TEntity}"/> registered below by AddZaakInformatieObjectenAPIExpands
+    /// (both are called together in Startup.cs) -- see <see cref="StatusZaakInformatieObjectenResolver"/>.
     /// </summary>
     public static void AddStatussenAPIExpands(this IServiceCollection services)
     {
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusStatusTypeResolver>();
+        services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakInformatieObjectenResolver>();
 
         services.AddScoped(sp => new ExpandValidator<StatusResponseDto>(sp.GetServices<IExpandResolver<StatusResponseDto>>()));
         services.AddScoped(sp => new ExpandEngine<StatusResponseDto>(sp.GetServices<IExpandResolver<StatusResponseDto>>()));

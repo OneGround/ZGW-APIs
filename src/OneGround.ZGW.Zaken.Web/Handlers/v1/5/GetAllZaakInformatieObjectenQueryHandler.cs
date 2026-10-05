@@ -46,9 +46,10 @@ class GetAllZaakInformatieObjectenQueryHandler
         if (
             string.IsNullOrEmpty(request.GetAllZaakInformatieObjectenFilter.InformatieObject)
             && string.IsNullOrEmpty(request.GetAllZaakInformatieObjectenFilter.Zaak)
+            && string.IsNullOrEmpty(request.GetAllZaakInformatieObjectenFilter.Status)
         )
         {
-            var error = new ValidationError("nonFieldErrors", ErrorCode.Invalid, "Either zaak or informatieobject should be specified");
+            var error = new ValidationError("nonFieldErrors", ErrorCode.Invalid, "Either zaak, informatieobject or status should be specified");
 
             return new QueryResult<IList<ZaakInformatieObject>>(null, QueryStatus.ValidationError, error);
         }
@@ -83,7 +84,8 @@ class GetAllZaakInformatieObjectenQueryHandler
     {
         return z =>
             (filter.Zaak == null || z.Zaak.Id == _uriService.GetId(filter.Zaak))
-            && (filter.InformatieObject == null || z.InformatieObject == filter.InformatieObject);
+            && (filter.InformatieObject == null || z.InformatieObject == filter.InformatieObject)
+            && (filter.Status == null || z.StatusId == _uriService.GetId(filter.Status));
     }
 }
 

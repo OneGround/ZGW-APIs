@@ -14,20 +14,26 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaakinformatieobjecten" expand path on a ZAAK. Like
-/// <see cref="ZaakRollenResolver"/>/<see cref="ZaakZaakObjectenResolver"/>, opens a fresh DI scope per
-/// ZAAK before querying (its handler creates a PostgreSQL temp table for row-level authorization --
-/// see ZaakRollenResolver's own remarks). Unlike every other list resolver this session, the raw
-/// ZRC-side rows aren't the final answer: a ZAAKINFORMATIEOBJECT must also be confirmed by DRC's own
-/// authorization model (<see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>),
-/// replicating the old v1._5 ZaakInformatieObjectenExpander's filter. Uses the v1._7
-/// UserAccount-authenticated agent (not the ServiceAccount-authenticated plain v1._7 one, nor the
-/// obsolete v1._5 one) so that authorization check reflects the real calling client.
-/// "...informatieobject.informatieobjecttype" is forwarded to
-/// <see cref="ZaakInformatieObjectInformatieObjectResolver"/> via <see cref="AdditionalPaths"/>; no
-/// "...catalogus" sibling (a 4th nesting level would exceed the VNG ZGW spec's 3-level expand cap).
+/// Resolves the top-level "zaakinformatieobjecten" expand path on a STATUS. Same shape as
+/// <see cref="ZaakZaakInformatieObjectenResolver"/> (fresh DI scope per row for
+/// GetAllZaakInformatieObjectenQuery's temp-table row-level authorization, cross-checked against
+/// DRC's own authorization model via <see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>)
+/// -- see that resolver's own remarks for why both of those are needed. Two differences: this filters
+/// <see cref="OneGround.ZGW.Zaken.Web.Models.v1.GetAllZaakInformatieObjectenFilter.Status"/> by this
+/// STATUS's own url (a new filter option added to that shared query/handler for this purpose --
+/// Zaak/InformatieObject-based callers are unaffected), and the DRC cross-check is scoped to
+/// <c>entity.Zaak</c> (the one ZAAK this STATUS belongs to). The request validators for creating/updating
+/// a ZAAKINFORMATIEOBJECT don't actually enforce that its "status" belongs to the same ZAAK it's linked
+/// to, so the filter also constrains on <c>Zaak = entity.Zaak</c> alongside <c>Status</c> -- this defends
+/// against that data-model gap by simply excluding any (status, zaak) mismatch from the result, rather
+/// than assuming it can't occur. Unlike the ZAAK-level resolver, there's no pre-populated url-count field
+/// on STATUS, so this always queries ZRC first; it then skips the DRC call entirely when that query
+/// comes back empty. "...informatieobject.informatieobjecttype" is forwarded to the same shared
+/// <see cref="ExpandEngine{TEntity}"/> the ZAAK-level resolver uses -- see
+/// <see cref="ZaakZaakInformatieObjectenResolver"/>'s own remarks for why a 4th nesting level isn't
+/// offered (the VNG ZGW spec's 3-level expand cap).
 /// </summary>
-public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDto>
+public class StatusZaakInformatieObjectenResolver : IExpandResolver<StatusResponseDto>
 {
     private const string ServiceName = "DRC";
     private readonly IServiceProvider _serviceProvider;
@@ -35,7 +41,7 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly ExpandEngine<ZaakInformatieObjectResponseDto> _zaakInformatieObjectExpandEngine;
 
-    public ZaakZaakInformatieObjectenResolver(
+    public StatusZaakInformatieObjectenResolver(
         IServiceProvider serviceProvider,
         IMapper mapper,
         IUserAuthDocumentenServiceAgent documentenServiceAgent,
@@ -56,31 +62,34 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
             ("zaakinformatieobjecten.informatieobject.informatieobjecttype", "zaakinformatieobjecten.informatieobject"),
         ];
 
-    public async Task<object> ResolveAsync(ZaakResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
+    public async Task<object> ResolveAsync(
+        StatusResponseDto entity,
+        IReadOnlyDictionary<string, object> resolved,
+        IReadOnlySet<string> requestedPaths
+    )
     {
-        var zaakInformatieObjectCount = entity.ZaakInformatieObjecten?.Count() ?? 0;
-        if (zaakInformatieObjectCount == 0)
-        {
-            return new List<ZaakInformatieObjectResponseDto>();
-        }
-
         using var scope = _serviceProvider.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         var result = await mediator.Send(
             new Handlers.v1._5.GetAllZaakInformatieObjectenQuery
             {
-                GetAllZaakInformatieObjectenFilter = new Models.v1.GetAllZaakInformatieObjectenFilter { Zaak = entity.Url },
+                GetAllZaakInformatieObjectenFilter = new Models.v1.GetAllZaakInformatieObjectenFilter { Status = entity.Url, Zaak = entity.Zaak },
             }
         );
 
+        if (result.Result.Count == 0)
+        {
+            return new List<ZaakInformatieObjectResponseDto>();
+        }
+
         var objectInformatieObjecten = await _documentenServiceAgent.GetObjectInformatieObjectenAsync(
-            new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Url }
+            new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Zaak }
         );
 
         if (!objectInformatieObjecten.Success)
         {
-            throw new ExpandExternalServiceException(ServiceName, entity.Url, null);
+            throw new ExpandExternalServiceException(ServiceName, entity.Zaak, null);
         }
 
         var mirroredInformatieObjecten = objectInformatieObjecten.Response.Select(oio => oio.InformatieObject).ToHashSet();
