@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
@@ -14,21 +15,38 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <see cref="ZaakInformatieObjectZaakResolver"/>: the STATUS lives in this same service, so this goes
 /// through the existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent. "status" is
 /// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A non-OK query result throws rather
-/// than resolving to null (see ZaakStatusResolver's own remarks for why).
+/// than resolving to null (see ZaakStatusResolver's own remarks for why). "status.statustype" is
+/// forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of
+/// <see cref="StatusResponseDto"/> itself (the same <see cref="StatusStatusTypeResolver"/> used for the
+/// top-level STATUS) -- no duplication.
+/// <para>
+/// Unlike the "zaak.zaaktype" resolvers (where <see cref="Lazy{T}"/> is purely a construction-cost
+/// optimization, since no real cycle exists there), this one is genuinely circular and
+/// <see cref="Lazy{T}"/> is REQUIRED, not optional: <see cref="ExpandEngine{TEntity}"/> of
+/// <see cref="StatusResponseDto"/> depends on <see cref="StatusZaakInformatieObjectenResolver"/>, which
+/// has an eager (non-<see cref="Lazy{T}"/>) dependency on <see cref="ExpandEngine{TEntity}"/> of
+/// <see cref="ZaakInformatieObjectResponseDto"/>, which in turn depends on this resolver -- closing the
+/// loop back to <see cref="StatusResponseDto"/>'s own engine. Changing this constructor parameter to a
+/// plain (non-lazy) <c>ExpandEngine&lt;StatusResponseDto&gt;</c> would make that cycle real and throw a
+/// DI "circular dependency" exception the first time either engine is resolved.
+/// </para>
 /// </summary>
 public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatieObjectResponseDto>
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
+    private readonly Lazy<ExpandEngine<StatusResponseDto>> _statusExpandEngine;
 
-    public ZaakInformatieObjectStatusResolver(IMediator mediator, IMapper mapper)
+    public ZaakInformatieObjectStatusResolver(IMediator mediator, IMapper mapper, Lazy<ExpandEngine<StatusResponseDto>> statusExpandEngine)
     {
         _mediator = mediator;
         _mapper = mapper;
+        _statusExpandEngine = statusExpandEngine;
     }
 
     public string Path => "status";
     public string Parent => null;
+    public IEnumerable<(string Path, string Parent)> AdditionalPaths => [("status.statustype", "status")];
 
     public async Task<object> ResolveAsync(
         ZaakInformatieObjectResponseDto entity,
@@ -48,6 +66,13 @@ public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatie
             throw new ExpandInternalQueryHandlerException(Path, result.Status);
         }
 
-        return _mapper.Map<StatusResponseDto>(result.Result);
+        var status = _mapper.Map<StatusResponseDto>(result.Result);
+
+        if (requestedPaths.Contains("status.statustype"))
+        {
+            await _statusExpandEngine.Value.ResolveAsync(status, ["statustype"]);
+        }
+
+        return status;
     }
 }

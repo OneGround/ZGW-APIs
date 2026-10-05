@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
@@ -16,21 +17,31 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// batched across a list (see FUND-2456 design discussion) -- a local, indexed DB lookup is cheap
 /// enough per row that the added complexity isn't worth it yet. Mirrors Documenten's
 /// InformatieObjectResolver: a non-OK query result throws rather than resolving to null (see
-/// ZaakStatusResolver's remarks for why).
+/// ZaakStatusResolver's remarks for why). "zaak.zaaktype" is forwarded to the already-registered
+/// <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> itself (the same
+/// <see cref="ZaakTypeResolver"/> used for the top-level ZAAK) -- no duplication. Injected as
+/// <see cref="Lazy{T}"/> purely to avoid eagerly constructing that entire ZAAK expand-resolver graph on
+/// every request to this resource (there's no circularity here -- this resolver isn't itself one of
+/// that engine's own <see cref="IExpandResolver{TEntity}"/> registrations, unlike
+/// <see cref="ZaakHoofdzaakResolver"/>, which needs Lazy for exactly that reason instead). Deliberately
+/// not forwarding further to "zaak.zaaktype.catalogus" -- out of scope for this increment.
 /// </summary>
 public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
+    private readonly Lazy<ExpandEngine<ZaakResponseDto>> _zaakExpandEngine;
 
-    public StatusZaakResolver(IMediator mediator, IMapper mapper)
+    public StatusZaakResolver(IMediator mediator, IMapper mapper, Lazy<ExpandEngine<ZaakResponseDto>> zaakExpandEngine)
     {
         _mediator = mediator;
         _mapper = mapper;
+        _zaakExpandEngine = zaakExpandEngine;
     }
 
     public string Path => "zaak";
     public string Parent => null;
+    public IEnumerable<(string Path, string Parent)> AdditionalPaths => [("zaak.zaaktype", "zaak")];
 
     public async Task<object> ResolveAsync(
         StatusResponseDto entity,
@@ -50,6 +61,13 @@ public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
             throw new ExpandInternalQueryHandlerException("zaak", result.Status);
         }
 
-        return _mapper.Map<ZaakResponseDto>(result.Result);
+        var zaak = _mapper.Map<ZaakResponseDto>(result.Result);
+
+        if (requestedPaths.Contains("zaak.zaaktype"))
+        {
+            await _zaakExpandEngine.Value.ResolveAsync(zaak, ["zaaktype"]);
+        }
+
+        return zaak;
     }
 }
