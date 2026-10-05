@@ -202,11 +202,14 @@ public static class ExpandsServiceCollectionExtensions
     /// yet fixed" N+1 precedent for ZaakContactmomenten's "zaak" expand). "informatieobject.informatieobjecttype"
     /// (one level deeper still) IS ZTC-backed though, exactly like every other "...type" expand this
     /// session -- see <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>'s own remarks.
+    /// "status" (the optional status-at-time-of-filing reference) is same-service, resolved via the
+    /// existing <c>GetZaakStatusQuery</c> -- see <see cref="ZaakInformatieObjectStatusResolver"/>.
     /// </summary>
     public static void AddZaakInformatieObjectenAPIExpands(this IServiceCollection services)
     {
         services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectZaakResolver>();
         services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectInformatieObjectResolver>();
+        services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectStatusResolver>();
 
         services.AddScoped(sp => new ExpandValidator<ZaakInformatieObjectResponseDto>(
             sp.GetServices<IExpandResolver<ZaakInformatieObjectResponseDto>>()
