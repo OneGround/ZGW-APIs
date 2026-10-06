@@ -40,6 +40,10 @@ public class ZaakFieldsSchemaTests
             "hoofdzaak.zaakobjecten.zaakobjecttype",
             "hoofdzaak.zaakinformatieobjecten",
             "hoofdzaak.zaakinformatieobjecten.informatieobject",
+            "hoofdzaak.deelzaken",
+            "hoofdzaak.deelzaken.zaaktype",
+            "hoofdzaak.deelzaken.status",
+            "hoofdzaak.deelzaken.resultaat",
             "deelzaken",
             "deelzaken.zaaktype",
             "deelzaken.zaaktype.catalogus",
@@ -328,16 +332,41 @@ public class ZaakFieldsSchemaTests
     }
 
     [Fact]
-    public void Validate_HoofdzaakDeelzakenNestedSelection_IsInvalid()
+    public void Validate_HoofdzaakDeelzakenFieldSelection_IsValid()
     {
-        // "hoofdzaak.deelzaken" is deliberately not implemented yet, same as the plain "deelzaken"
-        // case above -- must be rejected under "hoofdzaak" too.
         var (selection, _, error) = FieldsParser.ParseAndValidate(
-            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"deelzaken": ["url"]}]}]""")
+            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"deelzaken": ["url", "identificatie"]}]}]""")
         );
 
         Assert.Null(error);
-        Assert.Equal(["hoofdzaak.deelzaken"], _validator.Validate(selection));
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Theory]
+    [InlineData("zaaktype")]
+    [InlineData("status")]
+    [InlineData("resultaat")]
+    public void Validate_HoofdzaakDeelzakenNestedSelection_IsValid(string nestedField)
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse($$"""["identificatie", {"hoofdzaak": ["url", {"deelzaken": ["url", {"{{nestedField}}": ["url"]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_HoofdzaakDeelzakenZaaktypeCatalogusNestedSelection_IsInvalid()
+    {
+        // A 4th nesting level from ZAAK ("hoofdzaak.deelzaken.zaaktype.catalogus") exceeds the VNG ZGW
+        // spec's 3-level expand cap -- see ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder's own remarks.
+        var (selection, _, error) = FieldsParser.ParseAndValidate(
+            JArray.Parse("""["identificatie", {"hoofdzaak": ["url", {"deelzaken": ["url", {"zaaktype": ["url", {"catalogus": ["url"]}]}]}]}]""")
+        );
+
+        Assert.Null(error);
+        Assert.Equal(["hoofdzaak.deelzaken.zaaktype.catalogus"], _validator.Validate(selection));
     }
 
     [Fact]

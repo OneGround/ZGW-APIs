@@ -132,6 +132,46 @@ public class ZaakHoofdzaakResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_HoofdzaakDeelzakenZaaktypeRequested_ForwardsRelativePathsToReusedExpandEngine()
+    {
+        var hoofdzaak = new Zaak { Id = new("44444444-4444-4444-4444-444444444444") };
+        var mappedHoofdzaak = new ZaakResponseDto { Uuid = hoofdzaak.Id.ToString() };
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<Zaak>(hoofdzaak, QueryStatus.OK));
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(mappedHoofdzaak);
+
+        var deelzakenResolverMock = new Mock<IExpandResolver<ZaakResponseDto>>();
+        deelzakenResolverMock.SetupGet(r => r.Path).Returns("deelzaken");
+        deelzakenResolverMock.SetupGet(r => r.Parent).Returns((string)null);
+        var expandEngine = new ExpandEngine<ZaakResponseDto>([deelzakenResolverMock.Object]);
+
+        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(expandEngine));
+        var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
+
+        await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "hoofdzaak", "hoofdzaak.deelzaken", "hoofdzaak.deelzaken.zaaktype" }
+        );
+
+        // Verifies the double prefix-stripping actually happened: the mock must see "deelzaken.zaaktype"
+        // (both "hoofdzaak." layers stripped), not the raw "hoofdzaak.deelzaken.zaaktype", and not an
+        // empty set either.
+        deelzakenResolverMock.Verify(
+            r =>
+                r.ResolveAsync(
+                    mappedHoofdzaak,
+                    It.IsAny<IReadOnlyDictionary<string, object>>(),
+                    It.Is<IReadOnlySet<string>>(p => p.Contains("deelzaken") && p.Contains("deelzaken.zaaktype") && p.Count == 2)
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
     public void Path_IsHoofdzaak_AndHasNoParent_AndDeclaresExpectedAdditionalPaths()
     {
         var resolver = new ZaakHoofdzaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
@@ -152,6 +192,10 @@ public class ZaakHoofdzaakResolverTests
                 ("hoofdzaak.zaakobjecten.zaakobjecttype", "hoofdzaak.zaakobjecten"),
                 ("hoofdzaak.zaakinformatieobjecten", "hoofdzaak"),
                 ("hoofdzaak.zaakinformatieobjecten.informatieobject", "hoofdzaak.zaakinformatieobjecten"),
+                ("hoofdzaak.deelzaken", "hoofdzaak"),
+                ("hoofdzaak.deelzaken.zaaktype", "hoofdzaak.deelzaken"),
+                ("hoofdzaak.deelzaken.status", "hoofdzaak.deelzaken"),
+                ("hoofdzaak.deelzaken.resultaat", "hoofdzaak.deelzaken"),
             ],
             resolver.AdditionalPaths
         );

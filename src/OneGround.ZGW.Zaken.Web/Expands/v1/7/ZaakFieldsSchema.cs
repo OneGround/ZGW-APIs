@@ -73,8 +73,14 @@ public static class ZaakFieldsSchema
             // Note: self-referential -- HOOFDZAAK/DEELZAKEN are themselves ZAAK. ZaakHoofdzaakResolver/
             // ZaakDeelzakenResolver reuse the same ExpandEngine<ZaakResponseDto> for "hoofdzaak.*"/
             // "deelzaken.*", so these two schema entries are what let the FieldsValidator follow that
-            // same recursive graph. "hoofdzaak.deelzaken" (nesting deelzaken under hoofdzaak) is
-            // intentionally not registered yet (not implemented).
+            // same recursive graph. "hoofdzaak.deelzaken" (nesting deelzaken under hoofdzaak) IS
+            // supported too, but only as far as "...deelzaken.zaaktype"/"...status"/"...resultaat" --
+            // see ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder's own remarks for why it stops there
+            // (a 4th nesting level would exceed the VNG ZGW spec's 3-level expand cap). The schema graph
+            // itself doesn't need a separate entry for that -- "hoofdzaak"/"deelzaken" being registered
+            // against the same ZaakResponseDto type already lets FieldsValidator recurse through either
+            // in any combination; AdditionalPaths (not this schema) is what actually gates which
+            // combinations are allowed.
             .Entity<ZaakResponseDto, ZaakResponseDto>("hoofdzaak")
             .Entity<ZaakResponseDto, ZaakResponseDto>("deelzaken")
             // Note: also self-referential, like hoofdzaak/deelzaken above. The narrower nested scope

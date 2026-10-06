@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
@@ -28,9 +29,20 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// registered <see cref="IExpandResolver{TEntity}"/> of <see cref="ZaakResponseDto"/> -- including this
 /// resolver itself, so a direct constructor dependency would be circular; <see cref="Lazy{T}"/> defers
 /// that resolution until <c>.Value</c> is first touched, by which point construction has finished.
-/// "hoofdzaak.deelzaken" is intentionally not supported yet. The nested "hoofdzaak.*" tuples themselves
-/// come from <see cref="ZaakSelfReferenceExpandPaths"/>, shared with <see cref="ZaakDeelzakenResolver"/>
-/// (the exact same nested graph, just under a different root path) so the two can't silently drift apart.
+/// The nested "hoofdzaak.*" tuples themselves come from <see cref="ZaakSelfReferenceExpandPaths"/>,
+/// shared with <see cref="ZaakDeelzakenResolver"/> (the exact same nested graph, just under a different
+/// root path) so the two can't silently drift apart.
+/// </para>
+/// <para>
+/// "hoofdzaak.deelzaken.zaaktype"/"...status"/"...resultaat" are ALSO supported, one level deeper still
+/// -- see <see cref="ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder"/> for why this is narrower than
+/// the rest of the "hoofdzaak.*" graph and why "hoofdzaak.deelzaken" needs to be declared explicitly too.
+/// No extra dispatch code is needed for this here: <see cref="ZaakDeelzakenResolver"/> (Path
+/// "deelzaken") is itself one of this same reused <see cref="ExpandEngine{TEntity}"/>'s registrations,
+/// so forwarding "deelzaken"/"deelzaken.zaaktype"/etc. to it (after this resolver's own
+/// "hoofdzaak."-prefix stripping) dispatches straight to it, which in turn forwards its own
+/// "zaaktype"/"status"/"resultaat" children the exact same way it already does for the top-level
+/// "deelzaken" expand.
 /// </para>
 /// </summary>
 public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
@@ -48,7 +60,8 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
 
     public string Path => "hoofdzaak";
     public string Parent => null;
-    public IEnumerable<(string Path, string Parent)> AdditionalPaths => ZaakSelfReferenceExpandPaths.Build(Path);
+    public IEnumerable<(string Path, string Parent)> AdditionalPaths =>
+        ZaakSelfReferenceExpandPaths.Build(Path).Concat(ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder(Path));
 
     public async Task<object> ResolveAsync(ZaakResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
