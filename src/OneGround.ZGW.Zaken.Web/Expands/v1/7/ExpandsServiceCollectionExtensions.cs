@@ -65,6 +65,9 @@ public static class ExpandsServiceCollectionExtensions
         // Note: same ExpandEngine<ZaakResponseDto> reuse/IServiceProvider style as ZaakDeelzakenResolver,
         // for "relevanteanderezaken.*" -- see ZaakRelevanteAndereZakenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRelevanteAndereZakenResolver>();
+        // Note: both need IExternalJsonClient, registered by AddExternalJsonClient in Startup.cs.
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakCommunicatiekanaalResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakSelectielijstklasseResolver>();
 
         // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));

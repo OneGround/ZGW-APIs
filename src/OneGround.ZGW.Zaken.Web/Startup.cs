@@ -22,6 +22,7 @@ using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Common.Web.HealthChecks;
+using OneGround.ZGW.Common.Web.Http;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -110,6 +111,7 @@ public class Startup
 
         // Expanders support _expand in responses (>= v1.5)
         services.AddExpandables(); // Note: Legacy Expand Engine v1.5
+        services.AddExternalJsonClient(Configuration.GetSection("Application:ExternalJson")); // Note: For the v1.7 "communicatiekanaal"/"selectielijstklasse" expands
         services.AddZakenAPIExpands(); // Note: New Expand Engine v1.7
         services.AddZakenAPIFieldsValidators(); // Note: New field-selection (fields) v1.7
         services.AddStatussenAPIExpands(); // Note: New Expand Engine v1.7 for the STATUS resource itself
