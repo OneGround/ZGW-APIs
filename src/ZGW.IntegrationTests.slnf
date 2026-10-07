@@ -2,6 +2,7 @@
   "solution": {
     "path": "ZGW.all.sln",
     "projects": [
+      "Tests\\OneGround.ZGW.Autorisaties.WebApi.IntegrationTests\\ZGW.Autorisaties.WebApi.IntegrationTests.csproj",
       "Tests\\OneGround.ZGW.IntegrationTests.Common\\ZGW.IntegrationTests.Common.csproj",
       "Tests\\OneGround.ZGW.Zaken.WebApi.IntegrationTests\\ZGW.Zaken.WebApi.IntegrationTests.csproj"
     ]
