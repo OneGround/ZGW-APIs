@@ -24,6 +24,7 @@ COPY LICENSE ./
 COPY --from=build /app/publish .
 
 RUN apt-get update -yq \
+    && apt-get upgrade -yq \
     && apt-get install curl -yq \
     && rm -rf /var/lib/apt/lists/* 
 
