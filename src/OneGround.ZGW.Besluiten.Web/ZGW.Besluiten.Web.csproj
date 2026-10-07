@@ -20,4 +20,9 @@
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>OneGround.ZGW.Besluiten.WebApi.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>
