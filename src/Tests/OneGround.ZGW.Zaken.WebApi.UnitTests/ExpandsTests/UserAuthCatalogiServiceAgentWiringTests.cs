@@ -29,12 +29,14 @@ public class UserAuthCatalogiServiceAgentWiringTests
     }
 
     [Fact]
-    public void Decorator_WrapsTheUserAuthenticatedAgent_NotTheServiceAccountAgent()
+    public void Decorator_NeedsTheCallersAgentFirstAndTheCachedAgentAfterwards()
     {
         var constructor = Assert.Single(typeof(CatalogiServiceAgentDecorator).GetConstructors());
 
-        var parameter = Assert.Single(constructor.GetParameters());
-        Assert.Equal(typeof(IUserAuthCatalogiServiceAgent), parameter.ParameterType);
+        Assert.Equal(
+            [typeof(IUserAuthCatalogiServiceAgent), typeof(ICatalogiServiceAgent)],
+            constructor.GetParameters().Select(p => p.ParameterType)
+        );
     }
 
     [Fact]
