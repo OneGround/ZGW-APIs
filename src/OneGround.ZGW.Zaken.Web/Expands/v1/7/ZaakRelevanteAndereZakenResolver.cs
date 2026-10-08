@@ -40,8 +40,15 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <c>Uuid__in</c> naturally deduplicates (a SQL <c>IN</c> list only ever returns one row per matching
 /// id), so the fetched rows are re-expanded back against the ORIGINAL (possibly-duplicated,
 /// order-preserved) url list below, rather than returned as-is -- otherwise a duplicate reference would
-/// silently collapse to one expanded entry, breaking positional correspondence with the un-expanded
-/// "relevanteAndereZaken" field for any caller that zips the two by index.
+/// silently collapse to one expanded entry. Every reference therefore keeps its own entry, in the order
+/// of the un-expanded "relevanteAndereZaken" field.
+/// </para>
+/// <para>
+/// A referenced ZAAK that the query does not return -- it does not exist, the caller may not see it, or
+/// it lives in another ZRC -- is simply omitted, exactly as for <see cref="ZaakDeelzakenResolver"/>;
+/// there is no placeholder. The expanded list is therefore NOT positionally aligned with the un-expanded
+/// "relevanteAndereZaken" field in general: a caller must match an expanded ZAAK to its relation by the
+/// <c>url</c> of the expanded ZAAK, never by index.
 /// </para>
 /// </summary>
 public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>
@@ -98,6 +105,7 @@ public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>
         );
 
         var zakenByUuid = result.Result.PageResult.ToDictionary(z => z.Id);
+        // Note: references that were not returned are omitted (no placeholder), see the class remarks
         var orderedZaken = uuids.Where(zakenByUuid.ContainsKey).Select(id => zakenByUuid[id]).ToList();
         var relevanteAndereZaken = _mapper.Map<List<ZaakResponseDto>>(orderedZaken);
 
