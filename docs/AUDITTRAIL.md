@@ -120,6 +120,16 @@ Each API operation maps to an audit action with a Dutch display description:
 | `GetAsync`         | `retrieve`       | `"Object gelezen"` (or custom)                         | 200         |
 | `GetListAsync`     | `retrieve`       | `"Lijst van objecten gelezen"` (with filter/page info) | 200         |
 
+### Expanded resources
+
+A `retrieve` entry is written for the resource that is requested, not for the resources that are included in its response through
+`expand` (or, on the search operations, through the sub-entities of `fields`). For example `GET /zaken/{uuid}?expand=hoofdzaak.rollen`
+writes one entry for the zaak; the hoofdzaak and its rollen are not audited separately.
+
+Expanded data is read through the same queries, and with the same authorization (including the confidentiality of the zaak and the
+caller's RSIN), as a direct request for that resource. The legacy (v1.5) expand worked the same way. When access to a specific resource
+must be traceable, request that resource directly: that operation writes its own `retrieve` entry.
+
 ## Captured Context
 
 Each audit entry automatically captures the following from the HTTP context:

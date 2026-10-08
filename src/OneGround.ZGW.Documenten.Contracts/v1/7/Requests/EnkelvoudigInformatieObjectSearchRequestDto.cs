@@ -27,6 +27,14 @@ public class EnkelvoudigInformatieObjectSearchRequestDto : IDocumentenCommonSear
     [JsonProperty("expand")]
     public string Expand { get; set; }
 
+    private JToken _fields;
+
+    // Note: an explicit JSON null ("fields": null) is deserialized into a JValue of type Null, not into null. It means the same as leaving
+    // "fields" out, so it is normalized here -- otherwise it would be rejected as "not an array" or as a combination with "expand".
     [JsonProperty("fields")]
-    public JToken Fields { get; set; }
+    public JToken Fields
+    {
+        get => _fields;
+        set => _fields = value?.Type == JTokenType.Null ? null : value;
+    }
 }
