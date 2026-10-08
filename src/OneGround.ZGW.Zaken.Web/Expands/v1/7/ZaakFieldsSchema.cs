@@ -89,5 +89,9 @@ public static class ZaakFieldsSchema
             // not by this schema entry -- the entity-type registration itself is necessarily the same
             // ZaakResponseDto graph shared by every "Zaak-shaped" expand root.
             .Entity<ZaakResponseDto, ZaakResponseDto>("relevanteanderezaken")
+            // Note: the content of these two comes from an external API and is unknown to us (see ZaakExternalJsonResolver), so a field
+            // selection on them is impossible. They can only be requested as a whole: { "communicatiekanaal": [] }.
+            .OpaqueEntity<ZaakResponseDto>("communicatiekanaal")
+            .OpaqueEntity<ZaakResponseDto>("selectielijstklasse")
             .Build();
 }

@@ -63,8 +63,39 @@ public class ZaakFieldsSchemaTests
             "relevanteanderezaken.status.statustype",
             "relevanteanderezaken.resultaat",
             "relevanteanderezaken.resultaat.resultaattype",
+            "communicatiekanaal",
+            "selectielijstklasse",
         ]
     );
+
+    [Fact]
+    public void Validate_ExternalJsonExpandsWithoutFieldSelection_AreValid()
+    {
+        var fields = JArray.Parse(
+            """
+            ["uuid", { "zaaktype": ["omschrijving", { "catalogus": ["domein"] }], "communicatiekanaal": [], "selectielijstklasse": [] }]
+            """
+        );
+
+        var (selection, expandPaths, error) = FieldsParser.ParseAndValidate(fields);
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+        Assert.Contains("communicatiekanaal", expandPaths);
+        Assert.Contains("selectielijstklasse", expandPaths);
+    }
+
+    [Theory]
+    [InlineData("communicatiekanaal")]
+    [InlineData("selectielijstklasse")]
+    public void Validate_ExternalJsonExpandWithFieldSelection_IsInvalid(string name)
+    {
+        var fields = JArray.Parse($$"""[{ "{{name}}": ["naam"] }]""");
+
+        var (selection, _, _) = FieldsParser.ParseAndValidate(fields);
+
+        Assert.Equal([$"{name} (veldselectie wordt niet ondersteund)"], _validator.Validate(selection));
+    }
 
     [Fact]
     public void Validate_ZaaktypeCatalogusNestedSelection_IsValid()

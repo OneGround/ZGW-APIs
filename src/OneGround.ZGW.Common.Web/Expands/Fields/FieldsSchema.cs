@@ -21,17 +21,26 @@ public sealed class FieldsSchema
 {
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, Type>> _entities;
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> _nestedObjects;
+    private readonly IReadOnlyDictionary<Type, IReadOnlySet<string>> _opaqueEntities;
     private readonly ConcurrentDictionary<Type, HashSet<string>> _scalarCache = new();
     private readonly ConcurrentDictionary<(Type, string), IReadOnlyList<Type>> _nestedReflectionCache = new();
 
     internal FieldsSchema(
         IReadOnlyDictionary<Type, IReadOnlyDictionary<string, Type>> entities,
-        IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> nestedObjects
+        IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> nestedObjects,
+        IReadOnlyDictionary<Type, IReadOnlySet<string>> opaqueEntities
     )
     {
         _entities = entities;
         _nestedObjects = nestedObjects;
+        _opaqueEntities = opaqueEntities;
     }
+
+    /// <summary>
+    /// True als sub-entiteit <paramref name="entityName"/> binnen <paramref name="parent"/> een <b>ondoorzichtige</b> expand is: hij bestaat
+    /// (en wordt als geheel teruggegeven), maar de vorm van de inhoud is ons onbekend. Er kan dus geen veldselectie op worden gedaan.
+    /// </summary>
+    public bool IsOpaqueEntity(Type parent, string entityName) => _opaqueEntities.TryGetValue(parent, out var names) && names.Contains(entityName);
 
     /// <summary>
     /// Geldige scalaire veldnamen (JsonPropertyName) van <paramref name="type"/>, het <c>_expand</c> veld uitgezonderd.
@@ -165,6 +174,22 @@ public sealed class FieldsSchemaBuilder
         return this;
     }
 
+    private readonly Dictionary<Type, HashSet<string>> _opaqueEntities = new();
+
+    /// <summary>
+    /// Registreert sub-entiteit <paramref name="name"/> op <typeparamref name="TParent"/> als <b>ondoorzichtige</b> expand: de inhoud
+    /// (bv. een JSON-document van een externe API) is ons onbekend. Hij mag in <c>fields</c> worden opgegeven, maar alleen zonder
+    /// veldselectie (<c>{ "naam": [] }</c>), en wordt dan ongewijzigd en volledig teruggegeven.
+    /// </summary>
+    public FieldsSchemaBuilder OpaqueEntity<TParent>(string name)
+    {
+        if (!_opaqueEntities.TryGetValue(typeof(TParent), out var names))
+            _opaqueEntities[typeof(TParent)] = names = new HashSet<string>(StringComparer.Ordinal);
+
+        names.Add(name);
+        return this;
+    }
+
     public FieldsSchema Build()
     {
         var entities = _entities.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, Type>)kv.Value);
@@ -176,6 +201,8 @@ public sealed class FieldsSchemaBuilder
                     kv.Value.ToDictionary(e => e.Key, e => (IReadOnlyList<Type>)e.Value, StringComparer.Ordinal)
         );
 
-        return new FieldsSchema(entities, nested);
+        var opaque = _opaqueEntities.ToDictionary(kv => kv.Key, kv => (IReadOnlySet<string>)kv.Value);
+
+        return new FieldsSchema(entities, nested, opaque);
     }
 }

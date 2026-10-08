@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using Xunit;
 
@@ -54,6 +55,43 @@ public class FieldProjectorTests
     }
 
     // ---- Geneste entiteiten (_expand) ----
+
+    [Fact]
+    public void Project_JsonDocumentExpand_IsPassedOnUnchanged()
+    {
+        var document = new JObject
+        {
+            ["naam"] = "Telefoon",
+            ["nested"] = new JObject { ["a"] = 1 },
+        };
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = document },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Same(document, expand["extern"]);
+    }
+
+    [Fact]
+    public void Project_EmptyJsonDocumentExpand_StaysAnEmptyObject()
+    {
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = new JObject() },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Empty(Assert.IsType<JObject>(expand["extern"]));
+    }
 
     [Fact]
     public void Project_NestedSingleObject_ProjectsSubSelection()

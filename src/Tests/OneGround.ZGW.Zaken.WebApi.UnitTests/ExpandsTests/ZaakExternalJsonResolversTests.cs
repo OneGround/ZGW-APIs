@@ -71,6 +71,21 @@ public class ZaakExternalJsonResolversTests
     }
 
     [Fact]
+    public void ExpandValidator_AcceptsBothPaths_ForTheExpandStringOfPostSearchWithoutFields()
+    {
+        var client = Mock.Of<IExternalJsonClient>();
+        var validator = new ExpandValidator<ZaakResponseDto>([
+            new ZaakCommunicatiekanaalResolver(client),
+            new ZaakSelectielijstklasseResolver(client),
+        ]);
+
+        var (paths, error) = validator.ParseAndValidate("communicatiekanaal,selectielijstklasse");
+
+        Assert.Null(error);
+        Assert.Equal(["communicatiekanaal", "selectielijstklasse"], paths.Order().ToArray());
+    }
+
+    [Fact]
     public void Paths_AreTopLevel()
     {
         var client = Mock.Of<IExternalJsonClient>();
