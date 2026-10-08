@@ -20,7 +20,10 @@ public class ExternalJsonClientHandlerTests
         using var server = LoopbackServer.Start();
         using var client = new HttpClient(ExternalJsonClientServiceCollectionExtensions.CreateHandler(new ExternalJsonClientSettings()));
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => client.GetAsync($"http://127.0.0.1:{server.Port}/"));
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetAsync($"http://127.0.0.1:{server.Port}/"));
+
+        // Note: SocketsHttpHandler wraps what its ConnectCallback throws; the client relies on finding it as the inner exception
+        Assert.IsType<BlockedAddressException>(exception.InnerException);
 
         Assert.Equal(0, server.Connections);
     }

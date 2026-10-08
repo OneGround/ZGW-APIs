@@ -20,6 +20,19 @@ public class ExternalJsonClientSettingsTests
     }
 
     [Theory]
+    [InlineData(20, 20)]
+    [InlineData(60, 60)]
+    [InlineData(0, 10)]
+    [InlineData(-1, 10)]
+    [InlineData(61, 10)]
+    public void TotalTimeout_OutOfRange_FallsBackToDefault(int configured, int expectedSeconds)
+    {
+        var settings = new ExternalJsonClientSettings { TotalTimeoutSeconds = configured };
+
+        Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), settings.TotalTimeout);
+    }
+
+    [Theory]
     [InlineData(1000, 1000)]
     [InlineData(ExternalJsonClientSettings.MaxAllowedResponseBytes, ExternalJsonClientSettings.MaxAllowedResponseBytes)]
     [InlineData(0, 256 * 1024)]

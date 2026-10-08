@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -33,6 +34,19 @@ public static class ExternalUrlPolicy
         return true;
     }
 
+    /// <summary>
+    /// False for an <see cref="ExternalJsonClientSettings.AllowedHosts"/> entry that can never match (empty, or not a valid host name).
+    /// </summary>
+    public static bool IsValidHostEntry(string allowed)
+    {
+        if (string.IsNullOrWhiteSpace(allowed))
+            return false;
+
+        allowed = allowed.Trim();
+
+        return NormalizeHost(allowed.StartsWith("*.", StringComparison.Ordinal) ? allowed[2..] : allowed) != null;
+    }
+
     private static bool HostMatches(string host, string allowed)
     {
         if (string.IsNullOrWhiteSpace(allowed))
@@ -40,10 +54,38 @@ public static class ExternalUrlPolicy
 
         allowed = allowed.Trim();
 
-        if (allowed.StartsWith("*.", StringComparison.Ordinal))
-            return host.EndsWith(allowed[1..], StringComparison.OrdinalIgnoreCase) && host.Length > allowed.Length - 1;
+        var wildcard = allowed.StartsWith("*.", StringComparison.Ordinal);
+        var suffix = NormalizeHost(wildcard ? allowed[2..] : allowed);
+        var normalizedHost = NormalizeHost(host);
 
-        return string.Equals(host, allowed, StringComparison.OrdinalIgnoreCase);
+        if (suffix == null || normalizedHost == null)
+            return false;
+
+        return wildcard
+            ? normalizedHost.EndsWith("." + suffix, StringComparison.Ordinal)
+            : string.Equals(normalizedHost, suffix, StringComparison.Ordinal);
+    }
+
+    // Note: both the url host and the configured entries are compared in their punycode (ASCII) form, in lower case and without a
+    // trailing dot, so "Bücher.Example", "xn--bcher-kva.example" and "xn--bcher-kva.example." are the same host.
+    private static string NormalizeHost(string host)
+    {
+        host = host.Trim().TrimEnd('.');
+
+        if (host.Length == 0)
+            return null;
+
+        try
+        {
+            var ascii = new IdnMapping().GetAscii(host).ToLower(CultureInfo.InvariantCulture);
+
+            // Note: IdnMapping accepts characters (a space, for instance) that can never be part of a real host name
+            return ascii.All(c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-' or '.' or '_') ? ascii : null;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -62,10 +104,11 @@ public static class ExternalUrlPolicy
         if (address.AddressFamily == AddressFamily.InterNetworkV6)
         {
             // Forms that embed an IPv4 address (and so may reach a private one on a network that translates them) are refused outright:
-            // IPv4-compatible (::/96), NAT64 (64:ff9b::/96 and the local-use 64:ff9b:1::/48) and 6to4 (2002::/16).
+            // IPv4-compatible (::/96), NAT64 (the whole 64:ff9b::/32, which covers 64:ff9b::/96 and the local-use 64:ff9b:1::/48) and
+            // 6to4 (2002::/16).
             var v6 = address.GetAddressBytes();
             var isIpv4Compatible = Array.TrueForAll(v6[..12], x => x == 0);
-            var isNat64 = v6[0] == 0x00 && v6[1] == 0x64 && v6[2] == 0xff && v6[3] == 0x9b && (v6[4] == 0 || v6[4] == 1);
+            var isNat64 = v6[0] == 0x00 && v6[1] == 0x64 && v6[2] == 0xff && v6[3] == 0x9b;
             var is6To4 = v6[0] == 0x20 && v6[1] == 0x02;
 
             if (isIpv4Compatible || isNat64 || is6To4)

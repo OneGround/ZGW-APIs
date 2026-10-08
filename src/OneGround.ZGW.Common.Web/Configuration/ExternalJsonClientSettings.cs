@@ -20,16 +20,29 @@ public class ExternalJsonClientSettings
     /// </summary>
     public bool AllowPrivateAddresses { get; set; }
 
-    public int TimeoutSeconds { get; set; } = 3;
+    public int TimeoutSeconds { get; set; } = DefaultTimeoutSeconds;
 
-    public int MaxResponseBytes { get; set; } = 256 * 1024;
+    /// <summary>
+    /// Total time all external calls of ONE incoming request may take together (a list of zaken would otherwise multiply the
+    /// per-call timeout by the number of zaken). Once used up, further calls yield an empty object without calling out.
+    /// </summary>
+    public int TotalTimeoutSeconds { get; set; } = DefaultTotalTimeoutSeconds;
+
+    public int MaxResponseBytes { get; set; } = DefaultMaxResponseBytes;
 
     // Note: a misconfigured value (zero, negative, absurdly large) must neither break the client nor switch off its protection, so
     // the values actually used fall back to the default when out of range.
+    public const int DefaultTimeoutSeconds = 3;
+    public const int DefaultTotalTimeoutSeconds = 10;
+    public const int DefaultMaxResponseBytes = 256 * 1024;
     public const int MaxAllowedTimeoutSeconds = 30;
+    public const int MaxAllowedTotalTimeoutSeconds = 60;
     public const int MaxAllowedResponseBytes = 4 * 1024 * 1024;
 
-    public TimeSpan Timeout => TimeSpan.FromSeconds(TimeoutSeconds is > 0 and <= MaxAllowedTimeoutSeconds ? TimeoutSeconds : 3);
+    public TimeSpan TotalTimeout =>
+        TimeSpan.FromSeconds(TotalTimeoutSeconds is > 0 and <= MaxAllowedTotalTimeoutSeconds ? TotalTimeoutSeconds : DefaultTotalTimeoutSeconds);
 
-    public int EffectiveMaxResponseBytes => MaxResponseBytes is > 0 and <= MaxAllowedResponseBytes ? MaxResponseBytes : 256 * 1024;
+    public TimeSpan Timeout => TimeSpan.FromSeconds(TimeoutSeconds is > 0 and <= MaxAllowedTimeoutSeconds ? TimeoutSeconds : DefaultTimeoutSeconds);
+
+    public int EffectiveMaxResponseBytes => MaxResponseBytes is > 0 and <= MaxAllowedResponseBytes ? MaxResponseBytes : DefaultMaxResponseBytes;
 }
