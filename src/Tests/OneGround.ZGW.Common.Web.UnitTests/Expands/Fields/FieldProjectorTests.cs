@@ -78,6 +78,39 @@ public class FieldProjectorTests
     }
 
     [Fact]
+    public void Project_JsonDocumentExpandWithSubSelection_ReturnsNothing_InsteadOfLeakingTheWholeDocument()
+    {
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = new JObject { ["geheim"] = "x" } },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection { ScalarFields = { "naam" } } } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.IsNotType<JObject>(expand["extern"]);
+    }
+
+    [Fact]
+    public void Project_JsonArrayExpand_IsPassedOnUnchanged()
+    {
+        var document = new JArray(1, 2, 3);
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = document },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Same(document, expand["extern"]);
+    }
+
+    [Fact]
     public void Project_EmptyJsonDocumentExpand_StaysAnEmptyObject()
     {
         var entity = new ParentDto

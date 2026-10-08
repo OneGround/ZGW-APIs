@@ -9,8 +9,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Base for the top-level ZAAK expand paths whose value is an optional url that is fetched as a JSON object from an external,
 /// unauthenticated API. Whatever goes wrong (url not allowed, not reachable, not JSON, ...) results in an empty object, see
-/// <see cref="IExternalJsonClient"/>. There is deliberately no "fields" schema entry for these paths -- the shape of the external
-/// document is unknown to us.
+/// <see cref="IExternalJsonClient"/>. The shape of the external document is unknown to us, so in "fields" these paths are registered as
+/// opaque entities (see <c>ZaakFieldsSchema</c>): they can be requested as a whole (<c>{ "communicatiekanaal": [] }</c>), never with a field selection.
 /// </summary>
 public abstract class ZaakExternalJsonResolver : IExpandResolver<ZaakResponseDto>
 {

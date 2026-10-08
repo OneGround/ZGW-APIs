@@ -140,6 +140,7 @@ public sealed class FieldsSchemaBuilder
 {
     private readonly Dictionary<Type, Dictionary<string, Type>> _entities = new();
     private readonly Dictionary<Type, Dictionary<string, List<Type>>> _nestedObjects = new();
+    private readonly Dictionary<Type, HashSet<string>> _opaqueEntities = new();
 
     /// <summary>
     /// Registreert dat sub-entiteit <paramref name="name"/> op <typeparamref name="TParent"/>
@@ -174,8 +175,6 @@ public sealed class FieldsSchemaBuilder
         return this;
     }
 
-    private readonly Dictionary<Type, HashSet<string>> _opaqueEntities = new();
-
     /// <summary>
     /// Registreert sub-entiteit <paramref name="name"/> op <typeparamref name="TParent"/> als <b>ondoorzichtige</b> expand: de inhoud
     /// (bv. een JSON-document van een externe API) is ons onbekend. Hij mag in <c>fields</c> worden opgegeven, maar alleen zonder
@@ -192,6 +191,13 @@ public sealed class FieldsSchemaBuilder
 
     public FieldsSchema Build()
     {
+        // Note: een naam is óf een entiteit met een bekende vorm óf ondoorzichtig; allebei zou stilzwijgend de opaque-regel laten winnen.
+        foreach (var (parent, names) in _opaqueEntities)
+        {
+            if (_entities.TryGetValue(parent, out var known) && names.FirstOrDefault(known.ContainsKey) is { } conflict)
+                throw new InvalidOperationException($"'{conflict}' on {parent.Name} is registered as both an Entity and an OpaqueEntity.");
+        }
+
         var entities = _entities.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, Type>)kv.Value);
 
         var nested = _nestedObjects.ToDictionary(

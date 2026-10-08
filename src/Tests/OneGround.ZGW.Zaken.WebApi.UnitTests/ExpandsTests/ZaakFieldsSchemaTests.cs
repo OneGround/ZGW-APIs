@@ -63,8 +63,9 @@ public class ZaakFieldsSchemaTests
             "relevanteanderezaken.status.statustype",
             "relevanteanderezaken.resultaat",
             "relevanteanderezaken.resultaat.resultaattype",
-            "communicatiekanaal",
-            "selectielijstklasse",
+            // Note: taken from the real resolvers, so a renamed path no longer silently keeps these tests green
+            new ZaakCommunicatiekanaalResolver(null).Path,
+            new ZaakSelectielijstklasseResolver(null).Path,
         ]
     );
 
@@ -83,6 +84,19 @@ public class ZaakFieldsSchemaTests
         Assert.Empty(_validator.Validate(selection));
         Assert.Contains("communicatiekanaal", expandPaths);
         Assert.Contains("selectielijstklasse", expandPaths);
+    }
+
+    [Theory]
+    [InlineData("""[{ "hoofdzaak": [{ "communicatiekanaal": [] }] }]""", "hoofdzaak.communicatiekanaal")]
+    [InlineData("""[{ "deelzaken": [{ "selectielijstklasse": [] }] }]""", "deelzaken.selectielijstklasse")]
+    [InlineData("""[{ "relevanteanderezaken": [{ "communicatiekanaal": [] }] }]""", "relevanteanderezaken.communicatiekanaal")]
+    [InlineData("""["communicatiekanaal.naam"]""", "communicatiekanaal")] // dotted path = inline nested object, which a url is not
+    public void Validate_ExternalJsonExpandOnANestedOrInlinePath_IsInvalid(string fieldsJson, string expectedInvalid)
+    {
+        var (selection, _, error) = FieldsParser.ParseAndValidate(JArray.Parse(fieldsJson));
+
+        Assert.Null(error);
+        Assert.Equal([expectedInvalid], _validator.Validate(selection));
     }
 
     [Theory]

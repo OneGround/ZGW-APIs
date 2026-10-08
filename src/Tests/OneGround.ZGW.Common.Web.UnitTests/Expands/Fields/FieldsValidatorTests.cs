@@ -126,6 +126,14 @@ public class FieldsValidatorTests
     }
 
     [Fact]
+    public void Build_NameRegisteredAsBothEntityAndOpaqueEntity_Throws()
+    {
+        var builder = new FieldsSchemaBuilder().Entity<ParentDto, ChildDto>("x").OpaqueEntity<ParentDto>("x");
+
+        Assert.Throws<System.InvalidOperationException>(() => builder.Build());
+    }
+
+    [Fact]
     public void Validate_OpaqueEntity_NotExpandable_IsReported()
     {
         var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
