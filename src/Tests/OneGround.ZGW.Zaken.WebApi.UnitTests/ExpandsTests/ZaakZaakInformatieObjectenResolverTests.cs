@@ -178,7 +178,10 @@ public class ZaakZaakInformatieObjectenResolverTests
         documentenServiceAgentMock
             .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
             .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(new OneGround.ZGW.Common.Contracts.v1.ErrorResponse(), null)
+                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(
+                    new OneGround.ZGW.Common.Contracts.v1.ErrorResponse { Status = 500 },
+                    null
+                )
             );
 
         var resolver = new ZaakZaakInformatieObjectenResolver(
@@ -197,6 +200,9 @@ public class ZaakZaakInformatieObjectenResolverTests
         );
 
         Assert.Equal("DRC", ex.ServiceName);
+        // Note: the url that was asked of DRC and the status it answered with -- not just the url of the zaak
+        Assert.Equal($"objectinformatieobjecten?object={EntityWithTwoZaakInformatieObjecten.Url}", ex.ServiceUrl);
+        Assert.Equal(500, ex.StatusCode);
     }
 
     [Fact]

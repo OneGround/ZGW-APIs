@@ -52,7 +52,14 @@ public class ZaakInformatieObjectInformatieObjectResolver : IExpandResolver<Zaak
 
         if (!result.Success || result.Response == null)
         {
-            throw new ExpandExternalServiceException(ServiceName, entity.InformatieObject, null);
+            // Note: DRC evaluates the request as the caller. A document that DRC says is not available to the caller (403/404) is left out of the
+            // expand, like an entity that the same-service query does not return (see ExpandQueryStatus), instead of failing the request.
+            if (ExpandExternalServiceException.IsNotAvailableToCaller(result))
+            {
+                return null;
+            }
+
+            throw ExpandExternalServiceException.ForFailedResponse(ServiceName, entity.InformatieObject, result);
         }
 
         var informatieobject = _mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Response);

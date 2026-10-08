@@ -178,7 +178,10 @@ public class StatusZaakInformatieObjectenResolverTests
         documentenServiceAgentMock
             .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
             .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(new OneGround.ZGW.Common.Contracts.v1.ErrorResponse(), null)
+                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(
+                    new OneGround.ZGW.Common.Contracts.v1.ErrorResponse { Status = 500 },
+                    null
+                )
             );
 
         var resolver = new StatusZaakInformatieObjectenResolver(
@@ -193,6 +196,8 @@ public class StatusZaakInformatieObjectenResolverTests
         );
 
         Assert.Equal("DRC", ex.ServiceName);
+        Assert.Equal($"objectinformatieobjecten?object={Entity.Zaak}", ex.ServiceUrl);
+        Assert.Equal(500, ex.StatusCode);
     }
 
     [Fact]

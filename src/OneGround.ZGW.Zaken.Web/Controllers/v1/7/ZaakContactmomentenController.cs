@@ -106,7 +106,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
             }
             catch (ExpandExternalServiceException ex)
             {
-                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl, ex.StatusCode, ex);
             }
             catch (ExpandInternalQueryHandlerException ex)
             {
@@ -178,7 +178,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
             }
             catch (ExpandExternalServiceException ex)
             {
-                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl, ex.StatusCode, ex);
             }
             catch (ExpandInternalQueryHandlerException ex)
             {

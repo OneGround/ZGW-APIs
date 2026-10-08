@@ -98,7 +98,7 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         var serviceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
         serviceAgentMock
             .Setup(a => a.GetEnkelvoudigInformatieObjectByUrlAsync(InformatieObjectUrl))
-            .ReturnsAsync(new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(new ErrorResponse(), null));
+            .ReturnsAsync(new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(new ErrorResponse { Status = 502 }, null));
 
         var resolver = new ZaakInformatieObjectInformatieObjectResolver(
             serviceAgentMock.Object,
@@ -113,6 +113,32 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
 
         Assert.Equal("DRC", ex.ServiceName);
         Assert.Equal(InformatieObjectUrl, ex.ServiceUrl);
+        Assert.Equal(502, ex.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(403)]
+    [InlineData(404)]
+    public async Task ResolveAsync_DocumentNotAvailableToTheCaller_ResolvesToNullInsteadOfFailingTheRequest(int status)
+    {
+        var serviceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
+        serviceAgentMock
+            .Setup(a => a.GetEnkelvoudigInformatieObjectByUrlAsync(InformatieObjectUrl))
+            .ReturnsAsync(new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(new ErrorResponse { Status = status }, null));
+
+        var resolver = new ZaakInformatieObjectInformatieObjectResolver(
+            serviceAgentMock.Object,
+            Mock.Of<IMapper>(),
+            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([])
+        );
+
+        var result = await resolver.ResolveAsync(
+            new ZaakInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "informatieobject" }
+        );
+
+        Assert.Null(result);
     }
 
     [Fact]

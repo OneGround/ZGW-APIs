@@ -102,7 +102,7 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
             var result = await call();
             if (!result.Success || result.Response == null)
             {
-                throw new ExpandExternalServiceException(ServiceName, url, null);
+                throw ExpandExternalServiceException.ForFailedResponse(ServiceName, url, result);
             }
             return result;
         }

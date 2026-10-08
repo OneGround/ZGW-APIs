@@ -93,12 +93,24 @@ public abstract class ZGWControllerBase : ControllerBase
         return value.ToObject<T>();
     }
 
-    protected IActionResult ExterneServiceFout(string serviceName, string serviceUrl)
+    // Note: the cause (the reason the service agent recorded, the inner exception) only goes to the log; the client gets the service, the
+    // url that was asked of it and the HTTP status it answered with.
+    protected IActionResult ExterneServiceFout(string serviceName, string serviceUrl, int? statusCode = null, Exception exception = null)
     {
+        _logger.LogWarning(
+            exception,
+            "Expand failed: external service {ServiceName} could not deliver {ServiceUrl} (HTTP status: {StatusCode})",
+            serviceName,
+            serviceUrl,
+            statusCode?.ToString() ?? "none"
+        );
+
+        var status = statusCode is null ? string.Empty : $" (HTTP {statusCode})";
+
         return _errorResponseBuilder.BadGateway(
             code: ErrorCode.ExternalServiceError,
             title: $"Externe service '{serviceName}' niet beschikbaar",
-            detail: $"De expand kon niet worden uitgevoerd omdat service '{serviceName}' niet bereikbaar is of een fout heeft teruggegeven voor URL '{serviceUrl}'."
+            detail: $"De expand kon niet worden uitgevoerd omdat service '{serviceName}' niet bereikbaar is of een fout heeft teruggegeven{status} voor URL '{serviceUrl}'."
         );
     }
 

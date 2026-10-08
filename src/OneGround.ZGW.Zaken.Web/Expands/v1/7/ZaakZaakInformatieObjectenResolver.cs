@@ -80,7 +80,12 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
 
         if (!objectInformatieObjecten.Success)
         {
-            throw new ExpandExternalServiceException(ServiceName, entity.Url, null);
+            // Note: the url of what was asked of DRC (not the url of the zaak the expand is about)
+            throw ExpandExternalServiceException.ForFailedResponse(
+                ServiceName,
+                $"objectinformatieobjecten?object={entity.Url}",
+                objectInformatieObjecten
+            );
         }
 
         var mirroredInformatieObjecten = objectInformatieObjecten.Response.Select(oio => oio.InformatieObject).ToHashSet();
