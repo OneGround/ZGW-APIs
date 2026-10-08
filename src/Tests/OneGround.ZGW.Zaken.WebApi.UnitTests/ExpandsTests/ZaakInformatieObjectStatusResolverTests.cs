@@ -40,7 +40,7 @@ public class ZaakInformatieObjectStatusResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_StatusNotFound_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_StatusNotFound_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -50,16 +50,13 @@ public class ZaakInformatieObjectStatusResolverTests
         var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyStatusExpandEngine());
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
 
-        Assert.Equal("status", ex.Resource);
-        Assert.Equal(QueryStatus.NotFound, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task ResolveAsync_StatusForbidden_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_StatusForbidden_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -69,12 +66,9 @@ public class ZaakInformatieObjectStatusResolverTests
         var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyStatusExpandEngine());
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
 
-        Assert.Equal("status", ex.Resource);
-        Assert.Equal(QueryStatus.Forbidden, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]

@@ -27,6 +27,11 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <see cref="ExpandEngine{TEntity}"/> (for <c>ZaakEigenschapResponseDto</c> -- the same instance that
 /// powers the ZAAKEIGENSCHAP resource's own "expand=eigenschap") via its <c>ResolveListAsync</c>.
 /// </para>
+/// <para>
+/// <c>GetAllZaakEigenschappenQuery</c> is one of the few list queries that can answer with a non-OK status (NotFound or
+/// Forbidden, without a result), so that status is checked: NotFound/Forbidden (the ZAAK is not available to the caller) resolve to an
+/// empty list, see <see cref="ExpandQueryStatus"/>.
+/// </para>
 /// </summary>
 public class ZaakEigenschappenResolver : IExpandResolver<ZaakResponseDto>
 {
@@ -54,6 +59,11 @@ public class ZaakEigenschappenResolver : IExpandResolver<ZaakResponseDto>
         }
 
         var result = await _mediator.Send(new Handlers.v1.GetAllZaakEigenschappenQuery { Zaak = UriHelper.GetResourceId(entity.Url) });
+
+        if (!ExpandQueryStatus.IsAvailable(result.Status, Path))
+        {
+            return new List<ZaakEigenschapResponseDto>();
+        }
 
         var eigenschappen = _mapper.Map<List<ZaakEigenschapResponseDto>>(result.Result);
 

@@ -18,9 +18,9 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// MediatR rather than a ServiceAgent, and is deliberately not cached or batched across a list (same
 /// known trade-off as RolZaakResolver/ZaakObjectZaakResolver/ZaakInformatieObjectZaakResolver). Unlike
 /// status/resultaat though, HOOFDZAAK is a reference to a DIFFERENT ZAAK with its own independent
-/// authorization check -- still throws on a non-OK result (same reasoning as ZaakStatusResolver: a
-/// stored URL failing to resolve is a data-integrity/authorization problem) rather than silently
-/// degrading like the old v1._5 HoofdZaakExpander did.
+/// authorization check -- a HOOFDZAAK that is not available to the caller (NotFound/Forbidden)
+/// resolves to an empty object instead of failing the request, like the old v1._5 HoofdZaakExpander did (see
+/// <see cref="ExpandQueryStatus"/>).
 /// <para>
 /// Reuses the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>
 /// itself to resolve "hoofdzaak.*" nested paths on the fetched hoofdzaak -- the exact same resolvers
@@ -82,9 +82,9 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
             new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Hoofdzaak), SRID = ExpandSrid.From(_httpContextAccessor) }
         );
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, Path))
         {
-            throw new ExpandInternalQueryHandlerException(Path, result.Status);
+            return null;
         }
 
         var hoofdzaak = _mapper.Map<ZaakResponseDto>(result.Result);

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -16,8 +15,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// ServiceAgent, and is deliberately not cached or batched across a list. ZAAK is a required
 /// (non-nullable) field on ZAAKCONTACTMOMENT -- same as on ROL/ZAAKOBJECT -- but both of those still
 /// guard a null/empty value defensively rather than fail loudly, so this resolver matches that for
-/// consistency. A non-OK query result otherwise throws rather than resolving to null (see
-/// ZaakStatusResolver's remarks for why).
+/// consistency. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to an empty object
+/// instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class ZaakContactmomentZaakResolver : IExpandResolver<ZaakContactmomentResponseDto>
 {
@@ -46,9 +45,9 @@ public class ZaakContactmomentZaakResolver : IExpandResolver<ZaakContactmomentRe
 
         var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, "zaak"))
         {
-            throw new ExpandInternalQueryHandlerException("zaak", result.Status);
+            return null;
         }
 
         return _mapper.Map<ZaakResponseDto>(result.Result);

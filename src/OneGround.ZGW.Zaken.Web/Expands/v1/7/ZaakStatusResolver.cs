@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -14,10 +13,10 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <see cref="StatusZaakResolver"/>: the STATUS lives in this same service, so this goes through the
 /// existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent, and is deliberately not
 /// cached or batched across a list yet. Does not itself expand "status.zaak"/"status.statustype" --
-/// not supported. Mirrors Documenten's InformatieObjectResolver: a non-OK query
-/// result (NotFound/Forbidden) throws rather than silently resolving to null, since a URL already
-/// present on the ZAAK failing to resolve is a data-integrity/authorization problem, not "no linked
-/// entity" -- the controller already translates this via its InterneQueryHandlerFout catch block.
+/// not supported. A STATUS that is not
+/// available to the caller (NotFound/Forbidden) resolves to an empty object instead of failing the request, see
+/// <see cref="ExpandQueryStatus"/>. A real failure still throws, and the controller translates that via its InterneQueryHandlerFout
+/// catch block.
 /// </summary>
 public class ZaakStatusResolver : IExpandResolver<ZaakResponseDto>
 {
@@ -42,9 +41,9 @@ public class ZaakStatusResolver : IExpandResolver<ZaakResponseDto>
 
         var result = await _mediator.Send(new Handlers.v1._5.GetZaakStatusQuery { Id = UriHelper.GetResourceId(entity.Status) });
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, "status"))
         {
-            throw new ExpandInternalQueryHandlerException("status", result.Status);
+            return null;
         }
 
         return _mapper.Map<StatusResponseDto>(result.Result);

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -15,8 +14,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// the existing <c>GetZaakResultaatQuery</c> via MediatR rather than a ServiceAgent, and is
 /// deliberately not cached or batched across a list. Does not itself expand
 /// "resultaat.zaak"/"resultaat.resultaattype" -- see <see cref="ZaakResultaatResultaatTypeResolver"/>
-/// for the latter. Mirrors Documenten's InformatieObjectResolver: a non-OK query result throws
-/// rather than resolving to null (see ZaakStatusResolver's remarks for why).
+/// for the latter. A RESULTAAT that is not available to the caller (NotFound/Forbidden) resolves to an empty object
+/// instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class ZaakResultaatResolver : IExpandResolver<ZaakResponseDto>
 {
@@ -41,9 +40,9 @@ public class ZaakResultaatResolver : IExpandResolver<ZaakResponseDto>
 
         var result = await _mediator.Send(new Handlers.v1.GetZaakResultaatQuery { Id = UriHelper.GetResourceId(entity.Resultaat) });
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, "resultaat"))
         {
-            throw new ExpandInternalQueryHandlerException("resultaat", result.Status);
+            return null;
         }
 
         return _mapper.Map<ResultaatResponseDto>(result.Result);

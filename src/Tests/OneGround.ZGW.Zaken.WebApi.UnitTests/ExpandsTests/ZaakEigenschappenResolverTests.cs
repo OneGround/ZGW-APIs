@@ -34,6 +34,43 @@ public class ZaakEigenschappenResolverTests
     // plain IsAuthorized(zaak) check, not the TempZaakAuthorization temp-table pattern those other
     // handlers use (see the class doc comment), so it can safely send directly on the injected
     // IMediator -- these tests exercise that mock directly rather than via a built ServiceProvider.
+    [Theory]
+    [InlineData(QueryStatus.NotFound)]
+    [InlineData(QueryStatus.Forbidden)]
+    public async Task ResolveAsync_ZaakNotAvailableToTheCaller_ResolvesToAnEmptyListInsteadOfFailingOnTheMissingResult(QueryStatus status)
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetAllZaakEigenschappenQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<IEnumerable<ZaakEigenschap>>(null, status));
+        var resolver = new ZaakEigenschappenResolver(mediatorMock.Object, Mock.Of<IMapper>(), new ExpandEngine<ZaakEigenschapResponseDto>([]));
+
+        var result = await resolver.ResolveAsync(
+            EntityWithTwoEigenschappen,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "eigenschappen" }
+        );
+
+        Assert.Empty(Assert.IsType<List<ZaakEigenschapResponseDto>>(result));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_QueryFails_ThrowsExpandInternalQueryHandlerException()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetAllZaakEigenschappenQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<IEnumerable<ZaakEigenschap>>(null, QueryStatus.Failed));
+        var resolver = new ZaakEigenschappenResolver(mediatorMock.Object, Mock.Of<IMapper>(), new ExpandEngine<ZaakEigenschapResponseDto>([]));
+
+        var exception = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
+            resolver.ResolveAsync(EntityWithTwoEigenschappen, new Dictionary<string, object>(), new HashSet<string> { "eigenschappen" })
+        );
+
+        Assert.Equal("eigenschappen", exception.Resource);
+        Assert.Equal(QueryStatus.Failed, exception.StatusCode);
+    }
+
     [Fact]
     public async Task ResolveAsync_ZaakHasEigenschappen_SendsGetAllZaakEigenschappenQueryForParsedZaakIdAndReturnsMappedList()
     {

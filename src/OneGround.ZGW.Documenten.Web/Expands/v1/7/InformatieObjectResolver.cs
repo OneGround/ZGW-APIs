@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
@@ -15,7 +14,8 @@ namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the "informatieobject" expand path from an entity that references it by URL
 /// (GebruiksRecht, ObjectInformatieObject, Verzending). Shared by all three, since they only
-/// differ in how the URL is read off the entity.
+/// differ in how the URL is read off the entity. An INFORMATIEOBJECT that is not available to the caller
+/// (NotFound/Forbidden) resolves to an empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class InformatieObjectResolver<TEntity> : IExpandResolver<TEntity>
 {
@@ -42,9 +42,9 @@ public class InformatieObjectResolver<TEntity> : IExpandResolver<TEntity>
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
         var result = await mediator.Send(new GetEnkelvoudigInformatieObjectQuery { Id = _uriService.GetId(_informatieObjectUrl(entity)) });
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, "informatieobject"))
         {
-            throw new ExpandInternalQueryHandlerException("informatieobject", result.Status);
+            return null;
         }
 
         return mapper.Map<EnkelvoudigInformatieObjectGetResponseDto>(result.Result);

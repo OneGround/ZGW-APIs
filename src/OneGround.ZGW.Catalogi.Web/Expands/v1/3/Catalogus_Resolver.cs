@@ -20,7 +20,8 @@ namespace OneGround.ZGW.Catalogi.Web.Expands.v1._3;
 /// this queries it locally through MediatR, like DRC's own-service InformatieObjectResolver does.
 /// The result is cached per request (keyed by catalogus URL, like DRC's InformatieObjectTypeCatalogusResolver),
 /// since a list of InformatieObjectType/ZaakType/BesluitType typically references only a handful of
-/// distinct catalogi.
+/// distinct catalogi. A CATALOGUS that is not available to the caller (NotFound/Forbidden) resolves to an
+/// empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 ///
 /// One non-generic class implements IExpandResolver&lt;TEntity&gt; for every supported entity type,
 /// with one ResolveAsync overload per type: the entity types don't share a common interface exposing
@@ -73,9 +74,9 @@ public class Catalogus_Resolver
                 var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
                 var result = await mediator.Send(new GetCatalogusQuery { Id = _uriService.GetId(catalogusUrl) });
-                if (result.Status != QueryStatus.OK)
+                if (!ExpandQueryStatus.IsAvailable(result.Status, "catalogus"))
                 {
-                    throw new ExpandInternalQueryHandlerException("catalogus", result.Status);
+                    return null;
                 }
 
                 return mapper.Map<CatalogusResponseDto>(result.Result);

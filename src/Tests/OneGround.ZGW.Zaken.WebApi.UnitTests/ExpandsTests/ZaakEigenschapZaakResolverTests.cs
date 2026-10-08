@@ -39,7 +39,7 @@ public class ZaakEigenschapZaakResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_ZaakNotFound_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_ZaakNotFound_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -49,12 +49,9 @@ public class ZaakEigenschapZaakResolverTests
         var resolver = new ZaakEigenschapZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
         var entity = new ZaakEigenschapResponseDto { Zaak = ZaakUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
 
-        Assert.Equal("zaak", ex.Resource);
-        Assert.Equal(QueryStatus.NotFound, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]

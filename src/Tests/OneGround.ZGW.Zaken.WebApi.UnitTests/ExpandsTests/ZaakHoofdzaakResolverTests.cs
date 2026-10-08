@@ -139,7 +139,7 @@ public class ZaakHoofdzaakResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_HoofdzaakNotFound_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_HoofdzaakNotFound_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -149,16 +149,13 @@ public class ZaakHoofdzaakResolverTests
         var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
 
-        Assert.Equal("hoofdzaak", ex.Resource);
-        Assert.Equal(QueryStatus.NotFound, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task ResolveAsync_HoofdzaakForbidden_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_HoofdzaakForbidden_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -168,12 +165,9 @@ public class ZaakHoofdzaakResolverTests
         var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
 
-        Assert.Equal("hoofdzaak", ex.Resource);
-        Assert.Equal(QueryStatus.Forbidden, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]

@@ -39,7 +39,7 @@ public class ZaakResultaatResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_ResultaatNotFound_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_ResultaatNotFound_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -49,16 +49,13 @@ public class ZaakResultaatResolverTests
         var resolver = new ZaakResultaatResolver(mediatorMock.Object, Mock.Of<IMapper>());
         var entity = new ZaakResponseDto { Resultaat = ResultaatUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "resultaat" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "resultaat" });
 
-        Assert.Equal("resultaat", ex.Resource);
-        Assert.Equal(QueryStatus.NotFound, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task ResolveAsync_ResultaatForbidden_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_ResultaatForbidden_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -68,12 +65,9 @@ public class ZaakResultaatResolverTests
         var resolver = new ZaakResultaatResolver(mediatorMock.Object, Mock.Of<IMapper>());
         var entity = new ZaakResponseDto { Resultaat = ResultaatUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "resultaat" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "resultaat" });
 
-        Assert.Equal("resultaat", ex.Resource);
-        Assert.Equal(QueryStatus.Forbidden, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]

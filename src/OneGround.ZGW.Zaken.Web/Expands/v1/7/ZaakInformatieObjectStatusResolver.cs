@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -14,8 +13,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Resolves the top-level "status" expand path on a ZAAKINFORMATIEOBJECT. Mirrors
 /// <see cref="ZaakInformatieObjectZaakResolver"/>: the STATUS lives in this same service, so this goes
 /// through the existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent. "status" is
-/// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A non-OK query result throws rather
-/// than resolving to null (see ZaakStatusResolver's own remarks for why). "status.statustype" is
+/// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A STATUS that is not available to the caller
+/// (NotFound/Forbidden) resolves to an empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>. "status.statustype" is
 /// forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of
 /// <see cref="StatusResponseDto"/> itself (the same <see cref="StatusStatusTypeResolver"/> used for the
 /// top-level STATUS) -- no duplication.
@@ -61,9 +60,9 @@ public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatie
 
         var result = await _mediator.Send(new Handlers.v1._5.GetZaakStatusQuery { Id = UriHelper.GetResourceId(entity.Status) });
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, Path))
         {
-            throw new ExpandInternalQueryHandlerException(Path, result.Status);
+            return null;
         }
 
         var status = _mapper.Map<StatusResponseDto>(result.Result);

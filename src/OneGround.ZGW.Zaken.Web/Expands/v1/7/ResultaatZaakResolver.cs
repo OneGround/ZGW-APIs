@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -14,8 +13,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Resolves the top-level "zaak" expand path on a RESULTAAT. Mirrors <see cref="StatusZaakResolver"/>:
 /// the ZAAK lives in this same service, so this goes through the existing <c>GetZaakQuery</c> via
 /// MediatR rather than a ServiceAgent, and is deliberately not cached or batched across a list.
-/// Mirrors Documenten's InformatieObjectResolver: a non-OK query result throws rather than
-/// resolving to null (see ZaakStatusResolver's remarks for why). "zaak.zaaktype" is forwarded to the
+/// A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to an empty object instead of failing the
+/// request, see <see cref="ExpandQueryStatus"/>. "zaak.zaaktype" is forwarded to the
 /// already-registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> itself (the
 /// same <see cref="ZaakTypeResolver"/> used for the top-level ZAAK) -- no duplication. Injected as
 /// <see cref="Lazy{T}"/> purely to avoid eagerly constructing that entire ZAAK expand-resolver graph on
@@ -54,9 +53,9 @@ public class ResultaatZaakResolver : IExpandResolver<ResultaatResponseDto>
 
         var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
 
-        if (result.Status != QueryStatus.OK)
+        if (!ExpandQueryStatus.IsAvailable(result.Status, "zaak"))
         {
-            throw new ExpandInternalQueryHandlerException("zaak", result.Status);
+            return null;
         }
 
         var zaak = _mapper.Map<ZaakResponseDto>(result.Result);

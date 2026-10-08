@@ -40,7 +40,7 @@ public class ResultaatZaakResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_ZaakNotFound_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_ZaakNotFound_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -50,16 +50,13 @@ public class ResultaatZaakResolverTests
         var resolver = new ResultaatZaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyZaakExpandEngine());
         var entity = new ResultaatResponseDto { Zaak = ZaakUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
 
-        Assert.Equal("zaak", ex.Resource);
-        Assert.Equal(QueryStatus.NotFound, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task ResolveAsync_ZaakForbidden_ThrowsExpandInternalQueryHandlerException()
+    public async Task ResolveAsync_ZaakForbidden_ResolvesToNullInsteadOfFailingTheRequest()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
@@ -69,12 +66,9 @@ public class ResultaatZaakResolverTests
         var resolver = new ResultaatZaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyZaakExpandEngine());
         var entity = new ResultaatResponseDto { Zaak = ZaakUrl };
 
-        var ex = await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() =>
-            resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" })
-        );
+        var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
 
-        Assert.Equal("zaak", ex.Resource);
-        Assert.Equal(QueryStatus.Forbidden, ex.StatusCode);
+        Assert.Null(result);
     }
 
     [Fact]

@@ -35,11 +35,9 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// TEMPORARY TABLE on the DbContext's connection for row-level authorization (see
 /// ZaakRollenResolver's own remarks for why this means a fresh DI scope per ZAAK is required here too).
 /// That same authorization join also means a deelzaak the caller can't see (wrong RSIN, too
-/// confidential) is silently absent from the result -- deliberately, unlike
-/// <see cref="ZaakHoofdzaakResolver"/>'s single reference, which throws instead. A list naturally
-/// tolerates a missing/inaccessible entry (same as ZaakRollenResolver/ZaakZaakObjectenResolver/
-/// ZaakZaakInformatieObjectenResolver, which never throw per-row either); failing the whole expand
-/// over one unreadable deelzaak would not.
+/// confidential) is silently absent from the result -- the same outcome as for a single reference the caller
+/// can't see, such as <see cref="ZaakHoofdzaakResolver"/>'s (see <see cref="ExpandQueryStatus"/>): an entry that is not available never
+/// fails the whole expand.
 /// </para>
 /// <para>
 /// Nested "deelzaken.*" paths are resolved via the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/>
