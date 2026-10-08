@@ -10,8 +10,8 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "informatieobject" expand path on a ZAAKINFORMATIEOBJECT. Unlike other
-/// "type" resolvers this session, reads from DRC, via the v1._7 UserAccount-authenticated
+/// Resolves the top-level "informatieobject" expand path on a ZAAKINFORMATIEOBJECT. Unlike the
+/// "type" resolvers, reads from DRC, via the v1._7 UserAccount-authenticated
 /// <see cref="IUserAuthDocumentenServiceAgent"/> (not the ServiceAccount-authenticated plain v1._7
 /// agent, nor the obsolete v1._5 one) so DRC evaluates the request as the real calling client, not
 /// this backend's own credential. No WrapAsync equivalent exists for DRC, so a failed call throws

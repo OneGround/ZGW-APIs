@@ -35,8 +35,8 @@ internal static class ZaakSelfReferenceExpandPaths
     /// three go one level deeper either (no "...zaaktype.catalogus", "...status.statustype",
     /// "...resultaat.resultaattype") -- that would be a 4th nesting level, exceeding the VNG ZGW spec's
     /// 3-level expand cap. Scoped to "hoofdzaak" only (not "deelzaken" or "relevanteanderezaken") because
-    /// that's what was actually requested -- "deelzaken.deelzaken.*" (deelzaken-of-a-deelzaak) and
-    /// "relevanteanderezaken.deelzaken.*" are plausible future asks but weren't asked for, so they
+    /// only that root is supported so far -- "deelzaken.deelzaken.*" (deelzaken-of-a-deelzaak) and
+    /// "relevanteanderezaken.deelzaken.*" are plausible extensions but are not supported yet, so they
     /// aren't added speculatively; callers needing that parity should call this method with those root
     /// paths too (it already takes <paramref name="rootPath"/> as a parameter for exactly that reason).
     /// The "{rootPath}.deelzaken" tuple itself is required too, not just its children: without it, the

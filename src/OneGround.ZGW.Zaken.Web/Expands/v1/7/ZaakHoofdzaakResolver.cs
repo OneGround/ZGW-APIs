@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
@@ -50,9 +51,16 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
     private readonly Lazy<ExpandEngine<ZaakResponseDto>> _zaakExpandEngine;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ZaakHoofdzaakResolver(IMediator mediator, IMapper mapper, Lazy<ExpandEngine<ZaakResponseDto>> zaakExpandEngine)
+    public ZaakHoofdzaakResolver(
+        IMediator mediator,
+        IMapper mapper,
+        Lazy<ExpandEngine<ZaakResponseDto>> zaakExpandEngine,
+        IHttpContextAccessor httpContextAccessor = null
+    )
     {
+        _httpContextAccessor = httpContextAccessor;
         _mediator = mediator;
         _mapper = mapper;
         _zaakExpandEngine = zaakExpandEngine;
@@ -70,7 +78,9 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
             return null;
         }
 
-        var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Hoofdzaak) });
+        var result = await _mediator.Send(
+            new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Hoofdzaak), SRID = ExpandSrid.From(_httpContextAccessor) }
+        );
 
         if (result.Status != QueryStatus.OK)
         {

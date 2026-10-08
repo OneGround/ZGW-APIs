@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
-using OneGround.ZGW.Zaken.Web.Models.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -48,9 +48,11 @@ public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ZaakRelevanteAndereZakenResolver(IServiceProvider serviceProvider, IMapper mapper)
+    public ZaakRelevanteAndereZakenResolver(IServiceProvider serviceProvider, IMapper mapper, IHttpContextAccessor httpContextAccessor = null)
     {
+        _httpContextAccessor = httpContextAccessor;
         _serviceProvider = serviceProvider;
         _mapper = mapper;
     }
@@ -82,7 +84,8 @@ public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>
         var result = await mediator.Send(
             new Handlers.v1._5.GetAllZakenQuery
             {
-                GetAllZakenFilter = new GetAllZakenFilter
+                SRID = ExpandSrid.From(_httpContextAccessor),
+                GetAllZakenFilter = new Models.v1._5.GetAllZakenFilter
                 {
                     Uuid__in = uuids,
                     Zaaktype__in = [],

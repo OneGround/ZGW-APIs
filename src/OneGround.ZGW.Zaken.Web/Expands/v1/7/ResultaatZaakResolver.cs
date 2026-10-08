@@ -7,7 +7,6 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
-using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -23,7 +22,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// every request to this resource (there's no circularity here -- this resolver isn't itself one of
 /// that engine's own <see cref="IExpandResolver{TEntity}"/> registrations, unlike
 /// <see cref="ZaakHoofdzaakResolver"/>, which needs Lazy for exactly that reason instead). Deliberately
-/// not forwarding further to "zaak.zaaktype.catalogus" -- out of scope for this increment.
+/// not forwarding further to "zaak.zaaktype.catalogus" -- not supported.
 /// </summary>
 public class ResultaatZaakResolver : IExpandResolver<ResultaatResponseDto>
 {
@@ -53,7 +52,7 @@ public class ResultaatZaakResolver : IExpandResolver<ResultaatResponseDto>
             return null;
         }
 
-        var result = await _mediator.Send(new GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
+        var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
 
         if (result.Status != QueryStatus.OK)
         {

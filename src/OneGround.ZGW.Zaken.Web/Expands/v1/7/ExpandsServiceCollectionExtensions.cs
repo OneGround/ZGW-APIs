@@ -216,7 +216,7 @@ public static class ExpandsServiceCollectionExtensions
     /// <see cref="AddStatussenAPIExpands"/>. This <see cref="ExpandEngine{TEntity}"/> is also reused
     /// directly by <see cref="ZaakZaakInformatieObjectenResolver"/> to resolve
     /// "zaakinformatieobjecten.informatieobject" per item of the "zaakinformatieobjecten" list on a
-    /// ZAAK. Unlike every other resource this session, "informatieobject" itself is DRC-backed (not
+    /// ZAAK. Unlike the other resources, "informatieobject" itself is DRC-backed (not
     /// ZTC) and calls the user-authenticated
     /// <see cref="OneGround.ZGW.Documenten.ServiceAgent.v1._7.IUserAuthDocumentenServiceAgent"/>
     /// (registered by AddUserAuthDocumentenServiceAgent_v1_7 in Startup.cs, not the obsolete v1._5
@@ -224,10 +224,8 @@ public static class ExpandsServiceCollectionExtensions
     /// ZaakInformatieObjectInformatieObjectResolver's own remarks for why.
     /// No <see cref="IGenericCache{T}"/> registration for that agent: it does not cache per-url like
     /// the plain (service-account-authenticated) v1._7 one does, so every "informatieobject" expand
-    /// hits DRC fresh -- an accepted, un-optimized starting point (matches this session's "known, not
-    /// yet fixed" N+1 precedent for ZaakContactmomenten's "zaak" expand). "informatieobject.informatieobjecttype"
-    /// (one level deeper still) IS ZTC-backed though, exactly like every other "...type" expand this
-    /// session -- see <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>'s own remarks.
+    /// hits DRC fresh -- an accepted, un-optimized starting point (the same known N+1 as ZaakContactmomenten's "zaak" expand). "informatieobject.informatieobjecttype"
+    /// (one level deeper still) IS ZTC-backed though, exactly like every other "...type" expand -- see <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>'s own remarks.
     /// "status" (the optional status-at-time-of-filing reference) is same-service, resolved via the
     /// existing <c>GetZaakStatusQuery</c> -- see <see cref="ZaakInformatieObjectStatusResolver"/>.
     /// "zaak.zaaktype" is forwarded to the <see cref="Lazy{T}"/>-wrapped <see cref="ExpandEngine{TEntity}"/>

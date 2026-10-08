@@ -9,7 +9,6 @@ using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
-using OneGround.ZGW.Zaken.Web.Models.v1;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -69,7 +68,7 @@ public class ZaakRollenResolver : IExpandResolver<ZaakResponseDto>
         var result = await mediator.Send(
             new Handlers.v1._5.GetAllZaakRolQuery
             {
-                GetAllZaakRolFilter = new GetAllZaakRollenFilter { Zaak = entity.Url },
+                GetAllZaakRolFilter = new Models.v1.GetAllZaakRollenFilter { Zaak = entity.Url },
                 Pagination = new PaginationFilter { Page = 1, Size = rolCount },
             }
         );

@@ -34,7 +34,10 @@ public class EnkelvoudigInformatieObject_InformatieObjectType_Resolver : IExpand
         var expand = requestedPaths.Contains($"{Path}.catalogus") ? "catalogus" : null;
 
         var cachedInformatieObjectType = await _informatieobjecttypeCache.GetOrCacheAndGetAsync(
-            $"key_{entity.InformatieObjectType}",
+            // Note: the expand is part of the key, see ZaakTypeResolver
+            expand is null
+                ? $"key_{entity.InformatieObjectType}"
+                : $"key_{entity.InformatieObjectType}_{expand}",
             async () => (await _catalogiServiceAgent.GetInformatieObjectTypeByUrlAsync(entity.InformatieObjectType, expand)).Response
         );
 

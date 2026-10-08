@@ -17,7 +17,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Resolves the top-level "zaakinformatieobjecten" expand path on a ZAAK. Like
 /// <see cref="ZaakRollenResolver"/>/<see cref="ZaakZaakObjectenResolver"/>, opens a fresh DI scope per
 /// ZAAK before querying (its handler creates a PostgreSQL temp table for row-level authorization --
-/// see ZaakRollenResolver's own remarks). Unlike every other list resolver this session, the raw
+/// see ZaakRollenResolver's own remarks). Unlike the other list resolvers, the raw
 /// ZRC-side rows aren't the final answer: a ZAAKINFORMATIEOBJECT must also be confirmed by DRC's own
 /// authorization model (<see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>),
 /// replicating the old v1._5 ZaakInformatieObjectenExpander's filter. Uses the v1._7

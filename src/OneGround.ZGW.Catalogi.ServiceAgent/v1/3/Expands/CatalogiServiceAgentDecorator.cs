@@ -9,14 +9,15 @@ using OneGround.ZGW.Common.ServiceAgent.Expands;
 namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 
 /// <summary>
-/// This class intercepts calls to the <see cref="ICatalogiServiceAgent"/> and wraps exceptions in an <see cref="ExpandExternalServiceException"/>
+/// This class intercepts calls to the <see cref="IUserAuthCatalogiServiceAgent"/> and wraps exceptions in an <see cref="ExpandExternalServiceException"/>.
+/// Expands are evaluated by ZTC as the calling client (its own JWT), not with this backend's service credential.
 /// </summary>
 public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorator
 {
     private const string ServiceName = "ZTC";
-    private readonly ICatalogiServiceAgent _inner;
+    private readonly IUserAuthCatalogiServiceAgent _inner;
 
-    public CatalogiServiceAgentDecorator(ICatalogiServiceAgent inner) => _inner = inner;
+    public CatalogiServiceAgentDecorator(IUserAuthCatalogiServiceAgent inner) => _inner = inner;
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request) => throw new NotImplementedException();
 

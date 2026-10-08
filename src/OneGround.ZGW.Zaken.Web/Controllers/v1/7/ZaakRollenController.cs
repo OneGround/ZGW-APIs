@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Expands;
+using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
@@ -161,6 +162,7 @@ public class ZaakRollenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakRollen.Get, Name = Operations.ZaakRollen.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(RolResponseDto))]
+    [ETagFilter]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakRolQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakRolQueryParameters queryParameters, Guid id)
     {
@@ -232,6 +234,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpHead(ApiRoutes.ZaakRollen.Get, Name = Contracts.v1._5.Operations.ZaakRollen.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
+    [ETagFilter]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakRolQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakRolQueryParameters queryParameters)
     {

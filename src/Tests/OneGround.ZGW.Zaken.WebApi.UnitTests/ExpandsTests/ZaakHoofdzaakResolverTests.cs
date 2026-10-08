@@ -50,6 +50,65 @@ public class ZaakHoofdzaakResolverTests
         );
     }
 
+    [Theory]
+    [InlineData("EPSG:4326", 4326)]
+    [InlineData("EPSG:4937", 4937)]
+    [InlineData("EPSG:28992", 28992)]
+    [InlineData(null, 28992)] // no header: the default of the query (the CRS in which the geometry is stored)
+    [InlineData("EPSG:9999", 28992)] // not supported: never fail inside an expand
+    public async Task ResolveAsync_AcceptCrsHeader_DeterminesTheSridOfTheFetchedHoofdzaak(string acceptCrs, int expectedSrid)
+    {
+        var hoofdzaak = new Zaak { Id = new("44444444-4444-4444-4444-444444444444") };
+        GetZaakQuery sent = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<QueryResult<Zaak>>, CancellationToken>((q, _) => sent = (GetZaakQuery)q)
+            .ReturnsAsync(new QueryResult<Zaak>(hoofdzaak, QueryStatus.OK));
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
+
+        var resolver = new ZaakHoofdzaakResolver(
+            mediatorMock.Object,
+            mapperMock.Object,
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([])),
+            AcceptCrsTestHelper.AccessorWith(acceptCrs)
+        );
+
+        await resolver.ResolveAsync(
+            new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "hoofdzaak" }
+        );
+
+        Assert.NotNull(sent);
+        Assert.Equal(expectedSrid, sent.SRID);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_WithoutHttpContextAccessor_UsesTheDefaultSrid()
+    {
+        var hoofdzaak = new Zaak { Id = new("44444444-4444-4444-4444-444444444444") };
+        GetZaakQuery sent = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<QueryResult<Zaak>>, CancellationToken>((q, _) => sent = (GetZaakQuery)q)
+            .ReturnsAsync(new QueryResult<Zaak>(hoofdzaak, QueryStatus.OK));
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
+
+        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+
+        await resolver.ResolveAsync(
+            new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "hoofdzaak" }
+        );
+
+        Assert.Equal(28992, sent.SRID);
+    }
+
     [Fact]
     public async Task ResolveAsync_HoofdzaakStatusRequested_ForwardsRelativePathToReusedExpandEngine()
     {

@@ -103,6 +103,7 @@ public class ZakenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakResponseDto>))]
     [RequiresAcceptCrs]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZakenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZakenQueryParameters queryParameters, int page = 1, string ordering = null)
     {
@@ -189,6 +190,7 @@ public class ZakenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakResponseDto>))]
     [RequiresAcceptCrs]
+    [Expand]
     [ServiceFilter(typeof(ValidateBodyParametersFilter<ZaakSearchRequestDto>))]
     public async Task<IActionResult> SearchAsync([FromBody] ZaakSearchRequestDto zaakSearchRequest, int page = 1)
     {
@@ -384,6 +386,7 @@ public class ZakenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [RequiresAcceptCrs]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakQueryParameters queryParameters, Guid id)
     {
@@ -459,6 +462,7 @@ public class ZakenController : ZGWControllerBase
     [HttpHead(Contracts.v1._5.ApiRoutes.Zaken.Get, Name = Contracts.v1._5.Operations.Zaken.ReadHead)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakQueryParameters queryParameters)
     {

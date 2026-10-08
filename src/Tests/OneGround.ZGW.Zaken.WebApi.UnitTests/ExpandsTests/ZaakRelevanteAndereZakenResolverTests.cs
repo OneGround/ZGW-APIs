@@ -88,6 +88,37 @@ public class ZaakRelevanteAndereZakenResolverTests
         Assert.Equal([mappedRelevanteZaak1, mappedRelevanteZaak2], relevanteAndereZaken);
     }
 
+    [Theory]
+    [InlineData("EPSG:4326", 4326)]
+    [InlineData("EPSG:4937", 4937)]
+    [InlineData("EPSG:28992", 28992)]
+    [InlineData(null, 28992)] // no header: the default of the query (the CRS in which the geometry is stored)
+    [InlineData("EPSG:9999", 28992)] // not supported: never fail inside an expand
+    public async Task ResolveAsync_AcceptCrsHeader_DeterminesTheSridOfTheFetchedZaken(string acceptCrs, int expectedSrid)
+    {
+        GetAllZakenQuery sent = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetAllZakenQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<QueryResult<PagedResult<Zaak>>>, CancellationToken>((q, _) => sent = (GetAllZakenQuery)q)
+            .ReturnsAsync(new QueryResult<PagedResult<Zaak>>(new PagedResult<Zaak> { PageResult = [], Count = 0 }, QueryStatus.OK));
+
+        var resolver = new ZaakRelevanteAndereZakenResolver(
+            BuildServiceProvider(mediatorMock.Object),
+            Mock.Of<IMapper>(),
+            AcceptCrsTestHelper.AccessorWith(acceptCrs)
+        );
+
+        await resolver.ResolveAsync(
+            EntityWithTwoRelevanteAndereZaken,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "relevanteanderezaken" }
+        );
+
+        Assert.NotNull(sent);
+        Assert.Equal(expectedSrid, sent.SRID);
+    }
+
     [Fact]
     public async Task ResolveAsync_NoRelevanteAndereZaken_ReturnsEmptyListWithoutQuerying()
     {

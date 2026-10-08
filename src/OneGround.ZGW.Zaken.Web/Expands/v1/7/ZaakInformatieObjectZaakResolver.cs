@@ -24,7 +24,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// every request to this resource (there's no circularity here -- this resolver isn't itself one of
 /// that engine's own <see cref="IExpandResolver{TEntity}"/> registrations, unlike
 /// <see cref="ZaakHoofdzaakResolver"/>, which needs Lazy for exactly that reason instead). Deliberately
-/// not forwarding further to "zaak.zaaktype.catalogus" -- out of scope for this increment.
+/// not forwarding further to "zaak.zaaktype.catalogus" -- not supported.
 /// </summary>
 public class ZaakInformatieObjectZaakResolver : IExpandResolver<ZaakInformatieObjectResponseDto>
 {

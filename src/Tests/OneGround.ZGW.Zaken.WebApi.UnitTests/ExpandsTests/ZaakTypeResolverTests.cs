@@ -50,6 +50,37 @@ public class ZaakTypeResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_SameZaaktypeWithAndWithoutCatalogus_IsNotMixedUpByTheSharedCache()
+    {
+        // Note: the top-level "zaaktype" and the nested "hoofdzaak.zaaktype.catalogus" share one cache within a request
+        var withoutCatalogus = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var withCatalogus = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, null))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(withoutCatalogus));
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "catalogus"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(withCatalogus));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+        var entity = new ZaakResponseDto { Zaaktype = ZaakTypeUrl };
+
+        var first = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaaktype" });
+        var second = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaaktype", "zaaktype.catalogus" });
+        var secondAgain = await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.catalogus" }
+        );
+
+        Assert.Same(withoutCatalogus, first);
+        Assert.Same(withCatalogus, second);
+        Assert.Same(withCatalogus, secondAgain);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, It.IsAny<string>()), Times.Exactly(2));
+    }
+
+    [Fact]
     public async Task Path_IsZaaktype_AndHasNoParent()
     {
         var resolver = new ZaakTypeResolver(Mock.Of<ICatalogiServiceAgentDecorator>(), new GenericCache<ZaakTypeResponseDto>());

@@ -32,8 +32,10 @@ public class ZaakTypeResolver : IExpandResolver<ZaakResponseDto>
     {
         var expand = requestedPaths.Contains($"{Path}.catalogus") ? "catalogus" : null;
 
+        // Note: the expand is part of the key -- the same zaaktype is a different object with and without its catalogus, and this cache is
+        // shared by the top-level and the nested (hoofdzaak/deelzaken/...) expands of one request
         return await _zaaktypeCache.GetOrCacheAndGetAsync(
-            $"key_{entity.Zaaktype}",
+            expand is null ? $"key_{entity.Zaaktype}" : $"key_{entity.Zaaktype}_{expand}",
             async () => (await _catalogiServiceAgent.GetZaakTypeByUrlAsync(entity.Zaaktype, expand)).Response
         );
     }

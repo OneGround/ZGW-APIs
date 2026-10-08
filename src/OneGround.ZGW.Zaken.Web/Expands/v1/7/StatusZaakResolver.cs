@@ -14,7 +14,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Resolves the top-level "zaak" expand path on a STATUS. Unlike <see cref="StatusStatusTypeResolver"/>
 /// (a remote ZTC lookup), the ZAAK lives in this same service, so this goes through the existing
 /// <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. Deliberately not cached and not
-/// batched across a list (see FUND-2456 design discussion) -- a local, indexed DB lookup is cheap
+/// batched across a list -- a local, indexed DB lookup is cheap
 /// enough per row that the added complexity isn't worth it yet. Mirrors Documenten's
 /// InformatieObjectResolver: a non-OK query result throws rather than resolving to null (see
 /// ZaakStatusResolver's remarks for why). "zaak.zaaktype" is forwarded to the already-registered
@@ -24,7 +24,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// every request to this resource (there's no circularity here -- this resolver isn't itself one of
 /// that engine's own <see cref="IExpandResolver{TEntity}"/> registrations, unlike
 /// <see cref="ZaakHoofdzaakResolver"/>, which needs Lazy for exactly that reason instead). Deliberately
-/// not forwarding further to "zaak.zaaktype.catalogus" -- out of scope for this increment.
+/// not forwarding further to "zaak.zaaktype.catalogus" -- not supported.
 /// </summary>
 public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
 {

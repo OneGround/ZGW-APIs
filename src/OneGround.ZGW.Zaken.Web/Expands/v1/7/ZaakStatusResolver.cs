@@ -14,7 +14,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <see cref="StatusZaakResolver"/>: the STATUS lives in this same service, so this goes through the
 /// existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent, and is deliberately not
 /// cached or batched across a list yet. Does not itself expand "status.zaak"/"status.statustype" --
-/// out of scope for this increment. Mirrors Documenten's InformatieObjectResolver: a non-OK query
+/// not supported. Mirrors Documenten's InformatieObjectResolver: a non-OK query
 /// result (NotFound/Forbidden) throws rather than silently resolving to null, since a URL already
 /// present on the ZAAK failing to resolve is a data-integrity/authorization problem, not "no linked
 /// entity" -- the controller already translates this via its InterneQueryHandlerFout catch block.

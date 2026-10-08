@@ -57,15 +57,8 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected int GetSridFromAcceptCrsHeader()
     {
-        var acceptCrs = HttpContext.GetAcceptCrsHeader();
-
-        if (acceptCrs == "EPSG:4326")
-            return 4326;
-        if (acceptCrs == "EPSG:28992")
-            return 28992;
-        if (acceptCrs == "EPSG:4937")
-            return 4937;
-        throw new NotImplementedException($"A not supported acceptCrs header {acceptCrs}.");
+        return HttpContext.TryGetAcceptCrsSrid()
+            ?? throw new NotImplementedException($"A not supported acceptCrs header {HttpContext.GetAcceptCrsHeader()}.");
     }
 
     protected static HashSet<string> ExpandLookup(string expand) =>

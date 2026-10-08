@@ -26,4 +26,15 @@ public static class CatalogiServiceAgentExtensions
             }
         );
     }
+
+    // Note: User authorized ServiceAgent (for user cross-API expands like ZRC->ZTC and DRC->ZTC). No caching on purpose, see
+    // IUserAuthCatalogiServiceAgent's own remarks.
+    public static void AddUserAuthCatalogiServiceAgent_v1_3(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddServiceAgent<IUserAuthCatalogiServiceAgent, UserAuthCatalogiServiceAgent>(
+            ServiceRoleName.ZTC,
+            configuration,
+            authorizationType: AuthorizationType.UserAccount
+        );
+    }
 }

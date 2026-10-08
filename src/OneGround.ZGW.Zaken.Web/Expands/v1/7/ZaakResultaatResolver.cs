@@ -6,7 +6,6 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
-using OneGround.ZGW.Zaken.Web.Handlers.v1;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -40,7 +39,7 @@ public class ZaakResultaatResolver : IExpandResolver<ZaakResponseDto>
             return null;
         }
 
-        var result = await _mediator.Send(new GetZaakResultaatQuery { Id = UriHelper.GetResourceId(entity.Resultaat) });
+        var result = await _mediator.Send(new Handlers.v1.GetZaakResultaatQuery { Id = UriHelper.GetResourceId(entity.Resultaat) });
 
         if (result.Status != QueryStatus.OK)
         {

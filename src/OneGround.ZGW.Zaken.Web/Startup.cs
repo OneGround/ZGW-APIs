@@ -102,6 +102,7 @@ public class Startup
 
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
+        services.AddUserAuthCatalogiServiceAgent_v1_3(Configuration); // For ZRC v1.7 expands (evaluated by ZTC as the calling client)
         services.AddDocumentenServiceAgent_v1_7(Configuration);
         services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
         services.AddUserAuthDocumentenServiceAgent_v1_7(Configuration); // For ZRC v1.7 expands (zaakinformatieobjecten.informatieobject)
