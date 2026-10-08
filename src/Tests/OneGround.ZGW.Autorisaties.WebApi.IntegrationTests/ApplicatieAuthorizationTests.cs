@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -166,15 +165,16 @@ public class ApplicatieAuthorizationTests
     }
 
     [Fact]
-    public async Task Client_authorized_for_the_update_scope_passes_the_scope_check_on_write()
+    public async Task Client_authorized_for_the_update_scope_can_write()
     {
         var clientId = NewClientId();
-        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
+        var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
 
-        // A missing id, because a successful write publishes a notification the in-memory test bus cannot send
-        var response = await _client.SendAsync(AutorisatiesRequests.DeleteApplicatie(Guid.NewGuid(), clientId, Rsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(applicatie.Id, clientId, Rsin));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var stored = await FindAsync(_factory, applicatie.Id);
+        Assert.NotEqual(applicatie.Label, stored.Label);
     }
 
     [Fact]
