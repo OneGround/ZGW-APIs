@@ -1,18 +1,18 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Autorisaties.DataModel;
+using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
 using Xunit;
+using static OneGround.ZGW.Autorisaties.WebApi.IntegrationTests.AutorisatiesSeed;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.IntegrationTests;
 
 /// <summary>
-/// Authentication and scope checks on GET /applicaties, resolved by the API's own database authorization resolver.
+/// Authentication and scope checks on /applicaties, resolved by the API's own database authorization resolver.
 /// </summary>
 [Collection(AutorisatiesApiCollection.Name)]
 public class ApplicatieAuthorizationTests
@@ -48,6 +48,14 @@ public class ApplicatieAuthorizationTests
     }
 
     [Fact]
+    public async Task Request_without_client_id_claim_is_unauthorized()
+    {
+        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId: null, Rsin));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Client_in_no_applicatie_is_forbidden()
     {
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(NewClientId(), Rsin));
@@ -75,26 +83,38 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        AssertNoConsumerLookup(clientId);
+        AssertNoConsumerLookup(_factory, clientId);
+    }
+
+    [Fact]
+    public async Task Client_with_all_authorizations_gets_ok_on_api_version_1_1()
+    {
+        var clientId = NewClientId();
+        await SeedAsync(clientId, heeftAlleAutorisaties: true);
+
+        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin, Api.LatestVersion_1_1));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
     [Fact]
     public async Task Client_authorized_to_read_autorisaties_of_component_ac_gets_ok()
     {
         var clientId = NewClientId();
-        await SeedAsync(clientId, autorisatie: Autorisatie(Component.ac, AuthorizationScopes.Autorisaties.Read));
+        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Read));
 
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        AssertNoConsumerLookup(clientId);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
     [Fact]
     public async Task Client_authorized_to_read_autorisaties_of_another_component_is_forbidden()
     {
         var clientId = NewClientId();
-        await SeedAsync(clientId, autorisatie: Autorisatie(Component.zrc, AuthorizationScopes.Autorisaties.Read));
+        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.zrc, AuthorizationScopes.Autorisaties.Read));
 
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
@@ -105,7 +125,7 @@ public class ApplicatieAuthorizationTests
     public async Task Client_authorized_for_another_scope_only_is_forbidden()
     {
         var clientId = NewClientId();
-        await SeedAsync(clientId, autorisatie: Autorisatie(Component.ac, AuthorizationScopes.Autorisaties.Update));
+        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
 
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
@@ -118,13 +138,43 @@ public class ApplicatieAuthorizationTests
         var clientId = NewClientId();
         await SeedAsync(
             clientId,
-            autorisatie: Autorisatie(Component.ac, AuthorizationScopes.Autorisaties.Update, AuthorizationScopes.Autorisaties.Read)
+            autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update, AuthorizationScopes.Autorisaties.Read)
         );
 
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        AssertNoConsumerLookup(clientId);
+        AssertNoConsumerLookup(_factory, clientId);
+    }
+
+    [Theory]
+    [InlineData("POST")]
+    [InlineData("PUT")]
+    [InlineData("PATCH")]
+    [InlineData("DELETE")]
+    public async Task Client_authorized_for_the_read_scope_only_is_forbidden_to_write(string method)
+    {
+        var clientId = NewClientId();
+        var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Read));
+
+        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var stored = await FindAsync(_factory, applicatie.Id);
+        Assert.NotNull(stored);
+        Assert.Equal(applicatie.Label, stored.Label);
+    }
+
+    [Fact]
+    public async Task Client_authorized_for_the_update_scope_passes_the_scope_check_on_write()
+    {
+        var clientId = NewClientId();
+        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
+
+        // A missing id, because a successful write publishes a notification the in-memory test bus cannot send
+        var response = await _client.SendAsync(AutorisatiesRequests.DeleteApplicatie(Guid.NewGuid(), clientId, Rsin));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -136,60 +186,11 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        AssertNoConsumerLookup(clientId);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
-    private void AssertNoConsumerLookup(string clientId)
+    private Task<Applicatie> SeedAsync(string clientId, bool heeftAlleAutorisaties = false, Autorisatie autorisatie = null)
     {
-        Assert.DoesNotContain(
-            _factory.OutboundHttp.Requests,
-            r =>
-                r.RequestUri!.AbsolutePath.EndsWith("/applicaties/consumer", StringComparison.OrdinalIgnoreCase)
-                && r.RequestUri.Query.Contains($"clientId={clientId}", StringComparison.OrdinalIgnoreCase)
-        );
+        return ApplicatieAsync(_factory, Rsin, clientId, heeftAlleAutorisaties, autorisatie);
     }
-
-    private async Task SeedAsync(string clientId, bool heeftAlleAutorisaties = false, Autorisatie autorisatie = null)
-    {
-        var applicatieId = Guid.NewGuid();
-
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AcDbContext>();
-
-        context.Applicaties.Add(
-            new Applicatie
-            {
-                Id = applicatieId,
-                Owner = Rsin,
-                Label = $"integration-test-{applicatieId:N}",
-                CreationTime = DateTime.UtcNow,
-                HeeftAlleAutorisaties = heeftAlleAutorisaties,
-                ClientIds =
-                [
-                    new ApplicatieClient
-                    {
-                        Id = Guid.NewGuid(),
-                        ClientId = clientId,
-                        CreationTime = DateTime.UtcNow,
-                    },
-                ],
-                Autorisaties = autorisatie == null ? [] : [autorisatie],
-            }
-        );
-
-        await context.SaveChangesAsync();
-    }
-
-    private static Autorisatie Autorisatie(Component component, params string[] scopes)
-    {
-        return new Autorisatie
-        {
-            Id = Guid.NewGuid(),
-            Owner = Rsin,
-            Component = component,
-            Scopes = scopes,
-        };
-    }
-
-    private static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 }
