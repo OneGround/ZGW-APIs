@@ -22,6 +22,7 @@ public class ZaakFieldsSchemaTests
             "zaakobjecten",
             "zaakobjecten.zaakobjecttype",
             "zaakcontactmomenten",
+            "zaakverzoeken",
             "eigenschappen",
             "eigenschappen.eigenschap",
             "zaakinformatieobjecten",

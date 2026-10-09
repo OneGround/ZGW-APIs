@@ -78,6 +78,7 @@ public static class ExpandsServiceCollectionExtensions
         // ZaakZaakObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakContactmomentenResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakVerzoekenResolver>();
         // Note: reuses ExpandEngine<ZaakEigenschapResponseDto>, registered below by
         // AddZaakEigenschappenAPIExpands (both are called together in Startup.cs) -- see
         // ZaakEigenschappenResolver's own remarks.

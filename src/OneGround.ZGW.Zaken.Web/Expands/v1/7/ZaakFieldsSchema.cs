@@ -57,6 +57,8 @@ public static class ZaakFieldsSchema
             .NestedObject<ZaakObjectResponseDto, OverigeZaakObjectDto>("objectIdentificatie")
             .NestedObject<ZaakObjectResponseDto, WozWaardeZaakObjectDto>("objectIdentificatie")
             .Entity<ZaakResponseDto, ZaakContactmomentResponseDto>("zaakcontactmomenten")
+            // Note: no v1._7 version of ZAAKVERZOEK exists, the v1._5 dto is what ZaakZaakVerzoekenResolver returns
+            .Entity<ZaakResponseDto, Zaken.Contracts.v1._5.Responses.ZaakVerzoekResponseDto>("zaakverzoeken")
             .Entity<ZaakResponseDto, ZaakEigenschapResponseDto>("eigenschappen")
             .Entity<ZaakEigenschapResponseDto, EigenschapResponseDto>("eigenschap")
             .Entity<ZaakResponseDto, ZaakInformatieObjectResponseDto>("zaakinformatieobjecten")
