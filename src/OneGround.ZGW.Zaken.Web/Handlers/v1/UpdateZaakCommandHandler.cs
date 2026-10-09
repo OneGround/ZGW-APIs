@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -86,7 +87,17 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
 
             if (!string.IsNullOrEmpty(request.HoofdzaakUrl))
             {
-                var hoofdzaak = await _context.Zaken.SingleOrDefaultAsync(z => z.Id == _uriService.GetId(request.HoofdzaakUrl), cancellationToken);
+                var rsinFilter = GetRsinFilterPredicate<Zaak>();
+
+                var hoofdzaak = await _context
+                    .Zaken.Where(rsinFilter)
+                    .SingleOrDefaultAsync(z => z.Id == _uriService.GetId(request.HoofdzaakUrl), cancellationToken);
+
+                if (hoofdzaak == null)
+                {
+                    var error = new ValidationError("hoofdzaak", ErrorCode.NoMatch, "Dit veld bevat een niet bestaande Zaak.");
+                    return new CommandResult<Zaak>(null, CommandStatus.ValidationError, error);
+                }
 
                 if (hoofdzaak.Id != request.OriginalZaak.HoofdzaakId)
                 {

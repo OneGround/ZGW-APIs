@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.DataModel;
+using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Besluiten.Web.Notificaties;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Handlers;
@@ -56,6 +57,11 @@ class DeleteBesluitInformatieObjectCommandHandler
         if (besluitInformatieObject == null)
         {
             return new CommandResult(CommandStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(besluitInformatieObject.Besluit))
+        {
+            return new CommandResult(CommandStatus.Forbidden);
         }
 
         // keep the reference for later, because saving context removed relation from besluitInformatieObject.Besluit

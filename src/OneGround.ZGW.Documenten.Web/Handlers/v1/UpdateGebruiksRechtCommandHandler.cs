@@ -73,6 +73,11 @@ class UpdateGebruiksRechtCommandHandler
             return new CommandResult<GebruiksRecht>(null, CommandStatus.NotFound);
         }
 
+        if (!_authorizationContext.IsAuthorized(existingGebruiksRecht.InformatieObject, AuthorizationScopes.Documenten.Update))
+        {
+            return new CommandResult<GebruiksRecht>(null, CommandStatus.Forbidden);
+        }
+
         bool legacyAuditTrail = existingGebruiksRecht.InformatieObject.LegacyAuditTrail;
 
         GebruiksRecht gebruiksrecht;
@@ -93,29 +98,8 @@ class UpdateGebruiksRechtCommandHandler
 
         if (request.InformatieObjectUrl != null && existingGebruiksRecht.InformatieObjectId != _uriService.GetId(request.InformatieObjectUrl))
         {
-            var informatieObjectRsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
-            var informatieObject = await _context
-                .EnkelvoudigInformatieObjecten.Include(e => e.GebruiksRechten)
-                .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
-                .Where(informatieObjectRsinFilter)
-                .SingleOrDefaultAsync(z => z.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
-
-            if (informatieObject == null)
-            {
-                return new CommandResult<GebruiksRecht>(
-                    null,
-                    CommandStatus.ValidationError,
-                    new ValidationError("informatieobject", ErrorCode.Invalid, $"InformatieObject {request.InformatieObjectUrl} is onbekend.")
-                );
-            }
-
-            existingGebruiksRecht.InformatieObject = informatieObject;
-            existingGebruiksRecht.InformatieObjectId = informatieObject.Id;
-        }
-
-        if (!_authorizationContext.IsAuthorized(existingGebruiksRecht.InformatieObject, AuthorizationScopes.Documenten.Update))
-        {
-            return new CommandResult<GebruiksRecht>(null, CommandStatus.Forbidden);
+            var error = new ValidationError("informatieobject", ErrorCode.UpdateNotAllowed, "Dit veld mag niet gewijzigd worden.");
+            return new CommandResult<GebruiksRecht>(null, CommandStatus.ValidationError, error);
         }
 
         _logger.LogDebug("Updating GebruiksRecht {Id}....", existingGebruiksRecht.Id);

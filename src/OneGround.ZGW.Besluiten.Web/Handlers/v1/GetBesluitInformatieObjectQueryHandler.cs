@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.DataModel;
+using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -44,9 +45,17 @@ class GetBesluitInformatieObjectQueryHandler
             .Include(z => z.Besluit)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
-        return besluitstatus == null
-            ? new QueryResult<BesluitInformatieObject>(null, QueryStatus.NotFound)
-            : new QueryResult<BesluitInformatieObject>(besluitstatus, QueryStatus.OK);
+        if (besluitstatus == null)
+        {
+            return new QueryResult<BesluitInformatieObject>(null, QueryStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(besluitstatus.Besluit))
+        {
+            return new QueryResult<BesluitInformatieObject>(null, QueryStatus.Forbidden);
+        }
+
+        return new QueryResult<BesluitInformatieObject>(besluitstatus, QueryStatus.OK);
     }
 }
 
