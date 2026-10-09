@@ -106,6 +106,7 @@ public class ZaakObjectenController : ZGWControllerBase
     [HttpGet(Contracts.v1._5.ApiRoutes.ZaakObjecten.GetAll, Name = Contracts.v1._5.Operations.ZaakObjecten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ZaakObjectResponseDto>))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakObjectenQueryParameters queryParameters, int page = 1)
     {
@@ -179,6 +180,7 @@ public class ZaakObjectenController : ZGWControllerBase
     [HttpGet(Contracts.v1._5.ApiRoutes.ZaakObjecten.Get, Name = Contracts.v1._5.Operations.ZaakObjecten.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakObjectResponseDto))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakObjectQueryParameters>))]
     [ETagFilter]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakObjectQueryParameters queryParameters, Guid id)

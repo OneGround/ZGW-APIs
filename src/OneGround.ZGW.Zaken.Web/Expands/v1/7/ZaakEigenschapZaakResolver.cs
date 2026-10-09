@@ -10,11 +10,10 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "zaak" expand path on a ZAAKEIGENSCHAP. Mirrors
 /// <see cref="ZaakContactmomentZaakResolver"/>: the ZAAK lives in this same service, so this goes
-/// through the existing <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent, and is
-/// deliberately not cached or batched across a list. ZAAK is a required (non-nullable) field on
+/// through the existing <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent, and fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list. ZAAK is a required (non-nullable) field on
 /// ZAAKEIGENSCHAP, but the guard matches the other "zaak" resolvers for consistency (see
-/// ZaakContactmomentZaakResolver's remarks). A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to an
-/// empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// ZaakContactmomentZaakResolver's remarks). A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null (the
+/// ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class ZaakEigenschapZaakResolver : IExpandResolver<ZaakEigenschapResponseDto>
 {

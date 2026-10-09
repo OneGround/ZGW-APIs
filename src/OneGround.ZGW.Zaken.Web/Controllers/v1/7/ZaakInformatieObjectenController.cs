@@ -83,6 +83,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ZaakInformatieObjectResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakInformatieObjectenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakInformatieObjectenQueryParameters queryParameters)
     {
@@ -153,6 +154,7 @@ public class ZaakInformatieObjectenController : ZGWControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakInformatieObjectResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakInformatieObjectQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakInformatieObjectQueryParameters queryParameters, Guid id)
     {

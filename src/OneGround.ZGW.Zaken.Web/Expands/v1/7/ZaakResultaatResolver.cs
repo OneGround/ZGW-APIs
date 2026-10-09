@@ -14,7 +14,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// the existing <c>GetZaakResultaatQuery</c> via MediatR rather than a ServiceAgent, and is
 /// deliberately not cached or batched across a list. Does not itself expand
 /// "resultaat.zaak"/"resultaat.resultaattype" -- see <see cref="ZaakResultaatResultaatTypeResolver"/>
-/// for the latter. A RESULTAAT that is not available to the caller (NotFound/Forbidden) resolves to an empty object
+/// for the latter. A RESULTAAT that is not available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object)
 /// instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class ZaakResultaatResolver : IExpandResolver<ZaakResponseDto>

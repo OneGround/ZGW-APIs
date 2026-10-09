@@ -31,7 +31,14 @@ public class ZaakStatusStatusTypeResolver : IExpandResolver<ZaakResponseDto>
 
     public async Task<object> ResolveAsync(ZaakResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
-        if (!resolved.TryGetValue(Parent, out var obj) || obj is not StatusResponseDto status || string.IsNullOrEmpty(status.StatusType))
+        // Note: the zaak has no (available) status: the parent is missing, or is the empty object that the ExpandEngine put in its place
+        if (!resolved.TryGetValue(Parent, out var obj) || obj is not StatusResponseDto status)
+        {
+            return null;
+        }
+
+        // Note: a status without a statustype url: nothing to look up
+        if (string.IsNullOrEmpty(status.StatusType))
         {
             return null;
         }

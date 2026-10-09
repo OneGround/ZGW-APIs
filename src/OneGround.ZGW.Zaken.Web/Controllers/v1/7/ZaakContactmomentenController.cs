@@ -76,6 +76,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IList<ZaakContactmomentResponseDto>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakContactmomentenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakContactmomentenQueryParameters queryParameters)
     {
@@ -140,6 +141,7 @@ public class ZaakContactmomentenController : ZGWControllerBase
     [HttpGet(Contracts.v1._5.ApiRoutes.ZaakContactmomenten.Get, Name = Contracts.v1._5.Operations.ZaakContactmomenten.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakContactmomentResponseDto))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakContactmomentQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakContactmomentQueryParameters queryParameters, Guid id)
     {

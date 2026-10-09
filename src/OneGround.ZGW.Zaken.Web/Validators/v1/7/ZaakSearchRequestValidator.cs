@@ -1,6 +1,5 @@
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.Extensions.Configuration;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Validations;
@@ -57,7 +56,7 @@ public class ZaakSearchRequestValidator : ZGWValidator<ZaakSearchRequestDto>
 // 2. GetAllZakenQueryParameters is used in the regular GET /api/v1/zaken?<query-parameters>
 public class ZakenQueryParametersValidator : ZGWValidator<GetAllZakenQueryParameters>
 {
-    public ZakenQueryParametersValidator(IConfiguration configuration)
+    public ZakenQueryParametersValidator()
     {
         // Add validation for the common search fields
         Include(new _5.ZakenCommonSearchableFields());

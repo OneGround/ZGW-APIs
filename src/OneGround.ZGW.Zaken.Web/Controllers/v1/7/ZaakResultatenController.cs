@@ -90,6 +90,7 @@ public class ZaakResultatenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakResultaten.GetAll, Name = Operations.ZaakResultaten.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<ResultaatResponseDto>))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakResultatenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakResultatenQueryParameters queryParameters, int page = 1)
     {
@@ -163,6 +164,7 @@ public class ZaakResultatenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ResultaatResponseDto))]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakResultaatQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakResultaatQueryParameters queryParameters, Guid id)
     {

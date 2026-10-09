@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -109,10 +110,9 @@ internal sealed class ExternalJsonClientStartupCheck : IHostedService
         if (_settings.AllowPrivateAddresses)
             _logger.LogWarning("External JSON client: AllowPrivateAddresses is enabled, the protection against server-side request forgery is off");
 
-        foreach (var entry in _settings.AllowedHosts)
+        foreach (var entry in _settings.AllowedHosts.Where(entry => !ExternalUrlPolicy.IsValidHostEntry(entry)))
         {
-            if (!ExternalUrlPolicy.IsValidHostEntry(entry))
-                _logger.LogWarning("External JSON client: AllowedHosts entry '{Entry}' is not a valid host name and will never match", entry);
+            _logger.LogWarning("External JSON client: AllowedHosts entry '{Entry}' is not a valid host name and will never match", entry);
         }
 
         return Task.CompletedTask;

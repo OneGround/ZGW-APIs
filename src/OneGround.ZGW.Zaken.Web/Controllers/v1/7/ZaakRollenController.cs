@@ -86,6 +86,7 @@ public class ZaakRollenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakRollen.GetAll, Name = Operations.ZaakRollen.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<RolResponseDto>))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakRollenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakRollenQueryParameters queryParameters, int page = 1)
     {
@@ -163,6 +164,7 @@ public class ZaakRollenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(RolResponseDto))]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakRolQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakRolQueryParameters queryParameters, Guid id)
     {

@@ -332,7 +332,7 @@ public class ExternalJsonClientTests
     {
         const int callers = 16;
         var release = new TaskCompletionSource();
-        var started = new Barrier(callers);
+        using var started = new Barrier(callers);
         var handler = new StubHandler(
             async (_, _) =>
             {

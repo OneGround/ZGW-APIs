@@ -67,6 +67,22 @@ public class CatalogusResolverTests
         Assert.Null(await Resolve(resolver));
     }
 
+    [Theory]
+    [InlineData(QueryStatus.NotFound)]
+    [InlineData(QueryStatus.Forbidden)]
+    public async Task Engine_CatalogusNotAvailableToTheCaller_PutsAnEmptyObjectInExpand(QueryStatus status)
+    {
+        // Note: the resolver itself returns null; it is the engine that turns that into the empty object in _expand
+        var engine = new ExpandEngine<ZaakTypeResponseDto>([CreateResolver(new QueryResult<Catalogus>(null, status))]);
+        var zaakType = new ZaakTypeResponseDto { Catalogus = CatalogusUrl };
+
+        await engine.ResolveAsync(zaakType, ["catalogus"]);
+
+        var catalogus = zaakType.Expand["catalogus"];
+        Assert.NotNull(catalogus);
+        Assert.Equal(typeof(object), catalogus.GetType());
+    }
+
     [Fact]
     public async Task ResolveAsync_QueryFails_ThrowsExpandInternalQueryHandlerException()
     {

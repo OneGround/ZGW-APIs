@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Caching;
-using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
@@ -20,8 +19,9 @@ namespace OneGround.ZGW.Catalogi.Web.Expands.v1._3;
 /// this queries it locally through MediatR, like DRC's own-service InformatieObjectResolver does.
 /// The result is cached per request (keyed by catalogus URL, like DRC's InformatieObjectTypeCatalogusResolver),
 /// since a list of InformatieObjectType/ZaakType/BesluitType typically references only a handful of
-/// distinct catalogi. A CATALOGUS that is not available to the caller (NotFound/Forbidden) resolves to an
-/// empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// distinct catalogi. A CATALOGUS that is not available to the caller (NotFound/Forbidden) resolves to null,
+/// which the ExpandEngine stores in <c>_expand</c> as an empty object (<c>{}</c>), instead of failing the request, see
+/// <see cref="ExpandQueryStatus"/>.
 ///
 /// One non-generic class implements IExpandResolver&lt;TEntity&gt; for every supported entity type,
 /// with one ResolveAsync overload per type: the entity types don't share a common interface exposing

@@ -14,11 +14,11 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "hoofdzaak" expand path on a ZAAK. Like <see cref="ZaakStatusResolver"/>, the
 /// HOOFDZAAK lives in this same service, so this goes through the existing <c>GetZaakQuery</c> via
-/// MediatR rather than a ServiceAgent, and is deliberately not cached or batched across a list (same
+/// MediatR rather than a ServiceAgent, and fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list (same
 /// known trade-off as RolZaakResolver/ZaakObjectZaakResolver/ZaakInformatieObjectZaakResolver). Unlike
 /// status/resultaat though, HOOFDZAAK is a reference to a DIFFERENT ZAAK with its own independent
 /// authorization check -- a HOOFDZAAK that is not available to the caller (NotFound/Forbidden)
-/// resolves to an empty object instead of failing the request, like the old v1._5 HoofdZaakExpander did (see
+/// resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, like the old v1._5 HoofdZaakExpander did (see
 /// <see cref="ExpandQueryStatus"/>).
 /// <para>
 /// Reuses the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>

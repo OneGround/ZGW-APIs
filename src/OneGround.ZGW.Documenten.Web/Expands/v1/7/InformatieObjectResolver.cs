@@ -18,7 +18,8 @@ namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 /// Resolves the "informatieobject" expand path from an entity that references it by URL
 /// (GebruiksRecht, ObjectInformatieObject, Verzending). Shared by all three, since they only
 /// differ in how the URL is read off the entity. An INFORMATIEOBJECT that is not available to the caller
-/// (NotFound/Forbidden) resolves to an empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, see
+/// <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class InformatieObjectResolver<TEntity> : IExpandResolver<TEntity>
 {

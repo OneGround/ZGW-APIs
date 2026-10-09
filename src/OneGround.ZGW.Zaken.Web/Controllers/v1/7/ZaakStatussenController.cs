@@ -79,6 +79,7 @@ public class ZaakStatussenController : ZGWControllerBase
     [HttpGet(Contracts.v1._5.ApiRoutes.ZaakStatussen.GetAll, Name = Contracts.v1._5.Operations.ZaakStatussen.List)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<StatusResponseDto>))]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllZaakStatussenQueryParameters>))]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllZaakStatussenQueryParameters queryParameters, int page = 1)
     {
@@ -155,6 +156,7 @@ public class ZaakStatussenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(StatusResponseDto))]
     [ETagFilter]
+    [Expand]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakStatusQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakStatusQueryParameters queryParameters, Guid id)
     {

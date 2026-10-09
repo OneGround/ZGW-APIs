@@ -16,9 +16,9 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// Resolves the top-level "status" expand path on a ZAAKINFORMATIEOBJECT. Mirrors
 /// <see cref="ZaakInformatieObjectZaakResolver"/>: the STATUS lives in this same service, so this goes
 /// through the existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent. "status" is
-/// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A STATUS that is not available to the caller
-/// (NotFound/Forbidden) resolves to an empty object instead of failing the request, see <see cref="ExpandQueryStatus"/>. "status.statustype" is
-/// forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of
+/// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A STATUS that is not available to the caller (NotFound/Forbidden)
+/// resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, see
+/// <see cref="ExpandQueryStatus"/>. "status.statustype" is forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of
 /// <see cref="StatusResponseDto"/> itself (the same <see cref="StatusStatusTypeResolver"/> used for the
 /// top-level STATUS) -- no duplication.
 /// <para>
