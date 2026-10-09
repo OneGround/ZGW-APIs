@@ -64,32 +64,37 @@ public class OrganisationPartitioningTests
         AssertNoConsumerLookup(_factory, clientId);
     }
 
-    [Fact]
-    public async Task Consumer_of_another_organisation_is_not_found()
+    [Theory]
+    [InlineData(Api.LatestVersion_1_0)]
+    [InlineData(Api.LatestVersion_1_1)]
+    public async Task Consumer_of_another_organisation_is_not_found(string apiVersion)
     {
         var clientId = NewClientId();
         var otherClientId = NewClientId();
         await ApplicatieAsync(_factory, OwnRsin, clientId, heeftAlleAutorisaties: true);
         await ApplicatieAsync(_factory, OtherRsin, otherClientId, heeftAlleAutorisaties: true);
 
-        var ownResponse = await _client.SendAsync(AutorisatiesRequests.GetApplicatieByConsumer(clientId, clientId, OwnRsin));
-        var otherResponse = await _client.SendAsync(AutorisatiesRequests.GetApplicatieByConsumer(otherClientId, clientId, OwnRsin));
+        var ownResponse = await _client.SendAsync(AutorisatiesRequests.GetApplicatieByConsumer(clientId, clientId, OwnRsin, apiVersion));
+        var otherResponse = await _client.SendAsync(AutorisatiesRequests.GetApplicatieByConsumer(otherClientId, clientId, OwnRsin, apiVersion));
 
         Assert.Equal(HttpStatusCode.OK, ownResponse.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, otherResponse.StatusCode);
     }
 
     [Theory]
-    [InlineData("PUT")]
-    [InlineData("PATCH")]
-    [InlineData("DELETE")]
-    public async Task Applicatie_of_another_organisation_cannot_be_changed(string method)
+    [InlineData("PUT", Api.LatestVersion_1_0)]
+    [InlineData("PATCH", Api.LatestVersion_1_0)]
+    [InlineData("DELETE", Api.LatestVersion_1_0)]
+    [InlineData("PUT", Api.LatestVersion_1_1)]
+    [InlineData("PATCH", Api.LatestVersion_1_1)]
+    [InlineData("DELETE", Api.LatestVersion_1_1)]
+    public async Task Applicatie_of_another_organisation_cannot_be_changed(string method, string apiVersion)
     {
         var clientId = NewClientId();
         await ApplicatieAsync(_factory, OwnRsin, clientId, heeftAlleAutorisaties: true);
         var other = await ApplicatieAsync(_factory, OtherRsin, NewClientId(), heeftAlleAutorisaties: true);
 
-        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, other.Id, clientId, OwnRsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, other.Id, clientId, OwnRsin, apiVersion: apiVersion));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var stored = await FindAsync(_factory, other.Id);

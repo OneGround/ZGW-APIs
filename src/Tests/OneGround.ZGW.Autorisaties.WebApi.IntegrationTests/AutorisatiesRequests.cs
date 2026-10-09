@@ -23,39 +23,68 @@ internal static class AutorisatiesRequests
         return Create(HttpMethod.Get, ItemPath(id), clientId, rsin, apiVersion);
     }
 
-    public static HttpRequestMessage GetApplicatieByConsumer(string consumerClientId, string clientId, string rsin)
+    public static HttpRequestMessage GetApplicatieByConsumer(
+        string consumerClientId,
+        string clientId,
+        string rsin,
+        string apiVersion = Api.LatestVersion_1_0
+    )
     {
-        return Create(HttpMethod.Get, $"/{ApiRoutes.Applicaties.GetByConsumer}?clientId={Uri.EscapeDataString(consumerClientId)}", clientId, rsin);
+        return Create(
+            HttpMethod.Get,
+            $"/{ApiRoutes.Applicaties.GetByConsumer}?clientId={Uri.EscapeDataString(consumerClientId)}",
+            clientId,
+            rsin,
+            apiVersion
+        );
     }
 
-    public static HttpRequestMessage CreateApplicatie(string clientId, string rsin, string bodyClientId = null)
+    public static HttpRequestMessage CreateApplicatie(
+        string clientId,
+        string rsin,
+        string bodyClientId = null,
+        string apiVersion = Api.LatestVersion_1_0
+    )
     {
-        return Create(HttpMethod.Post, "/" + ApiRoutes.Applicaties.Create, clientId, rsin, body: NewApplicatieBody(bodyClientId));
+        return Create(HttpMethod.Post, "/" + ApiRoutes.Applicaties.Create, clientId, rsin, apiVersion, NewApplicatieBody(bodyClientId));
     }
 
-    public static HttpRequestMessage UpdateApplicatie(Guid id, string clientId, string rsin, string bodyClientId = null)
+    public static HttpRequestMessage UpdateApplicatie(
+        Guid id,
+        string clientId,
+        string rsin,
+        string bodyClientId = null,
+        string apiVersion = Api.LatestVersion_1_0
+    )
     {
-        return Create(HttpMethod.Put, ItemPath(id), clientId, rsin, body: NewApplicatieBody(bodyClientId));
+        return Create(HttpMethod.Put, ItemPath(id), clientId, rsin, apiVersion, NewApplicatieBody(bodyClientId));
     }
 
-    public static HttpRequestMessage PartialUpdateApplicatie(Guid id, string clientId, string rsin)
+    public static HttpRequestMessage PartialUpdateApplicatie(Guid id, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
     {
-        return Create(HttpMethod.Patch, ItemPath(id), clientId, rsin, body: new { label = $"integration-test-{Guid.NewGuid():N}" });
+        return Create(HttpMethod.Patch, ItemPath(id), clientId, rsin, apiVersion, new { label = $"integration-test-{Guid.NewGuid():N}" });
     }
 
-    public static HttpRequestMessage DeleteApplicatie(Guid id, string clientId, string rsin)
+    public static HttpRequestMessage DeleteApplicatie(Guid id, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
     {
-        return Create(HttpMethod.Delete, ItemPath(id), clientId, rsin);
+        return Create(HttpMethod.Delete, ItemPath(id), clientId, rsin, apiVersion);
     }
 
-    public static HttpRequestMessage Write(string method, Guid id, string clientId, string rsin, string bodyClientId = null)
+    public static HttpRequestMessage Write(
+        string method,
+        Guid id,
+        string clientId,
+        string rsin,
+        string bodyClientId = null,
+        string apiVersion = Api.LatestVersion_1_0
+    )
     {
         return method switch
         {
-            "POST" => CreateApplicatie(clientId, rsin, bodyClientId),
-            "PUT" => UpdateApplicatie(id, clientId, rsin, bodyClientId),
-            "PATCH" => PartialUpdateApplicatie(id, clientId, rsin),
-            "DELETE" => DeleteApplicatie(id, clientId, rsin),
+            "POST" => CreateApplicatie(clientId, rsin, bodyClientId, apiVersion),
+            "PUT" => UpdateApplicatie(id, clientId, rsin, bodyClientId, apiVersion),
+            "PATCH" => PartialUpdateApplicatie(id, clientId, rsin, apiVersion),
+            "DELETE" => DeleteApplicatie(id, clientId, rsin, apiVersion),
             _ => throw new ArgumentOutOfRangeException(nameof(method), method, null),
         };
     }

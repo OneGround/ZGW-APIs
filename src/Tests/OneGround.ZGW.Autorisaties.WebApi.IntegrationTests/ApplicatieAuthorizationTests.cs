@@ -148,17 +148,21 @@ public class ApplicatieAuthorizationTests
     }
 
     [Theory]
-    [InlineData("POST")]
-    [InlineData("PUT")]
-    [InlineData("PATCH")]
-    [InlineData("DELETE")]
-    public async Task Client_authorized_for_the_read_scope_only_is_forbidden_to_write(string method)
+    [InlineData("POST", Api.LatestVersion_1_0)]
+    [InlineData("PUT", Api.LatestVersion_1_0)]
+    [InlineData("PATCH", Api.LatestVersion_1_0)]
+    [InlineData("DELETE", Api.LatestVersion_1_0)]
+    [InlineData("POST", Api.LatestVersion_1_1)]
+    [InlineData("PUT", Api.LatestVersion_1_1)]
+    [InlineData("PATCH", Api.LatestVersion_1_1)]
+    [InlineData("DELETE", Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_the_read_scope_only_is_forbidden_to_write(string method, string apiVersion)
     {
         var clientId = NewClientId();
         var bodyClientId = NewClientId();
         var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Read));
 
-        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin, bodyClientId));
+        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var stored = await FindAsync(_factory, applicatie.Id);
@@ -167,13 +171,15 @@ public class ApplicatieAuthorizationTests
         Assert.Null(await FindByClientIdAsync(_factory, bodyClientId));
     }
 
-    [Fact]
-    public async Task Client_authorized_for_the_update_scope_can_create_an_applicatie_owned_by_its_organisation()
+    [Theory]
+    [InlineData(Api.LatestVersion_1_0)]
+    [InlineData(Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_the_update_scope_can_create_an_applicatie_owned_by_its_organisation(string apiVersion)
     {
         var clientId = await SeedUpdateClientAsync();
         var bodyClientId = NewClientId();
 
-        var response = await _client.SendAsync(AutorisatiesRequests.CreateApplicatie(clientId, Rsin, bodyClientId));
+        var response = await _client.SendAsync(AutorisatiesRequests.CreateApplicatie(clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await FindByClientIdAsync(_factory, bodyClientId);
@@ -181,40 +187,46 @@ public class ApplicatieAuthorizationTests
         Assert.Equal(Rsin, created.Owner);
     }
 
-    [Fact]
-    public async Task Client_authorized_for_the_update_scope_can_update()
+    [Theory]
+    [InlineData(Api.LatestVersion_1_0)]
+    [InlineData(Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_the_update_scope_can_update(string apiVersion)
     {
         var clientId = await SeedUpdateClientAsync();
         var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
         var bodyClientId = NewClientId();
 
-        var response = await _client.SendAsync(AutorisatiesRequests.UpdateApplicatie(target.Id, clientId, Rsin, bodyClientId));
+        var response = await _client.SendAsync(AutorisatiesRequests.UpdateApplicatie(target.Id, clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var stored = await FindAsync(_factory, target.Id);
         Assert.Equal(bodyClientId, stored.ClientIds.Single().ClientId);
     }
 
-    [Fact]
-    public async Task Client_authorized_for_the_update_scope_can_partially_update()
+    [Theory]
+    [InlineData(Api.LatestVersion_1_0)]
+    [InlineData(Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_the_update_scope_can_partially_update(string apiVersion)
     {
         var clientId = await SeedUpdateClientAsync();
         var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
 
-        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(target.Id, clientId, Rsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(target.Id, clientId, Rsin, apiVersion));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var stored = await FindAsync(_factory, target.Id);
         Assert.NotEqual(target.Label, stored.Label);
     }
 
-    [Fact]
-    public async Task Client_authorized_for_the_update_scope_can_delete()
+    [Theory]
+    [InlineData(Api.LatestVersion_1_0)]
+    [InlineData(Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_the_update_scope_can_delete(string apiVersion)
     {
         var clientId = await SeedUpdateClientAsync();
         var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
 
-        var response = await _client.SendAsync(AutorisatiesRequests.DeleteApplicatie(target.Id, clientId, Rsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.DeleteApplicatie(target.Id, clientId, Rsin, apiVersion));
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Null(await FindAsync(_factory, target.Id));
