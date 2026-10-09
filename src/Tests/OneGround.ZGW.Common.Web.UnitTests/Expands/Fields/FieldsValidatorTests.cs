@@ -12,6 +12,7 @@ public class FieldsValidatorTests
             .Entity<ParentDto, ChildDto>("zaaktype")
             .Entity<ParentDto, ChildDto>("status")
             .Entity<ChildDto, GrandChildDto>("detail")
+            .OpaqueEntity<ParentDto>("extern")
             .Build();
 
     private static FieldsValidator<ParentDto> Validator(params string[] expandablePaths) => new(BuildSchema(), expandablePaths);
@@ -85,6 +86,74 @@ public class FieldsValidatorTests
         var selection = new FieldSelection { Entities = { ["verzonnen"] = new FieldSelection() } };
 
         Assert.Equal(["verzonnen"], Validator("verzonnen").Validate(selection));
+    }
+
+    // ---- Ondoorzichtige expands (inhoud onbekend, bv. extern JSON-document) ----
+
+    [Fact]
+    public void Validate_OpaqueEntity_WithoutSubSelection_IsValid()
+    {
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        Assert.Empty(Validator("extern").Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_OpaqueEntity_WithAllScalars_IsValid()
+    {
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection { IncludeAllScalars = true } } };
+
+        Assert.Empty(Validator("extern").Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_OpaqueEntity_WithScalarSelection_IsReported()
+    {
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection { ScalarFields = { "naam" } } } };
+
+        Assert.Equal(["extern (veldselectie wordt niet ondersteund)"], Validator("extern").Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_OpaqueEntity_WithNestedSelection_IsReported()
+    {
+        var selection = new FieldSelection
+        {
+            Entities = { ["extern"] = new FieldSelection { NestedObjects = { ["a"] = new FieldSelection { ScalarFields = { "b" } } } } },
+        };
+
+        Assert.Equal(["extern (veldselectie wordt niet ondersteund)"], Validator("extern").Validate(selection));
+    }
+
+    [Fact]
+    public void Build_NameRegisteredAsBothEntityAndOpaqueEntity_Throws()
+    {
+        var builder = new FieldsSchemaBuilder().Entity<ParentDto, ChildDto>("x").OpaqueEntity<ParentDto>("x");
+
+        Assert.Throws<System.InvalidOperationException>(() => builder.Build());
+    }
+
+    [Fact]
+    public void Validate_OpaqueEntity_NotExpandable_IsReported()
+    {
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        Assert.Equal(["extern"], Validator("zaaktype").Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_OpaqueEntity_NextToNormalEntity_OnlyOpaqueRuleApplies()
+    {
+        var selection = new FieldSelection
+        {
+            Entities =
+            {
+                ["extern"] = new FieldSelection(),
+                ["zaaktype"] = new FieldSelection { ScalarFields = { "naam" } },
+            },
+        };
+
+        Assert.Empty(Validator("extern", "zaaktype").Validate(selection));
     }
 
     [Fact]

@@ -278,6 +278,7 @@ public class ZakenController : ZGWControllerBase
     [RequiresAcceptCrs]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
     public async Task<IActionResult> GetAsync([FromQuery] GetZaakQueryParameters queryParameters, Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
@@ -328,6 +329,7 @@ public class ZakenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ETagFilter]
     [Expand]
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetZaakQueryParameters>))]
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetZaakQueryParameters queryParameters)
     {
         return GetAsync(queryParameters, id);

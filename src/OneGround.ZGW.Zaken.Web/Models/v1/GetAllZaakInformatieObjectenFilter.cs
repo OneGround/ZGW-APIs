@@ -4,4 +4,5 @@ public class GetAllZaakInformatieObjectenFilter
 {
     public string Zaak { get; set; }
     public string InformatieObject { get; set; }
+    public string Status { get; set; }
 }

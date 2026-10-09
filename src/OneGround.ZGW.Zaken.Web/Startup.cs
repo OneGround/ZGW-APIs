@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
@@ -21,6 +22,7 @@ using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Common.Web.HealthChecks;
+using OneGround.ZGW.Common.Web.Http;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -35,6 +37,7 @@ using OneGround.ZGW.Zaken.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using OneGround.ZGW.Zaken.Web.Expands.v1._5;
+using OneGround.ZGW.Zaken.Web.Expands.v1._7;
 using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.Web.Handlers;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
@@ -99,14 +102,28 @@ public class Startup
 
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
+        services.AddUserAuthCatalogiServiceAgent_v1_3(Configuration); // For ZRC v1.7 expands (evaluated by ZTC as the calling client)
         services.AddDocumentenServiceAgent_v1_7(Configuration);
         services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
+        services.AddUserAuthDocumentenServiceAgent_v1_7(Configuration); // For ZRC v1.7 expands (zaakinformatieobjecten.informatieobject)
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
         services.AddBesluitenServiceAgent(Configuration);
 
         // Expanders support _expand in responses (>= v1.5)
-        services.AddExpandables();
+        services.AddExpandables(); // Note: Legacy Expand Engine v1.5
+        services.AddExternalJsonClient(Configuration.GetSection("Application:ExternalJson")); // Note: For the v1.7 "communicatiekanaal"/"selectielijstklasse" expands
+        services.AddZakenAPIExpands(); // Note: New Expand Engine v1.7
+        services.AddZakenAPIFieldsValidators(); // Note: New field-selection (fields) v1.7
+        services.AddStatussenAPIExpands(); // Note: New Expand Engine v1.7 for the STATUS resource itself
+        services.AddResultatenAPIExpands(); // Note: New Expand Engine v1.7 for the RESULTAAT resource itself
+        services.AddRollenAPIExpands(); // Note: New Expand Engine v1.7 for the ROL resource itself
+        services.AddZaakObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKOBJECT resource itself
+        services.AddZaakContactmomentenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKCONTACTMOMENT resource itself
+        services.AddZaakEigenschappenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKEIGENSCHAP resource itself
+        services.AddZaakInformatieObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKINFORMATIEOBJECT resource itself
+
+        services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 
         services.AddMassTransit(x =>
         {

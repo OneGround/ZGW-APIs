@@ -105,6 +105,7 @@ public class Startup
         services.AddBesluitenServiceAgent(Configuration);
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
+        services.AddUserAuthCatalogiServiceAgent_v1_3(Configuration); // For DRC v1.7 expands (evaluated by ZTC as the calling client)
 
         services.AddExpandables(); // Note: Legacy Expand Engine v1.5
         services.AddDocumentenAPIExpands(); // Note: New Expand Engine v1.7

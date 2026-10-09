@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
@@ -33,7 +34,7 @@ public static class FieldProjector
                 continue;
             }
 
-            scalarLookup[jsonAttr.PropertyName] = prop;
+            scalarLookup[JsonPropertyNames.Resolve(jsonAttr, prop)] = prop;
         }
 
         if (selection.IncludeAllScalars)
@@ -72,7 +73,12 @@ public static class FieldProjector
                     && entityValue.GetType() != typeof(object)
                 )
                 {
-                    if (entityValue is IEnumerable enumerable && entityValue is not string)
+                    // Note: een JSON-document met een onbekende vorm (bv. van een externe API) kan niet worden geprojecteerd: zonder
+                    // subselectie ongewijzigd doorgeven. Mét subselectie (de validator laat dat voor een ondoorzichtige expand niet toe)
+                    // juist niets teruggeven, zodat een niet-geregistreerde JSON-expand nooit meer data lekt dan is gevraagd.
+                    if (entityValue is JToken)
+                        expandDict[entityName] = HasSubSelection(subSelection) ? new object() : entityValue;
+                    else if (entityValue is IEnumerable enumerable && entityValue is not string)
                         expandDict[entityName] = enumerable.Cast<object>().Select(item => ProjectObject(item, subSelection)).ToList();
                     else
                         expandDict[entityName] = ProjectObject(entityValue, subSelection);
@@ -88,6 +94,9 @@ public static class FieldProjector
 
         return result;
     }
+
+    private static bool HasSubSelection(FieldSelection selection) =>
+        selection.ScalarFields.Count > 0 || selection.Entities.Count > 0 || selection.NestedObjects.Count > 0;
 
     private static object ProjectNested(object value, FieldSelection selection)
     {

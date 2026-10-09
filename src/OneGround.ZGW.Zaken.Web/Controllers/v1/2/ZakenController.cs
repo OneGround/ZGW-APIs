@@ -32,6 +32,7 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._2;
 [Authorize]
 [ZgwApiVersion(Api.LatestVersion_1_2)]
 [ZgwApiVersion(Api.LatestVersion_1_5)]
+[ZgwApiVersion(Api.LatestVersion_1_7)]
 [Consumes("application/json")]
 [Produces("application/json")]
 public class ZakenController : ZGWControllerBase

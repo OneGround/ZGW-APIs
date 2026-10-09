@@ -64,6 +64,17 @@ public class FieldsValidator<TEntity>
         {
             var path = Combine(prefix, name);
 
+            // Een ondoorzichtige expand (inhoud onbekend, bv. extern JSON-document) kan alleen als geheel worden opgevraagd.
+            if (types.Any(t => _schema.IsOpaqueEntity(t, name)))
+            {
+                if (!_expandablePaths.Contains(path))
+                    invalid.Add(path);
+                else if (HasSubSelection(child))
+                    invalid.Add($"{path} (veldselectie wordt niet ondersteund)");
+
+                continue;
+            }
+
             // Een geneste sub-entiteit is alleen geldig als ze ook expandbaar is (er een resolver voor bestaat)
             // én het schema het onderliggende DTO-type kent om de diepere velden tegen te valideren.
             Type childType = null;
@@ -106,6 +117,10 @@ public class FieldsValidator<TEntity>
             Walk(child, childTypes, path, invalid, depth + 1);
         }
     }
+
+    // Note: "*" (alle velden) is toegestaan: voor een ondoorzichtige expand is dat precies wat er sowieso gebeurt.
+    private static bool HasSubSelection(FieldSelection selection) =>
+        selection.ScalarFields.Count > 0 || selection.Entities.Count > 0 || selection.NestedObjects.Count > 0;
 
     private static string Combine(string prefix, string name) => string.IsNullOrEmpty(prefix) ? name : $"{prefix}.{name}";
 }
