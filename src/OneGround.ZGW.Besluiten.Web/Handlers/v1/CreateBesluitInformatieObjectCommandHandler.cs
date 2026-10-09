@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Besluiten.DataModel;
+using OneGround.ZGW.Besluiten.Web.Authorization;
 using OneGround.ZGW.Besluiten.Web.BusinessRules;
 using OneGround.ZGW.Besluiten.Web.Notificaties;
 using OneGround.ZGW.Common.Constants;
@@ -70,6 +71,10 @@ class CreateBesluitInformatieObjectCommandHandler
             var error = new ValidationError("besluit", ErrorCode.Invalid, $"Besluit {request.BesluitUrl} is onbekend.");
 
             errors.Add(error);
+        }
+        else if (!_authorizationContext.IsAuthorized(besluit))
+        {
+            return new CommandResult<BesluitInformatieObject>(null, CommandStatus.Forbidden);
         }
         else
         {

@@ -24,6 +24,7 @@ jobs:
       SOLUTION_ROOT: '${{ github.workspace }}/src'
       SOLUTION_FILE: 'ZGW.Backend.slnf'
       SOLUTION_UNIT_TESTS: 'ZGW.UnitTests.slnf'
+      SOLUTION_INTEGRATION_TESTS: 'ZGW.IntegrationTests.slnf'
       BUILD_CONFIGURATION: 'Release'
 
     steps:
@@ -59,4 +60,10 @@ jobs:
     - name: Test
       if: steps.changed-files.outputs.any_changed == 'true'
       run: dotnet test ${{ env.SOLUTION_UNIT_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"Code coverage" --logger trx --results-directory ${{ runner.temp }}
+      working-directory: ${{ env.SOLUTION_ROOT }}
+
+    # Boots the APIs in-process against PostgreSQL/PostGIS and Redis containers (Testcontainers, using the runner's Docker)
+    - name: Integration Test
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: dotnet test ${{ env.SOLUTION_INTEGRATION_TESTS }} --configuration ${{ env.BUILD_CONFIGURATION }} --logger trx --results-directory ${{ runner.temp }}
       working-directory: ${{ env.SOLUTION_ROOT }}

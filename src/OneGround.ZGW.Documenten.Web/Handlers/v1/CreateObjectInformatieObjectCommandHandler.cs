@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1.Responses;
 using OneGround.ZGW.Documenten.DataModel;
+using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1;
@@ -52,6 +53,24 @@ class CreateObjectInformatieObjectCommandHandler
 
         var errors = new List<ValidationError>();
 
+        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
+
+        var informatieObject = await _context
+            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
+            .Include(e => e.LatestEnkelvoudigInformatieObjectVersie)
+            .SingleOrDefaultAsync(e => e.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
+
+        if (informatieObject == null)
+        {
+            var error = new ValidationError("informatieobject", ErrorCode.ObjectDoesNotExist, "Het object bestaat niet in de database.");
+            return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
+        }
+
+        if (!_authorizationContext.IsAuthorized(informatieObject))
+        {
+            return new CommandResult<ObjectInformatieObject>(null, CommandStatus.Forbidden);
+        }
+
         await _objectInformatieObjectBusinessRuleService.ValidateAsync(
             objectInformatieObject,
             request.InformatieObjectUrl,
@@ -63,18 +82,6 @@ class CreateObjectInformatieObjectCommandHandler
         if (errors.Count != 0)
         {
             return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, errors.ToArray());
-        }
-
-        var rsinFilter = GetRsinFilterPredicate<EnkelvoudigInformatieObject>();
-
-        var informatieObject = await _context
-            .EnkelvoudigInformatieObjecten.Where(rsinFilter)
-            .SingleOrDefaultAsync(e => e.Id == _uriService.GetId(request.InformatieObjectUrl), cancellationToken);
-
-        if (informatieObject == null)
-        {
-            var error = new ValidationError("informatieobject", ErrorCode.ObjectDoesNotExist, "Het object bestaat niet in de database.");
-            return new CommandResult<ObjectInformatieObject>(null, CommandStatus.ValidationError, error);
         }
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, informatieObject.LegacyAuditTrail))

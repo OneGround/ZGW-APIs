@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.Web.Authorization;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1;
 
@@ -45,6 +46,11 @@ class GetKlantContactQueryHandler : ZakenBaseHandler<GetKlantContactQueryHandler
         if (result == null)
         {
             return new QueryResult<KlantContact>(null, QueryStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(result.Zaak))
+        {
+            return new QueryResult<KlantContact>(null, QueryStatus.Forbidden);
         }
 
         return new QueryResult<KlantContact>(result, QueryStatus.OK);

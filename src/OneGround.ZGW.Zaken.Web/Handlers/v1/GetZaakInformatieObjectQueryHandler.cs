@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.Web.Authorization;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1;
 
@@ -47,6 +48,11 @@ class GetZaakInformatieObjectQueryHandler
         if (zaakstatus == null)
         {
             return new QueryResult<ZaakInformatieObject>(null, QueryStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(zaakstatus.Zaak))
+        {
+            return new QueryResult<ZaakInformatieObject>(null, QueryStatus.Forbidden);
         }
 
         return new QueryResult<ZaakInformatieObject>(zaakstatus, QueryStatus.OK);
