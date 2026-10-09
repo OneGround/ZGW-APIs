@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,6 +67,17 @@ internal static class AutorisatiesSeed
         var context = scope.ServiceProvider.GetRequiredService<AcDbContext>();
 
         return await context.Applicaties.AsNoTracking().Include(a => a.ClientIds).SingleOrDefaultAsync(a => a.Id == id);
+    }
+
+    public static async Task<Applicatie> FindByClientIdAsync(AutorisatiesWebApplicationFactory factory, string clientId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AcDbContext>();
+
+        return await context
+            .Applicaties.AsNoTracking()
+            .Include(a => a.ClientIds)
+            .SingleOrDefaultAsync(a => a.ClientIds.Any(c => c.ClientId == clientId));
     }
 
     public static void AssertNoConsumerLookup(AutorisatiesWebApplicationFactory factory, string clientId)

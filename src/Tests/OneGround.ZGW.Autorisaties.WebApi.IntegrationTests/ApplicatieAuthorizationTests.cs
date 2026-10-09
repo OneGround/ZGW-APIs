@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -154,27 +155,69 @@ public class ApplicatieAuthorizationTests
     public async Task Client_authorized_for_the_read_scope_only_is_forbidden_to_write(string method)
     {
         var clientId = NewClientId();
+        var bodyClientId = NewClientId();
         var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Read));
 
-        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin, bodyClientId));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var stored = await FindAsync(_factory, applicatie.Id);
         Assert.NotNull(stored);
         Assert.Equal(applicatie.Label, stored.Label);
+        Assert.Null(await FindByClientIdAsync(_factory, bodyClientId));
     }
 
     [Fact]
-    public async Task Client_authorized_for_the_update_scope_can_write()
+    public async Task Client_authorized_for_the_update_scope_can_create_an_applicatie_owned_by_its_organisation()
     {
-        var clientId = NewClientId();
-        var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
+        var clientId = await SeedUpdateClientAsync();
+        var bodyClientId = NewClientId();
 
-        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(applicatie.Id, clientId, Rsin));
+        var response = await _client.SendAsync(AutorisatiesRequests.CreateApplicatie(clientId, Rsin, bodyClientId));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await FindByClientIdAsync(_factory, bodyClientId);
+        Assert.NotNull(created);
+        Assert.Equal(Rsin, created.Owner);
+    }
+
+    [Fact]
+    public async Task Client_authorized_for_the_update_scope_can_update()
+    {
+        var clientId = await SeedUpdateClientAsync();
+        var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
+        var bodyClientId = NewClientId();
+
+        var response = await _client.SendAsync(AutorisatiesRequests.UpdateApplicatie(target.Id, clientId, Rsin, bodyClientId));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var stored = await FindAsync(_factory, applicatie.Id);
-        Assert.NotEqual(applicatie.Label, stored.Label);
+        var stored = await FindAsync(_factory, target.Id);
+        Assert.Equal(bodyClientId, stored.ClientIds.Single().ClientId);
+    }
+
+    [Fact]
+    public async Task Client_authorized_for_the_update_scope_can_partially_update()
+    {
+        var clientId = await SeedUpdateClientAsync();
+        var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
+
+        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(target.Id, clientId, Rsin));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var stored = await FindAsync(_factory, target.Id);
+        Assert.NotEqual(target.Label, stored.Label);
+    }
+
+    [Fact]
+    public async Task Client_authorized_for_the_update_scope_can_delete()
+    {
+        var clientId = await SeedUpdateClientAsync();
+        var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
+
+        var response = await _client.SendAsync(AutorisatiesRequests.DeleteApplicatie(target.Id, clientId, Rsin));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Null(await FindAsync(_factory, target.Id));
     }
 
     [Fact]
@@ -187,6 +230,14 @@ public class ApplicatieAuthorizationTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         AssertNoConsumerLookup(_factory, clientId);
+    }
+
+    private async Task<string> SeedUpdateClientAsync()
+    {
+        var clientId = NewClientId();
+        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Update));
+
+        return clientId;
     }
 
     private Task<Applicatie> SeedAsync(string clientId, bool heeftAlleAutorisaties = false, Autorisatie autorisatie = null)

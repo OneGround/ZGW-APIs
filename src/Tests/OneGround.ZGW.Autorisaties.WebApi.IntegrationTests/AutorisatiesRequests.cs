@@ -28,14 +28,14 @@ internal static class AutorisatiesRequests
         return Create(HttpMethod.Get, $"/{ApiRoutes.Applicaties.GetByConsumer}?clientId={Uri.EscapeDataString(consumerClientId)}", clientId, rsin);
     }
 
-    public static HttpRequestMessage CreateApplicatie(string clientId, string rsin)
+    public static HttpRequestMessage CreateApplicatie(string clientId, string rsin, string bodyClientId = null)
     {
-        return Create(HttpMethod.Post, "/" + ApiRoutes.Applicaties.Create, clientId, rsin, body: NewApplicatieBody());
+        return Create(HttpMethod.Post, "/" + ApiRoutes.Applicaties.Create, clientId, rsin, body: NewApplicatieBody(bodyClientId));
     }
 
-    public static HttpRequestMessage UpdateApplicatie(Guid id, string clientId, string rsin)
+    public static HttpRequestMessage UpdateApplicatie(Guid id, string clientId, string rsin, string bodyClientId = null)
     {
-        return Create(HttpMethod.Put, ItemPath(id), clientId, rsin, body: NewApplicatieBody());
+        return Create(HttpMethod.Put, ItemPath(id), clientId, rsin, body: NewApplicatieBody(bodyClientId));
     }
 
     public static HttpRequestMessage PartialUpdateApplicatie(Guid id, string clientId, string rsin)
@@ -48,12 +48,12 @@ internal static class AutorisatiesRequests
         return Create(HttpMethod.Delete, ItemPath(id), clientId, rsin);
     }
 
-    public static HttpRequestMessage Write(string method, Guid id, string clientId, string rsin)
+    public static HttpRequestMessage Write(string method, Guid id, string clientId, string rsin, string bodyClientId = null)
     {
         return method switch
         {
-            "POST" => CreateApplicatie(clientId, rsin),
-            "PUT" => UpdateApplicatie(id, clientId, rsin),
+            "POST" => CreateApplicatie(clientId, rsin, bodyClientId),
+            "PUT" => UpdateApplicatie(id, clientId, rsin, bodyClientId),
             "PATCH" => PartialUpdateApplicatie(id, clientId, rsin),
             "DELETE" => DeleteApplicatie(id, clientId, rsin),
             _ => throw new ArgumentOutOfRangeException(nameof(method), method, null),
@@ -62,11 +62,11 @@ internal static class AutorisatiesRequests
 
     private static string ItemPath(Guid id) => "/" + ApiRoutes.Applicaties.Get.Replace("{id}", id.ToString());
 
-    private static object NewApplicatieBody()
+    private static object NewApplicatieBody(string clientId)
     {
         return new
         {
-            clientIds = new[] { AutorisatiesSeed.NewClientId() },
+            clientIds = new[] { clientId ?? AutorisatiesSeed.NewClientId() },
             label = $"integration-test-{Guid.NewGuid():N}",
             heeftAlleAutorisaties = true,
             autorisaties = Array.Empty<object>(),
