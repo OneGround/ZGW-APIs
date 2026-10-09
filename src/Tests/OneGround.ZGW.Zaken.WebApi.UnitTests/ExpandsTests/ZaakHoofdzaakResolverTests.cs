@@ -38,7 +38,7 @@ public class ZaakHoofdzaakResolverTests
         zaaktypeResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<ZaakResponseDto>([zaaktypeResolverMock.Object]);
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(expandEngine));
+        var resolver = new ZaakHoofdzaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object, LazyEngine(expandEngine));
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
@@ -69,7 +69,7 @@ public class ZaakHoofdzaakResolverTests
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
 
         var resolver = new ZaakHoofdzaakResolver(
-            mediatorMock.Object,
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
             mapperMock.Object,
             LazyEngine(new ExpandEngine<ZaakResponseDto>([])),
             AcceptCrsTestHelper.AccessorWith(acceptCrs)
@@ -99,7 +99,7 @@ public class ZaakHoofdzaakResolverTests
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
 
         var resolver = new ZaakHoofdzaakResolver(
-            mediatorMock.Object,
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
             mapperMock.Object,
             LazyEngine(new ExpandEngine<ZaakResponseDto>([])),
             AcceptCrsTestHelper.AccessorWith("EPSG:4326", requiresAcceptCrs: false)
@@ -127,7 +127,11 @@ public class ZaakHoofdzaakResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+        var resolver = new ZaakHoofdzaakResolver(
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
+            mapperMock.Object,
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([]))
+        );
 
         await resolver.ResolveAsync(
             new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl },
@@ -155,7 +159,7 @@ public class ZaakHoofdzaakResolverTests
         statusResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<ZaakResponseDto>([statusResolverMock.Object]);
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(expandEngine));
+        var resolver = new ZaakHoofdzaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object, LazyEngine(expandEngine));
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
         await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak", "hoofdzaak.status" });
@@ -175,7 +179,11 @@ public class ZaakHoofdzaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.NotFound));
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+        var resolver = new ZaakHoofdzaakResolver(
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
+            Mock.Of<IMapper>(),
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([]))
+        );
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
@@ -191,7 +199,11 @@ public class ZaakHoofdzaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.Forbidden));
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+        var resolver = new ZaakHoofdzaakResolver(
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
+            Mock.Of<IMapper>(),
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([]))
+        );
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
@@ -204,7 +216,11 @@ public class ZaakHoofdzaakResolverTests
     {
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+        var resolver = new ZaakHoofdzaakResolver(
+            ExpandCaches.ZaakLookup(mediatorMock.Object),
+            Mock.Of<IMapper>(),
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([]))
+        );
         var entity = new ZaakResponseDto { Hoofdzaak = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "hoofdzaak" });
@@ -230,7 +246,7 @@ public class ZaakHoofdzaakResolverTests
         deelzakenResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<ZaakResponseDto>([deelzakenResolverMock.Object]);
 
-        var resolver = new ZaakHoofdzaakResolver(mediatorMock.Object, mapperMock.Object, LazyEngine(expandEngine));
+        var resolver = new ZaakHoofdzaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object, LazyEngine(expandEngine));
         var entity = new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl };
 
         await resolver.ResolveAsync(
@@ -256,7 +272,11 @@ public class ZaakHoofdzaakResolverTests
     [Fact]
     public void Path_IsHoofdzaak_AndHasNoParent_AndDeclaresExpectedAdditionalPaths()
     {
-        var resolver = new ZaakHoofdzaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>(), LazyEngine(new ExpandEngine<ZaakResponseDto>([])));
+        var resolver = new ZaakHoofdzaakResolver(
+            ExpandCaches.ZaakLookup(Mock.Of<IMediator>()),
+            Mock.Of<IMapper>(),
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([]))
+        );
 
         Assert.Equal("hoofdzaak", resolver.Path);
         Assert.Null(resolver.Parent);

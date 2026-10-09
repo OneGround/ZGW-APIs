@@ -31,7 +31,12 @@ public class ZaakInformatieObjectStatusResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<StatusResponseDto>(zaakStatus)).Returns(mappedStatus);
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, mapperMock.Object, EmptyStatusExpandEngine());
+        var resolver = new ZaakInformatieObjectStatusResolver(
+            mediatorMock.Object,
+            mapperMock.Object,
+            EmptyStatusExpandEngine(),
+            ExpandCaches.Status()
+        );
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
@@ -47,7 +52,12 @@ public class ZaakInformatieObjectStatusResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakStatusQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<ZaakStatus>(null, QueryStatus.NotFound));
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyStatusExpandEngine());
+        var resolver = new ZaakInformatieObjectStatusResolver(
+            mediatorMock.Object,
+            Mock.Of<IMapper>(),
+            EmptyStatusExpandEngine(),
+            ExpandCaches.Status()
+        );
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
@@ -63,7 +73,12 @@ public class ZaakInformatieObjectStatusResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakStatusQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<ZaakStatus>(null, QueryStatus.Forbidden));
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyStatusExpandEngine());
+        var resolver = new ZaakInformatieObjectStatusResolver(
+            mediatorMock.Object,
+            Mock.Of<IMapper>(),
+            EmptyStatusExpandEngine(),
+            ExpandCaches.Status()
+        );
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
@@ -76,7 +91,12 @@ public class ZaakInformatieObjectStatusResolverTests
     {
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyStatusExpandEngine());
+        var resolver = new ZaakInformatieObjectStatusResolver(
+            mediatorMock.Object,
+            Mock.Of<IMapper>(),
+            EmptyStatusExpandEngine(),
+            ExpandCaches.Status()
+        );
         var entity = new ZaakInformatieObjectResponseDto { Status = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
@@ -104,7 +124,7 @@ public class ZaakInformatieObjectStatusResolverTests
             new ExpandEngine<StatusResponseDto>([statustypeResolverMock.Object])
         );
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, mapperMock.Object, statusExpandEngine);
+        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, mapperMock.Object, statusExpandEngine, ExpandCaches.Status());
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
         await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status", "status.statustype" });
@@ -134,7 +154,7 @@ public class ZaakInformatieObjectStatusResolverTests
             new ExpandEngine<StatusResponseDto>([statustypeResolverMock.Object])
         );
 
-        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, mapperMock.Object, statusExpandEngine);
+        var resolver = new ZaakInformatieObjectStatusResolver(mediatorMock.Object, mapperMock.Object, statusExpandEngine, ExpandCaches.Status());
         var entity = new ZaakInformatieObjectResponseDto { Status = StatusUrl };
 
         await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "status" });
@@ -148,7 +168,12 @@ public class ZaakInformatieObjectStatusResolverTests
     [Fact]
     public void Path_IsStatus_AndHasNoParent_AndDeclaresStatusStatustypeAsAdditionalPath()
     {
-        var resolver = new ZaakInformatieObjectStatusResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>(), EmptyStatusExpandEngine());
+        var resolver = new ZaakInformatieObjectStatusResolver(
+            Mock.Of<IMediator>(),
+            Mock.Of<IMapper>(),
+            EmptyStatusExpandEngine(),
+            ExpandCaches.Status()
+        );
 
         Assert.Equal("status", resolver.Path);
         Assert.Null(resolver.Parent);

@@ -80,7 +80,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             mapperMock.Object,
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         var result = await resolver.ResolveAsync(Entity, new Dictionary<string, object>(), new HashSet<string> { "zaakinformatieobjecten" });
@@ -121,7 +122,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             mapperMock.Object,
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         var result = await resolver.ResolveAsync(Entity, new Dictionary<string, object>(), new HashSet<string> { "zaakinformatieobjecten" });
@@ -151,7 +153,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             Mock.Of<IMapper>(),
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         var result = await resolver.ResolveAsync(Entity, new Dictionary<string, object>(), new HashSet<string> { "zaakinformatieobjecten" });
@@ -188,7 +191,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             Mock.Of<IMapper>(),
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         var ex = await Assert.ThrowsAsync<ExpandExternalServiceException>(() =>
@@ -226,7 +230,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             Mock.Of<IMapper>(),
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         var result = await resolver.ResolveAsync(Entity, new Dictionary<string, object>(), new HashSet<string> { "zaakinformatieobjecten" });
@@ -255,7 +260,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             Mock.Of<IMapper>(),
             documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         await Assert.ThrowsAsync<ExpandExternalServiceException>(() =>
@@ -295,7 +301,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             mapperMock.Object,
             documentenServiceAgentMock.Object,
-            expandEngine
+            expandEngine,
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         await resolver.ResolveAsync(
@@ -342,7 +349,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(mediatorMock.Object),
             mapperMock.Object,
             documentenServiceAgentMock.Object,
-            expandEngine
+            expandEngine,
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         await resolver.ResolveAsync(
@@ -374,7 +382,8 @@ public class StatusZaakInformatieObjectenResolverTests
             BuildServiceProvider(Mock.Of<IMediator>()),
             Mock.Of<IMapper>(),
             Mock.Of<IUserAuthDocumentenServiceAgent>(),
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
+            ExpandCaches.ObjectInformatieObjecten()
         );
 
         Assert.Equal("zaakinformatieobjecten", resolver.Path);

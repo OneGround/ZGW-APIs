@@ -30,7 +30,7 @@ public class ZaakContactmomentZaakResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(zaak)).Returns(mappedZaak);
 
-        var resolver = new ZaakContactmomentZaakResolver(mediatorMock.Object, mapperMock.Object);
+        var resolver = new ZaakContactmomentZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object);
         var entity = new ZaakContactmomentResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -46,7 +46,7 @@ public class ZaakContactmomentZaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.NotFound));
 
-        var resolver = new ZaakContactmomentZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var resolver = new ZaakContactmomentZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>());
         var entity = new ZaakContactmomentResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -63,7 +63,7 @@ public class ZaakContactmomentZaakResolverTests
         // failing loudly with an ExpandInternalQueryHandlerException if entity.Zaak is ever unpopulated.
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new ZaakContactmomentZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var resolver = new ZaakContactmomentZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>());
         var entity = new ZaakContactmomentResponseDto { Zaak = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -75,7 +75,7 @@ public class ZaakContactmomentZaakResolverTests
     [Fact]
     public void Path_IsZaak_AndHasNoParent()
     {
-        var resolver = new ZaakContactmomentZaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>());
+        var resolver = new ZaakContactmomentZaakResolver(ExpandCaches.ZaakLookup(Mock.Of<IMediator>()), Mock.Of<IMapper>());
 
         Assert.Equal("zaak", resolver.Path);
         Assert.Null(resolver.Parent);

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
+using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.DataModel;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -35,9 +38,16 @@ public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatie
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
     private readonly Lazy<ExpandEngine<StatusResponseDto>> _statusExpandEngine;
+    private readonly IGenericCache<QueryResult<ZaakStatus>> _statusCache;
 
-    public ZaakInformatieObjectStatusResolver(IMediator mediator, IMapper mapper, Lazy<ExpandEngine<StatusResponseDto>> statusExpandEngine)
+    public ZaakInformatieObjectStatusResolver(
+        IMediator mediator,
+        IMapper mapper,
+        Lazy<ExpandEngine<StatusResponseDto>> statusExpandEngine,
+        IGenericCache<QueryResult<ZaakStatus>> statusCache
+    )
     {
+        _statusCache = statusCache;
         _mediator = mediator;
         _mapper = mapper;
         _statusExpandEngine = statusExpandEngine;
@@ -58,7 +68,12 @@ public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatie
             return null;
         }
 
-        var result = await _mediator.Send(new Handlers.v1._5.GetZaakStatusQuery { Id = UriHelper.GetResourceId(entity.Status) });
+        // Note: several documents are filed at the same status, and GetZaakStatusQuery also loads all documents of the zaak: once per request
+        var statusId = UriHelper.GetResourceId(entity.Status);
+        var result = await _statusCache.GetOrCacheAndGetAsync(
+            $"status_{statusId}",
+            () => _mediator.Send(new Handlers.v1._5.GetZaakStatusQuery { Id = statusId })
+        );
 
         if (!ExpandQueryStatus.IsAvailable(result.Status, Path))
         {

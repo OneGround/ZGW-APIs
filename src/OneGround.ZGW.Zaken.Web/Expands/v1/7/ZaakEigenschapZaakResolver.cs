@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
-using MediatR;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -19,12 +18,12 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// </summary>
 public class ZaakEigenschapZaakResolver : IExpandResolver<ZaakEigenschapResponseDto>
 {
-    private readonly IMediator _mediator;
+    private readonly IZaakLookup _zaakLookup;
     private readonly IMapper _mapper;
 
-    public ZaakEigenschapZaakResolver(IMediator mediator, IMapper mapper)
+    public ZaakEigenschapZaakResolver(IZaakLookup zaakLookup, IMapper mapper)
     {
-        _mediator = mediator;
+        _zaakLookup = zaakLookup;
         _mapper = mapper;
     }
 
@@ -42,13 +41,13 @@ public class ZaakEigenschapZaakResolver : IExpandResolver<ZaakEigenschapResponse
             return null;
         }
 
-        var result = await _mediator.Send(new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Zaak) });
+        var zaakEntity = await _zaakLookup.GetAsync(UriHelper.GetResourceId(entity.Zaak), "zaak");
 
-        if (!ExpandQueryStatus.IsAvailable(result.Status, "zaak"))
+        if (zaakEntity is null)
         {
             return null;
         }
 
-        return _mapper.Map<ZaakResponseDto>(result.Result);
+        return _mapper.Map<ZaakResponseDto>(zaakEntity);
     }
 }

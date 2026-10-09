@@ -36,7 +36,12 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         informatieobjecttypeResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([informatieobjecttypeResolverMock.Object]);
 
-        var resolver = new ZaakInformatieObjectInformatieObjectResolver(serviceAgentMock.Object, mapperMock.Object, expandEngine);
+        var resolver = new ZaakInformatieObjectInformatieObjectResolver(
+            serviceAgentMock.Object,
+            mapperMock.Object,
+            expandEngine,
+            ExpandCaches.Document()
+        );
         var entity = new ZaakInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "informatieobject" });
@@ -71,7 +76,12 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         informatieobjecttypeResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([informatieobjecttypeResolverMock.Object]);
 
-        var resolver = new ZaakInformatieObjectInformatieObjectResolver(serviceAgentMock.Object, mapperMock.Object, expandEngine);
+        var resolver = new ZaakInformatieObjectInformatieObjectResolver(
+            serviceAgentMock.Object,
+            mapperMock.Object,
+            expandEngine,
+            ExpandCaches.Document()
+        );
         var entity = new ZaakInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl };
 
         var result = await resolver.ResolveAsync(
@@ -103,7 +113,8 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         var resolver = new ZaakInformatieObjectInformatieObjectResolver(
             serviceAgentMock.Object,
             Mock.Of<IMapper>(),
-            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([])
+            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([]),
+            ExpandCaches.Document()
         );
         var entity = new ZaakInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl };
 
@@ -129,7 +140,8 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         var resolver = new ZaakInformatieObjectInformatieObjectResolver(
             serviceAgentMock.Object,
             Mock.Of<IMapper>(),
-            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([])
+            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([]),
+            ExpandCaches.Document()
         );
 
         var result = await resolver.ResolveAsync(
@@ -147,7 +159,8 @@ public class ZaakInformatieObjectInformatieObjectResolverTests
         var resolver = new ZaakInformatieObjectInformatieObjectResolver(
             Mock.Of<IUserAuthDocumentenServiceAgent>(),
             Mock.Of<IMapper>(),
-            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([])
+            new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>([]),
+            ExpandCaches.Document()
         );
 
         Assert.Equal("informatieobject", resolver.Path);

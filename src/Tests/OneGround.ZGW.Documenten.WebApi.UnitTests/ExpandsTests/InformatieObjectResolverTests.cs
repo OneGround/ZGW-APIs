@@ -6,6 +6,7 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -36,7 +37,12 @@ public class InformatieObjectResolverTests
         var uriServiceMock = new Mock<IEntityUriService>();
         uriServiceMock.Setup(u => u.GetId(InformatieObjectUrl)).Returns(InformatieObjectId);
 
-        return new InformatieObjectResolver<Reference>(services.BuildServiceProvider(), uriServiceMock.Object, r => r.Url);
+        return new InformatieObjectResolver<Reference>(
+            services.BuildServiceProvider(),
+            uriServiceMock.Object,
+            r => r.Url,
+            new GenericCache<QueryResult<EnkelvoudigInformatieObject>>()
+        );
     }
 
     [Fact]
@@ -55,6 +61,97 @@ public class InformatieObjectResolverTests
         );
 
         Assert.Same(mapped, result);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_ManyRowsOfOneInformatieObject_QueriesTheDocumentOnce()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<EnkelvoudigInformatieObject>(new EnkelvoudigInformatieObject(), QueryStatus.OK));
+        var services = new ServiceCollection();
+        services.AddScoped(_ => mediatorMock.Object);
+        services.AddScoped(_ => Mock.Of<IMapper>());
+        var uriServiceMock = new Mock<IEntityUriService>();
+        uriServiceMock.Setup(u => u.GetId(InformatieObjectUrl)).Returns(InformatieObjectId);
+        var resolver = new InformatieObjectResolver<Reference>(
+            services.BuildServiceProvider(),
+            uriServiceMock.Object,
+            r => r.Url,
+            new GenericCache<QueryResult<EnkelvoudigInformatieObject>>()
+        );
+
+        for (var i = 0; i < 4; i++)
+        {
+            await resolver.ResolveAsync(
+                new Reference(InformatieObjectUrl),
+                new Dictionary<string, object>(),
+                new HashSet<string> { "informatieobject" }
+            );
+        }
+
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_OtherInformatieObject_IsAnotherQuery()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<EnkelvoudigInformatieObject>(new EnkelvoudigInformatieObject(), QueryStatus.OK));
+        var services = new ServiceCollection();
+        services.AddScoped(_ => mediatorMock.Object);
+        services.AddScoped(_ => Mock.Of<IMapper>());
+        var uriServiceMock = new Mock<IEntityUriService>();
+        uriServiceMock.Setup(u => u.GetId(It.IsAny<string>())).Returns<string>(url => url.EndsWith("/1") ? InformatieObjectId : Guid.NewGuid());
+        var resolver = new InformatieObjectResolver<Reference>(
+            services.BuildServiceProvider(),
+            uriServiceMock.Object,
+            r => r.Url,
+            new GenericCache<QueryResult<EnkelvoudigInformatieObject>>()
+        );
+
+        foreach (var url in new[] { "https://drc.test/x/1", "https://drc.test/x/2", "https://drc.test/x/1" })
+        {
+            await resolver.ResolveAsync(new Reference(url), new Dictionary<string, object>(), new HashSet<string> { "informatieobject" });
+        }
+
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_InformatieObjectNotAvailable_IsAskedOnceAndStaysNull()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<EnkelvoudigInformatieObject>(null, QueryStatus.Forbidden));
+        var services = new ServiceCollection();
+        services.AddScoped(_ => mediatorMock.Object);
+        services.AddScoped(_ => Mock.Of<IMapper>());
+        var uriServiceMock = new Mock<IEntityUriService>();
+        uriServiceMock.Setup(u => u.GetId(InformatieObjectUrl)).Returns(InformatieObjectId);
+        var resolver = new InformatieObjectResolver<Reference>(
+            services.BuildServiceProvider(),
+            uriServiceMock.Object,
+            r => r.Url,
+            new GenericCache<QueryResult<EnkelvoudigInformatieObject>>()
+        );
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Null(
+                await resolver.ResolveAsync(
+                    new Reference(InformatieObjectUrl),
+                    new Dictionary<string, object>(),
+                    new HashSet<string> { "informatieobject" }
+                )
+            );
+        }
+
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetEnkelvoudigInformatieObjectQuery>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Theory]

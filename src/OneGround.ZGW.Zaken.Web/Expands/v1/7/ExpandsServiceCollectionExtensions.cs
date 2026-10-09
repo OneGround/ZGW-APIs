@@ -1,19 +1,49 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
+using OneGround.ZGW.Zaken.DataModel;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 public static class ExpandsServiceCollectionExtensions
 {
+    // Note: per request, so the same zaak / status / document / OIO list is fetched once for all rows that expand to it. Every method that
+    // registers a resolver that needs one of these registers it itself (TryAdd, so it does not matter which are called, or in which order).
+    private static void AddZaakLookup(IServiceCollection services)
+    {
+        services.TryAddScoped<IGenericCache<QueryResult<Zaak>>, GenericCache<QueryResult<Zaak>>>();
+        services.TryAddScoped<IZaakLookup, ZaakLookup>();
+    }
+
+    private static void AddObjectInformatieObjectenCache(IServiceCollection services)
+    {
+        services.TryAddScoped<
+            IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>,
+            GenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>
+        >();
+    }
+
+    private static void AddZaakInformatieObjectCaches(IServiceCollection services)
+    {
+        services.TryAddScoped<IGenericCache<QueryResult<ZaakStatus>>, GenericCache<QueryResult<ZaakStatus>>>();
+        services.TryAddScoped<
+            IGenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>>,
+            GenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>>
+        >();
+    }
+
     public static void AddZakenAPIFieldsValidators(this IServiceCollection services)
     {
         services.AddScoped(sp =>
@@ -27,6 +57,8 @@ public static class ExpandsServiceCollectionExtensions
 
     public static void AddZakenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
+        AddObjectInformatieObjectenCache(services);
         // Expand resolvers -- one per expand path, registered as IExpandResolver<ZaakResponseDto>
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeCatalogusResolver>();
@@ -109,6 +141,8 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddStatussenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
+        AddObjectInformatieObjectenCache(services);
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakInformatieObjectenResolver>();
@@ -129,6 +163,7 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddResultatenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
         services.AddScoped<IExpandResolver<ResultaatResponseDto>, ResultaatZaakResolver>();
         services.AddScoped<IExpandResolver<ResultaatResponseDto>, ResultaatResultaatTypeResolver>();
 
@@ -148,6 +183,7 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddRollenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
         services.AddScoped<IExpandResolver<RolResponseDto>, RolZaakResolver>();
         services.AddScoped<IExpandResolver<RolResponseDto>, RolRolTypeResolver>();
 
@@ -168,6 +204,7 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddZaakObjectenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
         services.AddScoped<IExpandResolver<ZaakObjectResponseDto>, ZaakObjectZaakResolver>();
         services.AddScoped<IExpandResolver<ZaakObjectResponseDto>, ZaakObjectZaakObjectTypeResolver>();
 
@@ -185,6 +222,7 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddZaakContactmomentenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
         services.AddScoped<IExpandResolver<ZaakContactmomentResponseDto>, ZaakContactmomentZaakResolver>();
 
         services.AddScoped(sp => new ExpandValidator<ZaakContactmomentResponseDto>(sp.GetServices<IExpandResolver<ZaakContactmomentResponseDto>>()));
@@ -201,6 +239,7 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddZaakEigenschappenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
         services.AddScoped<IExpandResolver<ZaakEigenschapResponseDto>, ZaakEigenschapZaakResolver>();
         services.AddScoped<IExpandResolver<ZaakEigenschapResponseDto>, ZaakEigenschapEigenschapResolver>();
 
@@ -237,6 +276,8 @@ public static class ExpandsServiceCollectionExtensions
     /// </summary>
     public static void AddZaakInformatieObjectenAPIExpands(this IServiceCollection services)
     {
+        AddZaakLookup(services);
+        AddZaakInformatieObjectCaches(services);
         services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectZaakResolver>();
         services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectInformatieObjectResolver>();
         services.AddScoped<IExpandResolver<ZaakInformatieObjectResponseDto>, ZaakInformatieObjectStatusResolver>();

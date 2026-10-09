@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MapsterMapper;
+using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
@@ -26,13 +28,16 @@ public class ZaakInformatieObjectInformatieObjectResolver : IExpandResolver<Zaak
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly IMapper _mapper;
     private readonly ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> _informatieObjectExpandEngine;
+    private readonly IGenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> _documentCache;
 
     public ZaakInformatieObjectInformatieObjectResolver(
         IUserAuthDocumentenServiceAgent documentenServiceAgent,
         IMapper mapper,
-        ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> informatieObjectExpandEngine
+        ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> informatieObjectExpandEngine,
+        IGenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> documentCache
     )
     {
+        _documentCache = documentCache;
         _documentenServiceAgent = documentenServiceAgent;
         _mapper = mapper;
         _informatieObjectExpandEngine = informatieObjectExpandEngine;
@@ -48,7 +53,13 @@ public class ZaakInformatieObjectInformatieObjectResolver : IExpandResolver<Zaak
         IReadOnlySet<string> requestedPaths
     )
     {
-        var result = await _documentenServiceAgent.GetEnkelvoudigInformatieObjectByUrlAsync(entity.InformatieObject);
+        // Note: once per request and url (the user-authenticated agent has no cache of its own): a list filtered on one informatieobject, or a
+        // document that is linked more than once, would otherwise call DRC for every row. Only an exception is not kept; a response that is not
+        // a success is, so every caller must handle it as below (403/404 => nothing to expand, anything else => the request fails).
+        var result = await _documentCache.GetOrCacheAndGetAsync(
+            $"informatieobject_{entity.InformatieObject}",
+            () => _documentenServiceAgent.GetEnkelvoudigInformatieObjectByUrlAsync(entity.InformatieObject)
+        );
 
         if (!result.Success || result.Response == null)
         {

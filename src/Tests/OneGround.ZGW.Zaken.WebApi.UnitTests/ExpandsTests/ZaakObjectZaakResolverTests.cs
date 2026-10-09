@@ -32,7 +32,7 @@ public class ZaakObjectZaakResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(zaak)).Returns(mappedZaak);
 
-        var resolver = new ZaakObjectZaakResolver(mediatorMock.Object, mapperMock.Object, EmptyZaakExpandEngine());
+        var resolver = new ZaakObjectZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object, EmptyZaakExpandEngine());
         var entity = new ZaakObjectResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -48,7 +48,7 @@ public class ZaakObjectZaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.NotFound));
 
-        var resolver = new ZaakObjectZaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyZaakExpandEngine());
+        var resolver = new ZaakObjectZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>(), EmptyZaakExpandEngine());
         var entity = new ZaakObjectResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -61,7 +61,7 @@ public class ZaakObjectZaakResolverTests
     {
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new ZaakObjectZaakResolver(mediatorMock.Object, Mock.Of<IMapper>(), EmptyZaakExpandEngine());
+        var resolver = new ZaakObjectZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>(), EmptyZaakExpandEngine());
         var entity = new ZaakObjectResponseDto { Zaak = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -87,7 +87,7 @@ public class ZaakObjectZaakResolverTests
         zaaktypeResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var zaakExpandEngine = new Lazy<ExpandEngine<ZaakResponseDto>>(() => new ExpandEngine<ZaakResponseDto>([zaaktypeResolverMock.Object]));
 
-        var resolver = new ZaakObjectZaakResolver(mediatorMock.Object, mapperMock.Object, zaakExpandEngine);
+        var resolver = new ZaakObjectZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object, zaakExpandEngine);
         var entity = new ZaakObjectResponseDto { Zaak = ZaakUrl };
 
         await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak", "zaak.zaaktype" });
@@ -101,7 +101,7 @@ public class ZaakObjectZaakResolverTests
     [Fact]
     public void Path_IsZaak_AndHasNoParent_AndDeclaresZaakZaaktypeAsAdditionalPath()
     {
-        var resolver = new ZaakObjectZaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>(), EmptyZaakExpandEngine());
+        var resolver = new ZaakObjectZaakResolver(ExpandCaches.ZaakLookup(Mock.Of<IMediator>()), Mock.Of<IMapper>(), EmptyZaakExpandEngine());
 
         Assert.Equal("zaak", resolver.Path);
         Assert.Null(resolver.Parent);

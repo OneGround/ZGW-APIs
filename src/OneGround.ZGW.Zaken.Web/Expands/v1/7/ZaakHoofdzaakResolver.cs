@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
-using MediatR;
 using Microsoft.AspNetCore.Http;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
@@ -48,20 +47,20 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// </summary>
 public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
 {
-    private readonly IMediator _mediator;
+    private readonly IZaakLookup _zaakLookup;
     private readonly IMapper _mapper;
     private readonly Lazy<ExpandEngine<ZaakResponseDto>> _zaakExpandEngine;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ZaakHoofdzaakResolver(
-        IMediator mediator,
+        IZaakLookup zaakLookup,
         IMapper mapper,
         Lazy<ExpandEngine<ZaakResponseDto>> zaakExpandEngine,
         IHttpContextAccessor httpContextAccessor = null
     )
     {
         _httpContextAccessor = httpContextAccessor;
-        _mediator = mediator;
+        _zaakLookup = zaakLookup;
         _mapper = mapper;
         _zaakExpandEngine = zaakExpandEngine;
     }
@@ -78,16 +77,14 @@ public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>
             return null;
         }
 
-        var result = await _mediator.Send(
-            new Handlers.v1._5.GetZaakQuery { Id = UriHelper.GetResourceId(entity.Hoofdzaak), SRID = ExpandSrid.From(_httpContextAccessor) }
-        );
+        var zaakEntity = await _zaakLookup.GetAsync(UriHelper.GetResourceId(entity.Hoofdzaak), Path, ExpandSrid.From(_httpContextAccessor));
 
-        if (!ExpandQueryStatus.IsAvailable(result.Status, Path))
+        if (zaakEntity is null)
         {
             return null;
         }
 
-        var hoofdzaak = _mapper.Map<ZaakResponseDto>(result.Result);
+        var hoofdzaak = _mapper.Map<ZaakResponseDto>(zaakEntity);
 
         var nestedPaths = ZaakSelfReferenceExpandPaths.ExtractNestedPaths(requestedPaths, Path);
 

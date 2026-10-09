@@ -30,7 +30,7 @@ public class ZaakEigenschapZaakResolverTests
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<ZaakResponseDto>(zaak)).Returns(mappedZaak);
 
-        var resolver = new ZaakEigenschapZaakResolver(mediatorMock.Object, mapperMock.Object);
+        var resolver = new ZaakEigenschapZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), mapperMock.Object);
         var entity = new ZaakEigenschapResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -46,7 +46,7 @@ public class ZaakEigenschapZaakResolverTests
             .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<Zaak>(null, QueryStatus.NotFound));
 
-        var resolver = new ZaakEigenschapZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var resolver = new ZaakEigenschapZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>());
         var entity = new ZaakEigenschapResponseDto { Zaak = ZaakUrl };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -59,7 +59,7 @@ public class ZaakEigenschapZaakResolverTests
     {
         var mediatorMock = new Mock<IMediator>();
 
-        var resolver = new ZaakEigenschapZaakResolver(mediatorMock.Object, Mock.Of<IMapper>());
+        var resolver = new ZaakEigenschapZaakResolver(ExpandCaches.ZaakLookup(mediatorMock.Object), Mock.Of<IMapper>());
         var entity = new ZaakEigenschapResponseDto { Zaak = null };
 
         var result = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaak" });
@@ -71,7 +71,7 @@ public class ZaakEigenschapZaakResolverTests
     [Fact]
     public void Path_IsZaak_AndHasNoParent()
     {
-        var resolver = new ZaakEigenschapZaakResolver(Mock.Of<IMediator>(), Mock.Of<IMapper>());
+        var resolver = new ZaakEigenschapZaakResolver(ExpandCaches.ZaakLookup(Mock.Of<IMediator>()), Mock.Of<IMapper>());
 
         Assert.Equal("zaak", resolver.Path);
         Assert.Null(resolver.Parent);

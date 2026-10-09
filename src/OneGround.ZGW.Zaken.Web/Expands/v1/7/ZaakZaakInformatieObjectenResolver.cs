@@ -5,9 +5,12 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 
@@ -34,14 +37,17 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
     private readonly IMapper _mapper;
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly ExpandEngine<ZaakInformatieObjectResponseDto> _zaakInformatieObjectExpandEngine;
+    private readonly IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> _objectInformatieObjectenCache;
 
     public ZaakZaakInformatieObjectenResolver(
         IServiceProvider serviceProvider,
         IMapper mapper,
         IUserAuthDocumentenServiceAgent documentenServiceAgent,
-        ExpandEngine<ZaakInformatieObjectResponseDto> zaakInformatieObjectExpandEngine
+        ExpandEngine<ZaakInformatieObjectResponseDto> zaakInformatieObjectExpandEngine,
+        IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> objectInformatieObjectenCache
     )
     {
+        _objectInformatieObjectenCache = objectInformatieObjectenCache;
         _serviceProvider = serviceProvider;
         _mapper = mapper;
         _documentenServiceAgent = documentenServiceAgent;
@@ -74,8 +80,11 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
             }
         );
 
-        var objectInformatieObjecten = await _documentenServiceAgent.GetObjectInformatieObjectenAsync(
-            new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Url }
+        // Note: once per request and zaak, shared with StatusZaakInformatieObjectenResolver (see ExpandCacheKeys): the same zaak can come back
+        // more than once in one response, for instance as the hoofdzaak of several rows
+        var objectInformatieObjecten = await _objectInformatieObjectenCache.GetOrCacheAndGetAsync(
+            ExpandCacheKeys.ObjectInformatieObjecten(entity.Url),
+            () => _documentenServiceAgent.GetObjectInformatieObjectenAsync(new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Url })
         );
 
         if (!objectInformatieObjecten.Success || objectInformatieObjecten.Response == null)
