@@ -11,7 +11,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "zaak" expand path on a STATUS. Unlike <see cref="StatusStatusTypeResolver"/>
 /// (a remote ZTC lookup), the ZAAK lives in this same service, so this goes through the existing
-/// <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. Fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list -- a local, indexed DB lookup is cheap
+/// <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. Fetched through <see cref="IZaakLookup"/> (at most once per request), not batched
+/// across a list -- a local, indexed DB lookup is cheap
 /// enough per row that the added complexity isn't worth it yet. A ZAAK that is not
 /// available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, see
 /// <see cref="ExpandQueryStatus"/>. "zaak.zaaktype" is forwarded to the already-registered

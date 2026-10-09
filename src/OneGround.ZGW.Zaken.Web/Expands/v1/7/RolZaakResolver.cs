@@ -12,7 +12,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "zaak" expand path on a ROL. Mirrors <see cref="StatusZaakResolver"/> /
 /// <see cref="ResultaatZaakResolver"/>: the ZAAK lives in this same service, so this goes through
-/// the existing <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent, and fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null (the
+/// the existing <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. It is fetched through <see cref="IZaakLookup"/> (at most once per
+/// request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null (the
 /// ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>. "zaak.zaaktype" is
 /// forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> itself (the same
 /// <see cref="ZaakTypeResolver"/> used for the top-level ZAAK) -- no duplication. Injected as
