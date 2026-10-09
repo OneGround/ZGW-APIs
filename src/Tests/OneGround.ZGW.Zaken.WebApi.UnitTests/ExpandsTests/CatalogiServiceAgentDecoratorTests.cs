@@ -93,6 +93,39 @@ public class CatalogiServiceAgentDecoratorTests
         Assert.Equal(RolTypeUrl, exception.ServiceUrl);
     }
 
+    [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    public async Task CallerAccepted_ButTheSharedAgentIsRefused_RepeatsTheCallAsTheCaller(int status)
+    {
+        // Note: e.g. no ZTC secret for the RSIN: the shared agent then sends no token at all
+        var (caller, cached, decorator) = Create();
+        var rolType = new RolTypeResponseDto();
+        caller.Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl1, null)).ReturnsAsync(Ok(new ZaakTypeResponseDto()));
+        cached.Setup(a => a.GetRolTypeByUrlAsync(RolTypeUrl)).ReturnsAsync(Failed<RolTypeResponseDto>(status));
+        caller.Setup(a => a.GetRolTypeByUrlAsync(RolTypeUrl)).ReturnsAsync(Ok(rolType));
+
+        await decorator.GetZaakTypeByUrlAsync(ZaakTypeUrl1);
+        var result = await decorator.GetRolTypeByUrlAsync(RolTypeUrl);
+
+        Assert.Same(rolType, result.Response);
+        cached.Verify(a => a.GetRolTypeByUrlAsync(RolTypeUrl), Times.Once);
+        caller.Verify(a => a.GetRolTypeByUrlAsync(RolTypeUrl), Times.Once);
+    }
+
+    [Fact]
+    public async Task CallerAccepted_SharedAgentAnswersNotFound_DoesNotRepeatTheCall()
+    {
+        var (caller, cached, decorator) = Create();
+        caller.Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl1, null)).ReturnsAsync(Ok(new ZaakTypeResponseDto()));
+        cached.Setup(a => a.GetRolTypeByUrlAsync(RolTypeUrl)).ReturnsAsync(Failed<RolTypeResponseDto>(404));
+
+        await decorator.GetZaakTypeByUrlAsync(ZaakTypeUrl1);
+        await Assert.ThrowsAsync<ExpandExternalServiceException>(() => decorator.GetRolTypeByUrlAsync(RolTypeUrl));
+
+        caller.Verify(a => a.GetRolTypeByUrlAsync(It.IsAny<string>()), Times.Never);
+    }
+
     [Fact]
     public async Task EveryRequestHasItsOwnDecorator_AndSoItsOwnCheckOfTheCaller()
     {

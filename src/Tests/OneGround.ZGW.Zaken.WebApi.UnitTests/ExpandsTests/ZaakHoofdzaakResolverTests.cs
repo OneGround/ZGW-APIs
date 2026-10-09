@@ -86,6 +86,35 @@ public class ZaakHoofdzaakResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_OperationDoesNotRequireAcceptCrs_IgnoresTheHeader_SoOneResponseNeverMixesCrss()
+    {
+        var hoofdzaak = new Zaak { Id = new("44444444-4444-4444-4444-444444444444") };
+        GetZaakQuery sent = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetZaakQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<QueryResult<Zaak>>, CancellationToken>((q, _) => sent = (GetZaakQuery)q)
+            .ReturnsAsync(new QueryResult<Zaak>(hoofdzaak, QueryStatus.OK));
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<ZaakResponseDto>(hoofdzaak)).Returns(new ZaakResponseDto());
+
+        var resolver = new ZaakHoofdzaakResolver(
+            mediatorMock.Object,
+            mapperMock.Object,
+            LazyEngine(new ExpandEngine<ZaakResponseDto>([])),
+            AcceptCrsTestHelper.AccessorWith("EPSG:4326", requiresAcceptCrs: false)
+        );
+
+        await resolver.ResolveAsync(
+            new ZaakResponseDto { Hoofdzaak = HoofdzaakUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "hoofdzaak" }
+        );
+
+        Assert.Equal(28992, sent.SRID);
+    }
+
+    [Fact]
     public async Task ResolveAsync_WithoutHttpContextAccessor_UsesTheDefaultSrid()
     {
         var hoofdzaak = new Zaak { Id = new("44444444-4444-4444-4444-444444444444") };

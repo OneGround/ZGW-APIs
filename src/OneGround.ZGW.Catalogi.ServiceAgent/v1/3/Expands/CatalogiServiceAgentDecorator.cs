@@ -17,8 +17,13 @@ namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 /// <c>catalogi.lezen</c> and the RSIN, nothing per object), so once ZTC has accepted the caller, the remaining calls of that request are made
 /// through the <see cref="ICatalogiServiceAgent"/> (v1.3). The HTTP pipeline of that agent has the <c>CachingHandler</c>: the distributed (Redis)
 /// response cache, keyed by RSIN, url and API version, which keeps an entry for a few hours. It is the very same cache, with the same entries,
-/// that the v1.5 expands use. That way a request costs at most one uncached ZTC call, without a caller who may not read ZTC ever being served
-/// from that cache. A call that fails does not count as accepted, so the next call tries the caller's agent again.
+/// that the v1.5 expands use. That way a request normally costs one uncached ZTC call, without a caller who may not read ZTC ever being served
+/// from that cache. A call that fails does not count as accepted, so the next call tries the caller's agent again (and a request whose first
+/// calls fail keeps making uncached calls as the caller until one succeeds).
+/// </para>
+/// <para>
+/// The shared agent works with this backend's own credential for the RSIN. If ZTC refuses that (401/403, e.g. no ZTC secret is configured for
+/// the RSIN) after it did accept the caller, the call is repeated as the caller: ZTC has already shown that the caller may read it.
 /// </para>
 /// <para>
 /// Two cache layers, with different jobs: in front of this class the resolvers keep a cache per request (<c>IGenericCache</c>, in memory), so
@@ -125,6 +130,11 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
             var callerIsAccepted = Volatile.Read(ref _callerIsAccepted) == 1;
 
             var result = await call(callerIsAccepted ? _cachedAgent : _callerAgent);
+
+            if (callerIsAccepted && result.Error?.Status is 401 or 403)
+            {
+                result = await call(_callerAgent);
+            }
             if (!result.Success || result.Response == null)
             {
                 throw ExpandExternalServiceException.ForFailedResponse(ServiceName, url, result);

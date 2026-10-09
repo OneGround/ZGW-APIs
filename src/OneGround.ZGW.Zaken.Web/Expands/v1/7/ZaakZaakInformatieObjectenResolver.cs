@@ -78,8 +78,15 @@ public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDt
             new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Url }
         );
 
-        if (!objectInformatieObjecten.Success)
+        if (!objectInformatieObjecten.Success || objectInformatieObjecten.Response == null)
         {
+            // Note: DRC decides as the caller. When it answers that the caller may not read the objectinformatieobjecten (403/404), no document of
+            // this zaak is visible to the caller: nothing to expand, instead of failing the request (see ExpandQueryStatus).
+            if (ExpandExternalServiceException.IsNotAvailableToCaller(objectInformatieObjecten))
+            {
+                return new List<ZaakInformatieObjectResponseDto>();
+            }
+
             // Note: the url of what was asked of DRC (not the url of the zaak the expand is about)
             throw ExpandExternalServiceException.ForFailedResponse(
                 ServiceName,
