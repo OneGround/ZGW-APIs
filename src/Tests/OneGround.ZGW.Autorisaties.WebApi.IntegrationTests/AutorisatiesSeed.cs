@@ -15,6 +15,8 @@ internal static class AutorisatiesSeed
 {
     public static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 
+    public static string NewLabel() => $"integration-test-{Guid.NewGuid():N}";
+
     public static async Task<Applicatie> ApplicatieAsync(
         AutorisatiesWebApplicationFactory factory,
         string owner,
@@ -27,7 +29,7 @@ internal static class AutorisatiesSeed
         {
             Id = Guid.NewGuid(),
             Owner = owner,
-            Label = $"integration-test-{Guid.NewGuid():N}",
+            Label = NewLabel(),
             CreationTime = DateTime.UtcNow,
             HeeftAlleAutorisaties = heeftAlleAutorisaties,
             ClientIds =

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.IntegrationTests.Common;
+using OneGround.ZGW.IntegrationTests.Common.Http;
 using Xunit;
 using static OneGround.ZGW.Autorisaties.WebApi.IntegrationTests.AutorisatiesSeed;
 
@@ -82,19 +83,19 @@ public class OrganisationPartitioningTests
     }
 
     [Theory]
-    [InlineData("PUT", Api.LatestVersion_1_0)]
-    [InlineData("PATCH", Api.LatestVersion_1_0)]
-    [InlineData("DELETE", Api.LatestVersion_1_0)]
-    [InlineData("PUT", Api.LatestVersion_1_1)]
-    [InlineData("PATCH", Api.LatestVersion_1_1)]
-    [InlineData("DELETE", Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_1)]
     public async Task Applicatie_of_another_organisation_cannot_be_changed(string method, string apiVersion)
     {
         var clientId = NewClientId();
         await ApplicatieAsync(_factory, OwnRsin, clientId, heeftAlleAutorisaties: true);
         var other = await ApplicatieAsync(_factory, OtherRsin, NewClientId(), heeftAlleAutorisaties: true);
 
-        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, other.Id, clientId, OwnRsin, apiVersion: apiVersion));
+        var response = await _client.SendAsync(AutorisatiesRequests.GetOrWrite(method, other.Id, clientId, OwnRsin, apiVersion: apiVersion));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var stored = await FindAsync(_factory, other.Id);

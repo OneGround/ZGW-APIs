@@ -6,6 +6,7 @@ using OneGround.ZGW.Autorisaties.DataModel;
 using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
+using OneGround.ZGW.IntegrationTests.Common.Http;
 using Xunit;
 using static OneGround.ZGW.Autorisaties.WebApi.IntegrationTests.AutorisatiesSeed;
 
@@ -26,14 +27,6 @@ public class ApplicatieAuthorizationTests
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
-    }
-
-    [Fact]
-    public async Task Request_without_authorization_header_is_unauthorized()
-    {
-        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId: null, rsin: null));
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -111,17 +104,6 @@ public class ApplicatieAuthorizationTests
     }
 
     [Fact]
-    public async Task Client_authorized_to_read_autorisaties_of_another_component_is_forbidden()
-    {
-        var clientId = NewClientId();
-        await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.zrc, AuthorizationScopes.Autorisaties.Read));
-
-        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [Fact]
     public async Task Client_authorized_for_another_scope_only_is_forbidden()
     {
         var clientId = NewClientId();
@@ -148,21 +130,77 @@ public class ApplicatieAuthorizationTests
     }
 
     [Theory]
-    [InlineData("POST", Api.LatestVersion_1_0)]
-    [InlineData("PUT", Api.LatestVersion_1_0)]
-    [InlineData("PATCH", Api.LatestVersion_1_0)]
-    [InlineData("DELETE", Api.LatestVersion_1_0)]
-    [InlineData("POST", Api.LatestVersion_1_1)]
-    [InlineData("PUT", Api.LatestVersion_1_1)]
-    [InlineData("PATCH", Api.LatestVersion_1_1)]
-    [InlineData("DELETE", Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_1)]
     public async Task Client_authorized_for_the_read_scope_only_is_forbidden_to_write(string method, string apiVersion)
     {
         var clientId = NewClientId();
         var bodyClientId = NewClientId();
         var applicatie = await SeedAsync(clientId, autorisatie: Autorisatie(Rsin, Component.ac, AuthorizationScopes.Autorisaties.Read));
 
-        var response = await _client.SendAsync(AutorisatiesRequests.Write(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
+        var response = await _client.SendAsync(AutorisatiesRequests.GetOrWrite(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var stored = await FindAsync(_factory, applicatie.Id);
+        Assert.NotNull(stored);
+        Assert.Equal(applicatie.Label, stored.Label);
+        Assert.Null(await FindByClientIdAsync(_factory, bodyClientId));
+    }
+
+    [Theory]
+    [InlineData(HttpMethodNames.Get, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Get, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_1)]
+    public async Task Get_or_write_without_authorization_header_is_unauthorized(string method, string apiVersion)
+    {
+        var bodyClientId = NewClientId();
+        var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
+
+        var response = await _client.SendAsync(
+            AutorisatiesRequests.GetOrWrite(method, target.Id, clientId: null, rsin: null, bodyClientId, apiVersion)
+        );
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var stored = await FindAsync(_factory, target.Id);
+        Assert.NotNull(stored);
+        Assert.Equal(target.Label, stored.Label);
+        Assert.Null(await FindByClientIdAsync(_factory, bodyClientId));
+    }
+
+    [Theory]
+    [InlineData(HttpMethodNames.Get, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_0)]
+    [InlineData(HttpMethodNames.Get, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Post, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Put, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Patch, Api.LatestVersion_1_1)]
+    [InlineData(HttpMethodNames.Delete, Api.LatestVersion_1_1)]
+    public async Task Client_authorized_for_autorisaties_of_another_component_is_forbidden_to_get_or_write(string method, string apiVersion)
+    {
+        var clientId = NewClientId();
+        var bodyClientId = NewClientId();
+        var applicatie = await SeedAsync(
+            clientId,
+            autorisatie: Autorisatie(Rsin, Component.zrc, AuthorizationScopes.Autorisaties.Read, AuthorizationScopes.Autorisaties.Update)
+        );
+
+        var response = await _client.SendAsync(AutorisatiesRequests.GetOrWrite(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var stored = await FindAsync(_factory, applicatie.Id);
@@ -210,12 +248,13 @@ public class ApplicatieAuthorizationTests
     {
         var clientId = await SeedUpdateClientAsync();
         var target = await SeedAsync(NewClientId(), heeftAlleAutorisaties: true);
+        var label = NewLabel();
 
-        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(target.Id, clientId, Rsin, apiVersion));
+        var response = await _client.SendAsync(AutorisatiesRequests.PartialUpdateApplicatie(target.Id, clientId, Rsin, label, apiVersion));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var stored = await FindAsync(_factory, target.Id);
-        Assert.NotEqual(target.Label, stored.Label);
+        Assert.Equal(label, stored.Label);
     }
 
     [Theory]

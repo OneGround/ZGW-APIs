@@ -5,6 +5,7 @@ using System.Text.Json;
 using OneGround.ZGW.Autorisaties.Web.Contracts.v1;
 using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.IntegrationTests.Common.Authentication;
+using OneGround.ZGW.IntegrationTests.Common.Http;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.IntegrationTests;
 
@@ -60,9 +61,15 @@ internal static class AutorisatiesRequests
         return Create(HttpMethod.Put, ItemPath(id), clientId, rsin, apiVersion, NewApplicatieBody(bodyClientId));
     }
 
-    public static HttpRequestMessage PartialUpdateApplicatie(Guid id, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
+    public static HttpRequestMessage PartialUpdateApplicatie(
+        Guid id,
+        string clientId,
+        string rsin,
+        string label,
+        string apiVersion = Api.LatestVersion_1_0
+    )
     {
-        return Create(HttpMethod.Patch, ItemPath(id), clientId, rsin, apiVersion, new { label = $"integration-test-{Guid.NewGuid():N}" });
+        return Create(HttpMethod.Patch, ItemPath(id), clientId, rsin, apiVersion, new { label });
     }
 
     public static HttpRequestMessage DeleteApplicatie(Guid id, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
@@ -70,7 +77,7 @@ internal static class AutorisatiesRequests
         return Create(HttpMethod.Delete, ItemPath(id), clientId, rsin, apiVersion);
     }
 
-    public static HttpRequestMessage Write(
+    public static HttpRequestMessage GetOrWrite(
         string method,
         Guid id,
         string clientId,
@@ -81,10 +88,11 @@ internal static class AutorisatiesRequests
     {
         return method switch
         {
-            "POST" => CreateApplicatie(clientId, rsin, bodyClientId, apiVersion),
-            "PUT" => UpdateApplicatie(id, clientId, rsin, bodyClientId, apiVersion),
-            "PATCH" => PartialUpdateApplicatie(id, clientId, rsin, apiVersion),
-            "DELETE" => DeleteApplicatie(id, clientId, rsin, apiVersion),
+            HttpMethodNames.Get => GetApplicatie(id, clientId, rsin, apiVersion),
+            HttpMethodNames.Post => CreateApplicatie(clientId, rsin, bodyClientId, apiVersion),
+            HttpMethodNames.Put => UpdateApplicatie(id, clientId, rsin, bodyClientId, apiVersion),
+            HttpMethodNames.Patch => PartialUpdateApplicatie(id, clientId, rsin, AutorisatiesSeed.NewLabel(), apiVersion),
+            HttpMethodNames.Delete => DeleteApplicatie(id, clientId, rsin, apiVersion),
             _ => throw new ArgumentOutOfRangeException(nameof(method), method, null),
         };
     }
@@ -96,7 +104,7 @@ internal static class AutorisatiesRequests
         return new
         {
             clientIds = new[] { clientId ?? AutorisatiesSeed.NewClientId() },
-            label = $"integration-test-{Guid.NewGuid():N}",
+            label = AutorisatiesSeed.NewLabel(),
             heeftAlleAutorisaties = true,
             autorisaties = Array.Empty<object>(),
         };
