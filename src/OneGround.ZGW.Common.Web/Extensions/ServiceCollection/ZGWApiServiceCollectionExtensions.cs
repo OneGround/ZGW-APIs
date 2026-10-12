@@ -101,6 +101,7 @@ public static class ZGWApiServiceCollectionExtensions
                 options.ReportApiVersions = false; // Note: we have customized the way on how current/supported versions are reported in ApiVersionMiddleware class
                 options.UnsupportedApiVersionStatusCode = (int)HttpStatusCode.MethodNotAllowed; // Note: We override the default BadRequest into MethodNotAllowed so it behaves as before
             })
+            .AddMvc()
             .AddApiExplorer(options =>
             {
                 options.GroupNameFormat = zgwApiOptions.ApiServiceSettings.ApiGroupNameFormat;

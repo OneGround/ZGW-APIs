@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using OneGround.ZGW.Common.Web.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -27,7 +27,7 @@ public class IfNoneMatchHeaderOperationFilter : IOperationFilter
                 Description =
                     "Voer een voorwaardelijk verzoek uit. Deze header moet één of meerdere ETag-waardes bevatten van resources die de consumer gecached heeft. Indien de waarde van de ETag van de huidige resource voorkomt in deze set, dan antwoordt de provider met een lege HTTP 304 request. Zie MDN voor meer informatie.",
                 Required = false,
-                Schema = new OpenApiSchema { Type = "string" },
+                Schema = new OpenApiSchema { Type = JsonSchemaType.String },
             }
         );
     }

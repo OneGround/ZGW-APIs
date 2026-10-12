@@ -1,4 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi;
 
 namespace OneGround.ZGW.Common.Web.Swagger;
 
@@ -17,6 +17,6 @@ public static class SwaggerSecurityDefinitions
             Scheme = "Bearer",
         };
 
-        public static readonly OpenApiReference Reference = new() { Id = Name, Type = ReferenceType.SecurityScheme };
+        public static OpenApiSecuritySchemeReference CreateReference(OpenApiDocument document) => new(Name, document);
     }
 }

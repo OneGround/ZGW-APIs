@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <AssemblyName>OneGround.OneGround.ZGW.Common.UnitTests</AssemblyName>
     <RootNamespace>OneGround.OneGround.ZGW.Common.UnitTests</RootNamespace>

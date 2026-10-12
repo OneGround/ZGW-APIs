@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-C# / .NET 8 implementation of the VNG Realisatie "APIs voor Zaakgericht Werken" (ZGW) standard — case-management APIs for Dutch government. Each API is an independent microservice; one installation is multi-tenant (serves multiple organisations, partitioned by RSIN). Source lives under `src/`.
+C# / .NET 10 implementation of the VNG Realisatie "APIs voor Zaakgericht Werken" (ZGW) standard — case-management APIs for Dutch government. Each API is an independent microservice; one installation is multi-tenant (serves multiple organisations, partitioned by RSIN). Source lives under `src/`.
 
 > This is a public, world-readable GitHub repo. Don't introduce organization-specific names, internal hostnames/URLs, or credentials in code, comments, commits, or PR/issue text — describe *what* the code does, not *who* asked for it or *where* it runs.
 

@@ -15,7 +15,7 @@ public static class ForwardedHeadersServiceCollectionExtensions
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
 
-            options.KnownNetworks.Clear();
+            options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
 
             var knownNetworks = configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [];
@@ -27,7 +27,7 @@ public static class ForwardedHeadersServiceCollectionExtensions
 
                     if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var ipAddress) && int.TryParse(parts[1], out var prefixLength))
                     {
-                        options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(ipAddress, prefixLength));
+                        options.KnownIPNetworks.Add(new System.Net.IPNetwork(ipAddress, prefixLength));
                     }
                     else
                     {

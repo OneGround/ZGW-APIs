@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace OneGround.ZGW.Common.Web.Swagger;
@@ -8,6 +8,9 @@ public class RemoveApiVersionHeaderOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
+        if (operation.Parameters == null)
+            return;
+
         var apiVer = operation.Parameters.SingleOrDefault(p =>
             p.In == ParameterLocation.Header && p.Name.Equals("api-version", System.StringComparison.CurrentCultureIgnoreCase)
         );
