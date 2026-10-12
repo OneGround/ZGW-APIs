@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Autorisaties.DataModel;
@@ -88,7 +89,8 @@ internal static class AutorisatiesSeed
             factory.OutboundHttp.Requests,
             r =>
                 r.RequestUri!.AbsolutePath.EndsWith("/applicaties/consumer", StringComparison.OrdinalIgnoreCase)
-                && r.RequestUri.Query.Contains($"clientId={clientId}", StringComparison.OrdinalIgnoreCase)
+                && QueryHelpers.ParseQuery(r.RequestUri.Query).TryGetValue("clientId", out var values)
+                && string.Equals(values.ToString(), clientId, StringComparison.OrdinalIgnoreCase)
         );
     }
 }

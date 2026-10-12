@@ -51,9 +51,12 @@ public class ApplicatieAuthorizationTests
     [Fact]
     public async Task Client_in_no_applicatie_is_forbidden()
     {
-        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(NewClientId(), Rsin));
+        var clientId = NewClientId();
+
+        var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
     [Fact]
@@ -65,6 +68,7 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
     [Fact]
@@ -112,6 +116,7 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetAllApplicaties(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
     }
 
     [Fact]
@@ -147,6 +152,7 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetOrWrite(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
         var stored = await FindAsync(_factory, applicatie.Id);
         Assert.NotNull(stored);
         Assert.Equal(applicatie.Label, stored.Label);
@@ -203,6 +209,7 @@ public class ApplicatieAuthorizationTests
         var response = await _client.SendAsync(AutorisatiesRequests.GetOrWrite(method, applicatie.Id, clientId, Rsin, bodyClientId, apiVersion));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        AssertNoConsumerLookup(_factory, clientId);
         var stored = await FindAsync(_factory, applicatie.Id);
         Assert.NotNull(stored);
         Assert.Equal(applicatie.Label, stored.Label);
@@ -238,6 +245,7 @@ public class ApplicatieAuthorizationTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var stored = await FindAsync(_factory, target.Id);
+        Assert.NotNull(stored);
         Assert.Equal(bodyClientId, stored.ClientIds.Single().ClientId);
     }
 
@@ -254,6 +262,7 @@ public class ApplicatieAuthorizationTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var stored = await FindAsync(_factory, target.Id);
+        Assert.NotNull(stored);
         Assert.Equal(label, stored.Label);
     }
 
