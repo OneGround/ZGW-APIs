@@ -46,6 +46,24 @@ public class DomainToResponseProfileTests : IDisposable
     }
 
     [Fact]
+    public void EnkelvoudigInformatieObject_MappedTwice_GivesEachDtoItsOwnTrefwoorden()
+    {
+        // Note: one entity can be mapped to many dtos (a cached entity in the expands): the dtos must not share the list of the entity
+        var value = _fixture.Create<EnkelvoudigInformatieObject>();
+        // Note: the fixture omits back references (recursion), the mapping needs this one
+        value.LatestEnkelvoudigInformatieObjectVersie.LatestInformatieObject = value;
+        value.LatestEnkelvoudigInformatieObjectVersie.BestandsDelen = [];
+        value.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden = ["a", "b"];
+
+        var first = _mapper.Map<OneGround.ZGW.Documenten.Contracts.v1._7.Responses.EnkelvoudigInformatieObjectGetResponseDto>(value);
+        var second = _mapper.Map<OneGround.ZGW.Documenten.Contracts.v1._7.Responses.EnkelvoudigInformatieObjectGetResponseDto>(value);
+
+        Assert.Equal(["a", "b"], first.Trefwoorden);
+        Assert.NotSame(value.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden, first.Trefwoorden);
+        Assert.NotSame(first.Trefwoorden, second.Trefwoorden);
+    }
+
+    [Fact]
     public void GebruiksRecht_Maps_To_GebruiksRechtResponseDto()
     {
         var value = _fixture.Create<GebruiksRecht>();

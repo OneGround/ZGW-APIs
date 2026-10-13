@@ -387,7 +387,11 @@ public class RequestToDomainRegister : IRegister
         //
         // 4. ZaakInformatieObjecten
 
-        config.NewConfig<GetAllZaakInformatieObjectenQueryParameters, GetAllZaakInformatieObjectenFilter>();
+        config
+            .NewConfig<GetAllZaakInformatieObjectenQueryParameters, GetAllZaakInformatieObjectenFilter>()
+            // Status has no query parameter on this (pre-1.7) version -- only set internally by
+            // StatusZaakInformatieObjectenResolver, which constructs the filter itself.
+            .Ignore(dest => dest.Status);
 
         config
             .NewConfig<ZaakInformatieObjectRequestDto, ZaakInformatieObject>()
