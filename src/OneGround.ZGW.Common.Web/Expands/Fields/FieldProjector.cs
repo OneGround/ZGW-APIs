@@ -51,8 +51,8 @@ public static class FieldProjector
             }
         }
 
-        // Inline geneste objecten worden ter plekke geprojecteerd (niet via _expand). Scalars zijn
-        // hierboven al verwerkt; een geneste selectie op dezelfde naam heeft daarna voorrang.
+        // Inline nested objects are projected in place (not via _expand). Scalars are already handled above;
+        // a nested selection with the same name takes precedence.
         foreach (var (name, subSelection) in selection.NestedObjects)
         {
             if (scalarLookup.TryGetValue(name, out var prop))
@@ -73,9 +73,8 @@ public static class FieldProjector
                     && entityValue.GetType() != typeof(object)
                 )
                 {
-                    // Note: een JSON-document met een onbekende vorm (bv. van een externe API) kan niet worden geprojecteerd: zonder
-                    // subselectie ongewijzigd doorgeven. Mét subselectie (de validator laat dat voor een ondoorzichtige expand niet toe)
-                    // juist niets teruggeven, zodat een niet-geregistreerde JSON-expand nooit meer data lekt dan is gevraagd.
+                    // Note: external JSON has an unknown shape and cannot be projected. It is returned as a whole, or as an empty object when a
+                    // sub-selection is given (the validator rejects that), so it never returns more than was asked for.
                     if (entityValue is JToken)
                         expandDict[entityName] = HasSubSelection(subSelection) ? new object() : entityValue;
                     else if (entityValue is IEnumerable enumerable && entityValue is not string)
@@ -103,7 +102,7 @@ public static class FieldProjector
         if (value is null)
             return null;
 
-        // Een collectie van geneste objecten: projecteer elk element afzonderlijk.
+        // A collection of nested objects: project each element separately.
         if (value is IEnumerable enumerable && value is not string)
         {
             var items = new List<object>();

@@ -9,20 +9,14 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaak" expand path on a STATUS. Unlike <see cref="StatusStatusTypeResolver"/>
-/// (a remote ZTC lookup), the ZAAK lives in this same service, so this goes through the existing
-/// <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. Fetched through <see cref="IZaakLookup"/> (at most once per request), not batched
-/// across a list -- a local, indexed DB lookup is cheap
-/// enough per row that the added complexity isn't worth it yet. A ZAAK that is not
-/// available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, see
-/// <see cref="ExpandQueryStatus"/>. "zaak.zaaktype" is forwarded to the already-registered
-/// <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> itself (the same
-/// <see cref="ZaakTypeResolver"/> used for the top-level ZAAK) -- no duplication. Injected as
-/// <see cref="Lazy{T}"/> purely to avoid eagerly constructing that entire ZAAK expand-resolver graph on
-/// every request to this resource (there's no circularity here -- this resolver isn't itself one of
-/// that engine's own <see cref="IExpandResolver{TEntity}"/> registrations, unlike
-/// <see cref="ZaakHoofdzaakResolver"/>, which needs Lazy for exactly that reason instead). Deliberately
-/// not forwarding further to "zaak.zaaktype.catalogus" -- not supported.
+/// Resolves the "zaak" expand path on a STATUS. The ZAAK lives in this service, so it is fetched through <see cref="IZaakLookup"/>
+/// (at most once per request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null
+/// (the ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// <para>
+/// "zaak.zaaktype" is forwarded to the registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>, injected as
+/// <see cref="Lazy{T}"/> only to avoid constructing the whole ZAAK resolver graph on every request to this resource (there is no cycle here,
+/// unlike <see cref="ZaakHoofdzaakResolver"/>). "zaak.zaaktype.catalogus" is not supported.
+/// </para>
 /// </summary>
 public class StatusZaakResolver : IExpandResolver<StatusResponseDto>
 {

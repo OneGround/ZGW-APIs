@@ -18,12 +18,14 @@ namespace OneGround.ZGW.Common.Web.Http;
 /// <summary>
 /// Fetches a JSON object from an untrusted, unauthenticated url. Never throws for a failing call: a refused url, a timeout, a non-success
 /// status, an oversized response or a body that is not a JSON object all yield an empty object (and a warning in the log).
-/// Registered scoped: within one incoming request the same url is fetched at most once, all calls together may take at most
-/// <see cref="ExternalJsonClientSettings.TotalTimeout"/> (counted from the first EXTERNAL fetch of the request, so not only the time
-/// spent waiting on external hosts).
-/// The shared fetch is stopped when the incoming request is aborted (or by its own timeout). The token passed to
-/// <see cref="GetJsonObjectAsync"/> only stops the caller from waiting: other callers may still be waiting on the same fetch, and a
-/// caller without an incoming request (a background job) cannot abort a fetch that is already running, which ends at the latest at the timeout.
+/// <para>
+/// Registered scoped: within one incoming request the same url is fetched at most once, and all calls together may take at most
+/// <see cref="ExternalJsonClientSettings.TotalTimeout"/> (counted from the first external fetch of the request).
+/// </para>
+/// <para>
+/// The shared fetch stops when the incoming request is aborted or at its own timeout. The token passed to <see cref="GetJsonObjectAsync"/>
+/// only stops that caller from waiting, as other callers may share the fetch.
+/// </para>
 /// </summary>
 public interface IExternalJsonClient
 {

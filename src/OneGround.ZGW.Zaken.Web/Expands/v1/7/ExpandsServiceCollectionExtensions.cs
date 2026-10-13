@@ -59,86 +59,49 @@ public static class ExpandsServiceCollectionExtensions
     {
         AddZaakLookup(services);
         AddObjectInformatieObjectenCache(services);
-        // Expand resolvers -- one per expand path, registered as IExpandResolver<ZaakResponseDto>
+        // Note: one resolver per expand path. Some reuse the caches and engines that the other Add...APIExpands methods register (all of them
+        // are called together in Startup.cs).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeCatalogusResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusResolver>();
-        // Note: reuses IGenericCache<StatusTypeResponseDto>, registered below by AddStatussenAPIExpands
-        // (both are called together in Startup.cs) -- see ZaakStatusStatusTypeResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResolver>();
-        // Note: reuses IGenericCache<ResultaatTypeResponseDto>, registered below by
-        // AddResultatenAPIExpands (both are called together in Startup.cs).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResultaatTypeResolver>();
-        // Note: reuses ExpandEngine<RolResponseDto>, registered below by AddRollenAPIExpands (both
-        // are called together in Startup.cs) -- see ZaakRollenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRollenResolver>();
-        // Note: reuses ExpandEngine<ZaakObjectResponseDto>, registered below by
-        // AddZaakObjectenAPIExpands (both are called together in Startup.cs) -- see
-        // ZaakZaakObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakContactmomentenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakVerzoekenResolver>();
-        // Note: reuses ExpandEngine<ZaakEigenschapResponseDto>, registered below by
-        // AddZaakEigenschappenAPIExpands (both are called together in Startup.cs) -- see
-        // ZaakEigenschappenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakEigenschappenResolver>();
-        // Note: reuses ExpandEngine<ZaakInformatieObjectResponseDto>, registered below by
-        // AddZaakInformatieObjectenAPIExpands (both are called together in Startup.cs) -- see
-        // ZaakZaakInformatieObjectenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakInformatieObjectenResolver>();
-        // Note: reuses the ExpandEngine<ZaakResponseDto> registered right below, as a Lazy<T> -- see
-        // ZaakHoofdzaakResolver's own remarks for why.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakHoofdzaakResolver>();
-        // Note: reuses the same ExpandEngine<ZaakResponseDto> as ZaakHoofdzaakResolver, for
-        // "deelzaken.*" -- but resolved lazily via IServiceProvider, not as a Lazy<T> constructor
-        // dependency, since IServiceProvider is already needed here for CreateScope (see
-        // ZaakDeelzakenResolver's own remarks).
+        // Note: deelzaken and relevanteanderezaken take the engine of ZaakResponseDto from the IServiceProvider (they need it for CreateScope
+        // anyway), hoofdzaak takes it as a Lazy<T>.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakDeelzakenResolver>();
-        // Note: same ExpandEngine<ZaakResponseDto> reuse/IServiceProvider style as ZaakDeelzakenResolver,
-        // for "relevanteanderezaken.*" -- see ZaakRelevanteAndereZakenResolver's own remarks.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRelevanteAndereZakenResolver>();
         // Note: both need IExternalJsonClient, registered by AddExternalJsonClient in Startup.cs.
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakCommunicatiekanaalResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakSelectielijstklasseResolver>();
 
-        // Lightweight path validation for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
 
-        // Generic dispatcher for use in the controller
         services.AddScoped(sp => new ExpandEngine<ZaakResponseDto>(sp.GetServices<IExpandResolver<ZaakResponseDto>>()));
 
-        // Lazy wrapper for ZaakHoofdzaakResolver: defers resolving this same engine until first
-        // actually needed, so it can be a plain constructor dependency instead of a service-locator
-        // call (the engine's own construction needs every IExpandResolver<ZaakResponseDto>, including
-        // ZaakHoofdzaakResolver, so a direct, eager dependency would be circular).
+        // Note: the engine needs every IExpandResolver<ZaakResponseDto>, ZaakHoofdzaakResolver included, so that resolver can only take it lazily
         services.AddScoped(sp => new Lazy<ExpandEngine<ZaakResponseDto>>(() => sp.GetRequiredService<ExpandEngine<ZaakResponseDto>>()));
 
-        // Note: Also registered by the [Obsolete] v1.5 AddExpandables() -- v1.7 must not silently
-        // rely on that, or it breaks the moment AddExpandables() is ever removed.
+        // Note: also registered by the [Obsolete] v1.5 AddExpandables(); v1.7 must not rely on that
         services.AddScoped<IGenericCache<ZaakTypeResponseDto>, GenericCache<ZaakTypeResponseDto>>();
         services.AddScoped<IGenericCache<CatalogusResponseDto>, GenericCache<CatalogusResponseDto>>();
     }
 
     /// <summary>
-    /// Expand support for the STATUS resource itself (GET /statussen, GET /statussen/{uuid}).
-    /// No <c>fields</c>/field-selection mechanism here -- unlike Zaken, the ZRC 1.7.0 spec doesn't add
-    /// one for statussen, only "expand". "zaakinformatieobjecten" is same-service (via the existing
-    /// <c>GetAllZaakInformatieObjectenQuery</c>, extended with a <c>Status</c> filter option) cross-checked
-    /// against DRC's authorization model, and forwards "...informatieobject"/"...informatieobjecttype" to
-    /// the <see cref="ExpandEngine{TEntity}"/> registered below by AddZaakInformatieObjectenAPIExpands
-    /// (both are called together in Startup.cs) -- see <see cref="StatusZaakInformatieObjectenResolver"/>.
-    /// "zaak.zaaktype" is forwarded to the <see cref="Lazy{T}"/>-wrapped <see cref="ExpandEngine{TEntity}"/>
-    /// of <see cref="ZaakResponseDto"/> registered by AddZakenAPIExpands -- see
-    /// <see cref="StatusZaakResolver"/>. This method also registers a <see cref="Lazy{T}"/> wrapper
-    /// around its own <see cref="ExpandEngine{TEntity}"/> of <see cref="StatusResponseDto"/>, for
-    /// <see cref="ZaakInformatieObjectStatusResolver"/> to forward "status.statustype" from the
-    /// ZAAKINFORMATIEOBJECT resource (registered by AddZaakInformatieObjectenAPIExpands, called
-    /// alongside this one in Startup.cs). Unlike the "zaak.zaaktype" case, this <see cref="Lazy{T}"/> is
-    /// not just an optimization: <see cref="StatusZaakInformatieObjectenResolver"/>'s own eager
-    /// dependency on <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakInformatieObjectResponseDto"/>
-    /// closes a genuine cycle back to this engine -- see
-    /// <see cref="ZaakInformatieObjectStatusResolver"/>'s own remarks for the full chain.
+    /// Expand support for the STATUS resource itself (GET /statussen, GET /statussen/{uuid}), without a <c>fields</c> mechanism (the spec adds
+    /// none for statussen). "zaakinformatieobjecten" forwards "...informatieobject" to the engine of AddZaakInformatieObjectenAPIExpands.
+    /// <para>
+    /// Note: this method also registers a <see cref="Lazy{T}"/> of its own engine for <see cref="ZaakInformatieObjectStatusResolver"/>. That
+    /// <see cref="Lazy{T}"/> is required: <see cref="StatusZaakInformatieObjectenResolver"/> depends on the engine of
+    /// <see cref="ZaakInformatieObjectResponseDto"/>, which closes a cycle back to this engine.
+    /// </para>
     /// </summary>
     public static void AddStatussenAPIExpands(this IServiceCollection services)
     {
@@ -156,11 +119,7 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the RESULTAAT resource itself (GET /resultaten, GET /resultaten/{uuid}).
-    /// No <c>fields</c>/field-selection mechanism here -- same reasoning as
-    /// <see cref="AddStatussenAPIExpands"/>. "zaak.zaaktype" is forwarded to the <see cref="Lazy{T}"/>-wrapped
-    /// <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> registered by
-    /// AddZakenAPIExpands -- see <see cref="ResultaatZaakResolver"/>.
+    /// Expand support for the RESULTAAT resource itself (GET /resultaten, GET /resultaten/{uuid}), without a <c>fields</c> mechanism.
     /// </summary>
     public static void AddResultatenAPIExpands(this IServiceCollection services)
     {
@@ -175,12 +134,8 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the ROL resource itself (GET /rollen, GET /rollen/{uuid}). No <c>fields</c>
-    /// mechanism here -- same reasoning as <see cref="AddStatussenAPIExpands"/>. This
-    /// <see cref="ExpandEngine{TEntity}"/> is also reused directly by <see cref="ZaakRollenResolver"/>
-    /// to resolve "rollen.roltype" per item of the "rollen" list on a ZAAK. "zaak.zaaktype" is forwarded
-    /// to the <see cref="Lazy{T}"/>-wrapped <see cref="ExpandEngine{TEntity}"/> of
-    /// <see cref="ZaakResponseDto"/> registered by AddZakenAPIExpands -- see <see cref="RolZaakResolver"/>.
+    /// Expand support for the ROL resource itself (GET /rollen, GET /rollen/{uuid}), without a <c>fields</c> mechanism. The engine is also used
+    /// by <see cref="ZaakRollenResolver"/> for "rollen.roltype".
     /// </summary>
     public static void AddRollenAPIExpands(this IServiceCollection services)
     {
@@ -195,13 +150,8 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the ZAAKOBJECT resource itself (GET /zaakobjecten, GET /zaakobjecten/{uuid}).
-    /// No <c>fields</c> mechanism here -- same reasoning as <see cref="AddStatussenAPIExpands"/>. This
-    /// <see cref="ExpandEngine{TEntity}"/> is also reused directly by
-    /// <see cref="ZaakZaakObjectenResolver"/> to resolve "zaakobjecten.zaakobjecttype" per item of the
-    /// "zaakobjecten" list on a ZAAK. "zaak.zaaktype" is forwarded to the <see cref="Lazy{T}"/>-wrapped
-    /// <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> registered by
-    /// AddZakenAPIExpands -- see <see cref="ZaakObjectZaakResolver"/>.
+    /// Expand support for the ZAAKOBJECT resource itself (GET /zaakobjecten, GET /zaakobjecten/{uuid}), without a <c>fields</c> mechanism. The
+    /// engine is also used by <see cref="ZaakZaakObjectenResolver"/> for "zaakobjecten.zaakobjecttype".
     /// </summary>
     public static void AddZaakObjectenAPIExpands(this IServiceCollection services)
     {
@@ -216,10 +166,8 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the ZAAKCONTACTMOMENT resource itself (GET /zaakcontactmomenten, GET
-    /// /zaakcontactmomenten/{uuid}). No <c>fields</c> mechanism here -- same reasoning as
-    /// <see cref="AddStatussenAPIExpands"/>. Unlike ROL/ZAAKOBJECT, <see cref="ZaakZaakContactmomentenResolver"/>
-    /// has no nested expand to resolve, so it does not reuse this <see cref="ExpandEngine{TEntity}"/>.
+    /// Expand support for the ZAAKCONTACTMOMENT resource itself (GET /zaakcontactmomenten, GET /zaakcontactmomenten/{uuid}), without a
+    /// <c>fields</c> mechanism.
     /// </summary>
     public static void AddZaakContactmomentenAPIExpands(this IServiceCollection services)
     {
@@ -231,12 +179,8 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the ZAAKEIGENSCHAP resource itself (GET
-    /// /zaken/{zaak_uuid}/zaakeigenschappen, GET /zaken/{zaak_uuid}/zaakeigenschappen/{uuid} -- both
-    /// actions live on ZakenController, not a dedicated controller). No <c>fields</c> mechanism here --
-    /// same reasoning as <see cref="AddStatussenAPIExpands"/>. This <see cref="ExpandEngine{TEntity}"/>
-    /// is also reused directly by <see cref="ZaakEigenschappenResolver"/> to resolve
-    /// "eigenschappen.eigenschap" per item of the "eigenschappen" list on a ZAAK.
+    /// Expand support for the ZAAKEIGENSCHAP resource itself (both actions are on ZakenController), without a <c>fields</c> mechanism. The
+    /// engine is also used by <see cref="ZaakEigenschappenResolver"/> for "eigenschappen.eigenschap".
     /// </summary>
     public static void AddZaakEigenschappenAPIExpands(this IServiceCollection services)
     {
@@ -251,29 +195,13 @@ public static class ExpandsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Expand support for the ZAAKINFORMATIEOBJECT resource itself (GET /zaakinformatieobjecten, GET
-    /// /zaakinformatieobjecten/{uuid}). No <c>fields</c> mechanism here -- same reasoning as
-    /// <see cref="AddStatussenAPIExpands"/>. This <see cref="ExpandEngine{TEntity}"/> is also reused
-    /// directly by <see cref="ZaakZaakInformatieObjectenResolver"/> to resolve
-    /// "zaakinformatieobjecten.informatieobject" per item of the "zaakinformatieobjecten" list on a
-    /// ZAAK. Unlike the other resources, "informatieobject" itself is DRC-backed (not
-    /// ZTC) and calls the user-authenticated
-    /// <see cref="OneGround.ZGW.Documenten.ServiceAgent.v1._7.IUserAuthDocumentenServiceAgent"/>
-    /// (registered by AddUserAuthDocumentenServiceAgent_v1_7 in Startup.cs, not the obsolete v1._5
-    /// variant used elsewhere specifically for v1._5 expands) rather than a ZTC-style decorator -- see
-    /// ZaakInformatieObjectInformatieObjectResolver's own remarks for why.
-    /// No <see cref="IGenericCache{T}"/> registration for that agent: it does not cache per-url like
-    /// the plain (service-account-authenticated) v1._7 one does, so every "informatieobject" expand
-    /// hits DRC fresh -- an accepted, un-optimized starting point (the same known N+1 as ZaakContactmomenten's "zaak" expand). "informatieobject.informatieobjecttype"
-    /// (one level deeper still) IS ZTC-backed though, exactly like every other "...type" expand -- see <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>'s own remarks.
-    /// "status" (the optional status-at-time-of-filing reference) is same-service, resolved via the
-    /// existing <c>GetZaakStatusQuery</c> -- see <see cref="ZaakInformatieObjectStatusResolver"/>.
-    /// "zaak.zaaktype" is forwarded to the <see cref="Lazy{T}"/>-wrapped <see cref="ExpandEngine{TEntity}"/>
-    /// of <see cref="ZaakResponseDto"/> registered by AddZakenAPIExpands -- see
-    /// <see cref="ZaakInformatieObjectZaakResolver"/>. "status.statustype" is forwarded the same way to
-    /// the <see cref="Lazy{T}"/>-wrapped <see cref="ExpandEngine{TEntity}"/> of <see cref="StatusResponseDto"/>
-    /// registered by AddStatussenAPIExpands (also called alongside this one in Startup.cs) -- see
-    /// <see cref="ZaakInformatieObjectStatusResolver"/>.
+    /// Expand support for the ZAAKINFORMATIEOBJECT resource itself (GET /zaakinformatieobjecten, GET /zaakinformatieobjecten/{uuid}), without a
+    /// <c>fields</c> mechanism. The engine is also used by <see cref="ZaakZaakInformatieObjectenResolver"/> for "informatieobject".
+    /// <para>
+    /// "informatieobject" is DRC-backed through the user-authenticated <see cref="OneGround.ZGW.Documenten.ServiceAgent.v1._7.IUserAuthDocumentenServiceAgent"/>,
+    /// which has no per-url cache, so every "informatieobject" expand calls DRC (an accepted N+1). "informatieobject.informatieobjecttype" is
+    /// ZTC-backed.
+    /// </para>
     /// </summary>
     public static void AddZaakInformatieObjectenAPIExpands(this IServiceCollection services)
     {
@@ -290,10 +218,7 @@ public static class ExpandsServiceCollectionExtensions
             sp.GetServices<IExpandResolver<ZaakInformatieObjectResponseDto>>()
         ));
 
-        // "informatieobject.informatieobjecttype" -- ZTC-backed, resolved by
-        // ZaakInformatieObjectInformatieObjectResolver via this engine, same shape as
-        // ZaakTypeResolver's own ExpandEngine<ZaakResponseDto> reuse. No "...catalogus" sibling --
-        // that would be a 4th nesting level from ZAAK, which exceeds the VNG ZGW spec's 3-level cap.
+        // Note: "informatieobject.informatieobjecttype" is ZTC-backed; no "...catalogus" (4th nesting level, over the 3-level cap of the spec)
         services.AddScoped<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>, EnkelvoudigInformatieObjectInformatieObjectTypeResolver>();
         services.AddScoped(sp => new ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto>(
             sp.GetServices<IExpandResolver<EnkelvoudigInformatieObjectGetResponseDto>>()

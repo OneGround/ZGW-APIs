@@ -12,15 +12,11 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "informatieobject" expand path on a ZAAKINFORMATIEOBJECT. Unlike the
-/// "type" resolvers, reads from DRC, via the v1._7 UserAccount-authenticated
-/// <see cref="IUserAuthDocumentenServiceAgent"/> (not the ServiceAccount-authenticated plain v1._7
-/// agent, nor the obsolete v1._5 one) so DRC evaluates the request as the real calling client, not
-/// this backend's own credential. No WrapAsync equivalent exists for DRC, so a failed call throws
-/// <see cref="ExpandExternalServiceException"/> directly. "informatieobjecttype" is resolved by a
-/// separate ZRC-side ZTC resolver (<see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>)
-/// rather than DRC's own expand -- forwarding DRC's raw JSON here instead breaks the fields/FieldProjector
-/// mechanism (a JObject reads as IEnumerable, so a single informatieobject gets misread as a list).
+/// Resolves the "informatieobject" expand path on a ZAAKINFORMATIEOBJECT from DRC, through the user-authenticated
+/// <see cref="IUserAuthDocumentenServiceAgent"/> so DRC evaluates the request as the real calling client. A failed call throws
+/// <see cref="ExpandExternalServiceException"/>. "informatieobjecttype" is resolved by
+/// <see cref="EnkelvoudigInformatieObjectInformatieObjectTypeResolver"/>, not by the expand of DRC: its raw JSON breaks the fields projection (a
+/// JObject reads as IEnumerable, so a single informatieobject is misread as a list).
 /// </summary>
 public class ZaakInformatieObjectInformatieObjectResolver : IExpandResolver<ZaakInformatieObjectResponseDto>
 {

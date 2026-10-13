@@ -14,47 +14,20 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "deelzaken" expand path on a ZAAK -- the inverse of
-/// <see cref="ZaakHoofdzaakResolver"/> (a list of ZAAK references instead of one). Like
-/// <see cref="ZaakRollenResolver"/>, this is a collection: fetches every deelzaak in one query (the
-/// existing <c>GetAllZakenQuery</c>, filtered by <c>Uuid__in</c> on the deelzaak urls already on the
-/// ZAAK, no artificial page limit -- Size is set to the exact deelzaak count) rather than one
-/// <c>GetZaakQuery</c> per url, which would compound badly across a page of ZAKEN that each have
-/// their own deelzaken.
+/// Resolves the "deelzaken" expand path on a ZAAK: the inverse of <see cref="ZaakHoofdzaakResolver"/>, a list of ZAAK references.
 /// <para>
-/// <see cref="OneGround.ZGW.Zaken.Web.Models.v1._5.GetAllZakenFilter"/> is normally only ever
-/// constructed by Mapster from <c>GetAllZakenQueryParameters</c>, which guarantees its <c>IList&lt;T&gt;</c>
-/// properties are never null; built directly here instead, so <c>Zaaktype__in</c>/<c>Archiefnominatie__in</c>/
-/// <c>Archiefstatus__in</c>/<c>Bronorganisatie__in</c> must be explicitly initialized to empty lists --
-/// <c>GetAllZakenQueryHandler</c>'s own filter-predicate chain calls <c>.Any()</c> on each of them
-/// unconditionally and would NullReferenceException otherwise. This can't be caught by a resolver unit
-/// test (which mocks IMediator), so take care if this filter's shape ever changes.
+/// All deelzaken are fetched in one <c>GetAllZakenQuery</c> (<c>Uuid__in</c>, sized to the exact count) instead of one query per url. A
+/// deelzaak that the query does not return (the authorization join leaves it out) is omitted, see <see cref="ExpandQueryStatus"/>.
 /// </para>
 /// <para>
-/// GetAllZakenQuery's handler, when the caller lacks HasAllAuthorizations, creates a PostgreSQL
-/// TEMPORARY TABLE on the DbContext's connection for row-level authorization (see
-/// ZaakRollenResolver's own remarks for why this means a fresh DI scope per ZAAK is required here too).
-/// That same authorization join also means a deelzaak the caller can't see (wrong RSIN, too
-/// confidential) is silently absent from the result -- the same outcome as for a single reference the caller
-/// can't see, such as <see cref="ZaakHoofdzaakResolver"/>'s (see <see cref="ExpandQueryStatus"/>): an entry that is not available never
-/// fails the whole expand.
+/// Note: <c>GetAllZakenFilter</c> is built here, not by Mapster, so its <c>*__in</c> lists must be initialized: the handler calls
+/// <c>.Any()</c> on each of them. A resolver unit test (which mocks IMediator) cannot catch a missing one.
 /// </para>
 /// <para>
-/// Nested "deelzaken.*" paths are resolved via the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/>
-/// of <see cref="ZaakResponseDto"/> itself (same resolvers used for the top-level ZAAK and for
-/// "hoofdzaak.*"). Resolved lazily here via <see cref="IServiceProvider"/> rather than a constructor
-/// dependency, for the same circular-construction reason as <see cref="ZaakHoofdzaakResolver"/> --
-/// which instead takes an explicit <c>Lazy&lt;ExpandEngine{ZaakResponseDto}&gt;</c> constructor
-/// dependency, since it has no other need for <see cref="IServiceProvider"/>; this resolver keeps the
-/// service-locator style instead because it already needs <see cref="IServiceProvider"/> for
-/// <c>CreateScope()</c> above. The nested "deelzaken.*" tuples themselves come from
-/// <see cref="ZaakSelfReferenceExpandPaths"/>, shared with ZaakHoofdzaakResolver.
-/// </para>
-/// <para>
-/// GetAllZakenQuery's handler always also runs a cached COUNT(*) query (for the paging metadata this
-/// resolver never reads) under a cache key that includes the (per-ZAAK-unique) Uuid__in filter, so
-/// that cache practically never hits here -- an accepted cost of reusing the general-purpose query
-/// rather than building a narrower one just for this.
+/// Note: the handler can create a PostgreSQL TEMPORARY TABLE on the connection, so every call opens its own DI scope, like
+/// <see cref="ZaakRollenResolver"/>. The nested "deelzaken.*" paths are resolved by the registered <see cref="ExpandEngine{TEntity}"/> of
+/// <see cref="ZaakResponseDto"/> (taken from the <see cref="IServiceProvider"/> to avoid a circular construction, see
+/// <see cref="ZaakHoofdzaakResolver"/>); the paths themselves come from <see cref="ZaakSelfReferenceExpandPaths"/>.
 /// </para>
 /// </summary>
 public class ZaakDeelzakenResolver : IExpandResolver<ZaakResponseDto>

@@ -213,10 +213,9 @@ public class ZaakFieldsSchemaTests
     [InlineData("identificatie")] // Medewerker/NatuurlijkPersoon/NietNatuurlijkPersoon/OrganisatorischeEenheid
     public void Validate_RollenBetrokkeneIdentificatieNestedSelection_IsValid(string fieldName)
     {
-        // Geneste velden van een inline object (niet-expandbaar, zoals betrokkeneIdentificatie) worden
-        // geselecteerd via een gepunt pad ("betrokkeneIdentificatie.veld"), niet via object-syntax
-        // ({"betrokkeneIdentificatie": [...]}) -- dat laatste is voorbehouden aan expandbare sub-entiteiten
-        // (zoals "roltype"), zie FieldsParserTests.ParseAndValidate_DottedPath_PopulatesNestedObject_NoExpandPath.
+        // Fields of an inline object (not expandable, like betrokkeneIdentificatie) are selected with a dotted path
+        // ("betrokkeneIdentificatie.field"), not with object syntax: that is for expandable entities (like "roltype"), see
+        // FieldsParserTests.ParseAndValidate_DottedPath_PopulatesNestedObject_NoExpandPath.
         var (selection, _, error) = FieldsParser.ParseAndValidate(
             JArray.Parse($$"""["identificatie", {"rollen": ["url", "betrokkeneIdentificatie.{{fieldName}}"]}]""")
         );

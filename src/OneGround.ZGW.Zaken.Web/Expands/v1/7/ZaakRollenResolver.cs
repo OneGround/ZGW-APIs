@@ -13,28 +13,16 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "rollen" expand path on a ZAAK. Unlike Status/Resultaat, this field is a
-/// collection: fetches every ROL for this ZAAK in one query (the existing GetAllZaakRolQuery,
-/// filtered by zaak url, no artificial page limit -- Size is set to the exact number of role urls
-/// already on the ZAAK) rather than one query per url.
+/// Resolves the "rollen" expand path on a ZAAK. All ROLs of the ZAAK are fetched in one <c>GetAllZaakRolQuery</c> (sized to the number of role
+/// urls on the ZAAK) instead of one query per url.
 /// <para>
-/// "rollen.roltype" is declared via <see cref="AdditionalPaths"/> rather than as its own dispatched
-/// resolver: the generic per-entity parent/child wiring in <see cref="ExpandEngine{TEntity}"/> only
-/// auto-embeds a child into a single IExpandable parent, not into every item of a list. Instead, once
-/// the ROL list is built, this resolver hands it to the already-registered
-/// <see cref="ExpandEngine{TEntity}"/> (for <c>RolResponseDto</c> -- the same instance that powers
-/// GET /rollen?expand=roltype) via its <c>ResolveListAsync</c>, which embeds "roltype" into each
-/// ROL's own <c>_expand</c> -- exactly the batch operation that engine already exists for.
+/// "rollen.roltype" is an <see cref="AdditionalPaths"/> entry: the engine only embeds a child into a single parent, not into every item of a
+/// list. So the built ROL list is handed to the registered <see cref="ExpandEngine{TEntity}"/> of <c>RolResponseDto</c> (<c>ResolveListAsync</c>).
 /// </para>
 /// <para>
-/// GetAllZaakRolQuery's handler, when the caller lacks HasAllAuthorizations, creates a PostgreSQL
-/// TEMPORARY TABLE on the DbContext's connection to apply row-level authorization (see
-/// ZaakAuthorizationTempTableService) and never drops it. ResolveListAsync invokes this resolver once
-/// per ZAAK in a page via the SAME request-scoped IMediator/DbContext, so sending the query directly
-/// on the injected IMediator would try to CREATE the same temp table again for the second ZAAK and
-/// crash with a PostgreSQL "already exists" error. Opening a fresh DI scope per ZAAK (a new
-/// DbContext/connection each time) avoids the collision -- exactly the workaround the old (v1._5)
-/// RollenExpander already uses for this identical query.
+/// Note: when the caller lacks HasAllAuthorizations, the query handler creates a PostgreSQL TEMPORARY TABLE on the connection (see
+/// ZaakAuthorizationTempTableService) and never drops it. Reusing the request-scoped IMediator for a second ZAAK of a page would create it
+/// again and fail with "already exists", so every call opens its own DI scope (a new DbContext/connection), like the v1.5 RollenExpander.
 /// </para>
 /// </summary>
 public class ZaakRollenResolver : IExpandResolver<ZaakResponseDto>

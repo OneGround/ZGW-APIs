@@ -14,41 +14,16 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "relevanteanderezaken" expand path on a ZAAK. Like
-/// <see cref="ZaakDeelzakenResolver"/>, this is a collection of ZAAK references resolved in one
-/// batched <c>GetAllZakenQuery</c> call (filtered by <c>Uuid__in</c>, sized to the exact count, fresh
-/// DI scope per ZAAK, silently-omits-inaccessible-entries semantics) -- see that resolver's own
-/// remarks, all of which apply here identically. The only structural difference:
-/// <see cref="ZaakResponseDto.RelevanteAndereZaken"/> is a list of <c>{ url, aardRelatie }</c> wrapper
-/// objects, not plain URL strings, so the urls are projected out first; <c>aardRelatie</c> itself is
-/// never embedded in the expand (matching the old v1._5 RelevanteAndereZakenExpander, which discarded
-/// it the same way -- it stays visible on the un-expanded "relevanteAndereZaken" field regardless).
+/// Resolves the "relevanteanderezaken" expand path on a ZAAK. Like <see cref="ZaakDeelzakenResolver"/> (see its remarks), the referenced
+/// ZAAKs are fetched in one batched query and an unavailable one is omitted. The urls are projected out of the <c>{ url, aardRelatie }</c>
+/// wrappers first; <c>aardRelatie</c> stays on the un-expanded field.
 /// <para>
-/// Unlike <see cref="ZaakHoofdzaakResolver"/>/<see cref="ZaakDeelzakenResolver"/>, the nested scope
-/// here is deliberately narrower -- only "zaaktype", "status"/"status.statustype", and
-/// "resultaat"/"resultaat.resultaattype" (no "zaaktype.catalogus", "rollen", "zaakobjecten", or
-/// "zaakinformatieobjecten") -- matching the old v1._5 SupportedExpands list for this resource exactly,
-/// a deliberate scope decision rather than an oversight. So <see cref="AdditionalPaths"/> is its own list here, not
-/// the shared <see cref="ZaakSelfReferenceExpandPaths.Build"/> used by the other two (though
-/// <see cref="ZaakSelfReferenceExpandPaths.ExtractNestedPaths"/> is still reused, since that part is
-/// scope-agnostic).
+/// The nested scope is deliberately narrower than that of hoofdzaak/deelzaken (the v1.5 list), so <see cref="AdditionalPaths"/> is its own list.
 /// </para>
 /// <para>
-/// Unlike deelzaken (a navigation collection derived from a child's own foreign key, so it can never
-/// contain the same ZAAK twice), relevanteAndereZaken is a freestanding list of relations and CAN
-/// legitimately reference the same ZAAK more than once with a different <c>aardRelatie</c> each time.
-/// <c>Uuid__in</c> naturally deduplicates (a SQL <c>IN</c> list only ever returns one row per matching
-/// id), so the fetched rows are re-expanded back against the ORIGINAL (possibly-duplicated,
-/// order-preserved) url list below, rather than returned as-is -- otherwise a duplicate reference would
-/// silently collapse to one expanded entry. Every reference therefore keeps its own entry, in the order
-/// of the un-expanded "relevanteAndereZaken" field.
-/// </para>
-/// <para>
-/// A referenced ZAAK that the query does not return -- it does not exist, the caller may not see it, or
-/// it lives in another ZRC -- is simply omitted, exactly as for <see cref="ZaakDeelzakenResolver"/>;
-/// there is no placeholder. The expanded list is therefore NOT positionally aligned with the un-expanded
-/// "relevanteAndereZaken" field in general: a caller must match an expanded ZAAK to its relation by the
-/// <c>url</c> of the expanded ZAAK, never by index.
+/// Unlike deelzaken, the same ZAAK can be referenced more than once (with another <c>aardRelatie</c>), while <c>Uuid__in</c> deduplicates.
+/// The fetched rows are therefore expanded back against the original url list, so every reference keeps its entry. Because omitted
+/// references leave no placeholder, match an expanded ZAAK to its relation by <c>url</c>, never by index.
 /// </para>
 /// </summary>
 public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>

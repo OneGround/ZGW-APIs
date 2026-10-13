@@ -17,24 +17,12 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaakinformatieobjecten" expand path on a STATUS. Same shape as
-/// <see cref="ZaakZaakInformatieObjectenResolver"/> (fresh DI scope per row for
-/// GetAllZaakInformatieObjectenQuery's temp-table row-level authorization, cross-checked against
-/// DRC's own authorization model via <see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>)
-/// -- see that resolver's own remarks for why both of those are needed. Two differences: this filters
-/// <see cref="OneGround.ZGW.Zaken.Web.Models.v1.GetAllZaakInformatieObjectenFilter.Status"/> by this
-/// STATUS's own url (a new filter option added to that shared query/handler for this purpose --
-/// Zaak/InformatieObject-based callers are unaffected), and the DRC cross-check is scoped to
-/// <c>entity.Zaak</c> (the one ZAAK this STATUS belongs to). The request validators for creating/updating
-/// a ZAAKINFORMATIEOBJECT don't actually enforce that its "status" belongs to the same ZAAK it's linked
-/// to, so the filter also constrains on <c>Zaak = entity.Zaak</c> alongside <c>Status</c> -- this defends
-/// against that data-model gap by simply excluding any (status, zaak) mismatch from the result, rather
-/// than assuming it can't occur. Unlike the ZAAK-level resolver, there's no pre-populated url-count field
-/// on STATUS, so this always queries ZRC first; it then skips the DRC call entirely when that query
-/// comes back empty. "...informatieobject.informatieobjecttype" is forwarded to the same shared
-/// <see cref="ExpandEngine{TEntity}"/> the ZAAK-level resolver uses -- see
-/// <see cref="ZaakZaakInformatieObjectenResolver"/>'s own remarks for why a 4th nesting level isn't
-/// offered (the VNG ZGW spec's 3-level expand cap).
+/// Resolves the "zaakinformatieobjecten" expand path on a STATUS. Same shape as <see cref="ZaakZaakInformatieObjectenResolver"/> (DI scope per
+/// row, cross-check with the DRC authorization, see its remarks), with two differences. The query is filtered on this STATUS and on its
+/// <c>Zaak</c>: the request validators do not enforce that a ZAAKINFORMATIEOBJECT's status belongs to the same ZAAK, and a mismatch is left out.
+/// And STATUS has no url-count field, so ZRC is always queried first; DRC is skipped when that returns nothing.
+/// "...informatieobject.informatieobjecttype" is forwarded to the shared engine, a 4th nesting level is not offered (3-level expand cap of the
+/// VNG ZGW spec).
 /// </summary>
 public class StatusZaakInformatieObjectenResolver : IExpandResolver<StatusResponseDto>
 {

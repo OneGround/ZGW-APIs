@@ -13,12 +13,8 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaakobjecten" expand path on a ZAAK. Mirrors <see cref="ZaakRollenResolver"/>
-/// exactly (same reasoning applies to both members of its class doc comment: the collection-fetch
-/// shape, the "zaakobjecten.zaakobjecttype" AdditionalPaths batch-embed via the resource's own
-/// ExpandEngine, and -- most importantly -- the fresh-DI-scope-per-ZAAK requirement, since
-/// GetAllZaakObjectenQuery's handler has the same TempZaakAuthorization temp-table behavior as
-/// GetAllZaakRolQuery's).
+/// Resolves the "zaakobjecten" expand path on a ZAAK. Same as <see cref="ZaakRollenResolver"/>: one collection query, "zaakobjecten.zaakobjecttype"
+/// as an <see cref="AdditionalPaths"/> entry, and a DI scope per ZAAK because the handler can create a PostgreSQL TEMPORARY TABLE.
 /// </summary>
 public class ZaakZaakObjectenResolver : IExpandResolver<ZaakResponseDto>
 {

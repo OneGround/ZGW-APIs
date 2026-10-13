@@ -52,9 +52,7 @@ public class InformatieObjectResolver<TEntity> : IExpandResolver<TEntity>
             $"informatieobject_{id}",
             async () =>
             {
-                // Note: Eigen scope (dus eigen DbContext) per query, zodat concurrente resolves voor verschillende entities uit
-                // dezelfde lijst nooit dezelfde scoped DbContext-instantie delen. Alleen een cache-miss heeft een scope nodig, en die
-                // wordt weer vrijgegeven zodra de query klaar is.
+                // Note: own scope (so own DbContext) per query: concurrent resolves for entities of one list must not share a scoped DbContext
                 using var scope = _serviceProvider.CreateScope();
 
                 return await scope.ServiceProvider.GetRequiredService<IMediator>().Send(new GetEnkelvoudigInformatieObjectQuery { Id = id });

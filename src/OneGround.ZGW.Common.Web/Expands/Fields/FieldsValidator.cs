@@ -5,18 +5,18 @@ using System.Linq;
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
 /// <summary>
-/// Valideert een geparseerde <see cref="FieldSelection"/> voor <typeparamref name="TEntity"/>:
+/// Validates a parsed <see cref="FieldSelection"/> for <typeparamref name="TEntity"/>:
 /// <list type="bullet">
-/// <item>elke opgevraagde <b>scalaire</b> veldnaam moet voorkomen in de bijbehorende DTO (per niveau);</item>
-/// <item>elke opgevraagde <b>geneste sub-entiteit</b> moet een expandbaar pad zijn — d.w.z. er moet
-/// een geregistreerde expand-resolver voor bestaan, zodat de selectie ook daadwerkelijk gevuld kan worden.</item>
+/// <item>every requested <b>scalar</b> field name must exist in the corresponding DTO (per level);</item>
+/// <item>every requested <b>nested sub-entity</b> must be an expandable path, i.e. a registered expand
+/// resolver must exist for it, so the selection can actually be filled.</item>
 /// </list>
-/// Onbekende veldnamen, niet-expandbare nesting of onbekende sub-entiteiten leveren een foutmelding op.
+/// Unknown field names, non-expandable nesting or unknown sub-entities result in an error.
 /// </summary>
 public class FieldsValidator<TEntity>
 {
-    // Begrenst de recursiediepte van Walk zodat een pathologisch geneste FieldSelection (van welke
-    // bron dan ook) geen onbeperkte recursie (en uiteindelijk een StackOverflowException) kan veroorzaken.
+    // Limits the recursion depth of Walk so that a pathologically nested FieldSelection (from whatever
+    // source) cannot cause unbounded recursion (and eventually a StackOverflowException).
     private const int MaxDepth = 32;
 
     private readonly FieldsSchema _schema;
@@ -29,9 +29,9 @@ public class FieldsValidator<TEntity>
     }
 
     /// <summary>
-    /// Controleert alle veldnamen in <paramref name="selection"/> tegen het schema en de expandbare paden,
-    /// en retourneert elke ongeldige veldnaam als afzonderlijk (gepunt) pad. Een lege lijst betekent dat
-    /// alles geldig is. De uitkomst is gesorteerd voor een voorspelbare volgorde.
+    /// Checks all field names in <paramref name="selection"/> against the schema and the expandable paths,
+    /// and returns every invalid field name as a separate (dotted) path. An empty list means that
+    /// everything is valid. The result is sorted for a predictable order.
     /// </summary>
     public IReadOnlyList<string> Validate(FieldSelection selection)
     {
@@ -44,8 +44,8 @@ public class FieldsValidator<TEntity>
         return invalid;
     }
 
-    // Werkt op een lijst van types zodat een polymorf inline object (bv. betrokkeneIdentificatie)
-    // tegen de unie van zijn varianten gevalideerd kan worden. Op concrete niveaus is dit één type.
+    // Works on a list of types so that a polymorphic inline object (e.g. betrokkeneIdentificatie)
+    // can be validated against the union of its variants. At concrete levels this is a single type.
     private void Walk(FieldSelection selection, IReadOnlyList<Type> types, string prefix, List<string> invalid, int depth)
     {
         if (depth > MaxDepth)
@@ -64,7 +64,7 @@ public class FieldsValidator<TEntity>
         {
             var path = Combine(prefix, name);
 
-            // Een ondoorzichtige expand (inhoud onbekend, bv. extern JSON-document) kan alleen als geheel worden opgevraagd.
+            // An opaque expand (unknown shape, for instance external JSON) can only be requested as a whole
             if (types.Any(t => _schema.IsOpaqueEntity(t, name)))
             {
                 if (!_expandablePaths.Contains(path))
@@ -75,8 +75,8 @@ public class FieldsValidator<TEntity>
                 continue;
             }
 
-            // Een geneste sub-entiteit is alleen geldig als ze ook expandbaar is (er een resolver voor bestaat)
-            // én het schema het onderliggende DTO-type kent om de diepere velden tegen te valideren.
+            // A nested sub-entity is only valid if it is also expandable (a resolver exists for it)
+            // and the schema knows the underlying DTO type to validate the deeper fields against.
             Type childType = null;
             foreach (var t in types)
             {
@@ -100,7 +100,7 @@ public class FieldsValidator<TEntity>
         {
             var path = Combine(prefix, name);
 
-            // Een inline genest object daalt af in het/de onderliggende DTO-type(n) — geen expand nodig.
+            // An inline nested object descends into the underlying DTO type(s); no expand needed.
             var childTypes = new List<Type>();
             foreach (var t in types)
             {
@@ -118,7 +118,7 @@ public class FieldsValidator<TEntity>
         }
     }
 
-    // Note: "*" (alle velden) is toegestaan: voor een ondoorzichtige expand is dat precies wat er sowieso gebeurt.
+    // Note: "*" (all fields) is allowed: for an opaque expand that is what happens anyway
     private static bool HasSubSelection(FieldSelection selection) =>
         selection.ScalarFields.Count > 0 || selection.Entities.Count > 0 || selection.NestedObjects.Count > 0;
 

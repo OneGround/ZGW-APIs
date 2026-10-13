@@ -9,12 +9,12 @@ using Newtonsoft.Json;
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
 /// <summary>
-/// Beschrijft per response-DTO welke veldnamen geldig zijn in een <see cref="FieldSelection"/>.
+/// Describes, per response DTO, which field names are valid in a <see cref="FieldSelection"/>.
 /// <para>
-/// Scalaire velden worden afgeleid uit de <see cref="JsonPropertyAttribute"/> waarden van de DTO.
-/// Sub-entiteiten (geneste objecten in <c>fields</c>) worden expliciet geregistreerd als
-/// type → (naam → child-type), zodat de validatie de DTO-graaf op elke diepte kan volgen — inclusief
-/// recursieve relaties zoals <c>hoofdzaak</c>/<c>deelzaken</c> die zelf weer een Zaak zijn.
+/// Scalar fields are derived from the <see cref="JsonPropertyAttribute"/> values of the DTO.
+/// Sub-entities (nested objects in <c>fields</c>) are registered explicitly as
+/// type → (name → child type), so the validation can follow the DTO graph at any depth, including
+/// recursive relations such as <c>hoofdzaak</c>/<c>deelzaken</c>, which are a Zaak themselves.
 /// </para>
 /// </summary>
 public sealed class FieldsSchema
@@ -37,19 +37,19 @@ public sealed class FieldsSchema
     }
 
     /// <summary>
-    /// True als sub-entiteit <paramref name="entityName"/> binnen <paramref name="parent"/> een <b>ondoorzichtige</b> expand is: hij bestaat
-    /// (en wordt als geheel teruggegeven), maar de vorm van de inhoud is ons onbekend. Er kan dus geen veldselectie op worden gedaan.
+    /// True if <paramref name="entityName"/> on <paramref name="parent"/> is an <b>opaque</b> expand: it is returned as a whole, because its
+    /// shape is unknown and no field selection is possible.
     /// </summary>
     public bool IsOpaqueEntity(Type parent, string entityName) => _opaqueEntities.TryGetValue(parent, out var names) && names.Contains(entityName);
 
     /// <summary>
-    /// Geldige scalaire veldnamen (JsonPropertyName) van <paramref name="type"/>, het <c>_expand</c> veld uitgezonderd.
+    /// Valid scalar field names (JsonPropertyName) of <paramref name="type"/>, except the <c>_expand</c> field.
     /// </summary>
     public HashSet<string> ScalarsOf(Type type) => _scalarCache.GetOrAdd(type, Reflect);
 
     /// <summary>
-    /// Probeert het DTO-type van een geneste sub-entiteit <paramref name="entityName"/> binnen
-    /// <paramref name="parent"/> te bepalen. Retourneert <c>false</c> als de sub-entiteit niet bestaat.
+    /// Tries to determine the DTO type of the nested sub-entity <paramref name="entityName"/> within
+    /// <paramref name="parent"/>. Returns <c>false</c> if the sub-entity does not exist.
     /// </summary>
     public bool TryGetEntityType(Type parent, string entityName, out Type childType)
     {
@@ -64,13 +64,13 @@ public sealed class FieldsSchema
     }
 
     /// <summary>
-    /// Bepaalt het/de DTO-type(n) van een <b>inline genest object</b> <paramref name="name"/> binnen
-    /// <paramref name="parent"/>. Eerst worden expliciete registraties geraadpleegd (nodig voor
-    /// polymorfe velden zoals <c>betrokkeneIdentificatie</c>, met meerdere mogelijke types); is er
-    /// geen registratie, dan wordt het type via reflectie uit de property afgeleid
-    /// (incl. <c>Nullable&lt;T&gt;</c> en <c>IEnumerable&lt;T&gt;</c> → <c>T</c>). Retourneert
-    /// <c>false</c> als <paramref name="name"/> geen scalair-houdend object is (bv. een string-veld
-    /// of een opaque <c>object</c>).
+    /// Determines the DTO type(s) of an <b>inline nested object</b> <paramref name="name"/> within
+    /// <paramref name="parent"/>. Explicit registrations are consulted first (needed for polymorphic
+    /// fields such as <c>betrokkeneIdentificatie</c>, which have several possible types); without a
+    /// registration the type is derived from the property by reflection
+    /// (incl. <c>Nullable&lt;T&gt;</c> and <c>IEnumerable&lt;T&gt;</c> → <c>T</c>). Returns
+    /// <c>false</c> if <paramref name="name"/> is not an object that holds scalars (e.g. a string field
+    /// or an opaque <c>object</c>).
     /// </summary>
     public bool TryGetNestedTypes(Type parent, string name, out IReadOnlyList<Type> childTypes)
     {
@@ -99,13 +99,13 @@ public sealed class FieldsSchema
 
         var elementType = UnwrapElementType(prop.PropertyType);
 
-        // Alleen een "complex DTO" (met JsonPropertyName-velden) is een genest object om in af te dalen.
+        // Only a "complex DTO" (with JsonPropertyName fields) is a nested object to descend into.
         return ScalarsOf(elementType).Count > 0 ? new[] { elementType } : Array.Empty<Type>();
     }
 
     /// <summary>
-    /// Pelt <c>Nullable&lt;T&gt;</c> en een (niet-string) <c>IEnumerable&lt;T&gt;</c> af tot het
-    /// onderliggende elementtype.
+    /// Unwraps <c>Nullable&lt;T&gt;</c> and a (non-string) <c>IEnumerable&lt;T&gt;</c> to the
+    /// underlying element type.
     /// </summary>
     private static Type UnwrapElementType(Type type)
     {
@@ -133,8 +133,8 @@ public sealed class FieldsSchema
 }
 
 /// <summary>
-/// Fluent builder voor het opbouwen van een <see cref="FieldsSchema"/>: registreer per bovenliggend
-/// DTO-type welke geneste sub-entiteiten naar welk onderliggend DTO-type expanderen.
+/// Fluent builder for a <see cref="FieldsSchema"/>: register, per parent DTO type, which nested
+/// sub-entities expand to which child DTO type.
 /// </summary>
 public sealed class FieldsSchemaBuilder
 {
@@ -143,8 +143,8 @@ public sealed class FieldsSchemaBuilder
     private readonly Dictionary<Type, HashSet<string>> _opaqueEntities = new();
 
     /// <summary>
-    /// Registreert dat sub-entiteit <paramref name="name"/> op <typeparamref name="TParent"/>
-    /// expandt naar DTO <typeparamref name="TChild"/>.
+    /// Registers that sub-entity <paramref name="name"/> on <typeparamref name="TParent"/>
+    /// expands to DTO <typeparamref name="TChild"/>.
     /// </summary>
     public FieldsSchemaBuilder Entity<TParent, TChild>(string name)
     {
@@ -156,11 +156,11 @@ public sealed class FieldsSchemaBuilder
     }
 
     /// <summary>
-    /// Registreert expliciet dat het inline geneste object <paramref name="name"/> op
-    /// <typeparamref name="TParent"/> (mede) van type <typeparamref name="TChild"/> is. Nodig voor
-    /// <b>polymorfe</b> velden (bv. <c>betrokkeneIdentificatie</c>): roep dit per mogelijke variant
-    /// aan, dan wordt gevalideerd tegen de unie van alle varianten. Voor concreet getypeerde geneste
-    /// objecten is registratie niet nodig — die worden via reflectie afgeleid.
+    /// Explicitly registers that the inline nested object <paramref name="name"/> on
+    /// <typeparamref name="TParent"/> is (also) of type <typeparamref name="TChild"/>. Needed for
+    /// <b>polymorphic</b> fields (e.g. <c>betrokkeneIdentificatie</c>): call this once per possible variant,
+    /// and validation is done against the union of all variants. Concretely typed nested objects need
+    /// no registration; they are derived by reflection.
     /// </summary>
     public FieldsSchemaBuilder NestedObject<TParent, TChild>(string name)
     {
@@ -176,9 +176,8 @@ public sealed class FieldsSchemaBuilder
     }
 
     /// <summary>
-    /// Registreert sub-entiteit <paramref name="name"/> op <typeparamref name="TParent"/> als <b>ondoorzichtige</b> expand: de inhoud
-    /// (bv. een JSON-document van een externe API) is ons onbekend. Hij mag in <c>fields</c> worden opgegeven, maar alleen zonder
-    /// veldselectie (<c>{ "naam": [] }</c>), en wordt dan ongewijzigd en volledig teruggegeven.
+    /// Registers <paramref name="name"/> on <typeparamref name="TParent"/> as an <b>opaque</b> expand (for instance external JSON of unknown
+    /// shape). It can only be requested as a whole (<c>{ "name": [] }</c>), and is then returned unchanged.
     /// </summary>
     public FieldsSchemaBuilder OpaqueEntity<TParent>(string name)
     {
@@ -191,7 +190,7 @@ public sealed class FieldsSchemaBuilder
 
     public FieldsSchema Build()
     {
-        // Note: een naam is óf een entiteit met een bekende vorm óf ondoorzichtig; allebei zou stilzwijgend de opaque-regel laten winnen.
+        // Note: a name is either an entity with a known shape or opaque; both would silently let the opaque rule win.
         foreach (var (parent, names) in _opaqueEntities)
         {
             if (_entities.TryGetValue(parent, out var known) && names.FirstOrDefault(known.ContainsKey) is { } conflict)

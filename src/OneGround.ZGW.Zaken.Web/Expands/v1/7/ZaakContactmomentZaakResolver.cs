@@ -8,14 +8,9 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaak" expand path on a ZAAKCONTACTMOMENT. Mirrors
-/// <see cref="RolZaakResolver"/>/<see cref="ZaakObjectZaakResolver"/>: the ZAAK lives in this same
-/// service, so this goes through the existing <c>GetZaakQuery</c> via MediatR rather than a
-/// ServiceAgent. It is fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list. ZAAK is a required
-/// (non-nullable) field on ZAAKCONTACTMOMENT -- same as on ROL/ZAAKOBJECT -- but both of those still
-/// guard a null/empty value defensively rather than fail loudly, so this resolver matches that for
-/// consistency. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object)
-/// instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// Resolves the "zaak" expand path on a ZAAKCONTACTMOMENT. The ZAAK lives in this service, so it is fetched through <see cref="IZaakLookup"/>
+/// (at most once per request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null
+/// (the ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// </summary>
 public class ZaakContactmomentZaakResolver : IExpandResolver<ZaakContactmomentResponseDto>
 {

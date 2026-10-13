@@ -17,18 +17,12 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaakinformatieobjecten" expand path on a ZAAK. Like
-/// <see cref="ZaakRollenResolver"/>/<see cref="ZaakZaakObjectenResolver"/>, opens a fresh DI scope per
-/// ZAAK before querying (its handler creates a PostgreSQL temp table for row-level authorization --
-/// see ZaakRollenResolver's own remarks). Unlike the other list resolvers, the raw
-/// ZRC-side rows aren't the final answer: a ZAAKINFORMATIEOBJECT must also be confirmed by DRC's own
-/// authorization model (<see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>),
-/// replicating the old v1._5 ZaakInformatieObjectenExpander's filter. Uses the v1._7
-/// UserAccount-authenticated agent (not the ServiceAccount-authenticated plain v1._7 one, nor the
-/// obsolete v1._5 one) so that authorization check reflects the real calling client.
-/// "...informatieobject.informatieobjecttype" is forwarded to
-/// <see cref="ZaakInformatieObjectInformatieObjectResolver"/> via <see cref="AdditionalPaths"/>; no
-/// "...catalogus" sibling (a 4th nesting level would exceed the VNG ZGW spec's 3-level expand cap).
+/// Resolves the "zaakinformatieobjecten" expand path on a ZAAK. Like <see cref="ZaakRollenResolver"/>, every call opens its own DI scope (the
+/// handler can create a PostgreSQL TEMPORARY TABLE). The ZRC rows are not the final answer: each ZAAKINFORMATIEOBJECT must also be confirmed by
+/// the authorization of DRC (<see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>), as the v1.5 expander does. The
+/// user-authenticated agent is used so that check reflects the real calling client.
+/// "...informatieobject.informatieobjecttype" is forwarded to <see cref="ZaakInformatieObjectInformatieObjectResolver"/>; "...catalogus" is not
+/// offered (3-level expand cap of the VNG ZGW spec).
 /// </summary>
 public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDto>
 {

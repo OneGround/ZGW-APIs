@@ -75,10 +75,8 @@ public sealed class VariantTwoDto
     public string Twee { get; set; }
 }
 
-// [JsonProperty] zonder expliciete naam (zoals BetrokkeneIdentificatie op de echte Rol-subtype
-// DTO's): Newtonsoft valt dan terug op de camelCased member-naam via de contract resolver
-// (CamelCasePropertyNamesContractResolver, de ASP.NET Core Newtonsoft-default). FieldProjector moet
-// diezelfde val-terug repliceren in plaats van een null JsonPropertyName als sleutel te gebruiken.
+// [JsonProperty] without an explicit name (like BetrokkeneIdentificatie on the Rol subtype DTOs): Newtonsoft falls back to the camelCased
+// member name (CamelCasePropertyNamesContractResolver, the ASP.NET Core default). FieldProjector must replicate that fallback.
 public sealed class NamelessJsonPropertyDto
 {
     [JsonProperty(Order = 1000)]

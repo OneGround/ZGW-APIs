@@ -12,37 +12,19 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "hoofdzaak" expand path on a ZAAK. Like <see cref="ZaakStatusResolver"/>, the
-/// HOOFDZAAK lives in this same service, so this goes through the existing <c>GetZaakQuery</c> via
-/// MediatR rather than a ServiceAgent. It is fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list (same
-/// known trade-off as RolZaakResolver/ZaakObjectZaakResolver/ZaakInformatieObjectZaakResolver). Unlike
-/// status/resultaat though, HOOFDZAAK is a reference to a DIFFERENT ZAAK with its own independent
-/// authorization check -- a HOOFDZAAK that is not available to the caller (NotFound/Forbidden)
-/// resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, like the old v1._5 HoofdZaakExpander did (see
-/// <see cref="ExpandQueryStatus"/>).
+/// Resolves the "hoofdzaak" expand path on a ZAAK. Like <see cref="ZaakStatusResolver"/> it goes through <c>GetZaakQuery</c> via MediatR,
+/// fetched through <see cref="IZaakLookup"/> (at most once per request), not batched across a list. A HOOFDZAAK is a different ZAAK with its
+/// own authorization check: one that is not available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an
+/// empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// <para>
-/// Reuses the ALREADY-REGISTERED <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>
-/// itself to resolve "hoofdzaak.*" nested paths on the fetched hoofdzaak -- the exact same resolvers
-/// (<see cref="ZaakTypeResolver"/>, <see cref="ZaakStatusResolver"/>, <see cref="ZaakRollenResolver"/>,
-/// etc.) already used for the top-level ZAAK, no duplication. That engine is injected as a
-/// <see cref="Lazy{T}"/> rather than directly, because the engine's own construction resolves every
-/// registered <see cref="IExpandResolver{TEntity}"/> of <see cref="ZaakResponseDto"/> -- including this
-/// resolver itself, so a direct constructor dependency would be circular; <see cref="Lazy{T}"/> defers
-/// that resolution until <c>.Value</c> is first touched, by which point construction has finished.
-/// The nested "hoofdzaak.*" tuples themselves come from <see cref="ZaakSelfReferenceExpandPaths"/>,
-/// shared with <see cref="ZaakDeelzakenResolver"/> (the exact same nested graph, just under a different
-/// root path) so the two can't silently drift apart.
+/// The nested "hoofdzaak.*" paths are resolved by the registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>, so
+/// no resolver is duplicated. That engine is injected as <see cref="Lazy{T}"/> because its own construction resolves every
+/// <see cref="IExpandResolver{TEntity}"/> of <see cref="ZaakResponseDto"/>, this one included: a direct dependency would be circular.
+/// The paths come from <see cref="ZaakSelfReferenceExpandPaths"/>, shared with <see cref="ZaakDeelzakenResolver"/>.
 /// </para>
 /// <para>
-/// "hoofdzaak.deelzaken.zaaktype"/"...status"/"...resultaat" are ALSO supported, one level deeper still
-/// -- see <see cref="ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder"/> for why this is narrower than
-/// the rest of the "hoofdzaak.*" graph and why "hoofdzaak.deelzaken" needs to be declared explicitly too.
-/// No extra dispatch code is needed for this here: <see cref="ZaakDeelzakenResolver"/> (Path
-/// "deelzaken") is itself one of this same reused <see cref="ExpandEngine{TEntity}"/>'s registrations,
-/// so forwarding "deelzaken"/"deelzaken.zaaktype"/etc. to it (after this resolver's own
-/// "hoofdzaak."-prefix stripping) dispatches straight to it, which in turn forwards its own
-/// "zaaktype"/"status"/"resultaat" children the exact same way it already does for the top-level
-/// "deelzaken" expand.
+/// "hoofdzaak.deelzaken.*" is supported one level deeper, see <see cref="ZaakSelfReferenceExpandPaths.BuildDeelzakenUnder"/>; the
+/// registered <see cref="ZaakDeelzakenResolver"/> handles it, so no dispatch code is needed here.
 /// </para>
 /// </summary>
 public class ZaakHoofdzaakResolver : IExpandResolver<ZaakResponseDto>

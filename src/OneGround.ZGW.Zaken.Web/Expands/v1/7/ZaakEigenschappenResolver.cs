@@ -10,27 +10,16 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "eigenschappen" expand path on a ZAAK. Like <see cref="ZaakRollenResolver"/>/
-/// <see cref="ZaakZaakObjectenResolver"/>, this is a collection: it short-circuits on
-/// <see cref="ZaakResponseDto"/>'s existing "Eigenschappen" URL-list field before querying.
+/// Resolves the "eigenschappen" expand path on a ZAAK. Like <see cref="ZaakRollenResolver"/> it is a collection and it short-circuits on the
+/// "Eigenschappen" url list of <see cref="ZaakResponseDto"/>. NotFound/Forbidden of the query resolve to an empty list, see
+/// <see cref="ExpandQueryStatus"/>.
 /// <para>
-/// Unlike those two (and unlike <see cref="ZaakZaakContactmomentenResolver"/>), this does NOT open a
-/// fresh DI scope per ZAAK: <c>GetAllZaakEigenschappenQueryHandler</c> authorizes with a plain
-/// <c>IsAuthorized(zaak)</c> check, not the TempZaakAuthorization temp-table pattern those other
-/// handlers use, so there is no risk in reusing the request-scoped IMediator/DbContext across every
-/// ZAAK in a list response.
+/// Unlike <see cref="ZaakRollenResolver"/>, no DI scope per ZAAK: the handler authorizes with a plain <c>IsAuthorized(zaak)</c> and creates no
+/// temp table, so the request-scoped IMediator can be reused.
 /// </para>
 /// <para>
-/// "eigenschappen.eigenschap" is declared via <see cref="AdditionalPaths"/> rather than as its own
-/// dispatched resolver -- same reasoning as ZaakRollenResolver's "rollen.roltype": once the
-/// ZAAKEIGENSCHAP list is built, this resolver hands it to the already-registered
-/// <see cref="ExpandEngine{TEntity}"/> (for <c>ZaakEigenschapResponseDto</c> -- the same instance that
-/// powers the ZAAKEIGENSCHAP resource's own "expand=eigenschap") via its <c>ResolveListAsync</c>.
-/// </para>
-/// <para>
-/// <c>GetAllZaakEigenschappenQuery</c> is one of the few list queries that can answer with a non-OK status (NotFound or
-/// Forbidden, without a result), so that status is checked: NotFound/Forbidden (the ZAAK is not available to the caller) resolve to an
-/// empty list, see <see cref="ExpandQueryStatus"/>.
+/// "eigenschappen.eigenschap" is an <see cref="AdditionalPaths"/> entry: the built list is handed to the registered
+/// <see cref="ExpandEngine{TEntity}"/> of <c>ZaakEigenschapResponseDto</c>, as <see cref="ZaakRollenResolver"/> does for "rollen.roltype".
 /// </para>
 /// </summary>
 public class ZaakEigenschappenResolver : IExpandResolver<ZaakResponseDto>

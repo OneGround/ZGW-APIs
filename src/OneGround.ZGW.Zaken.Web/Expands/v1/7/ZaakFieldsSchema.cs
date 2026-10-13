@@ -9,8 +9,8 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Bouwt het schema waartegen de <c>fields</c> selectie van POST /zaken/_zoek wordt gevalideerd.
-/// De geneste sub-entiteiten volgen de DTO-graaf zoals het expand-mechanisme die ondersteunt.
+/// Builds the schema that the <c>fields</c> selection of POST /zaken/_zoek is validated against. The nested entities follow the DTO graph
+/// that the expand mechanism supports.
 /// </summary>
 public static class ZaakFieldsSchema
 {

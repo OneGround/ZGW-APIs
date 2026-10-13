@@ -13,24 +13,15 @@ using OneGround.ZGW.Zaken.DataModel;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "status" expand path on a ZAAKINFORMATIEOBJECT. Mirrors
-/// <see cref="ZaakInformatieObjectZaakResolver"/>: the STATUS lives in this same service, so this goes
-/// through the existing <c>GetZaakStatusQuery</c> via MediatR rather than a ServiceAgent. "status" is
-/// an optional field on ZAAKINFORMATIEOBJECT, hence the null-guard. A STATUS that is not available to the caller (NotFound/Forbidden)
-/// resolves to null (the ExpandEngine makes that an empty object) instead of failing the request, see
-/// <see cref="ExpandQueryStatus"/>. "status.statustype" is forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of
-/// <see cref="StatusResponseDto"/> itself (the same <see cref="StatusStatusTypeResolver"/> used for the
-/// top-level STATUS) -- no duplication.
+/// Resolves the "status" expand path on a ZAAKINFORMATIEOBJECT through <c>GetZaakStatusQuery</c> (like
+/// <see cref="ZaakInformatieObjectZaakResolver"/>). "status" is optional on a ZAAKINFORMATIEOBJECT, hence the null guard. A STATUS that is not
+/// available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty object) instead of failing the request,
+/// see <see cref="ExpandQueryStatus"/>. "status.statustype" is forwarded to the registered <see cref="ExpandEngine{TEntity}"/> of
+/// <see cref="StatusResponseDto"/>.
 /// <para>
-/// Unlike the "zaak.zaaktype" resolvers (where <see cref="Lazy{T}"/> is purely a construction-cost
-/// optimization, since no real cycle exists there), this one is genuinely circular and
-/// <see cref="Lazy{T}"/> is REQUIRED, not optional: <see cref="ExpandEngine{TEntity}"/> of
-/// <see cref="StatusResponseDto"/> depends on <see cref="StatusZaakInformatieObjectenResolver"/>, which
-/// has an eager (non-<see cref="Lazy{T}"/>) dependency on <see cref="ExpandEngine{TEntity}"/> of
-/// <see cref="ZaakInformatieObjectResponseDto"/>, which in turn depends on this resolver -- closing the
-/// loop back to <see cref="StatusResponseDto"/>'s own engine. Changing this constructor parameter to a
-/// plain (non-lazy) <c>ExpandEngine&lt;StatusResponseDto&gt;</c> would make that cycle real and throw a
-/// DI "circular dependency" exception the first time either engine is resolved.
+/// Note: <see cref="Lazy{T}"/> is required here (not just a construction-cost optimization): the engine of <see cref="StatusResponseDto"/>
+/// depends on <see cref="StatusZaakInformatieObjectenResolver"/>, which depends on the engine of <see cref="ZaakInformatieObjectResponseDto"/>,
+/// which depends on this resolver. A direct dependency makes that cycle real and fails with a DI circular dependency exception.
 /// </para>
 /// </summary>
 public class ZaakInformatieObjectStatusResolver : IExpandResolver<ZaakInformatieObjectResponseDto>

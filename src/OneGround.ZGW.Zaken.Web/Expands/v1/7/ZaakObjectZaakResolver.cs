@@ -10,16 +10,13 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "zaak" expand path on a ZAAKOBJECT. Mirrors <see cref="RolZaakResolver"/>: the ZAAK lives in this same service, so
-/// this goes through the existing <c>GetZaakQuery</c> via MediatR rather than a ServiceAgent. It is fetched through <see cref="IZaakLookup"/> (at
-/// most once per request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null (the
-/// ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// Resolves the "zaak" expand path on a ZAAKOBJECT. The ZAAK lives in this service, so it is fetched through <see cref="IZaakLookup"/>
+/// (at most once per request), not batched across a list. A ZAAK that is not available to the caller (NotFound/Forbidden) resolves to null
+/// (the ExpandEngine makes that an empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>.
 /// <para>
-/// "zaak.zaaktype" is forwarded to the already-registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/> itself (the same
-/// <see cref="ZaakTypeResolver"/> used for the top-level ZAAK) -- no duplication. That engine is injected as <see cref="Lazy{T}"/> purely to
-/// avoid constructing the entire ZAAK expand-resolver graph on every request to this resource. Unlike <see cref="ZaakHoofdzaakResolver"/>, which
-/// is one of that engine's own resolvers and needs <see cref="Lazy{T}"/> to avoid a circular dependency, this resolver is not, so there is no
-/// circularity here. Deliberately not forwarding further to "zaak.zaaktype.catalogus" -- out of scope for this increment.
+/// "zaak.zaaktype" is forwarded to the registered <see cref="ExpandEngine{TEntity}"/> of <see cref="ZaakResponseDto"/>, injected as
+/// <see cref="Lazy{T}"/> only to avoid constructing the whole ZAAK resolver graph on every request to this resource (there is no cycle here,
+/// unlike <see cref="ZaakHoofdzaakResolver"/>). "zaak.zaaktype.catalogus" is not supported.
 /// </para>
 /// </summary>
 public class ZaakObjectZaakResolver : IExpandResolver<ZaakObjectResponseDto>

@@ -9,14 +9,10 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
-/// Resolves the top-level "resultaat" expand path on a ZAAK. Same reasoning as
-/// <see cref="ZaakStatusResolver"/>: the RESULTAAT lives in this same service, so this goes through
-/// the existing <c>GetZaakResultaatQuery</c> via MediatR rather than a ServiceAgent, and is
-/// deliberately not cached or batched across a list. Does not itself expand
-/// "resultaat.zaak"/"resultaat.resultaattype" -- see <see cref="ZaakResultaatResultaatTypeResolver"/>
-/// for the latter. A RESULTAAT that is not available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an empty
-/// object)
-/// instead of failing the request, see <see cref="ExpandQueryStatus"/>.
+/// Resolves the "resultaat" expand path on a ZAAK through <c>GetZaakResultaatQuery</c> (like <see cref="ZaakStatusResolver"/>), not cached or
+/// batched across a list. A RESULTAAT that is not available to the caller (NotFound/Forbidden) resolves to null (the ExpandEngine makes that an
+/// empty object) instead of failing the request, see <see cref="ExpandQueryStatus"/>. "resultaat.resultaattype" is resolved by
+/// <see cref="ZaakResultaatResultaatTypeResolver"/>.
 /// </summary>
 public class ZaakResultaatResolver : IExpandResolver<ZaakResponseDto>
 {

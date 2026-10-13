@@ -13,8 +13,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <see cref="RolRolTypeResolver"/>: a remote ZTC lookup through the decorator, cached per url. Unlike
 /// ROL's RolType (required per the VNG spec), ZAAKOBJECT's ZaakObjectType is optional, so a null/empty
 /// value must resolve to null without calling the ZTC -- the old (v1._5) ZaakObjectenExpander already
-/// guards this the same way. Skipping this guard produced a production 502 ("Externe service 'ZTC' niet
-/// beschikbaar") for any ZAAKOBJECT without one.
+/// guards this the same way. Without the guard, a ZAAKOBJECT without one failed the request with a 502.
 /// </summary>
 public class ZaakObjectZaakObjectTypeResolver : IExpandResolver<ZaakObjectResponseDto>
 {

@@ -10,29 +10,23 @@ using OneGround.ZGW.Common.ServiceAgent.Expands;
 namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 
 /// <summary>
-/// This class intercepts calls to the Catalogi service agent and wraps exceptions in an <see cref="ExpandExternalServiceException"/>.
+/// Intercepts calls to the Catalogi service agent and wraps exceptions in an <see cref="ExpandExternalServiceException"/>.
 /// <para>
 /// Expands must be evaluated by ZTC as the calling client. The first call of a request therefore goes through the
 /// <see cref="IUserAuthCatalogiServiceAgent"/> (the caller's own token, no response cache). ZTC authorizes every read the same way (the scope
-/// <c>catalogi.lezen</c> and the RSIN, nothing per object), so once ZTC has accepted the caller, the remaining calls of that request are made
-/// through the <see cref="ICatalogiServiceAgent"/> (v1.3). The HTTP pipeline of that agent has the <c>CachingHandler</c>: the distributed (Redis)
-/// response cache, keyed by RSIN, url and API version, which keeps an entry for a few hours. It is the very same cache, with the same entries,
-/// that the v1.5 expands use. That way a request normally costs one uncached ZTC call, without a caller who may not read ZTC ever being served
-/// from that cache. A call that fails does not count as accepted, so the next call tries the caller's agent again (and a request whose first
-/// calls fail keeps making uncached calls as the caller until one succeeds).
+/// <c>catalogi.lezen</c> and the RSIN, nothing per object), so once ZTC has accepted the caller, the remaining calls of that request go
+/// through the <see cref="ICatalogiServiceAgent"/> (v1.3), whose pipeline has the distributed (Redis) response cache, shared with the v1.5
+/// expands. A call that fails does not count as accepted, so the next call tries the caller's agent again.
 /// </para>
 /// <para>
-/// The shared agent works with this backend's own credential for the RSIN. If ZTC refuses that (401/403, e.g. no ZTC secret is configured for
-/// the RSIN) after it did accept the caller, the call is repeated as the caller: ZTC has already shown that the caller may read it.
+/// The shared agent uses this backend's own credential for the RSIN. If ZTC refuses that (401/403) after it accepted the caller, the call is
+/// repeated as the caller.
 /// </para>
 /// <para>
-/// Two cache layers, with different jobs: in front of this class the resolvers keep a cache per request (<c>IGenericCache</c>, in memory), so
-/// the same url reaches this class at most once per request (100 zaken with the same zaaktype are one call); the Redis cache behind it is the
-/// layer between requests.
+/// Unlike a reference to an entity of the own service (see <c>ExpandQueryStatus</c>), a failure of ZTC is never left out of the expand, a 404
+/// included: a reference to a type that ZTC does not know is inconsistent data, and an expand must not hide that.
 /// </para>
-/// <para>
 /// Registered scoped: the "accepted" state lives for one request (one caller).
-/// </para>
 /// </summary>
 public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorator
 {
