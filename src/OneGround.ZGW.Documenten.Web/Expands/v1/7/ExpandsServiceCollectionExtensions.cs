@@ -4,10 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Contracts;
+using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
+using OneGround.ZGW.Documenten.DataModel;
 
 namespace OneGround.ZGW.Documenten.Web.Expands.v1._7;
 
@@ -62,6 +64,8 @@ public static partial class ExpandsServiceCollectionExtensions
         // verwijderd wordt (zie de TODO bij de aanroep in Startup.cs).
         services.AddScoped<IGenericCache<EnkelvoudigInformatieObjectGetResponseDto>, GenericCache<EnkelvoudigInformatieObjectGetResponseDto>>();
         services.AddScoped<IGenericCache<InformatieObjectTypeResponseDto>, GenericCache<InformatieObjectTypeResponseDto>>();
+        // Note: per request, so a list filtered on one informatieobject fetches that document once
+        services.AddScoped<IGenericCache<QueryResult<EnkelvoudigInformatieObject>>, GenericCache<QueryResult<EnkelvoudigInformatieObject>>>();
     }
 
     /// <summary>
@@ -77,7 +81,8 @@ public static partial class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<TEntity>>(sp => new InformatieObjectResolver<TEntity>(
             sp,
             sp.GetRequiredService<IEntityUriService>(),
-            informatieObjectUrl
+            informatieObjectUrl,
+            sp.GetRequiredService<IGenericCache<QueryResult<EnkelvoudigInformatieObject>>>()
         ));
         services.AddScoped<IExpandResolver<TEntity>, InformatieObjectTypeResolver<TEntity>>();
         services.AddScoped<IExpandResolver<TEntity>>(_ => new InformatieObjectTypeCatalogusResolver<TEntity>(
