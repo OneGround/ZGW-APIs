@@ -8,6 +8,7 @@ using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Common.Constants;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -20,7 +21,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// </summary>
 public class ZaakInformatieObjectInformatieObjectResolver : IExpandResolver<ZaakInformatieObjectResponseDto>
 {
-    private const string ServiceName = "DRC";
+    private const string ServiceName = ServiceRoleName.DRC;
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
     private readonly IMapper _mapper;
     private readonly ExpandEngine<EnkelvoudigInformatieObjectGetResponseDto> _informatieObjectExpandEngine;
