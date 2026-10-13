@@ -49,6 +49,18 @@ public static class HttpContextExtensions
         return acceptCrsHeader;
     }
 
+    // The SRID belonging to the Accept-Crs header, or null when the header is missing or not one of the supported CRSs.
+    public static int? TryGetAcceptCrsSrid(this HttpContext httpContext)
+    {
+        return httpContext?.GetAcceptCrsHeader() switch
+        {
+            "EPSG:4326" => 4326,
+            "EPSG:28992" => 28992,
+            "EPSG:4937" => 4937,
+            _ => null,
+        };
+    }
+
     // "Content-Crs":
     //  Het 'Coordinate Reference System' (CRS) van de geometrie in de vraag (request body).
     //  Volgens de GeoJSON spec is WGS84 de default (EPSG:4326 is hetzelfde als WGS84).

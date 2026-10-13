@@ -474,6 +474,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
@@ -512,6 +513,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> GetAllZaakAuditTrailRegelsAsync(Guid zaak_uuid)
     {
         _logger.LogDebug("{ControllerMethod} called with {@ZaakUuid}", nameof(GetAllZaakAuditTrailRegelsAsync), zaak_uuid);
@@ -550,6 +552,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> GetZaakAuditTrailRegelAsync(Guid zaak_uuid, Guid uuid)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", nameof(GetZaakAuditTrailRegelAsync), zaak_uuid, uuid);
@@ -585,6 +588,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> GetAllZaakBesluitenAsync(Guid zaak_uuid)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}", nameof(GetAllZaakBesluitenAsync), zaak_uuid);
@@ -640,6 +644,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> AddZaakBesluitenAsync(Guid zaak_uuid, [FromBody] ZaakBesluitRequestDto zaakBesluitRequest)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {@FromBody}", nameof(AddZaakBesluitenAsync), zaak_uuid, zaakBesluitRequest);
@@ -677,6 +682,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> GetZaakBesluitAsync(Guid zaak_uuid, Guid uuid)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", nameof(GetZaakBesluitAsync), zaak_uuid, uuid);
@@ -728,6 +734,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> DeleteZaakBesluitAsync(Guid zaak_uuid, Guid uuid)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", nameof(DeleteZaakBesluitAsync), zaak_uuid, uuid);
@@ -808,6 +815,7 @@ public class ZakenController : ZGWControllerBase
     [ZgwApiVersion(Api.LatestVersion_1_0)]
     [ZgwApiVersion(Api.LatestVersion_1_2)]
     [ZgwApiVersion(Api.LatestVersion_1_5)]
+    [ZgwApiVersion(Api.LatestVersion_1_7)]
     public async Task<IActionResult> AddZaakEigenschapAsync(Guid zaak_uuid, [FromBody] ZaakEigenschapRequestDto zaakEigenschapRequest)
     {
         _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {@FromBody}", nameof(AddZaakEigenschapAsync), zaak_uuid, zaakEigenschapRequest);

@@ -5,8 +5,8 @@ namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
 public static class FieldsParser
 {
-    // Begrenst de nesting-diepte van een veldpad zodat een diep gepunt pad geen onbeperkte
-    // recursie (en uiteindelijk een StackOverflow) in parser/validator/projector kan veroorzaken.
+    // Limits the nesting depth of a field path so that a deep dotted path cannot cause unbounded
+    // recursion (and eventually a StackOverflow) in the parser/validator/projector.
     private const int MaxPathDepth = 20;
 
     public static (FieldSelection Selection, List<string> ExpandPaths, string Error) ParseAndValidate(JToken fieldsToken)
@@ -27,9 +27,9 @@ public static class FieldsParser
         return (selection, expandPaths, null);
     }
 
-    // Begrenst ook de nesting-diepte van geneste `{ "naam": [...] }`-objecten, om dezelfde reden als
-    // MaxPathDepth hierboven: zonder limiet kan een kwaadwillend diep-geneste 'fields' JSON-array
-    // onbeperkte recursie (en een StackOverflow) veroorzaken, los van de lengte van een los veldpad.
+    // Also limits the nesting depth of nested `{ "name": [...] }` objects, for the same reason as
+    // MaxPathDepth above: without a limit a maliciously deeply nested 'fields' JSON array can cause
+    // unbounded recursion (and a StackOverflow), regardless of the length of a single field path.
     private static (FieldSelection Result, string Error) ParseArray(JArray array, string prefix, int depth)
     {
         if (depth > MaxPathDepth)
@@ -76,10 +76,10 @@ public static class FieldsParser
     }
 
     /// <summary>
-    /// Voegt een (mogelijk gepunt) veldpad toe aan <paramref name="selection"/>. Een pad zonder
-    /// punt is een scalair veld (of <c>*</c> voor alle scalairen); een pad met punt daalt af in een
-    /// inline genest object (<see cref="FieldSelection.NestedObjects"/>) en werkt zo recursief voor
-    /// <c>a.b.c</c> en <c>verlenging.*</c>. Retourneert een foutmelding bij een leeg segment, anders <c>null</c>.
+    /// Adds a (possibly dotted) field path to <paramref name="selection"/>. A path without a
+    /// dot is a scalar field (or <c>*</c> for all scalars); a path with a dot descends into an
+    /// inline nested object (<see cref="FieldSelection.NestedObjects"/>) and so works recursively for
+    /// <c>a.b.c</c> and <c>extension.*</c>. Returns an error message for an empty segment, otherwise <c>null</c>.
     /// </summary>
     private static string AddPath(FieldSelection selection, string path, string prefix)
     {
