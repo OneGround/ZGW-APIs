@@ -6,6 +6,7 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Caching;
+using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Expands;
@@ -26,7 +27,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// </summary>
 public class ZaakZaakInformatieObjectenResolver : IExpandResolver<ZaakResponseDto>
 {
-    private const string ServiceName = "DRC";
+    private const string ServiceName = ServiceRoleName.DRC;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
     private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
