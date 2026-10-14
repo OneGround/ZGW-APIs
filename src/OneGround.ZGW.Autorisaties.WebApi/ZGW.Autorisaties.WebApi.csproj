@@ -20,5 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Autorisaties.Web\ZGW.Autorisaties.Web.csproj" />
+    <InternalsVisibleTo Include="OneGround.ZGW.Autorisaties.WebApi.IntegrationTests" />
   </ItemGroup>
 </Project>
