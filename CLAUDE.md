@@ -90,7 +90,7 @@ Each API is split into projects with a fixed dependency direction:
 
 ## Key tech
 
-MediatR (CQRS), FluentValidation, Mapster, EF Core 8 + Npgsql, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
+MediatR (CQRS), FluentValidation, Mapster, EF Core 10 + Npgsql 10, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
 
 ## Further docs
 
