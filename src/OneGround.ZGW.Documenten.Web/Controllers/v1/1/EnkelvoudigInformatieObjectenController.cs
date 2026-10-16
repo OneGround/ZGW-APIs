@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -484,7 +483,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             }
         );
 
-        var cd = new ContentDisposition { FileName = HttpUtility.UrlPathEncode(enkelvoudigInformatieObjectVersie.Bestandsnaam) };
+        var cd = new ContentDisposition { FileName = Uri.EscapeDataString(enkelvoudigInformatieObjectVersie.Bestandsnaam ?? string.Empty) };
 
         Response.Headers.ContentDisposition = cd.ToString();
         Response.Headers.XContentTypeOptions = "nosniff";
