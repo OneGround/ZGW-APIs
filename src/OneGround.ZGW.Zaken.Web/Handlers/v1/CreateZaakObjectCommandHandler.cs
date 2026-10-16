@@ -71,6 +71,7 @@ class CreateZaakObjectCommandHandler
             !_authorizationContext.IsAuthorized(
                 zaak.Zaaktype,
                 zaak.VertrouwelijkheidAanduiding,
+                AuthorizationScopes.Zaken.Create,
                 AuthorizationScopes.Zaken.Update,
                 AuthorizationScopes.Zaken.ForcedUpdate
             )
