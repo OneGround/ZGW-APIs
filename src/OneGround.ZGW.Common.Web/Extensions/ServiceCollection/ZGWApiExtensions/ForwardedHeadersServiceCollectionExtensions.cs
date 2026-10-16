@@ -10,6 +10,10 @@ namespace OneGround.ZGW.Common.Web.Extensions.ServiceCollection.ZGWApiExtensions
 
 public static class ForwardedHeadersServiceCollectionExtensions
 {
+    // An IPv4 address is 32 bits long and an IPv6 address is 128 bits long, so a CIDR prefix length can't exceed that.
+    private const int IPv4MaxPrefixLength = 32;
+    private const int IPv6MaxPrefixLength = 128;
+
     public static IServiceCollection ConfigureForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ForwardedHeadersOptions>(options =>
@@ -25,13 +29,12 @@ public static class ForwardedHeadersServiceCollectionExtensions
                 foreach (var network in knownNetworks)
                 {
                     var parts = network.Split('/');
-
                     if (
                         parts.Length == 2
                         && IPAddress.TryParse(parts[0], out var ipAddress)
                         && int.TryParse(parts[1], out var prefixLength)
                         && prefixLength >= 0
-                        && prefixLength <= (ipAddress.AddressFamily == AddressFamily.InterNetwork ? 32 : 128)
+                        && prefixLength <= GetMaxPrefixLength(ipAddress)
                     )
                     {
                         options.KnownIPNetworks.Add(new System.Net.IPNetwork(ipAddress, prefixLength));
@@ -63,4 +66,7 @@ public static class ForwardedHeadersServiceCollectionExtensions
 
         return services;
     }
+
+    private static int GetMaxPrefixLength(IPAddress ipAddress) =>
+        ipAddress.AddressFamily == AddressFamily.InterNetwork ? IPv4MaxPrefixLength : IPv6MaxPrefixLength;
 }
