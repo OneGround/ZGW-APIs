@@ -12,7 +12,7 @@ public class RemoveApiVersionHeaderOperationFilter : IOperationFilter
             return;
 
         var apiVer = operation.Parameters.SingleOrDefault(p =>
-            p.In == ParameterLocation.Header && p.Name.Equals("api-version", System.StringComparison.CurrentCultureIgnoreCase)
+            p.In == ParameterLocation.Header && string.Equals(p.Name, "api-version", System.StringComparison.OrdinalIgnoreCase)
         );
         if (apiVer != null)
         {

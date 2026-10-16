@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +26,13 @@ public static class ForwardedHeadersServiceCollectionExtensions
                 {
                     var parts = network.Split('/');
 
-                    if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var ipAddress) && int.TryParse(parts[1], out var prefixLength))
+                    if (
+                        parts.Length == 2
+                        && IPAddress.TryParse(parts[0], out var ipAddress)
+                        && int.TryParse(parts[1], out var prefixLength)
+                        && prefixLength >= 0
+                        && prefixLength <= (ipAddress.AddressFamily == AddressFamily.InterNetwork ? 32 : 128)
+                    )
                     {
                         options.KnownIPNetworks.Add(new System.Net.IPNetwork(ipAddress, prefixLength));
                     }

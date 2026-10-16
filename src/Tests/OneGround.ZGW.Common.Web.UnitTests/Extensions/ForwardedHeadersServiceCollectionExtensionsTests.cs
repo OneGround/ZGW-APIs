@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -38,6 +39,19 @@ public class ForwardedHeadersServiceCollectionExtensionsTests
         var network = Assert.Single(options.KnownIPNetworks);
         Assert.True(network.Contains(IPAddress.Parse("10.9.9.9")));
         Assert.False(network.Contains(IPAddress.Parse("11.0.0.1")));
+    }
+
+    [Theory]
+    [InlineData("10.0.0.0/33")]
+    [InlineData("10.0.0.0/-1")]
+    [InlineData("fd00::/129")]
+    [InlineData("10.0.0.0")]
+    public void ConfigureForwardedHeaders_rejects_invalid_known_network_with_descriptive_error(string configured)
+    {
+        var exception = Assert.Throws<FormatException>(() => ResolveOptions(configured));
+
+        Assert.Contains("ForwardedHeaders:KnownNetworks", exception.Message);
+        Assert.Contains(configured, exception.Message);
     }
 
     private static ForwardedHeadersOptions ResolveOptions(params string[] knownNetworks)

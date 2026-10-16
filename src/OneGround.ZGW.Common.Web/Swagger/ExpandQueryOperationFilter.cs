@@ -20,7 +20,7 @@ public class ExpandQueryOperationFilter : IOperationFilter
         operation.Parameters ??= [];
 
         var expand = operation.Parameters.SingleOrDefault(p =>
-            p.In == ParameterLocation.Query && p.Name.Equals("expand", System.StringComparison.CurrentCultureIgnoreCase)
+            p.In == ParameterLocation.Query && string.Equals(p.Name, "expand", System.StringComparison.OrdinalIgnoreCase)
         );
         if (expand != null)
         {
