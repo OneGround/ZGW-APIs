@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using OneGround.ZGW.Common.Web.Middleware;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -27,7 +27,7 @@ public class RequiresContentCrsHeaderOperationFilter : IOperationFilter
                 Description =
                     "Het 'Coordinate Reference System' (CRS) van de geometrie in de vraag (request body). Volgens de GeoJSON spec is WGS84 de default (EPSG:4326 is hetzelfde als WGS84).\r\n\r\nAvailable values : EPSG:4326.",
                 Required = false,
-                Schema = new OpenApiSchema { Type = "string" },
+                Schema = new OpenApiSchema { Type = JsonSchemaType.String },
             }
         );
     }

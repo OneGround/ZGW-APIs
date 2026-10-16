@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using NetTopologySuite.Geometries;
 using OneGround.ZGW.Common.Extensions;
 using OneGround.ZGW.Common.Web.Swagger;
@@ -58,7 +58,7 @@ public static class SwaggerServiceCollectionExtensions
         services.AddSwaggerGen(x =>
         {
             // TODO: We have to make an OpenApi schema later. But it works for now
-            x.MapType<Geometry>(() => new OpenApiSchema { Type = "object" });
+            x.MapType<Geometry>(() => new OpenApiSchema { Type = JsonSchemaType.Object });
 
             x.CustomOperationIds(SwaggerCustomOperationIdsSelector.OperationIdSelector);
             x.CustomSchemaIds(DefaultSchemaIdSelector);
@@ -86,15 +86,10 @@ public static class SwaggerServiceCollectionExtensions
             }
 
             x.AddSecurityDefinition(SwaggerSecurityDefinitions.JWTBearerToken.Name, SwaggerSecurityDefinitions.JWTBearerToken.Scheme);
-            x.AddSecurityRequirement(
-                new OpenApiSecurityRequirement()
-                {
-                    {
-                        new OpenApiSecurityScheme { Reference = SwaggerSecurityDefinitions.JWTBearerToken.Reference },
-                        new List<string>()
-                    },
-                }
-            );
+            x.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+            {
+                { SwaggerSecurityDefinitions.JWTBearerToken.CreateReference(document), new List<string>() },
+            });
 
             var xmlFile = $"{ApplicationInformation.GetName()}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
