@@ -106,9 +106,7 @@ public class ZaakRollenController : ZGWControllerBase
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakRollenPageSize));
         var filter = _mapper.Map<GetAllZaakRollenFilter>(queryParameters);
 
-        var result = await _mediator.Send(
-            new OneGround.ZGW.Zaken.Web.Handlers.v1._5.GetAllZaakRolQuery { GetAllZaakRolFilter = filter, Pagination = pagination }
-        );
+        var result = await _mediator.Send(new Handlers.v1._5.GetAllZaakRolQuery { GetAllZaakRolFilter = filter, Pagination = pagination });
 
         if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
         {

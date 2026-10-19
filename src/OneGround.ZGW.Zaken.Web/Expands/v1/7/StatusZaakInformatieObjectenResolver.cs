@@ -5,14 +5,7 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Common.Caching;
-using OneGround.ZGW.Common.Constants;
-using OneGround.ZGW.Common.ServiceAgent;
-using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Expands;
-using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
@@ -27,25 +20,19 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// </summary>
 public class StatusZaakInformatieObjectenResolver : IExpandResolver<StatusResponseDto>
 {
-    private const string ServiceName = ServiceRoleName.DRC;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
-    private readonly IUserAuthDocumentenServiceAgent _documentenServiceAgent;
+
     private readonly ExpandEngine<ZaakInformatieObjectResponseDto> _zaakInformatieObjectExpandEngine;
-    private readonly IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> _objectInformatieObjectenCache;
 
     public StatusZaakInformatieObjectenResolver(
         IServiceProvider serviceProvider,
         IMapper mapper,
-        IUserAuthDocumentenServiceAgent documentenServiceAgent,
-        ExpandEngine<ZaakInformatieObjectResponseDto> zaakInformatieObjectExpandEngine,
-        IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> objectInformatieObjectenCache
+        ExpandEngine<ZaakInformatieObjectResponseDto> zaakInformatieObjectExpandEngine
     )
     {
-        _objectInformatieObjectenCache = objectInformatieObjectenCache;
         _serviceProvider = serviceProvider;
         _mapper = mapper;
-        _documentenServiceAgent = documentenServiceAgent;
         _zaakInformatieObjectExpandEngine = zaakInformatieObjectExpandEngine;
     }
 
@@ -78,33 +65,7 @@ public class StatusZaakInformatieObjectenResolver : IExpandResolver<StatusRespon
             return new List<ZaakInformatieObjectResponseDto>();
         }
 
-        // Note: once per request and zaak, shared with ZaakZaakInformatieObjectenResolver (see ExpandCacheKeys): all statuses of one zaak ask
-        // DRC the same thing
-        var objectInformatieObjecten = await _objectInformatieObjectenCache.GetOrCacheAndGetAsync(
-            ExpandCacheKeys.ObjectInformatieObjecten(entity.Zaak),
-            () => _documentenServiceAgent.GetObjectInformatieObjectenAsync(new GetAllObjectInformatieObjectenQueryParameters { Object = entity.Zaak })
-        );
-
-        if (!objectInformatieObjecten.Success || objectInformatieObjecten.Response == null)
-        {
-            // Note: DRC decides as the caller. When it answers that the caller may not read the objectinformatieobjecten (403/404), no document of
-            // this zaak is visible to the caller: nothing to expand, instead of failing the request (see ExpandQueryStatus).
-            if (ExpandExternalServiceException.IsNotAvailableToCaller(objectInformatieObjecten))
-            {
-                return new List<ZaakInformatieObjectResponseDto>();
-            }
-
-            // Note: the url of what was asked of DRC (not the url of the zaak the expand is about)
-            throw ExpandExternalServiceException.ForFailedResponse(
-                ServiceName,
-                $"objectinformatieobjecten?object={entity.Zaak}",
-                objectInformatieObjecten
-            );
-        }
-
-        var mirroredInformatieObjecten = objectInformatieObjecten.Response.Select(oio => oio.InformatieObject).ToHashSet();
-
-        var zaakinformatieobjecten = result.Result.Where(zio => mirroredInformatieObjecten.Contains(zio.InformatieObject)).ToList();
+        var zaakinformatieobjecten = result.Result.ToList();
 
         var response = _mapper.Map<List<ZaakInformatieObjectResponseDto>>(zaakinformatieobjecten);
 

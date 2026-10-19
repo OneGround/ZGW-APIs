@@ -39,7 +39,7 @@ class GetZaakStatusQueryHandler : ZakenBaseHandler<GetZaakStatusQueryHandler>, I
 
         var zaakStatus = await _context
             .ZaakStatussen.AsNoTracking()
-            .Include(z => z.Zaak.ZaakInformatieObjecten)
+            .Include(z => z.Zaak)
             .Where(rsinFilter)
             .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
@@ -54,6 +54,11 @@ class GetZaakStatusQueryHandler : ZakenBaseHandler<GetZaakStatusQueryHandler>, I
         {
             return new QueryResult<ZaakStatus>(null, QueryStatus.Forbidden);
         }
+
+        // Set the zaak-status zaakinformatieobjecten collection
+        var zioBelongingToStatus = _context.ZaakInformatieObjecten.Where(z => z.ZaakId == zaakStatus.ZaakId && z.StatusId == zaakStatus.Id).ToList();
+
+        zaakStatus.Zaak.ZaakInformatieObjecten = zioBelongingToStatus;
 
         return new QueryResult<ZaakStatus>(zaakStatus, QueryStatus.OK);
     }
