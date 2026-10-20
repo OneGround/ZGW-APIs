@@ -13,6 +13,8 @@ using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 using OneGround.ZGW.Zaken.Web.Models.v1._5;
 
+#pragma warning disable CS0618 // Note: oaoIdentificatie is deprecated, but still accepted and returned (#2576)
+
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1._5;
 
 // Note: This Register adds extended mappings (above the ones defined in v1.0). config.Scan discovers both
@@ -574,7 +576,8 @@ public class RequestToDomainRegister : IRegister
         if (source.ObjectIdentificatie.AdresAanduidingGrp != null)
         {
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_NumIdentificatie = source.ObjectIdentificatie.AdresAanduidingGrp.NumIdentificatie;
-            terreinGebouwdObjectZaakObject.AdresAanduidingGrp_OaoIdentificatie = source.ObjectIdentificatie.AdresAanduidingGrp.OaoIdentificatie;
+            terreinGebouwdObjectZaakObject.AdresAanduidingGrp_OaoIdentificatie =
+                source.ObjectIdentificatie.AdresAanduidingGrp.AoaIdentificatie ?? source.ObjectIdentificatie.AdresAanduidingGrp.OaoIdentificatie;
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_WplWoonplaatsNaam = source.ObjectIdentificatie.AdresAanduidingGrp.WplWoonplaatsNaam;
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_GorOpenbareRuimteNaam = source
                 .ObjectIdentificatie
