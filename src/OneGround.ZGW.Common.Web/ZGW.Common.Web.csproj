@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>OneGround.ZGW.Common.Web</AssemblyName>
     <RootNamespace>OneGround.ZGW.Common.Web</RootNamespace>
+    <!-- AV0018: API versioning is registered here, but the versioned controllers are declared in the consuming *.Web assemblies. -->
+    <NoWarn>$(NoWarn);AV0018</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\iso-639-3.tab" />

@@ -33,9 +33,7 @@ public static class ZakenDataProtectionExtensions
             var certPassword = configuration["DataProtection:CertificatePassword"];
             var flags = X509KeyStorageFlags.EphemeralKeySet;
             var certBytes = Convert.FromBase64String(certBase64);
-            var cert = string.IsNullOrWhiteSpace(certPassword)
-                ? new X509Certificate2(certBytes, (string?)null, flags)
-                : new X509Certificate2(certBytes, certPassword, flags);
+            var cert = X509CertificateLoader.LoadPkcs12(certBytes, string.IsNullOrWhiteSpace(certPassword) ? null : certPassword, flags);
 
             if (!cert.HasPrivateKey)
             {

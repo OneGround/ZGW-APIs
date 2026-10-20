@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-C# / .NET 8 implementation of the VNG Realisatie "APIs voor Zaakgericht Werken" (ZGW) standard — case-management APIs for Dutch government. Each API is an independent microservice; one installation is multi-tenant (serves multiple organisations, partitioned by RSIN). Source lives under `src/`.
+C# / .NET 10 implementation of the VNG Realisatie "APIs voor Zaakgericht Werken" (ZGW) standard — case-management APIs for Dutch government. Each API is an independent microservice; one installation is multi-tenant (serves multiple organisations, partitioned by RSIN). Source lives under `src/`.
 
 > This is a public, world-readable GitHub repo. Don't introduce organization-specific names, internal hostnames/URLs, or credentials in code, comments, commits, or PR/issue text — describe *what* the code does, not *who* asked for it or *where* it runs.
 
@@ -90,7 +90,7 @@ Each API is split into projects with a fixed dependency direction:
 
 ## Key tech
 
-MediatR (CQRS), FluentValidation, Mapster, EF Core 8 + Npgsql, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
+MediatR (CQRS), FluentValidation, Mapster, EF Core 10 + Npgsql 10, MassTransit + RabbitMQ (eventing), Hangfire + Hangfire.PostgreSql (background jobs), Serilog, Duende OAuth2 introspection / JWT (machine-to-machine auth via Keycloak), Asp.Versioning, Swashbuckle, Ceph or filesystem for document blobs. Central package versions in `src/Directory.Packages.props` (`ManagePackageVersionsCentrally`).
 
 ## Further docs
 

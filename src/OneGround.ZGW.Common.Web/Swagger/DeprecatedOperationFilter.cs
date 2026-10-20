@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace OneGround.ZGW.Common.Web.Swagger;
@@ -12,7 +12,7 @@ public class DeprecatedOperationFilter : IOperationFilter
         operation.Parameters ??= [];
 
         var apiDescription = context.ApiDescription;
-        if (apiDescription.IsDeprecated())
+        if (apiDescription.IsDeprecated)
         {
             operation.Deprecated = true;
         }
