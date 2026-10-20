@@ -6,16 +6,16 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.Web.Expands;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
 /// Resolves the "zaakinformatieobjecten" expand path on a ZAAK. Like <see cref="ZaakRollenResolver"/>, every call opens its own DI scope (the
-/// handler can create a PostgreSQL TEMPORARY TABLE). The ZRC rows are not the final answer: each ZAAKINFORMATIEOBJECT must also be confirmed by
-/// the authorization of DRC (<see cref="IUserAuthDocumentenServiceAgent.GetObjectInformatieObjectenAsync"/>), as the v1.5 expander does. The
-/// user-authenticated agent is used so that check reflects the real calling client.
+/// handler can create a PostgreSQL TEMPORARY TABLE). The ZAAKINFORMATIEOBJECT rows of ZRC are leading: they are authorized exactly like
+/// GET /zaakinformatieobjecten (zaaktype and vertrouwelijkheidaanduiding of the zaak) and are not cross-checked against DRC, unlike the v1.5
+/// expander. The document itself ("...informatieobject") is fetched from DRC as the real calling client (user-authenticated agent), so DRC
+/// still decides what the caller may see of it.
 /// "...informatieobject.informatieobjecttype" is forwarded to <see cref="ZaakInformatieObjectInformatieObjectResolver"/>; "...catalogus" is not
 /// offered (3-level expand cap of the VNG ZGW spec).
 /// </summary>

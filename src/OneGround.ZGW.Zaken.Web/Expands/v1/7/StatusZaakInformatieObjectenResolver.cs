@@ -12,9 +12,9 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 /// <summary>
 /// Resolves the "zaakinformatieobjecten" expand path on a STATUS. Same shape as <see cref="ZaakZaakInformatieObjectenResolver"/> (DI scope per
-/// row, cross-check with the DRC authorization, see its remarks), with two differences. The query is filtered on this STATUS and on its
+/// row, ZRC rows are leading and not cross-checked against DRC, see its remarks), with two differences. The query is filtered on this STATUS and on its
 /// <c>Zaak</c>: the request validators do not enforce that a ZAAKINFORMATIEOBJECT's status belongs to the same ZAAK, and a mismatch is left out.
-/// And STATUS has no url-count field, so ZRC is always queried first; DRC is skipped when that returns nothing.
+/// And STATUS has no url-count field, so ZRC is always queried, also when the STATUS has no ZAAKINFORMATIEOBJECTEN.
 /// "...informatieobject.informatieobjecttype" is forwarded to the shared engine, a 4th nesting level is not offered (3-level expand cap of the
 /// VNG ZGW spec).
 /// </summary>

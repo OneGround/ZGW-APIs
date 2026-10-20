@@ -56,7 +56,10 @@ class GetZaakStatusQueryHandler : ZakenBaseHandler<GetZaakStatusQueryHandler>, I
         }
 
         // Set the zaak-status zaakinformatieobjecten collection
-        var zioBelongingToStatus = _context.ZaakInformatieObjecten.Where(z => z.ZaakId == zaakStatus.ZaakId && z.StatusId == zaakStatus.Id).ToList();
+        var zioBelongingToStatus = await _context
+            .ZaakInformatieObjecten.AsNoTracking()
+            .Where(z => z.ZaakId == zaakStatus.ZaakId && z.StatusId == zaakStatus.Id)
+            .ToListAsync(cancellationToken);
 
         zaakStatus.Zaak.ZaakInformatieObjecten = zioBelongingToStatus;
 

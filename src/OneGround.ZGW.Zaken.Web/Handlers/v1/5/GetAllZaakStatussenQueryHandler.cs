@@ -47,7 +47,7 @@ class GetAllZaakStatussenQueryHandler
 
         var rsinFilter = GetRsinFilterPredicate<ZaakStatus>();
 
-        var query = _context.ZaakStatussen.AsNoTracking().Include(z => z.Zaak.ZaakInformatieObjecten).Where(rsinFilter).Where(filter);
+        var query = _context.ZaakStatussen.AsNoTracking().Where(rsinFilter).Where(filter);
 
         if (!_authorizationContext.Authorization.HasAllAuthorizations)
         {
@@ -67,6 +67,18 @@ class GetAllZaakStatussenQueryHandler
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .ToListAsync(cancellationToken);
+
+        // Set the zaak-status zaakinformatieobjecten collection (only those belonging to the status, one query for the whole page)
+        var statusIds = pagedResult.Select(z => (Guid?)z.Id).ToList();
+
+        var zioBelongingToStatus = (
+            await _context.ZaakInformatieObjecten.AsNoTracking().Where(z => statusIds.Contains(z.StatusId)).ToListAsync(cancellationToken)
+        ).ToLookup(z => z.StatusId);
+
+        foreach (var zaakStatus in pagedResult)
+        {
+            zaakStatus.Zaak.ZaakInformatieObjecten = zioBelongingToStatus[zaakStatus.Id].ToList();
+        }
 
         var result = new PagedResult<ZaakStatus> { PageResult = pagedResult, Count = totalCount };
 

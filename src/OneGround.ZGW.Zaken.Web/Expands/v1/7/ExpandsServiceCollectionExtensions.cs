@@ -20,20 +20,12 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 public static class ExpandsServiceCollectionExtensions
 {
-    // Note: per request, so the same zaak / status / document / OIO list is fetched once for all rows that expand to it. Every method that
+    // Note: per request, so the same zaak / status / document is fetched once for all rows that expand to it. Every method that
     // registers a resolver that needs one of these registers it itself (TryAdd, so it does not matter which are called, or in which order).
     private static void AddZaakLookup(IServiceCollection services)
     {
         services.TryAddScoped<IGenericCache<QueryResult<Zaak>>, GenericCache<QueryResult<Zaak>>>();
         services.TryAddScoped<IZaakLookup, ZaakLookup>();
-    }
-
-    private static void AddObjectInformatieObjectenCache(IServiceCollection services)
-    {
-        services.TryAddScoped<
-            IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>,
-            GenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>
-        >();
     }
 
     private static void AddZaakInformatieObjectCaches(IServiceCollection services)
@@ -59,7 +51,6 @@ public static class ExpandsServiceCollectionExtensions
     public static void AddZakenAPIExpands(this IServiceCollection services)
     {
         AddZaakLookup(services);
-        AddObjectInformatieObjectenCache(services);
         // Note: one resolver per expand path. Some reuse the caches and engines that the other Add...APIExpands methods register (all of them
         // are called together in Startup.cs).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
@@ -107,7 +98,6 @@ public static class ExpandsServiceCollectionExtensions
     public static void AddStatussenAPIExpands(this IServiceCollection services)
     {
         AddZaakLookup(services);
-        AddObjectInformatieObjectenCache(services);
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakInformatieObjectenResolver>();
