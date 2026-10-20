@@ -12,7 +12,7 @@ public class MedewerkerZaakRol : IBaseEntity
     [Column("id")]
     public Guid Id { get; set; }
 
-    [MaxLength(24)]
+    [MaxLength(254)]
     [Column("identificatie")]
     public string Identificatie { get; set; }
 

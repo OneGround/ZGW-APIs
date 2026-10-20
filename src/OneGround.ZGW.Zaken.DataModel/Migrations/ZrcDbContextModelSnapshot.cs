@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:CollationDefinition:ci_collation", "@colStrength=secondary,@colStrength=secondary,icu,False")
-                .HasAnnotation("ProductVersion", "8.0.25")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pgcrypto");
@@ -1690,8 +1690,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("achternaam");
 
                     b.Property<string>("Identificatie")
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
                         .HasColumnName("identificatie");
 
                     b.Property<string>("Voorletters")
