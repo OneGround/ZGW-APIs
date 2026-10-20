@@ -2,6 +2,7 @@ using System;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
+using OneGround.ZGW.Zaken.Web.MappingProfiles;
 
 namespace OneGround.ZGW.Zaken.Web.Handlers.v1._2.EntityUpdaters;
 
@@ -158,7 +159,10 @@ public class ZaakObjectUpdater : IEntityUpdater<ZaakObject>
 
         source.TerreinGebouwdObject.Identificatie = request.TerreinGebouwdObject.Identificatie;
         source.TerreinGebouwdObject.AdresAanduidingGrp_NumIdentificatie = request.TerreinGebouwdObject.AdresAanduidingGrp_NumIdentificatie;
-        source.TerreinGebouwdObject.AdresAanduidingGrp_OaoIdentificatie = request.TerreinGebouwdObject.AdresAanduidingGrp_OaoIdentificatie;
+        source.TerreinGebouwdObject.AdresAanduidingGrp_OaoIdentificatie = AdresAanduidingGrpIdentificatie.ResolveForUpdate(
+            request.TerreinGebouwdObject,
+            source.TerreinGebouwdObject.AdresAanduidingGrp_OaoIdentificatie
+        );
         source.TerreinGebouwdObject.AdresAanduidingGrp_WplWoonplaatsNaam = request.TerreinGebouwdObject.AdresAanduidingGrp_WplWoonplaatsNaam;
         source.TerreinGebouwdObject.AdresAanduidingGrp_GorOpenbareRuimteNaam = request.TerreinGebouwdObject.AdresAanduidingGrp_GorOpenbareRuimteNaam;
         source.TerreinGebouwdObject.AdresAanduidingGrp_AoaPostcode = request.TerreinGebouwdObject.AdresAanduidingGrp_AoaPostcode;

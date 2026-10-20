@@ -17,8 +17,6 @@ using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 using OneGround.ZGW.Zaken.Web.Models.v1;
 
-#pragma warning disable CS0618 // Note: oaoIdentificatie is deprecated, but still accepted and returned (#2576)
-
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1;
 
 public class RequestToDomainRegister : IRegister
@@ -329,12 +327,12 @@ public class RequestToDomainRegister : IRegister
             .Map(dest => dest.AdresAanduidingGrp_AoaPostcode, src => src.AdresAanduidingGrp.AoaPostcode)
             .Map(dest => dest.AdresAanduidingGrp_GorOpenbareRuimteNaam, src => src.AdresAanduidingGrp.GorOpenbareRuimteNaam)
             .Map(dest => dest.AdresAanduidingGrp_NumIdentificatie, src => src.AdresAanduidingGrp.NumIdentificatie)
-            .Map(
-                dest => dest.AdresAanduidingGrp_OaoIdentificatie,
-                src => src.AdresAanduidingGrp.AoaIdentificatie ?? src.AdresAanduidingGrp.OaoIdentificatie
-            )
+            .Ignore(dest => dest.AdresAanduidingGrp_OaoIdentificatie)
+            .Ignore(dest => dest.AdresAanduidingGrp_OaoIdentificatieAsSent)
+            .Ignore(dest => dest.AdresAanduidingGrp_AoaIdentificatieAsSent)
             .Map(dest => dest.AdresAanduidingGrp_OgoLocatieAanduiding, src => src.AdresAanduidingGrp.OgoLocatieAanduiding)
-            .Map(dest => dest.AdresAanduidingGrp_WplWoonplaatsNaam, src => src.AdresAanduidingGrp.WplWoonplaatsNaam);
+            .Map(dest => dest.AdresAanduidingGrp_WplWoonplaatsNaam, src => src.AdresAanduidingGrp.WplWoonplaatsNaam)
+            .AfterMapping((src, dest) => AdresAanduidingGrpIdentificatie.Apply(dest, src.AdresAanduidingGrp));
         config
             .NewConfig<TerreinGebouwdObjectZaakObjectRequestDto, ZaakObject>()
             .Map(dest => dest.TerreinGebouwdObject, src => src.ObjectIdentificatie)
@@ -651,8 +649,7 @@ public class RequestToDomainRegister : IRegister
         if (source.ObjectIdentificatie.AdresAanduidingGrp != null)
         {
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_NumIdentificatie = source.ObjectIdentificatie.AdresAanduidingGrp.NumIdentificatie;
-            terreinGebouwdObjectZaakObject.AdresAanduidingGrp_OaoIdentificatie =
-                source.ObjectIdentificatie.AdresAanduidingGrp.AoaIdentificatie ?? source.ObjectIdentificatie.AdresAanduidingGrp.OaoIdentificatie;
+            AdresAanduidingGrpIdentificatie.Apply(terreinGebouwdObjectZaakObject, source.ObjectIdentificatie.AdresAanduidingGrp);
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_WplWoonplaatsNaam = source.ObjectIdentificatie.AdresAanduidingGrp.WplWoonplaatsNaam;
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_GorOpenbareRuimteNaam = source
                 .ObjectIdentificatie
