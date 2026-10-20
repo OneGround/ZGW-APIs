@@ -33,6 +33,8 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
     private static readonly Guid ZioOfStatus1Id = new("bbbbbbbb-0000-0000-0000-000000000001");
     private static readonly Guid ZioOfStatus2Id = new("bbbbbbbb-0000-0000-0000-000000000002");
     private static readonly Guid ZioWithoutStatusId = new("bbbbbbbb-0000-0000-0000-000000000003");
+    private static readonly Guid OtherZaakId = new("22222222-2222-2222-2222-222222222222");
+    private static readonly Guid ZioOfOtherZaakWithStatus1Id = new("bbbbbbbb-0000-0000-0000-000000000004");
 
     private ZrcDbContext _dbContext;
     private Mock<IEntityUriService> _uriServiceMock;
@@ -47,27 +49,14 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
         _dbContext = new UnitTestZrcDbContext(options);
         await _dbContext.Database.EnsureCreatedAsync();
 
-        _dbContext.Zaken.Add(
-            new Zaak
-            {
-                Id = ZaakId,
-                Owner = TestOwner,
-                Zaaktype = TestZaakTypeUrl,
-                Bronorganisatie = TestOwner,
-                Identificatie = "ZAAK-2024-001",
-                Startdatum = DateOnly.FromDateTime(DateTime.UtcNow),
-                VertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
-                Archiefstatus = ArchiefStatus.nog_te_archiveren,
-                Communicatiekanaal = string.Empty,
-                Selectielijstklasse = string.Empty,
-                VerantwoordelijkeOrganisatie = TestOwner,
-            }
-        );
+        _dbContext.Zaken.AddRange(NewZaak(ZaakId, "ZAAK-2024-001"), NewZaak(OtherZaakId, "ZAAK-2024-002"));
         _dbContext.ZaakStatussen.AddRange(NewStatus(Status1Id, DateTime.UtcNow.AddMinutes(-2)), NewStatus(Status2Id, DateTime.UtcNow.AddMinutes(-1)));
         _dbContext.ZaakInformatieObjecten.AddRange(
             NewZaakInformatieObject(ZioOfStatus1Id, Status1Id),
             NewZaakInformatieObject(ZioOfStatus2Id, Status2Id),
-            NewZaakInformatieObject(ZioWithoutStatusId, null)
+            NewZaakInformatieObject(ZioWithoutStatusId, null),
+            // Note: the validators do not enforce that the status of a zaakinformatieobject belongs to the same zaak; such a mismatch is left out
+            NewZaakInformatieObject(ZioOfOtherZaakWithStatus1Id, Status1Id, OtherZaakId)
         );
         await _dbContext.SaveChangesAsync();
 
@@ -94,6 +83,22 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
         return Task.CompletedTask;
     }
 
+    private static Zaak NewZaak(Guid id, string identificatie) =>
+        new()
+        {
+            Id = id,
+            Owner = TestOwner,
+            Zaaktype = TestZaakTypeUrl,
+            Bronorganisatie = TestOwner,
+            Identificatie = identificatie,
+            Startdatum = DateOnly.FromDateTime(DateTime.UtcNow),
+            VertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
+            Archiefstatus = ArchiefStatus.nog_te_archiveren,
+            Communicatiekanaal = string.Empty,
+            Selectielijstklasse = string.Empty,
+            VerantwoordelijkeOrganisatie = TestOwner,
+        };
+
     private static ZaakStatus NewStatus(Guid id, DateTime creationTime) =>
         new()
         {
@@ -105,12 +110,12 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
             CreationTime = creationTime,
         };
 
-    private static ZaakInformatieObject NewZaakInformatieObject(Guid id, Guid? statusId) =>
+    private static ZaakInformatieObject NewZaakInformatieObject(Guid id, Guid? statusId, Guid? zaakId = null) =>
         new()
         {
             Id = id,
             Owner = TestOwner,
-            ZaakId = ZaakId,
+            ZaakId = zaakId ?? ZaakId,
             StatusId = statusId,
             InformatieObject = $"http://documenten.local/api/v1/enkelvoudiginformatieobjecten/{id}",
             CreationTime = DateTime.UtcNow,
@@ -134,10 +139,8 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
         Assert.Equal([ZioOfStatus1Id], result.Result.Zaak.ZaakInformatieObjecten.Select(z => z.Id));
     }
 
-    [Fact]
-    public async Task GetAllZaakStatussen_EveryStatusGetsOnlyItsOwnZaakInformatieObjecten()
-    {
-        var sut = new GetAllZaakStatussenQueryHandler(
+    private GetAllZaakStatussenQueryHandler CreateGetAllSut() =>
+        new(
             NullLogger<GetAllZaakStatussenQueryHandler>.Instance,
             _configuration,
             _dbContext,
@@ -147,14 +150,27 @@ public class ZaakStatusZaakInformatieObjectenHandlerTests : IAsyncLifetime
             _zaakKenmerkenResolverMock.Object
         );
 
-        var result = await sut.Handle(
-            new GetAllZaakStatussenQuery
-            {
-                GetAllZaakStatussenFilter = new GetAllZaakStatussenFilter(),
-                Pagination = new PaginationFilter { Page = 1, Size = 10 },
-            },
-            CancellationToken.None
-        );
+    private static GetAllZaakStatussenQuery NewGetAllQuery(int page) =>
+        new()
+        {
+            GetAllZaakStatussenFilter = new GetAllZaakStatussenFilter(),
+            Pagination = new PaginationFilter { Page = page, Size = 10 },
+        };
+
+    [Fact]
+    public async Task GetAllZaakStatussen_EmptyPage_ReturnsNoStatussen()
+    {
+        var result = await CreateGetAllSut().Handle(NewGetAllQuery(page: 2), CancellationToken.None);
+
+        Assert.Equal(QueryStatus.OK, result.Status);
+        Assert.Empty(result.Result.PageResult);
+        Assert.Equal(2, result.Result.Count);
+    }
+
+    [Fact]
+    public async Task GetAllZaakStatussen_EveryStatusGetsOnlyItsOwnZaakInformatieObjecten()
+    {
+        var result = await CreateGetAllSut().Handle(NewGetAllQuery(page: 1), CancellationToken.None);
 
         Assert.Equal(QueryStatus.OK, result.Status);
         var statussen = result.Result.PageResult.ToDictionary(s => s.Id);

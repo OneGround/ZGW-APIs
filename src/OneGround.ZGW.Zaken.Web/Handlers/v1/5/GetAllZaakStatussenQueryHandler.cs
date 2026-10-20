@@ -77,7 +77,10 @@ class GetAllZaakStatussenQueryHandler
 
         foreach (var zaakStatus in pagedResult)
         {
-            zaakStatus.Zaak.ZaakInformatieObjecten = zioBelongingToStatus[zaakStatus.Id].ToList();
+            // Note: like GetZaakStatusQueryHandler also on the zaak of the status (the validators do not enforce that a ZAAKINFORMATIEOBJECT's
+            // status belongs to the same ZAAK). Every status needs its own Zaak instance here, which AsNoTracking gives (no identity resolution): with
+            // AsNoTrackingWithIdentityResolution or a tracking query the statuses of one zaak would share it and overwrite each other's collection.
+            zaakStatus.Zaak.ZaakInformatieObjecten = zioBelongingToStatus[zaakStatus.Id].Where(z => z.ZaakId == zaakStatus.ZaakId).ToList();
         }
 
         var result = new PagedResult<ZaakStatus> { PageResult = pagedResult, Count = totalCount };
