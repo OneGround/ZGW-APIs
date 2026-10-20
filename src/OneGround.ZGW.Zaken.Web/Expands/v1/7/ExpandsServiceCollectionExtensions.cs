@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
@@ -192,6 +193,20 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<ZaakEigenschapResponseDto>(sp.GetServices<IExpandResolver<ZaakEigenschapResponseDto>>()));
 
         services.AddScoped<IGenericCache<EigenschapResponseDto>, GenericCache<EigenschapResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKBESLUIT resource itself (both actions are on ZakenController), without a <c>fields</c> mechanism.
+    /// "besluit" is BRC-backed through the user-authenticated <see cref="OneGround.ZGW.Besluiten.ServiceAgent.v1.IUserAuthBesluitenServiceAgent"/>,
+    /// which has no per-url cache of its own, so the result is cached per request here.
+    /// </summary>
+    public static void AddZaakBesluitenAPIExpands(this IServiceCollection services)
+    {
+        services.TryAddScoped<IGenericCache<ServiceAgentResponse<BesluitResponseDto>>, GenericCache<ServiceAgentResponse<BesluitResponseDto>>>();
+        services.AddScoped<IExpandResolver<ZaakBesluitResponseDto>, ZaakBesluitBesluitResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakBesluitResponseDto>(sp.GetServices<IExpandResolver<ZaakBesluitResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ZaakBesluitResponseDto>(sp.GetServices<IExpandResolver<ZaakBesluitResponseDto>>()));
     }
 
     /// <summary>

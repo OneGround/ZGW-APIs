@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MediatR;
+using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.ServiceAgent;
@@ -18,6 +19,8 @@ internal static class ExpandCaches
 
     public static IGenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> Document() =>
         new GenericCache<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>>();
+
+    public static IGenericCache<ServiceAgentResponse<BesluitResponseDto>> Besluit() => new GenericCache<ServiceAgentResponse<BesluitResponseDto>>();
 
     public static IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> ObjectInformatieObjecten() =>
         new GenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>();
