@@ -116,8 +116,8 @@ services:
     command: >-
       sh -euc '
       JAR=/providers/zgw-token-introspection.jar;
-      SHA256=1b03b68d43d92705b38e99800fa4abbdada0127641cb44c07cc4c8a5a96ea5d3;
-      URL=https://github.com/OneGround/Keycloak-ZGW-Token-Introspection/releases/download/v2/zgw-token-introspection.jar;
+      SHA256=278345fd3084041042ef0ba050ba2be7950f28df4e6ecb6eb30ecfa8a5feb1a3;
+      URL=https://github.com/OneGround/Keycloak-ZGW-Token-Introspection/releases/download/v3/zgw-token-introspection.jar;
       if [ -f "$$JAR" ] && [ "$$(sha256sum "$$JAR" | cut -d" " -f1)" = "$$SHA256" ]; then echo "JAR present and up to date"; exit 0; fi;
       echo "Downloading $$URL";
       wget -q -O "$$JAR.download" "$$URL";
