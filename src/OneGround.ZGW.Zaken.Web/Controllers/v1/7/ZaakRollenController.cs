@@ -152,6 +152,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// </summary>
     /// <param name="queryParameters"></param>
     /// <param name="id">Unieke resource identifier (UUID4)</param>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
@@ -227,6 +228,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// De headers voor een specifieke ROL bij een ZAAK opvragen.
     /// </summary>
     /// <response code="200">OK</response>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>

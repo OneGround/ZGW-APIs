@@ -16,6 +16,7 @@ using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
+using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Models;
@@ -858,10 +859,52 @@ public class ZakenController : ZGWControllerBase
     [HttpGet(ApiRoutes.ZaakEigenschappen.Get, Name = Operations.ZaakEigenschappen.Read)]
     [Scope(AuthorizationScopes.Zaken.Read)]
     [ZgwApiVersion(Api.LatestVersion_1_0)]
-    [ZgwApiVersion(Api.LatestVersion_1_2)]
-    public async Task<IActionResult> GetZaakEigenschapAsync(Guid zaak_uuid, Guid uuid)
+    public Task<IActionResult> GetZaakEigenschapAsync(Guid zaak_uuid, Guid uuid)
     {
-        _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", nameof(GetZaakEigenschapAsync), zaak_uuid, uuid);
+        return GetZaakEigenschapCoreAsync(nameof(GetZaakEigenschapAsync), zaak_uuid, uuid);
+    }
+
+    // Note: 1.2 differs from 1.0 by the ETag (If-None-Match) support, so it also has the HEAD operation
+    /// <summary>
+    /// Een specifieke ZAAKEIGENSCHAP opvragen.
+    /// </summary>
+    /// <response code="304">Not Modified</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpGet(ApiRoutes.ZaakEigenschappen.Get, Name = Operations.ZaakEigenschappen.Read)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [ETagFilter]
+    [ZgwApiVersion(Api.LatestVersion_1_2)]
+    public Task<IActionResult> GetZaakEigenschapV1_2Async(Guid zaak_uuid, Guid uuid)
+    {
+        return GetZaakEigenschapCoreAsync(nameof(GetZaakEigenschapV1_2Async), zaak_uuid, uuid);
+    }
+
+    /// <summary>
+    /// De headers voor een specifiek(e) ZAAKEIGENSCHAP opvragen.
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="304">Not Modified</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpHead(ApiRoutes.ZaakEigenschappen.Get, Name = Contracts.v1._5.Operations.ZaakEigenschappen.ReadHead)]
+    [Scope(AuthorizationScopes.Zaken.Read)]
+    [ETagFilter]
+    [ZgwApiVersion(Api.LatestVersion_1_2)]
+    public Task<IActionResult> HeadZaakEigenschapV1_2Async(Guid zaak_uuid, Guid uuid)
+    {
+        return GetZaakEigenschapCoreAsync(nameof(HeadZaakEigenschapV1_2Async), zaak_uuid, uuid);
+    }
+
+    private async Task<IActionResult> GetZaakEigenschapCoreAsync(string controllerMethod, Guid zaak_uuid, Guid uuid)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {ZaakUuid}, {Uuid}", controllerMethod, zaak_uuid, uuid);
 
         var result = await _mediator.Send(new GetZaakEigenschapQuery { Zaak = zaak_uuid, Eigenschap = uuid });
 

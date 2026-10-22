@@ -37,6 +37,7 @@ public class ObjectInformatieObjectenController : ZGWControllerBase
     /// <summary>
     /// Een specifieke OBJECT-INFORMATIEOBJECT relatie opvragen.
     /// </summary>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>

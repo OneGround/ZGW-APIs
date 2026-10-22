@@ -111,7 +111,7 @@ class UpdateZaakEigenschapCommandHandler
             return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, error2);
         }
 
-        var warnings = Array.Empty<string>() as IReadOnlyList<string>;
+        IReadOnlyList<string> warnings = [];
         if (request.WarnOnSpecificatieViolations)
         {
             var aantalOverigeWaarden = await _context.ZaakEigenschappen.CountAsync(
