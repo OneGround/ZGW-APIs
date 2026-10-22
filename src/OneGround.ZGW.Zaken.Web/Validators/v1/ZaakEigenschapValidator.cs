@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Zaken.DataModel;
 
@@ -33,7 +35,7 @@ static class ZaakEigenschapValidator
                     break;
 
                 case "getal":
-                    if (!decimal.TryParse(zaakeigenschap.Waarde, out _))
+                    if (!TryParseGetal(zaakeigenschap.Waarde, out _))
                         error = new ValidationError("eigenschap", ErrorCode.Invalid, "Eigenschap-waarde is geen getal.");
                     break;
 
@@ -51,6 +53,57 @@ static class ZaakEigenschapValidator
 
         return error == null;
     }
+
+    /// <summary>
+    /// Checks the waarde against the parts of the specificatie that are not blocking: waardenverzameling and kardinaliteit.
+    /// Expects a waarde that already passed <see cref="Validate"/>.
+    /// </summary>
+    /// <param name="aantalOverigeWaarden">The number of other zaakeigenschappen of the same eigenschap that the zaak already has.</param>
+    public static IReadOnlyList<string> GetWarnings(
+        ZaakEigenschap zaakeigenschap,
+        Catalogi.Contracts.v1.EigenschapSpecificatieDto specificatie,
+        int aantalOverigeWaarden
+    )
+    {
+        var warnings = new List<string>();
+
+        if (specificatie == null)
+        {
+            return warnings;
+        }
+
+        if (specificatie.Waardenverzameling is { Length: > 0 } && !IsInWaardenverzameling(zaakeigenschap.Waarde, specificatie))
+        {
+            warnings.Add("De waarde van de zaakeigenschap komt niet voor in de waardenverzameling van de eigenschap.");
+        }
+
+        // Note: kardinaliteit is the maximum number of values per zaak: "1" up to a number, or "n" for unlimited. Anything else is not checked.
+        if (
+            int.TryParse(specificatie.Kardinaliteit, NumberStyles.None, CultureInfo.InvariantCulture, out var maximum)
+            && aantalOverigeWaarden + 1 > maximum
+        )
+        {
+            warnings.Add(
+                $"Het aantal waarden van deze eigenschap bij de zaak overschrijdt de kardinaliteit van de eigenschap (maximaal {maximum.ToString(CultureInfo.InvariantCulture)})."
+            );
+        }
+
+        return warnings;
+    }
+
+    private static bool IsInWaardenverzameling(string waarde, Catalogi.Contracts.v1.EigenschapSpecificatieDto specificatie)
+    {
+        if (specificatie.Formaat == "getal" && TryParseGetal(waarde, out var getal))
+        {
+            // Note: 1.50 and 1.5 are the same number
+            return specificatie.Waardenverzameling.Any(w => TryParseGetal(w, out var candidate) && candidate == getal);
+        }
+
+        return specificatie.Waardenverzameling.Contains(waarde, StringComparer.Ordinal);
+    }
+
+    private static bool TryParseGetal(string input, out decimal output) =>
+        decimal.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out output);
 
     private static bool TryParseDate(string input, bool required, out DateOnly output)
     {

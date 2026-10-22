@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -78,6 +79,7 @@ public class ZakenController : ZGWControllerBase
                 ZaakEigenschap = zaakEigenschap,
                 ZaakId = zaak_uuid,
                 Id = uuid,
+                WarnOnSpecificatieViolations = IsApiVersionRequested(new ApiVersion(1, 7)),
             }
         );
 
@@ -95,6 +97,8 @@ public class ZakenController : ZGWControllerBase
         {
             return _errorResponseBuilder.Forbidden();
         }
+
+        AddWarningHeaders(result);
 
         var response = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
 
@@ -148,6 +152,7 @@ public class ZakenController : ZGWControllerBase
                 ZaakId = zaak_uuid,
                 Id = uuid,
                 IsPartialUpdate = true,
+                WarnOnSpecificatieViolations = IsApiVersionRequested(new ApiVersion(1, 7)),
             }
         );
 
@@ -160,6 +165,8 @@ public class ZakenController : ZGWControllerBase
         {
             return _errorResponseBuilder.Forbidden();
         }
+
+        AddWarningHeaders(resultUpd);
 
         var zaakEigenschapResponse = _mapper.Map<ZaakEigenschapResponseDto>(resultUpd.Result);
 

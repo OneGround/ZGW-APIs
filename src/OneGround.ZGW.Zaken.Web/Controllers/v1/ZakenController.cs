@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -820,7 +821,14 @@ public class ZakenController : ZGWControllerBase
 
         var zaakEigenschap = _mapper.Map<ZaakEigenschap>(zaakEigenschapRequest);
 
-        var result = await _mediator.Send(new CreateZaakEigenschapCommand { ZaakId = zaak_uuid, ZaakEigenschap = zaakEigenschap });
+        var result = await _mediator.Send(
+            new CreateZaakEigenschapCommand
+            {
+                ZaakId = zaak_uuid,
+                ZaakEigenschap = zaakEigenschap,
+                WarnOnSpecificatieViolations = IsApiVersionRequested(new ApiVersion(1, 7)),
+            }
+        );
 
         if (result.Status == CommandStatus.ValidationError)
         {
@@ -831,6 +839,8 @@ public class ZakenController : ZGWControllerBase
         {
             return _errorResponseBuilder.Forbidden();
         }
+
+        AddWarningHeaders(result);
 
         var zaakEigenschapResponse = _mapper.Map<ZaakEigenschapResponseDto>(result.Result);
 

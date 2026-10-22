@@ -132,6 +132,17 @@ class CreateZaakEigenschapCommandHandler
             return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, error2);
         }
 
+        var warnings = Array.Empty<string>() as IReadOnlyList<string>;
+        if (request.WarnOnSpecificatieViolations)
+        {
+            var aantalOverigeWaarden = await _context.ZaakEigenschappen.CountAsync(
+                z => z.ZaakId == request.ZaakId && z.Eigenschap == zaakEigenschap.Eigenschap,
+                cancellationToken
+            );
+
+            warnings = ZaakEigenschapValidator.GetWarnings(zaakEigenschap, eigenschap.Specificatie, aantalOverigeWaarden);
+        }
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaak.LegacyAuditTrail))
         {
             await _context.ZaakEigenschappen.AddAsync(zaakEigenschap, cancellationToken); // Note: Sequential Guid for Id is generated here by EF
@@ -152,7 +163,7 @@ class CreateZaakEigenschapCommandHandler
 
         await SendNotificationAsync(Actie.create, zaakEigenschap, cancellationToken);
 
-        return new CommandResult<ZaakEigenschap>(zaakEigenschap, CommandStatus.OK);
+        return new CommandResult<ZaakEigenschap>(zaakEigenschap, CommandStatus.OK) { Warnings = warnings };
     }
 
     private async Task<EigenschapResponseDto> GetEigenschapAsync(ZaakEigenschap eigenschap, List<ValidationError> errors)
@@ -186,4 +197,7 @@ class CreateZaakEigenschapCommand : IRequest<CommandResult<ZaakEigenschap>>
 {
     public Guid ZaakId { get; internal set; }
     public ZaakEigenschap ZaakEigenschap { get; internal set; }
+
+    // Note: waardenverzameling and kardinaliteit of the eigenschap are reported as warnings only (the value is stored anyway)
+    public bool WarnOnSpecificatieViolations { get; internal set; }
 }

@@ -20,6 +20,11 @@ public class CommandResult
     public CommandStatus Status { get; }
     public IList<ValidationError> Errors { get; }
     public ErrorResponse ErrorResponse { get; }
+
+    /// <summary>
+    /// Non-blocking remarks about a successful command. The controller reports them to the caller (as X-Warning headers).
+    /// </summary>
+    public IReadOnlyList<string> Warnings { get; init; } = [];
 }
 
 public class CommandResult<TResult> : CommandResult

@@ -101,9 +101,25 @@ class UpdateZaakEigenschapCommandHandler
 
         var eigenschap = await GetEigenschapAsync(zaakEigenschap, errors);
 
+        if (errors.Count != 0)
+        {
+            return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, errors.ToArray());
+        }
+
         if (!ZaakEigenschapValidator.Validate(request.ZaakEigenschap, eigenschap.Specificatie, out var error2))
         {
             return new CommandResult<ZaakEigenschap>(null, CommandStatus.ValidationError, error2);
+        }
+
+        var warnings = Array.Empty<string>() as IReadOnlyList<string>;
+        if (request.WarnOnSpecificatieViolations)
+        {
+            var aantalOverigeWaarden = await _context.ZaakEigenschappen.CountAsync(
+                z => z.ZaakId == zaakEigenschap.ZaakId && z.Eigenschap == zaakEigenschap.Eigenschap && z.Id != zaakEigenschap.Id,
+                cancellationToken
+            );
+
+            warnings = ZaakEigenschapValidator.GetWarnings(request.ZaakEigenschap, eigenschap.Specificatie, aantalOverigeWaarden);
         }
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, zaakEigenschap.Zaak.LegacyAuditTrail))
@@ -132,7 +148,7 @@ class UpdateZaakEigenschapCommandHandler
 
         await SendNotificationAsync(Actie.update, zaakEigenschap, cancellationToken);
 
-        return new CommandResult<ZaakEigenschap>(zaakEigenschap, CommandStatus.OK);
+        return new CommandResult<ZaakEigenschap>(zaakEigenschap, CommandStatus.OK) { Warnings = warnings };
     }
 
     private async Task<Catalogi.Contracts.v1.Responses.EigenschapResponseDto> GetEigenschapAsync(
@@ -159,4 +175,7 @@ class UpdateZaakEigenschapCommand : IRequest<CommandResult<ZaakEigenschap>>
     public Guid ZaakId { get; internal set; }
     public Guid Id { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
+
+    // Note: waardenverzameling and kardinaliteit of the eigenschap are reported as warnings only (the value is stored anyway)
+    public bool WarnOnSpecificatieViolations { get; internal set; }
 }
