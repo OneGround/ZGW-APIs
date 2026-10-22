@@ -22,5 +22,6 @@ public class ApplicationConfiguration
     public int DrcSynchronizationTimeoutSeconds { get; set; } = 8;
     public bool DrcSynchronizationAsyncOnlyMode { get; set; } = false;
     public Dictionary<string, string> NummerGeneratorFormats { get; set; } = [];
+    public int ReserveZaaknummersMaxAantal { get; set; } = 100;
     public ExpandSettings ExpandSettings { get; set; } = new();
 }

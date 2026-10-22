@@ -59,6 +59,18 @@ public class NummerGenerator<TContext> : INummerGenerator
         return nummer;
     }
 
+    public async Task<string> GetFormatAsync(string rsin, string entity, CancellationToken cancellationToken = default)
+    {
+        // Note: the format is stored with the first number of an organisation, so a configuration that changed later does not apply to it
+        var stored = await _context
+            .OrganisatieNummers.AsNoTracking()
+            .Where(o => o.Rsin == rsin && o.EntiteitNaam == entity)
+            .Select(o => o.Formaat)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return stored ?? _formats.GetValueOrDefault(entity);
+    }
+
     public async Task<string> GenerateAsync(string rsin, string entity, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug($"{nameof(NummerGenerator<TContext>)}: Generating number for organization {{Rsin}} {{Entity}}", rsin, entity);

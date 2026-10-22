@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -61,6 +62,43 @@ public class NummerGeneratorTests
         );
         var result = await nummerGenerator.GenerateAsync(_rsin, "besluiten", format => format != $"B{_now.Year}-00000002");
         Assert.Equal($"B{_now.Year}-00000003", result);
+    }
+
+    [Theory]
+    [InlineData("zaken", "Z{yyyy}-{v^8}")] // Note: no number generated yet for the organisation, so the configured format
+    [InlineData("besluiten", "B{yyyy}-{v^8}")]
+    [InlineData("onbekend", null)]
+    public async Task GetFormatAsync_ShouldGiveTheConfiguredFormat_WhenTheOrganisationHasNone(string entity, string expectedFormat)
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            _mockedConfiguration,
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal(expectedFormat, await nummerGenerator.GetFormatAsync("123456782", entity));
+    }
+
+    [Fact]
+    public async Task GetFormatAsync_ShouldGiveTheFormatOfTheOrganisation_NotTheConfiguredOne()
+    {
+        var options = await GetMockedDbContext();
+        using (var context = new UnitTestDbContext(options))
+        {
+            // Note: the stored format of the organisation differs from the configured one
+            context.OrganisatieNummers.Single(o => o.Rsin == _rsin).Formaat = "X{yyyy}-{v^6}";
+            await context.SaveChangesAsync();
+        }
+
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            _mockedConfiguration,
+            new UnitTestDbContext(options),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal("X{yyyy}-{v^6}", await nummerGenerator.GetFormatAsync(_rsin, "besluiten"));
     }
 
     private async Task<DbContextOptions<UnitTestDbContext>> GetMockedDbContext()
