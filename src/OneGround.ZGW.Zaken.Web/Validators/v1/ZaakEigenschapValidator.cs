@@ -17,7 +17,7 @@ static class ZaakEigenschapValidator
     {
         error = null;
 
-        // TODO: Bug fix: Support minimal validation (not fully implemented: kardinaliteit and waardenverzameling is missing)
+        // Note: Only the blocking checks (formaat and lengte) are done here. waardenverzameling and kardinaliteit are non-blocking: see GetWarnings
         if (specificatie != null)
         {
             switch (specificatie.Formaat)

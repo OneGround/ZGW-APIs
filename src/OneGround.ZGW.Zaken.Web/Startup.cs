@@ -70,7 +70,7 @@ public class Startup
         services.AddZGWApi(
             "Zaken",
             Configuration,
-            Api.LatestVersion_1_5,
+            Api.LatestVersion_1_7,
             c =>
             {
                 c.NewtonsoftJsonOptions = (o) =>
