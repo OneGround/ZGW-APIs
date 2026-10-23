@@ -74,6 +74,44 @@ public class ZaakSubResourceAuthorizationTests
         ("v1._5.ZaakVerzoekenController.DeleteAsync", null),
         ("v1.ZaakInformatieObjectenController.AddAsync", null),
         ("v1._5.ZaakInformatieObjectenController.AddAsync", null),
+        ("v1.ZaakInformatieObjectenController.GetAsync", null),
+        ("v1.ZaakInformatieObjectenController.UpdateAsync", null),
+        ("v1.ZaakInformatieObjectenController.PartialUpdateAsync", null),
+        ("v1.ZaakInformatieObjectenController.DeleteAsync", null),
+        ("v1._5.ZaakInformatieObjectenController.GetAsync", null),
+        ("v1._5.ZaakInformatieObjectenController.UpdateAsync", null),
+        ("v1._5.ZaakInformatieObjectenController.PartialUpdateAsync", null),
+        ("v1._5.ZaakInformatieObjectenController.DeleteAsync", null),
+        ("v1.KlantContactenController.GetAsync", null),
+        ("v1.KlantContactenController.AddAsync", null),
+        ("v1.ZakenController.DeleteAsync", null),
+        ("v1._7.ZaakStatussenController.GetAsync", null),
+        // Statuses are added to a zaak that already has one.
+        ("v1._7.ZaakStatussenController.AddAsync", ZaakResource.Status),
+        ("v1._7.ZaakResultatenController.GetAsync", null),
+        ("v1._7.ZaakResultatenController.AddAsync", null),
+        ("v1._7.ZaakResultatenController.UpdateAsync", null),
+        ("v1._7.ZaakResultatenController.PartialUpdateAsync", null),
+        ("v1._7.ZaakResultatenController.DeleteAsync", null),
+        ("v1._7.ZaakRollenController.GetAsync", null),
+        ("v1._7.ZaakRollenController.AddAsync", null),
+        ("v1._7.ZaakRollenController.DeleteAsync", null),
+        ("v1._7.ZaakObjectenController.GetAsync", null),
+        ("v1._7.ZaakObjectenController.AddAsync", null),
+        ("v1._7.ZaakObjectenController.UpdateAsync", null),
+        ("v1._7.ZaakObjectenController.PartialUpdateAsync", null),
+        ("v1._7.ZaakObjectenController.DeleteAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.GetAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.AddAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.UpdateAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.PartialUpdateAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.DeleteAsync", null),
+        ("v1._7.ZaakContactmomentenController.GetAsync", null),
+        ("v1._7.ZaakContactmomentenController.AddAsync", null),
+        ("v1._7.ZaakContactmomentenController.DeleteAsync", null),
+        ("v1._7.ZakenController.GetZaakEigenschapAsync", null),
+        ("v1._7.ZakenController.UpdateAsync", null),
+        ("v1._7.ZakenController.PartialUpdateAsync", null),
     ];
 
     private readonly ZakenWebApplicationFactory _factory;
@@ -93,6 +131,13 @@ public class ZaakSubResourceAuthorizationTests
         [
             [Api.LatestVersion_1_0],
             [Api.LatestVersion_1_5],
+        ];
+
+    public static IEnumerable<object[]> StatusVersions() =>
+        [
+            [Api.LatestVersion_1_0],
+            [Api.LatestVersion_1_5],
+            [Api.LatestVersion_1_7],
         ];
 
     [Theory]
@@ -156,6 +201,73 @@ public class ZaakSubResourceAuthorizationTests
         var response = await CreateZaakAsync(clientId, ZaakTypes.A, ZaakVertrouwelijkheid, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusVersions))]
+    public async Task First_status_of_a_zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_set(string apiVersion)
+    {
+        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
+
+        var response = await AddStatusAsync(zaak, clientId, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusVersions))]
+    public async Task First_status_of_a_zaak_within_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_forbidden(string apiVersion)
+    {
+        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
+
+        var response = await AddStatusAsync(zaak, clientId, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Created, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusVersions))]
+    public async Task Zaak_is_deleted_by_a_client_authorized_for_it_on_every_version(string apiVersion)
+    {
+        var response = await DeleteZaakAsync(ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.NoContent, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusVersions))]
+    public async Task Zaak_of_another_zaaktype_is_not_deleted_on_any_version(string apiVersion)
+    {
+        var response = await DeleteZaakAsync(ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusVersions))]
+    public async Task Zaak_above_the_clients_maximum_is_not_deleted_on_any_version(string apiVersion)
+    {
+        var response = await DeleteZaakAsync(ZaakTypes.A, BelowZaak, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+    }
+
+    private async Task<HttpResponseMessage> DeleteZaakAsync(string clientZaakType, VertrouwelijkheidAanduiding clientMaximum, string apiVersion)
+    {
+        var matrixRow = ScopeMatrix.Named("v1.ZakenController.DeleteAsync") with { ApiVersion = apiVersion };
+        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(_factory, clientZaakType, clientMaximum, matrixRow.Scopes);
+
+        return await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+    }
+
+    private async Task<HttpResponseMessage> AddStatusAsync(SeededZaak zaak, string clientId, string apiVersion)
+    {
+        var body = ZakenEndpointRequests.Status(zaak, zaak.Catalogi.BeginStatusType);
+
+        return await _client.SendAsync(ZakenEndpointRequests.Create(HttpMethod.Post, "/api/v1/statussen", apiVersion, clientId, zaak.Rsin, body));
     }
 
     private async Task<HttpResponseMessage> SendAsync(string row, string clientZaakType, VertrouwelijkheidAanduiding clientMaximum)

@@ -7,6 +7,7 @@ using OneGround.ZGW.Zaken.Web.Controllers;
 using V1 = OneGround.ZGW.Zaken.Web.Controllers.v1;
 using V1_2 = OneGround.ZGW.Zaken.Web.Controllers.v1._2;
 using V1_5 = OneGround.ZGW.Zaken.Web.Controllers.v1._5;
+using V1_7 = OneGround.ZGW.Zaken.Web.Controllers.v1._7;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -47,6 +48,7 @@ internal static class ScopeMatrix
     private const string V1_0 = Api.LatestVersion_1_0;
     private const string V1_2_0 = Api.LatestVersion_1_2;
     private const string V1_5_1 = Api.LatestVersion_1_5;
+    private const string V1_7_0 = Api.LatestVersion_1_7;
 
     private static readonly HttpMethod Get = HttpMethod.Get;
     private static readonly HttpMethod Head = HttpMethod.Head;
@@ -390,6 +392,174 @@ internal static class ScopeMatrix
             Head,
             "api/v1/zaken/{zaak_uuid}/zaakeigenschappen/{uuid}",
             V1_5_1,
+            ZaakResource.Eigenschap,
+            Read
+        ),
+        // Controllers/v1/7/ZaakContactmomentenController.cs
+        Row<V1_7.ZaakContactmomentenController>("GetAllAsync", Get, "api/v1/zaakcontactmomenten", V1_7_0, ZaakResource.Contactmoment, Read),
+        Row<V1_7.ZaakContactmomentenController>("GetAsync", Get, "api/v1/zaakcontactmomenten/{id}", V1_7_0, ZaakResource.Contactmoment, Read),
+        Row<V1_7.ZaakContactmomentenController>("AddAsync", Post, "api/v1/zaakcontactmomenten", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZaakContactmomentenController>(
+            "DeleteAsync",
+            DeleteMethod,
+            "api/v1/zaakcontactmomenten/{id}",
+            V1_7_0,
+            ZaakResource.Contactmoment,
+            Update,
+            ForcedUpdate
+        ),
+        // Controllers/v1/7/ZaakInformatieObjectenController.cs
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "GetAllAsync",
+            Get,
+            "api/v1/zaakinformatieobjecten",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Read
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "GetAsync",
+            Get,
+            "api/v1/zaakinformatieobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Read
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "HeadAsync",
+            Head,
+            "api/v1/zaakinformatieobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Read
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "AddAsync",
+            Post,
+            "api/v1/zaakinformatieobjecten",
+            V1_7_0,
+            ZaakResource.None,
+            Create,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "UpdateAsync",
+            Put,
+            "api/v1/zaakinformatieobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "PartialUpdateAsync",
+            Patch,
+            "api/v1/zaakinformatieobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakInformatieObjectenController>(
+            "DeleteAsync",
+            DeleteMethod,
+            "api/v1/zaakinformatieobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakInformatieObject,
+            Update,
+            ForcedUpdate,
+            Delete
+        ),
+        // Controllers/v1/7/ZaakObjectenController.cs
+        Row<V1_7.ZaakObjectenController>("GetAllAsync", Get, "api/v1/zaakobjecten", V1_7_0, ZaakResource.ZaakObject, Read),
+        Row<V1_7.ZaakObjectenController>("GetAsync", Get, "api/v1/zaakobjecten/{id}", V1_7_0, ZaakResource.ZaakObject, Read),
+        Row<V1_7.ZaakObjectenController>("HeadAsync", Head, "api/v1/zaakobjecten/{id}", V1_7_0, ZaakResource.ZaakObject, Read),
+        Row<V1_7.ZaakObjectenController>("AddAsync", Post, "api/v1/zaakobjecten", V1_7_0, ZaakResource.None, Create, Update, ForcedUpdate),
+        Row<V1_7.ZaakObjectenController>("UpdateAsync", Put, "api/v1/zaakobjecten/{id}", V1_7_0, ZaakResource.ZaakObject, Update, ForcedUpdate),
+        Row<V1_7.ZaakObjectenController>(
+            "PartialUpdateAsync",
+            Patch,
+            "api/v1/zaakobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakObject,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakObjectenController>(
+            "DeleteAsync",
+            DeleteMethod,
+            "api/v1/zaakobjecten/{id}",
+            V1_7_0,
+            ZaakResource.ZaakObject,
+            Update,
+            ForcedUpdate,
+            Delete
+        ),
+        // Controllers/v1/7/ZaakResultatenController.cs
+        Row<V1_7.ZaakResultatenController>("GetAllAsync", Get, "api/v1/resultaten", V1_7_0, ZaakResource.Resultaat, Read),
+        Row<V1_7.ZaakResultatenController>("GetAsync", Get, "api/v1/resultaten/{id}", V1_7_0, ZaakResource.Resultaat, Read),
+        Row<V1_7.ZaakResultatenController>("HeadAsync", Head, "api/v1/resultaten/{id}", V1_7_0, ZaakResource.Resultaat, Read),
+        Row<V1_7.ZaakResultatenController>("AddAsync", Post, "api/v1/resultaten", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZaakResultatenController>("UpdateAsync", Put, "api/v1/resultaten/{id}", V1_7_0, ZaakResource.Resultaat, Update, ForcedUpdate),
+        Row<V1_7.ZaakResultatenController>(
+            "PartialUpdateAsync",
+            Patch,
+            "api/v1/resultaten/{id}",
+            V1_7_0,
+            ZaakResource.Resultaat,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakResultatenController>(
+            "DeleteAsync",
+            DeleteMethod,
+            "api/v1/resultaten/{id}",
+            V1_7_0,
+            ZaakResource.Resultaat,
+            Update,
+            ForcedUpdate
+        ),
+        // Controllers/v1/7/ZaakRollenController.cs
+        Row<V1_7.ZaakRollenController>("GetAllAsync", Get, "api/v1/rollen", V1_7_0, ZaakResource.Rol, Read),
+        Row<V1_7.ZaakRollenController>("GetAsync", Get, "api/v1/rollen/{id}", V1_7_0, ZaakResource.Rol, Read),
+        Row<V1_7.ZaakRollenController>("HeadAsync", Head, "api/v1/rollen/{id}", V1_7_0, ZaakResource.Rol, Read),
+        Row<V1_7.ZaakRollenController>("AddAsync", Post, "api/v1/rollen", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZaakRollenController>("DeleteAsync", DeleteMethod, "api/v1/rollen/{id}", V1_7_0, ZaakResource.Rol, Update, ForcedUpdate),
+        // Controllers/v1/7/ZaakStatussenController.cs
+        Row<V1_7.ZaakStatussenController>("GetAllAsync", Get, "api/v1/statussen", V1_7_0, ZaakResource.Status, Read),
+        Row<V1_7.ZaakStatussenController>("GetAsync", Get, "api/v1/statussen/{id}", V1_7_0, ZaakResource.Status, Read),
+        Row<V1_7.ZaakStatussenController>("HeadAsync", Head, "api/v1/statussen/{id}", V1_7_0, ZaakResource.Status, Read),
+        Row<V1_7.ZaakStatussenController>("AddAsync", Post, "api/v1/statussen", V1_7_0, ZaakResource.None, Create, AddStatus, Reopen),
+        // Controllers/v1/7/ZakenController.cs
+        Row<V1_7.ZakenController>("GetAllAsync", Get, "api/v1/zaken", V1_7_0, ZaakResource.None, Read),
+        Row<V1_7.ZakenController>("SearchAsync", Post, "api/v1/zaken/_zoek", V1_7_0, ZaakResource.None, Read),
+        Row<V1_7.ZakenController>("AddAsync", Post, "api/v1/zaken", V1_7_0, ZaakResource.None, Create),
+        Row<V1_7.ZakenController>("GetAsync", Get, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Read),
+        Row<V1_7.ZakenController>("HeadAsync", Head, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Read),
+        Row<V1_7.ZakenController>("UpdateAsync", Put, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZakenController>("PartialUpdateAsync", Patch, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZakenController>(
+            "GetAllZaakEigenschappenAsync",
+            Get,
+            "api/v1/zaken/{zaak_uuid}/zaakeigenschappen",
+            V1_7_0,
+            ZaakResource.Eigenschap,
+            Read
+        ),
+        Row<V1_7.ZakenController>(
+            "GetZaakEigenschapAsync",
+            Get,
+            "api/v1/zaken/{zaak_uuid}/zaakeigenschappen/{uuid}",
+            V1_7_0,
+            ZaakResource.Eigenschap,
+            Read
+        ),
+        Row<V1_7.ZakenController>(
+            "HeadZaakEigenschapAsync",
+            Head,
+            "api/v1/zaken/{zaak_uuid}/zaakeigenschappen/{uuid}",
+            V1_7_0,
             ZaakResource.Eigenschap,
             Read
         ),

@@ -12,7 +12,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
 /// What a scope allows beyond getting past the scope filter, decided in the handlers: modifying a closed zaak, setting a zaak's statuses and
-/// reopening a closed zaak. Each test runs on API versions 1.0 and 1.5.
+/// reopening a closed zaak. Each test runs on API versions 1.0, 1.5 and 1.7.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
 public class ZaakScopeSemanticsTests
@@ -34,6 +34,7 @@ public class ZaakScopeSemanticsTests
         [
             [Api.LatestVersion_1_0],
             [Api.LatestVersion_1_5],
+            [Api.LatestVersion_1_7],
         ];
 
     // The zaak update, partial update and rol create row of each version.
@@ -45,6 +46,9 @@ public class ZaakScopeSemanticsTests
             ["v1._5.ZakenController.UpdateAsync"],
             ["v1._5.ZakenController.PartialUpdateAsync"],
             ["v1._5.ZaakRollenController.AddAsync"],
+            ["v1._7.ZakenController.UpdateAsync"],
+            ["v1._7.ZakenController.PartialUpdateAsync"],
+            ["v1._7.ZaakRollenController.AddAsync"],
         ];
 
     [Theory]

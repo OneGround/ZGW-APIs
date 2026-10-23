@@ -38,6 +38,13 @@ public class ZaakSubResourceListAuthorizationTests
         "v1._5.ZaakVerzoekenController.GetAllAsync",
         "v1.ZakenController.SearchAsync",
         "v1._5.ZakenController.SearchAsync",
+        "v1._7.ZaakStatussenController.GetAllAsync",
+        "v1._7.ZaakResultatenController.GetAllAsync",
+        "v1._7.ZaakRollenController.GetAllAsync",
+        "v1._7.ZaakObjectenController.GetAllAsync",
+        "v1._7.ZaakInformatieObjectenController.GetAllAsync",
+        "v1._7.ZaakContactmomentenController.GetAllAsync",
+        "v1._7.ZakenController.SearchAsync",
     ];
 
     // Lists under /zaken/{zaak_uuid}, which answer 403 for a zaak the client is not authorized for instead of leaving it out.
@@ -45,6 +52,7 @@ public class ZaakSubResourceListAuthorizationTests
     [
         "v1.ZakenController.GetAllZaakBesluitenAsync",
         "v1.ZakenController.GetAllZaakEigenschappenAsync",
+        "v1._7.ZakenController.GetAllZaakEigenschappenAsync",
         "v1.ZakenController.GetAllZaakAuditTrailRegelsAsync",
     ];
 

@@ -8,6 +8,7 @@ using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
+using StackExchange.Redis;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -58,14 +59,32 @@ internal static class ZakenSeed
     public static void PrepareFactory(ZakenWebApplicationFactory factory)
     {
         CatalogiStub.InstallOn(factory);
+        EvictCachedCatalogiResponses(factory);
 
         // Handlers read the setting per request, so a write after this one already sees it.
         factory.Services.GetRequiredService<IConfiguration>()["Application:DontSendNotificaties"] = "true";
     }
 
     /// <summary>
+    /// Drops the Catalogi responses the API cached in Redis, so a test never reads the body of another test's stub for the same zaaktype URL.
+    /// </summary>
+    private static void EvictCachedCatalogiResponses(ZakenWebApplicationFactory factory)
+    {
+        var redis = factory.Services.GetRequiredService<IConnectionMultiplexer>();
+
+        foreach (var endPoint in redis.GetEndPoints())
+        {
+            foreach (var key in redis.GetServer(endPoint).Keys(pattern: "ZGW:ZTC:*"))
+            {
+                redis.GetDatabase().KeyDelete(key);
+            }
+        }
+    }
+
+    /// <summary>
     /// Seeds a zaak of <paramref name="zaakType"/> owned by <paramref name="rsin"/>, closed (with an <c>einddatum</c>) when
-    /// <paramref name="closed"/>, and with one <paramref name="resource"/> under it.
+    /// <paramref name="closed"/>, and with one <paramref name="resource"/> under it. It is the deelzaak of <paramref name="hoofdzaakId"/>
+    /// and has a relevante andere zaak when given one.
     /// </summary>
     public static async Task<SeededZaak> SeedZaakAsync(
         ZakenWebApplicationFactory factory,
@@ -73,7 +92,9 @@ internal static class ZakenSeed
         VertrouwelijkheidAanduiding vertrouwelijkheidAanduiding = VertrouwelijkheidAanduiding.openbaar,
         bool closed = false,
         ZaakResource resource = ZaakResource.None,
-        string rsin = TestRsins.A
+        string rsin = TestRsins.A,
+        Guid? hoofdzaakId = null,
+        Guid? relevanteAndereZaakId = null
     )
     {
         using var scope = factory.Services.CreateScope();
@@ -100,7 +121,22 @@ internal static class ZakenSeed
             Archiefstatus = ArchiefStatus.nog_te_archiveren,
             CatalogusId = Guid.Parse(CatalogiStub.Catalogus[^36..]),
             LegacyAuditTrail = resource == ZaakResource.AuditTrailRegel,
+            HoofdzaakId = hoofdzaakId,
         };
+
+        if (relevanteAndereZaakId is { } relevant)
+        {
+            zaak.RelevanteAndereZaken =
+            [
+                new RelevanteAndereZaak
+                {
+                    Id = Guid.NewGuid(),
+                    Owner = rsin,
+                    Url = ZakenEndpointRequests.Url($"zaken/{relevant}"),
+                    AardRelatie = "vervolg",
+                },
+            ];
+        }
 
         context.Zaken.Add(zaak);
 
