@@ -43,5 +43,6 @@ public static class QueryAndSearchParameterValidationsExtensions
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1.Requests.ZaakSearchRequestDto>>();
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1._5.Requests.ZaakSearchRequestDto>>();
         services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1._7.Requests.ZaakSearchRequestDto>>();
+        services.AddScoped<ValidateBodyParametersFilter<Zaken.Contracts.v1._7.Requests.ReserveZaakIdentificatieRequestDto>>();
     }
 }

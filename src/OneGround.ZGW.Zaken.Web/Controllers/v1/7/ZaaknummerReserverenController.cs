@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
 using OneGround.ZGW.Common.Web.Services;
+using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -55,6 +56,7 @@ public class ZaaknummerReserverenController : ZGWControllerBase
     [Scope(AuthorizationScopes.Zaken.Create)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ReserveZaakIdentificatieResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<ReserveZaakIdentificatieRequestDto>))]
     public async Task<IActionResult> ReserveAsync([FromBody] ReserveZaakIdentificatieRequestDto request)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(ReserveAsync), request);
