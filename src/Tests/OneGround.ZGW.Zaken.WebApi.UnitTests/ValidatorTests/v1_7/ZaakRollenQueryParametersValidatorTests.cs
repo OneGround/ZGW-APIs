@@ -1,6 +1,4 @@
-using FluentValidation;
 using FluentValidation.TestHelper;
-using OneGround.ZGW.Common.Web.Validations;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.Web.Validators.v1._7.Queries;
 using Xunit;
@@ -9,15 +7,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ValidatorTests.v1_7;
 
 public class ZaakRollenQueryParametersValidatorTests
 {
-    private readonly ZaakRollenQueryParametersValidator _validator;
-
-    public ZaakRollenQueryParametersValidatorTests()
-    {
-        // Other test classes set this global in parallel; set it before building the validator so names never mix.
-        ValidatorOptions.Global.PropertyNameResolver = PropertyNameResolver.Default;
-
-        _validator = new ZaakRollenQueryParametersValidator();
-    }
+    private readonly ZaakRollenQueryParametersValidator _validator = new();
 
     [Fact]
     public void ShouldHaveErrorWhenZaakIsNotAUri()
