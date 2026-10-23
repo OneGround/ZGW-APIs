@@ -48,6 +48,11 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
             return new CommandResult(CommandStatus.NotFound);
         }
 
+        if (zakenAndDeelZaken.Any(z => z == null || !_authorizationContext.IsAuthorized(z)))
+        {
+            return new CommandResult(CommandStatus.Forbidden);
+        }
+
         var hoofdzaak = zakenAndDeelZaken.Single(z => z.Id == request.Id);
 
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, hoofdzaak.LegacyAuditTrail))
@@ -104,18 +109,11 @@ class DeleteZaakCommandHandler : ZakenBaseHandler<DeleteZaakCommandHandler>, IRe
         return zakenAndDeelZaken;
     }
 
-    private CommandResult DeleteZaak(Zaak zaak)
+    private void DeleteZaak(Zaak zaak)
     {
-        if (!_authorizationContext.IsAuthorized(zaak))
-        {
-            return new CommandResult(CommandStatus.Forbidden);
-        }
-
         RemoveZaakInformatieObjecten(zaak);
         RemoveZaak(zaak);
         RemoveAudit(zaak);
-
-        return new CommandResult(CommandStatus.OK);
     }
 
     private void RemoveZaakInformatieObjecten(Zaak zaak)
