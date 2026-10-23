@@ -16,6 +16,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.Contracts.v1._5.Responses;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Notificaties;
 
@@ -63,6 +64,11 @@ class DeleteZaakInformatieObjectCommandHandler
         if (zaakInformatieObject == null)
         {
             return new CommandResult(CommandStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(zaakInformatieObject.Zaak))
+        {
+            return new CommandResult(CommandStatus.Forbidden);
         }
 
         var errors = new List<ValidationError>();

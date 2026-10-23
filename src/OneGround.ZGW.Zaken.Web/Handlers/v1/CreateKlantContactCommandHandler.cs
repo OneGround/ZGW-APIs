@@ -16,6 +16,7 @@ using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses;
 using OneGround.ZGW.Zaken.DataModel;
+using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using OneGround.ZGW.Zaken.Web.Notificaties;
 
@@ -70,6 +71,11 @@ class CreateKlantContactCommandHandler
             var error = new ValidationError("zaak", ErrorCode.Invalid, $"Zaak {request.ZaakUrl} is onbekend.");
             errors.Add(error);
             return new CommandResult<KlantContact>(null, CommandStatus.ValidationError, errors.ToArray());
+        }
+
+        if (!_authorizationContext.IsAuthorized(zaak))
+        {
+            return new CommandResult<KlantContact>(null, CommandStatus.Forbidden);
         }
 
         if (!_closedZaakModificationBusinessRule.ValidateClosedZaakModificationRule(zaak, errors))

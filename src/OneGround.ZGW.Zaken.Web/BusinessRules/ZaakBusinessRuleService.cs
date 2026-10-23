@@ -163,7 +163,10 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         // zrc-013: Valideren hoofdzaak op de Zaak-resource
         if (!string.IsNullOrEmpty(hoofdzaakUrl))
         {
-            var hoofdZaak = await _context.Zaken.AsNoTracking().FirstOrDefaultAsync(z => z.Id == _uriService.GetId(hoofdzaakUrl));
+            // On create the new zaak carries the owner; on update the existing (owner-filtered) zaak does.
+            var owner = zaakExisting?.Owner ?? zaakForValidation.Owner;
+
+            var hoofdZaak = await _context.Zaken.AsNoTracking().FirstOrDefaultAsync(z => z.Id == _uriService.GetId(hoofdzaakUrl) && z.Owner == owner);
 
             if (hoofdZaak == null)
             {

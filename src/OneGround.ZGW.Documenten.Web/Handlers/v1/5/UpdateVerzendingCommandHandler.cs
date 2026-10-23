@@ -77,6 +77,11 @@ class UpdateVerzendingCommandHandler
             return new CommandResult<Verzending>(null, CommandStatus.NotFound);
         }
 
+        if (!_authorizationContext.IsAuthorized(existingVerzending.InformatieObject, AuthorizationScopes.Documenten.Update))
+        {
+            return new CommandResult<Verzending>(null, CommandStatus.Forbidden);
+        }
+
         bool legacyAuditTrail = existingVerzending.InformatieObject.LegacyAuditTrail;
 
         Verzending verzending;

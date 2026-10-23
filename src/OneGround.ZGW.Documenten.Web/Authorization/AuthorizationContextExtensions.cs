@@ -35,14 +35,6 @@ public static class AuthorizationContextExtensions
         );
     }
 
-    public static bool IsForcedUnlockAuthorized(this AuthorizationContext context)
-    {
-        if (context.Authorization.HasAllAuthorizations)
-            return true;
-
-        return context.Authorization.Authorizations.Any(a => a.Scopes.Contains(AuthorizationScopes.Documenten.ForcedUnlock));
-    }
-
     public static bool IsAuthorized(
         this AuthorizationContext context,
         string informatieObjectType,

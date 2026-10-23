@@ -100,6 +100,11 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.NotFound();
         }
 
+        if (result.Status == QueryStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
         var besluitInformatieObjectResponse = _mapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
 
         await _mediator.Send(
@@ -146,6 +151,11 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
 
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
+        }
+
         var besluitResponse = _mapper.Map<BesluitInformatieObjectResponseDto>(result.Result);
 
         return Created(besluitResponse.Url, besluitResponse);
@@ -177,6 +187,11 @@ public class BesluitInformatieObjectenController : ZGWControllerBase
         if (result.Status == CommandStatus.ValidationError)
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        if (result.Status == CommandStatus.Forbidden)
+        {
+            return _errorResponseBuilder.Forbidden();
         }
 
         return NoContent();

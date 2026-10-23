@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>OneGround.ZGW.Besluiten.Web</AssemblyName>
     <RootNamespace>OneGround.ZGW.Besluiten.Web</RootNamespace>
   </PropertyGroup>
@@ -19,5 +19,10 @@
     <ProjectReference Include="..\OneGround.ZGW.Documenten.ServiceAgent\ZGW.Documenten.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.ServiceAgent\ZGW.Notificaties.ServiceAgent.csproj" />
     <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>OneGround.ZGW.Besluiten.WebApi.UnitTests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 </Project>

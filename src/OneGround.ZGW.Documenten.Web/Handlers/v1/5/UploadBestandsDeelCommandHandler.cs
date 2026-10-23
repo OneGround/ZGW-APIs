@@ -17,6 +17,7 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.Contracts.v1._5.Responses;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Services;
+using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Notificaties;
 using OneGround.ZGW.Documenten.Web.Services.FileValidation;
 
@@ -66,6 +67,11 @@ class UploadBestandsDeelCommandHandler
         if (bestandsdeel == null)
         {
             return new CommandResult<BestandsDeel>(null, CommandStatus.NotFound);
+        }
+
+        if (!_authorizationContext.IsAuthorized(bestandsdeel.EnkelvoudigInformatieObjectVersie))
+        {
+            return new CommandResult<BestandsDeel>(null, CommandStatus.Forbidden);
         }
 
         if (bestandsdeel.Voltooid)

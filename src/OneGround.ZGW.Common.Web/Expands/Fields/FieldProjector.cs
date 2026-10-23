@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace OneGround.ZGW.Common.Web.Expands.Fields;
 
@@ -33,7 +34,7 @@ public static class FieldProjector
                 continue;
             }
 
-            scalarLookup[jsonAttr.PropertyName] = prop;
+            scalarLookup[JsonPropertyNames.Resolve(jsonAttr, prop)] = prop;
         }
 
         if (selection.IncludeAllScalars)
@@ -50,8 +51,8 @@ public static class FieldProjector
             }
         }
 
-        // Inline geneste objecten worden ter plekke geprojecteerd (niet via _expand). Scalars zijn
-        // hierboven al verwerkt; een geneste selectie op dezelfde naam heeft daarna voorrang.
+        // Inline nested objects are projected in place (not via _expand). Scalars are already handled above;
+        // a nested selection with the same name takes precedence.
         foreach (var (name, subSelection) in selection.NestedObjects)
         {
             if (scalarLookup.TryGetValue(name, out var prop))
@@ -72,7 +73,11 @@ public static class FieldProjector
                     && entityValue.GetType() != typeof(object)
                 )
                 {
-                    if (entityValue is IEnumerable enumerable && entityValue is not string)
+                    // Note: external JSON has an unknown shape and cannot be projected. It is returned as a whole, or as an empty object when a
+                    // sub-selection is given (the validator rejects that), so it never returns more than was asked for.
+                    if (entityValue is JToken)
+                        expandDict[entityName] = HasSubSelection(subSelection) ? new object() : entityValue;
+                    else if (entityValue is IEnumerable enumerable && entityValue is not string)
                         expandDict[entityName] = enumerable.Cast<object>().Select(item => ProjectObject(item, subSelection)).ToList();
                     else
                         expandDict[entityName] = ProjectObject(entityValue, subSelection);
@@ -89,12 +94,15 @@ public static class FieldProjector
         return result;
     }
 
+    private static bool HasSubSelection(FieldSelection selection) =>
+        selection.ScalarFields.Count > 0 || selection.Entities.Count > 0 || selection.NestedObjects.Count > 0;
+
     private static object ProjectNested(object value, FieldSelection selection)
     {
         if (value is null)
             return null;
 
-        // Een collectie van geneste objecten: projecteer elk element afzonderlijk.
+        // A collection of nested objects: project each element separately.
         if (value is IEnumerable enumerable && value is not string)
         {
             var items = new List<object>();

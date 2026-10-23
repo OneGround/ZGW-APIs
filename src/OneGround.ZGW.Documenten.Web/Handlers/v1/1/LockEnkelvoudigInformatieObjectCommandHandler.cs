@@ -119,6 +119,11 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
             return new CommandResult<string>(null, CommandStatus.Conflict, error);
         }
 
+        if (!_authorizationContext.IsAuthorized(enkelvoudigInformatieObject))
+        {
+            return new CommandResult<string>(null, CommandStatus.Forbidden);
+        }
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, enkelvoudigInformatieObject.LegacyAuditTrail))
         {
             audittrail.SetOld<EnkelvoudigInformatieObjectGetResponseDto>(enkelvoudigInformatieObject);
@@ -144,7 +149,7 @@ public class LockEnkelvoudigInformatieObjectCommandHandler
 
                 if (request.Lock == null)
                 {
-                    if (!AuthorizationContextAccessor.AuthorizationContext.IsForcedUnlockAuthorized())
+                    if (!_authorizationContext.IsAuthorized(enkelvoudigInformatieObject, AuthorizationScopes.Documenten.ForcedUnlock))
                     {
                         var error = new ValidationError("nonFieldErrors", ErrorCode.MissingLockId, "Dit is een verplicht veld.");
                         return new CommandResult<string>(null, CommandStatus.ValidationError, error);

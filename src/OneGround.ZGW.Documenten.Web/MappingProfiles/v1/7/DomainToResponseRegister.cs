@@ -198,7 +198,7 @@ public class DomainToResponseRegister : IRegister
         dest.Locked = latestVersion.LatestInformatieObject.Locked;
 
         dest.Verschijningsvorm = latestVersion.Verschijningsvorm;
-        dest.Trefwoorden = latestVersion.Trefwoorden;
+        dest.Trefwoorden = latestVersion.Trefwoorden?.ToList(); // Note: a copy, one entity is mapped to many dtos (see InformatieObjectResolver)
         dest.InhoudIsVervallen = latestVersion.InhoudIsVervallen;
 
         dest.BestandsDelen = latestVersion
@@ -268,7 +268,7 @@ public class DomainToResponseRegister : IRegister
         dest.IndicatieGebruiksrecht = latestVersion.LatestInformatieObject.IndicatieGebruiksrecht;
 
         dest.Verschijningsvorm = latestVersion.Verschijningsvorm;
-        dest.Trefwoorden = latestVersion.Trefwoorden;
+        dest.Trefwoorden = latestVersion.Trefwoorden?.ToList(); // Note: a copy, one entity is mapped to many dtos (see InformatieObjectResolver)
         dest.InhoudIsVervallen = latestVersion.InhoudIsVervallen;
 
         // Lock is deliberately not set here -- the request's own value must be validated, not the one already stored.

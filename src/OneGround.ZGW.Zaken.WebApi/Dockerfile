@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 
 ARG Version=1.0.0
 
@@ -11,7 +11,7 @@ RUN dotnet restore src/OneGround.ZGW.Zaken.WebApi/ZGW.Zaken.WebApi.csproj -p:Pub
 RUN dotnet publish src/OneGround.ZGW.Zaken.WebApi/ZGW.Zaken.WebApi.csproj --self-contained false -c Release -o /app/publish --no-restore -p:Version=$Version /p:PublishReadyToRun=true -r linux-x64
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble
 
 LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
       org.opencontainers.image.description="OneGround implementation of ZGW Zaken API (from Netherlands VNG standard)." \
@@ -24,6 +24,7 @@ COPY LICENSE ./
 COPY --from=build /app/publish .
 
 RUN apt-get update -yq \
+&& apt-get upgrade -yq \
 && apt-get install curl -yq \
 && rm -rf /var/lib/apt/lists/*
 

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -137,7 +136,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             }
             catch (ExpandExternalServiceException ex)
             {
-                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl, ex.StatusCode, ex);
             }
             catch (ExpandInternalQueryHandlerException ex)
             {
@@ -235,7 +234,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             }
             catch (ExpandExternalServiceException ex)
             {
-                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl, ex.StatusCode, ex);
             }
             catch (ExpandInternalQueryHandlerException ex)
             {
@@ -387,7 +386,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             }
             catch (ExpandExternalServiceException ex)
             {
-                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl);
+                return ExterneServiceFout(ex.ServiceName, ex.ServiceUrl, ex.StatusCode, ex);
             }
             catch (ExpandInternalQueryHandlerException ex)
             {
@@ -705,7 +704,7 @@ public class EnkelvoudigInformatieObjectenController : ZGWControllerBase
             cancellationToken
         );
 
-        var cd = new ContentDisposition { FileName = HttpUtility.UrlPathEncode(enkelvoudigInformatieObjectVersie.Bestandsnaam) };
+        var cd = new ContentDisposition { FileName = Uri.EscapeDataString(enkelvoudigInformatieObjectVersie.Bestandsnaam ?? string.Empty) };
 
         Response.Headers.ContentDisposition = cd.ToString();
         Response.Headers.XContentTypeOptions = "nosniff";

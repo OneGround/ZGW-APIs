@@ -87,6 +87,11 @@ class CreateZaakStatusCommandHandler
 
         if (!_authorizationContext.IsAuthorized(zaak, AuthorizationScopes.Zaken.Statuses.Add, AuthorizationScopes.Zaken.Reopen))
         {
+            if (!_authorizationContext.IsAuthorized(zaak, AuthorizationScopes.Zaken.Create))
+            {
+                return new CommandResult<ZaakStatus>(null, CommandStatus.Forbidden);
+            }
+
             var zaakStatusExists = await _context.ZaakStatussen.AsNoTracking().AnyAsync(z => z.ZaakId == zaak.Id, cancellationToken);
 
             if (zaakStatusExists)

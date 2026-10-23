@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using Xunit;
 
@@ -54,6 +55,76 @@ public class FieldProjectorTests
     }
 
     // ---- Geneste entiteiten (_expand) ----
+
+    [Fact]
+    public void Project_JsonDocumentExpand_IsPassedOnUnchanged()
+    {
+        var document = new JObject
+        {
+            ["naam"] = "Telefoon",
+            ["nested"] = new JObject { ["a"] = 1 },
+        };
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = document },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Same(document, expand["extern"]);
+    }
+
+    [Fact]
+    public void Project_JsonDocumentExpandWithSubSelection_ReturnsNothing_InsteadOfLeakingTheWholeDocument()
+    {
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = new JObject { ["geheim"] = "x" } },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection { ScalarFields = { "naam" } } } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.IsNotType<JObject>(expand["extern"]);
+    }
+
+    [Fact]
+    public void Project_JsonArrayExpand_IsPassedOnUnchanged()
+    {
+        var document = new JArray(1, 2, 3);
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = document },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Same(document, expand["extern"]);
+    }
+
+    [Fact]
+    public void Project_EmptyJsonDocumentExpand_StaysAnEmptyObject()
+    {
+        var entity = new ParentDto
+        {
+            Uuid = "u1",
+            Expand = new() { ["extern"] = new JObject() },
+        };
+        var selection = new FieldSelection { Entities = { ["extern"] = new FieldSelection() } };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        var expand = Assert.IsType<Dictionary<string, object>>(result["_expand"]);
+        Assert.Empty(Assert.IsType<JObject>(expand["extern"]));
+    }
 
     [Fact]
     public void Project_NestedSingleObject_ProjectsSubSelection()
@@ -248,6 +319,19 @@ public class FieldProjectorTests
         var verlenging = Assert.IsType<Dictionary<string, object>>(result["verlenging"]);
         var diep = Assert.IsType<Dictionary<string, object>>(verlenging["diep"]);
         Assert.Equal("diep!", diep["x"]);
+    }
+
+    // ---- [JsonProperty] zonder expliciete naam ----
+
+    [Fact]
+    public void Project_PropertyWithoutExplicitJsonPropertyName_FallsBackToCamelCasedMemberName()
+    {
+        var entity = new NamelessJsonPropertyDto { BetrokkeneIdentificatie = "waarde" };
+        var selection = new FieldSelection { IncludeAllScalars = true };
+
+        var result = FieldProjector.Project(entity, selection);
+
+        Assert.Equal("waarde", result["betrokkeneIdentificatie"]);
     }
 
     // ---- ProjectList ----
