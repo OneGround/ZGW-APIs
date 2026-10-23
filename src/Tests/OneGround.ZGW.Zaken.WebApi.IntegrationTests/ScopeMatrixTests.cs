@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,7 +15,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// request was well-formed, and the accepted cell's response came from past the filter.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ScopeMatrixTests
+public class ScopeMatrixTests : IDisposable
 {
     private const VertrouwelijkheidAanduiding Maximum = VertrouwelijkheidAanduiding.zeer_geheim;
 
@@ -27,6 +28,12 @@ public class ScopeMatrixTests
         _client = _factory.CreateClient();
 
         ZakenSeed.PrepareFactory(_factory);
+    }
+
+    // The Catalogi responses the API cached for this test would otherwise outlive it and be read by the next test class.
+    public void Dispose()
+    {
+        ZakenSeed.EvictCachedCatalogiResponses(_factory);
     }
 
     public static IEnumerable<object[]> Rows() => ScopeMatrix.Rows.Select(r => new object[] { r.Name });

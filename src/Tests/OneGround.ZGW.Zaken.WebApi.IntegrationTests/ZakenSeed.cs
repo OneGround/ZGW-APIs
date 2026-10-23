@@ -66,9 +66,9 @@ internal static class ZakenSeed
     }
 
     /// <summary>
-    /// Drops the Catalogi responses the API cached in Redis, so a test never reads the body of another test's stub for the same zaaktype URL.
+    /// Drops the Catalogi responses the API cached in Redis, before and after a test, so a test never reads the body of another test's stub for the same zaaktype URL.
     /// </summary>
-    private static void EvictCachedCatalogiResponses(ZakenWebApplicationFactory factory)
+    public static void EvictCachedCatalogiResponses(ZakenWebApplicationFactory factory)
     {
         var redis = factory.Services.GetRequiredService<IConnectionMultiplexer>();
 

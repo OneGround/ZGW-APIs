@@ -15,7 +15,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// reopening a closed zaak. Each test runs on API versions 1.0, 1.5 and 1.7.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakScopeSemanticsTests
+public class ZaakScopeSemanticsTests : IDisposable
 {
     private const VertrouwelijkheidAanduiding Maximum = VertrouwelijkheidAanduiding.zeer_geheim;
 
@@ -28,6 +28,12 @@ public class ZaakScopeSemanticsTests
         _client = _factory.CreateClient();
 
         ZakenSeed.PrepareFactory(_factory);
+    }
+
+    // The Catalogi responses the API cached for this test would otherwise outlive it and be read by the next test class.
+    public void Dispose()
+    {
+        ZakenSeed.EvictCachedCatalogiResponses(_factory);
     }
 
     public static IEnumerable<object[]> Versions() =>
