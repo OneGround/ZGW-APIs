@@ -43,6 +43,8 @@ public class ZaaknummerReserverenController : ZGWControllerBase
     /// als ze dit nummer expliciet meegeven bij het aanmaken van een zaak.
     /// Als aantal niet wordt opgegeven of gelijk is aan 1, wordt een enkel object teruggegeven. Als aantal > 1, wordt een lijst van objecten
     /// teruggegeven.
+    /// Wijkt de bronorganisatie af van de organisatie van de aanroeper, dan worden de zaaknummers toch voor de organisatie van de aanroeper
+    /// gereserveerd en wordt dit gemeld in de X-Warning response header.
     /// </summary>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
@@ -63,6 +65,8 @@ public class ZaaknummerReserverenController : ZGWControllerBase
         {
             return _errorResponseBuilder.BadRequest(result.Errors);
         }
+
+        AddWarningHeaders(result);
 
         var response = result.Result.Select(nummer => new ReserveZaakIdentificatieResponseDto { Zaaknummer = nummer }).ToList();
 

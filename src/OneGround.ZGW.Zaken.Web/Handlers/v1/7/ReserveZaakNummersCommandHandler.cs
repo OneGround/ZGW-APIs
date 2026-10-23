@@ -45,12 +45,12 @@ class ReserveZaakNummersCommandHandler : ZGWBaseHandler, IRequestHandler<Reserve
     {
         _logger.LogDebug("Reserving {Aantal} zaaknummer(s)....", request.Aantal);
 
-        // Note: the numbers are generated (and unique) per organisation, so a reservation is only possible for the organisation of the caller
+        // Note: the numbers are generated (and unique) per organisation, so they are always reserved for the organisation of the caller.
+        // A different bronorganisatie is not an error, but is reported as a warning.
+        var warnings = new List<string>();
         if (request.Bronorganisatie != _rsin)
         {
-            return Fail(
-                new ValidationError("bronorganisatie", ErrorCode.Invalid, "De bronorganisatie moet gelijk zijn aan de organisatie van de aanroeper.")
-            );
+            warnings.Add("De bronorganisatie wijkt af van de organisatie van de aanroeper.");
         }
 
         var maxAantal = _applicationConfiguration.ReserveZaaknummersMaxAantal;
@@ -85,7 +85,7 @@ class ReserveZaakNummersCommandHandler : ZGWBaseHandler, IRequestHandler<Reserve
 
         _logger.LogDebug("{Aantal} zaaknummer(s) successfully reserved.", zaaknummers.Count);
 
-        return new CommandResult<IReadOnlyList<string>>(zaaknummers, CommandStatus.OK);
+        return new CommandResult<IReadOnlyList<string>>(zaaknummers, CommandStatus.OK) { Warnings = warnings };
     }
 
     private bool IsZaakIdentificatieUnique(string identificatie)

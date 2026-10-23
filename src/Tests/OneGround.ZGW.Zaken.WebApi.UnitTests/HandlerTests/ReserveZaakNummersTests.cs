@@ -15,7 +15,6 @@ using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
-using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Requests;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -106,13 +105,25 @@ public class ReserveZaakNummersTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Reserve_ForAnotherBronorganisatie_IsAValidationError_AndUsesNoNumber()
+    public async Task Reserve_ForAnotherBronorganisatie_ReservesForTheCaller_AndGivesAWarning()
     {
         var result = await CreateSut().Handle(Command(bronorganisatie: "123456782"), CancellationToken.None);
 
-        Assert.Equal(CommandStatus.ValidationError, result.Status);
-        Assert.Equal("bronorganisatie", result.Errors.Single().Name);
-        AssertNoNumberGenerated();
+        Assert.Equal(CommandStatus.OK, result.Status);
+        Assert.Equal(["Z2025-00000001"], result.Result);
+        Assert.Equal(["De bronorganisatie wijkt af van de organisatie van de aanroeper."], result.Warnings);
+        _nummerGeneratorMock.Verify(
+            m => m.GenerateAsync(TestOwner, "zaken", It.IsAny<Func<string, bool>>(), It.IsAny<CancellationToken>()),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task Reserve_ForTheBronorganisatieOfTheCaller_GivesNoWarning()
+    {
+        var result = await CreateSut().Handle(Command(), CancellationToken.None);
+
+        Assert.Empty(result.Warnings);
     }
 
     [Theory]
@@ -213,23 +224,47 @@ public class ReserveZaakNummersTests : IAsyncLifetime
 
     // ---- controller: the shape of the response
 
-    private async Task<ObjectResult> ReserveAsync(int? aantal, params string[] nummers)
+    private async Task<ObjectResult> ReserveAsync(int? aantal, params string[] nummers) =>
+        (await ReserveWithResponseAsync(aantal, [], nummers)).Result;
+
+    private async Task<(ObjectResult Result, HttpResponse Response)> ReserveWithResponseAsync(int? aantal, string[] warnings, params string[] nummers)
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(m => m.Send(It.IsAny<IRequest<CommandResult<IReadOnlyList<string>>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CommandResult<IReadOnlyList<string>>(nummers, CommandStatus.OK));
+            .ReturnsAsync(new CommandResult<IReadOnlyList<string>>(nummers, CommandStatus.OK) { Warnings = warnings });
 
+        var httpContext = new DefaultHttpContext();
         var controller = new ZaaknummerReserverenController(
             NullLogger<ZaaknummerReserverenController>.Instance,
             mediatorMock.Object,
             new Mock<MapsterMapper.IMapper>().Object,
             new Mock<IErrorResponseBuilder>().Object
-        );
+        )
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
+        };
 
         var result = await controller.ReserveAsync(new ReserveZaakIdentificatieRequestDto { Bronorganisatie = TestOwner, Aantal = aantal });
 
-        return Assert.IsType<ObjectResult>(result);
+        return (Assert.IsType<ObjectResult>(result), httpContext.Response);
+    }
+
+    [Fact]
+    public async Task Controller_Warnings_AreReturnedAsXWarningHeaders_WithStatusCreated()
+    {
+        var (result, response) = await ReserveWithResponseAsync(null, ["waarschuwing"], "Z2025-00000001");
+
+        Assert.Equal(StatusCodes.Status201Created, result.StatusCode);
+        Assert.Equal(["waarschuwing"], response.Headers["X-Warning"].ToArray());
+    }
+
+    [Fact]
+    public async Task Controller_NoWarnings_GivesNoXWarningHeader()
+    {
+        var (_, response) = await ReserveWithResponseAsync(null, [], "Z2025-00000001");
+
+        Assert.False(response.Headers.ContainsKey("X-Warning"));
     }
 
     [Theory]
