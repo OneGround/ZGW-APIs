@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check for changed files
         id: changed-files
@@ -31,7 +31,7 @@ jobs:
 
       - name: Setup .NET
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -39,7 +39,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0
         with:
-          Version: 7.5.0
+          Version: 7.6.6
 
       - name: Validate OneGround application CD workflow paths
         if: steps.changed-files.outputs.any_changed == 'true'
