@@ -966,6 +966,74 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                     b.ToTable("zaakkenmerken");
                 });
 
+            modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakNotitie", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AangemaaktDoor")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("aangemaaktdoor");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("createdby");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creationtime");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificationtime");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("modifiedby");
+
+                    b.Property<int>("NotitieType")
+                        .HasColumnType("integer")
+                        .HasColumnName("notitietype");
+
+                    b.Property<string>("Onderwerp")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("onderwerp");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("owner");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Tekst")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tekst");
+
+                    b.Property<Guid>("ZaakId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("zaak_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Owner");
+
+                    b.HasIndex("ZaakId");
+
+                    b.ToTable("zaaknotities");
+                });
+
             modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakObject.AanduidingWozObject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2443,6 +2511,17 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                 {
                     b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
                         .WithMany("Kenmerken")
+                        .HasForeignKey("ZaakId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Zaak");
+                });
+
+            modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakNotitie", b =>
+                {
+                    b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
+                        .WithMany()
                         .HasForeignKey("ZaakId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

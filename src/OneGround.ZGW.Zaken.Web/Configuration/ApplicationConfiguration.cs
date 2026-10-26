@@ -6,16 +6,18 @@ namespace OneGround.ZGW.Zaken.Web.Configuration;
 public class ApplicationConfiguration
 {
     public bool DontSendNotificaties { get; set; }
-    public int ZakenPageSize { get; set; }
-    public int ZaakStatussenPageSize { get; set; }
-    public int ZaakObjectenPageSize { get; set; }
-    public int ZaakInformatieObjectenPageSize { get; set; }
-    public int ZaakResultatenPageSize { get; set; }
-    public int ZaakRollenPageSize { get; set; }
+    public int ZakenPageSize { get; set; } = 50;
+    public int ZaakStatussenPageSize { get; set; } = 100;
+    public int ZaakObjectenPageSize { get; set; } = 100;
+    public int ZaakInformatieObjectenPageSize { get; set; } = 100;
+    public int ZaakResultatenPageSize { get; set; } = 100;
+    public int ZaakRollenPageSize { get; set; } = 100;
+    public int KlantContactenPageSize { get; set; } = 100;
+    public int ZaakNotitiesPageSize { get; set; } = 100;
     public bool IgnoreZaakTypeValidation { get; set; }
     public bool IgnoreStatusTypeValidation { get; set; }
     public bool IgnoreInformatieObjectValidation { get; set; }
-    public int KlantContactenPageSize { get; set; }
+
     public bool SkipMigrationsAtStartup { get; set; }
     public bool ApplyFixturesAtStartup { get; set; }
     public string FixturesSource { get; set; }

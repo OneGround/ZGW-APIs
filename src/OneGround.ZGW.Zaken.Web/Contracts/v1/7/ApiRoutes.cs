@@ -8,6 +8,19 @@ public class ApiRoutes
 
     private const string Base = Root + "/" + Version;
 
+    public static class ZaakNotities
+    {
+        public const string GetAll = Base + "/zaaknotities";
+
+        public const string Get = Base + "/zaaknotities/{uuid}";
+
+        public const string Create = Base + "/zaaknotities";
+
+        public const string Update = Base + "/zaaknotities/{uuid}";
+
+        public const string Delete = Base + "/zaaknotities/{uuid}";
+    }
+
     public static class ZaaknummerReserveren
     {
         public const string Create = Base + "/zaaknummer_reserveren";

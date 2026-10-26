@@ -48,7 +48,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
     public DbSet<ZaakResultaat> ZaakResultaten { get; set; }
     public DbSet<KlantContact> KlantContacten { get; set; } // Deprecated in >= v1.5
     public DbSet<ZaakContactmoment> ZaakContactmomenten { get; set; }
-    public DbSet<ZaakVerzoek> ZaakVerzoeken { get; set; }
+    public DbSet<ZaakVerzoek> ZaakVerzoeken { get; set; } // Deprecated in >= v1.5
+    public DbSet<ZaakNotitie> ZaakNotities { get; set; }
     public DbSet<OrganisatieNummer> OrganisatieNummers { get; set; }
 
     public DbSet<NotAnEntity> WithoutEntity { get; set; }
@@ -124,6 +125,8 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         modelBuilder.Entity<ZaakContactmoment>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<ZaakVerzoek>().HasIndex(p => p.Owner);
+
+        modelBuilder.Entity<ZaakNotitie>().HasIndex(p => p.Owner);
 
         modelBuilder.Entity<Zaak>().Property(p => p.Archiefstatus).HasDefaultValue(ArchiefStatus.nog_te_archiveren);
 
