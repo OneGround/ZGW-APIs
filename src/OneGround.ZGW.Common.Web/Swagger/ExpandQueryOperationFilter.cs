@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using OneGround.ZGW.Common.Web.Expands;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -20,7 +20,7 @@ public class ExpandQueryOperationFilter : IOperationFilter
         operation.Parameters ??= [];
 
         var expand = operation.Parameters.SingleOrDefault(p =>
-            p.In == ParameterLocation.Query && p.Name.Equals("expand", System.StringComparison.CurrentCultureIgnoreCase)
+            p.In == ParameterLocation.Query && string.Equals(p.Name, "expand", System.StringComparison.OrdinalIgnoreCase)
         );
         if (expand != null)
         {
@@ -35,7 +35,7 @@ public class ExpandQueryOperationFilter : IOperationFilter
                 Description =
                     "Haal details van gelinkte resources direct op. Als je meerdere resources tegelijk wilt ophalen kun je deze scheiden met een komma. Voor het ophalen van resources die een laag dieper genest zijn wordt de punt-notatie gebruikt.",
                 Required = false,
-                Schema = new OpenApiSchema { Type = "string" },
+                Schema = new OpenApiSchema { Type = JsonSchemaType.String },
             }
         );
     }

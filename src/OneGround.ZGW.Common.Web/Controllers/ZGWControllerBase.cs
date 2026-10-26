@@ -35,7 +35,7 @@ public abstract class ZGWControllerBase : ControllerBase
 
     protected bool IsApiVersionRequested(ApiVersion version)
     {
-        return HttpContext?.GetRequestedApiVersion() >= version;
+        return HttpContext?.RequestedApiVersion >= version;
     }
 
     // Note: one X-Warning header per warning
