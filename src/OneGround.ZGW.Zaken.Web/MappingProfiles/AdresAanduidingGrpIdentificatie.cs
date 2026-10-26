@@ -26,7 +26,11 @@ public static class AdresAanduidingGrpIdentificatie
         target.AdresAanduidingGrp_AoaIdentificatieAsSent = source?.AoaIdentificatie;
     }
 
-    public static string ResolveForCreate(string oaoIdentificatie, string aoaIdentificatie) => aoaIdentificatie ?? oaoIdentificatie;
+    // Note: a blank name counts as not sent, so it never wins over a name that has a value
+    public static string ResolveForCreate(string oaoIdentificatie, string aoaIdentificatie) =>
+        !string.IsNullOrWhiteSpace(aoaIdentificatie) ? aoaIdentificatie
+        : !string.IsNullOrWhiteSpace(oaoIdentificatie) ? oaoIdentificatie
+        : aoaIdentificatie ?? oaoIdentificatie;
 
     /// <param name="request">The object mapped from the request (see <see cref="Apply"/>).</param>
     /// <param name="stored">The value that is stored now.</param>
@@ -51,7 +55,10 @@ public static class AdresAanduidingGrpIdentificatie
             return aoa;
         }
 
-        // Note: also for a request object that was not mapped from a dto: then only the resolved value is known
-        return request.AdresAanduidingGrp_OaoIdentificatie;
+        // Note: also for a request object that was not mapped from a dto: then only the resolved value is known.
+        // A blank value counts as not sent here too, so it keeps the stored value
+        var resolved = request.AdresAanduidingGrp_OaoIdentificatie;
+
+        return string.IsNullOrWhiteSpace(resolved) ? stored : resolved;
     }
 }

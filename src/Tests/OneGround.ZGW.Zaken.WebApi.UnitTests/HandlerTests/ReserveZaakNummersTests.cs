@@ -30,6 +30,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.HandlerTests;
 public class ReserveZaakNummersTests : IAsyncLifetime
 {
     private const string TestOwner = "999993653";
+    private const string OtherOrganisation = "999990482";
 
     private ZrcDbContext _dbContext;
     private Mock<INummerGenerator> _nummerGeneratorMock;
@@ -107,7 +108,7 @@ public class ReserveZaakNummersTests : IAsyncLifetime
     [Fact]
     public async Task Reserve_ForAnotherBronorganisatie_ReservesForTheCaller_AndGivesAWarning()
     {
-        var result = await CreateSut().Handle(Command(bronorganisatie: "123456782"), CancellationToken.None);
+        var result = await CreateSut().Handle(Command(bronorganisatie: OtherOrganisation), CancellationToken.None);
 
         Assert.Equal(CommandStatus.OK, result.Status);
         Assert.Equal(["Z2025-00000001"], result.Result);

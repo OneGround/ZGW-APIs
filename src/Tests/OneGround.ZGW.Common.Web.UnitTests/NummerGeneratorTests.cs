@@ -20,6 +20,7 @@ public class NummerGeneratorTests
     private readonly Mock<ISqlCommandExecutor> _sqlCommandExecutor;
     private readonly DateTime _now = DateTime.Now;
     private readonly string _rsin = "999993653";
+    private const string OtherRsin = "999990482";
 
     public NummerGeneratorTests()
     {
@@ -77,7 +78,7 @@ public class NummerGeneratorTests
             _sqlCommandExecutor.Object
         );
 
-        Assert.Equal(expectedFormat, await nummerGenerator.GetFormatAsync("123456782", entity));
+        Assert.Equal(expectedFormat, await nummerGenerator.GetFormatAsync(OtherRsin, entity));
     }
 
     [Fact]
