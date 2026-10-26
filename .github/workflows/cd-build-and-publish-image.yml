@@ -40,11 +40,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up PowerShell
-        uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0
-        with:
-          Version: 7.5.0
-
       - name: Get next application version
         id: get_next_application_version
         shell: pwsh
