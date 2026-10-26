@@ -116,7 +116,14 @@ public class NummerGenerator<TContext> : INummerGenerator
             o => o.Rsin == rsin && o.EntiteitNaam == entity,
             cancellationToken
         );
-        if (organisatieNummer == null)
+
+        if (organisatieNummer != null)
+        {
+            // Note: The context keeps the entity of an earlier call (e.g. a batch in one request) with its old counter, as a query does not
+            // overwrite the values of a tracked entity. Another request may have taken numbers since, so read the counter again (inside the lock).
+            await _context.Entry(organisatieNummer).ReloadAsync(cancellationToken);
+        }
+        else
         {
             organisatieNummer = new OrganisatieNummer
             {

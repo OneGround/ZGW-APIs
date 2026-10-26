@@ -48,13 +48,8 @@ class GetZaakNotitieQueryHandler : ZakenBaseHandler<GetZaakNotitieQueryHandler>,
             return new QueryResult<ZaakNotitie>(null, QueryStatus.NotFound);
         }
 
-        if (
-            !_authorizationContext.IsAuthorized(
-                zaakNotitie.Zaak.Zaaktype,
-                zaakNotitie.Zaak.VertrouwelijkheidAanduiding,
-                AuthorizationScopes.Zaken.Read
-            )
-        )
+        // Note: Checked against the scopes of the requested action (read for a GET, update for the read of a PATCH)
+        if (!_authorizationContext.IsAuthorized(zaakNotitie.Zaak))
         {
             return new QueryResult<ZaakNotitie>(null, QueryStatus.Forbidden);
         }

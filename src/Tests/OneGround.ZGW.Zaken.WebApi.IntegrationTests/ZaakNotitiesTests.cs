@@ -146,6 +146,21 @@ public class ZaakNotitiesTests
     }
 
     [Fact]
+    public async Task Patch_is_allowed_for_a_client_that_may_update_but_not_read()
+    {
+        var zaakUrl = await SeedZaakUrlAsync();
+        var notitie = await CreateAsync(NewClientWithAllAuthorizations(), zaakUrl);
+        var updateOnly = NewClientAuthorized(ZaakTypes.A, AuthorizationScopes.Zaken.Update);
+        var path = new Uri(notitie.Value<string>("url")!).AbsolutePath;
+
+        var patch = await SendAsync(HttpMethod.Patch, path, updateOnly, new JObject { ["tekst"] = "Alleen de tekst" });
+        var read = await SendAsync(HttpMethod.Get, path, updateOnly);
+
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, read.StatusCode);
+    }
+
+    [Fact]
     public async Task Put_without_type_and_status_keeps_the_stored_values()
     {
         var clientId = NewClientWithAllAuthorizations();
