@@ -27,6 +27,7 @@ internal enum ZaakResource
     Verzoek,
     KlantContact,
     AuditTrailRegel,
+    Notitie,
 }
 
 /// <summary>
@@ -276,6 +277,20 @@ internal static class ZakenSeed
                         ResourceWeergave = zaak.Identificatie,
                         Toelichting = "",
                         AanmaakDatum = registered,
+                    }
+                );
+                break;
+
+            case ZaakResource.Notitie:
+                context.ZaakNotities.Add(
+                    new ZaakNotitie
+                    {
+                        Id = resourceId,
+                        Owner = rsin,
+                        Zaak = zaak,
+                        CreationTime = registered,
+                        Onderwerp = "Integratietest",
+                        Tekst = "Integratietest",
                     }
                 );
                 break;

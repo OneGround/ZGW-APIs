@@ -206,6 +206,22 @@ internal static class ScopeMatrix
             ZaakResource.Eigenschap,
             Read
         ),
+        Row<V1.ZakenController>(
+            "GetZaakEigenschapV1_2Async",
+            Get,
+            "api/v1/zaken/{zaak_uuid}/zaakeigenschappen/{uuid}",
+            V1_2_0,
+            ZaakResource.Eigenschap,
+            Read
+        ),
+        Row<V1.ZakenController>(
+            "HeadZaakEigenschapV1_2Async",
+            Head,
+            "api/v1/zaken/{zaak_uuid}/zaakeigenschappen/{uuid}",
+            V1_2_0,
+            ZaakResource.Eigenschap,
+            Read
+        ),
         // Controllers/v1/2/ZaakObjectenController.cs
         Row<V1_2.ZaakObjectenController>("GetAllAsync", Get, "api/v1/zaakobjecten", V1_2_0, ZaakResource.ZaakObject, Read),
         Row<V1_2.ZaakObjectenController>("GetAsync", Get, "api/v1/zaakobjecten/{id}", V1_2_0, ZaakResource.ZaakObject, Read),
@@ -486,6 +502,23 @@ internal static class ScopeMatrix
             ForcedUpdate,
             Delete
         ),
+        // Controllers/v1/7/ZaaknummerReserverenController.cs
+        Row<V1_7.ZaaknummerReserverenController>("ReserveAsync", Post, "api/v1/zaaknummer_reserveren", V1_7_0, ZaakResource.None, Create),
+        // Controllers/v1/7/ZaakNotitiesController.cs
+        Row<V1_7.ZaakNotitiesController>("GetAllAsync", Get, "api/v1/zaaknotities", V1_7_0, ZaakResource.Notitie, Read),
+        Row<V1_7.ZaakNotitiesController>("GetAsync", Get, "api/v1/zaaknotities/{uuid}", V1_7_0, ZaakResource.Notitie, Read),
+        Row<V1_7.ZaakNotitiesController>("AddAsync", Post, "api/v1/zaaknotities", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZaakNotitiesController>("UpdateAsync", Put, "api/v1/zaaknotities/{uuid}", V1_7_0, ZaakResource.Notitie, Update, ForcedUpdate),
+        Row<V1_7.ZaakNotitiesController>(
+            "PartialUpdateAsync",
+            Patch,
+            "api/v1/zaaknotities/{uuid}",
+            V1_7_0,
+            ZaakResource.Notitie,
+            Update,
+            ForcedUpdate
+        ),
+        Row<V1_7.ZaakNotitiesController>("DeleteAsync", DeleteMethod, "api/v1/zaaknotities/{uuid}", V1_7_0, ZaakResource.Notitie, Update, ForcedUpdate),
         // Controllers/v1/7/ZaakObjectenController.cs
         Row<V1_7.ZaakObjectenController>("GetAllAsync", Get, "api/v1/zaakobjecten", V1_7_0, ZaakResource.ZaakObject, Read),
         Row<V1_7.ZaakObjectenController>("GetAsync", Get, "api/v1/zaakobjecten/{id}", V1_7_0, ZaakResource.ZaakObject, Read),
@@ -554,6 +587,8 @@ internal static class ScopeMatrix
         Row<V1_7.ZakenController>("HeadAsync", Head, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Read),
         Row<V1_7.ZakenController>("UpdateAsync", Put, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
         Row<V1_7.ZakenController>("PartialUpdateAsync", Patch, "api/v1/zaken/{id}", V1_7_0, ZaakResource.None, Update, ForcedUpdate),
+        Row<V1_7.ZakenController>("GetAllZaakBesluitenAsync", Get, "api/v1/zaken/{zaak_uuid}/besluiten", V1_7_0, ZaakResource.Besluit, Read),
+        Row<V1_7.ZakenController>("GetZaakBesluitAsync", Get, "api/v1/zaken/{zaak_uuid}/besluiten/{uuid}", V1_7_0, ZaakResource.Besluit, Read),
         Row<V1_7.ZakenController>(
             "GetAllZaakEigenschappenAsync",
             Get,

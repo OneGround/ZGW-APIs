@@ -41,7 +41,12 @@ internal static class ZakenEndpointRequests
 
         if (row.Method == HttpMethod.Get && !row.Route.Contains('{'))
         {
-            path += row.Route == "api/v1/zaken" ? $"?identificatie={zaak.Identificatie}" : $"?zaak={Uri.EscapeDataString(zaak.Url)}";
+            path += row.Route switch
+            {
+                "api/v1/zaken" => $"?identificatie={zaak.Identificatie}",
+                "api/v1/zaaknotities" => $"?gerelateerdAan={Uri.EscapeDataString(zaak.Url)}",
+                _ => $"?zaak={Uri.EscapeDataString(zaak.Url)}",
+            };
         }
 
         return Create(row.Method, "/" + path, row.ApiVersion, clientId, zaak.Rsin, BodyFor(row, zaak));
@@ -195,6 +200,14 @@ internal static class ZakenEndpointRequests
             },
             "api/v1/zaakcontactmomenten" => new { zaak = zaak.Url, contactmoment = ContactmomentUrl },
             "api/v1/zaakverzoeken" => new { zaak = zaak.Url, verzoek = VerzoekUrl },
+            "api/v1/zaaknummer_reserveren" => new { bronorganisatie = zaak.Rsin, aantal = 1 },
+            "api/v1/zaaknotities" when isPatch => new { tekst = "Bijgewerkt" },
+            "api/v1/zaaknotities" => new
+            {
+                gerelateerdAan = zaak.Url,
+                onderwerp = "Integratietest",
+                tekst = "Integratietest",
+            },
             _ => throw new ArgumentOutOfRangeException(nameof(row), row.Name, $"No request body for {row.Method} {row.Route}."),
         };
     }
