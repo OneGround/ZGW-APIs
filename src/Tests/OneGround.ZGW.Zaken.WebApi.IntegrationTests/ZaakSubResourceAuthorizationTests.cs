@@ -113,6 +113,20 @@ public class ZaakSubResourceAuthorizationTests
         ("v1._7.ZakenController.GetZaakEigenschapAsync", null),
         ("v1._7.ZakenController.UpdateAsync", null),
         ("v1._7.ZakenController.PartialUpdateAsync", null),
+        ("v1._5.ZakenController.HeadAsync", null),
+        ("v1._5.ZakenController.HeadZaakEigenschapAsync", null),
+        ("v1._5.ZaakStatussenController.HeadAsync", null),
+        ("v1._5.ZaakResultatenController.HeadAsync", null),
+        ("v1._5.ZaakRollenController.HeadAsync", null),
+        ("v1._5.ZaakObjectenController.HeadAsync", null),
+        ("v1._5.ZaakInformatieObjectenController.HeadAsync", null),
+        ("v1._7.ZakenController.HeadAsync", null),
+        ("v1._7.ZakenController.HeadZaakEigenschapAsync", null),
+        ("v1._7.ZaakStatussenController.HeadAsync", null),
+        ("v1._7.ZaakResultatenController.HeadAsync", null),
+        ("v1._7.ZaakRollenController.HeadAsync", null),
+        ("v1._7.ZaakObjectenController.HeadAsync", null),
+        ("v1._7.ZaakInformatieObjectenController.HeadAsync", null),
     ];
 
     private readonly ZakenWebApplicationFactory _factory;
@@ -132,6 +146,7 @@ public class ZaakSubResourceAuthorizationTests
         [
             [Api.LatestVersion_1_0],
             [Api.LatestVersion_1_5],
+            [Api.LatestVersion_1_7],
         ];
 
     public static IEnumerable<object[]> StatusVersions() =>

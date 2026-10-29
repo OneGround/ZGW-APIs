@@ -6,7 +6,6 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using OneGround.ZGW.Common.Web.Authorization;
-using OneGround.ZGW.Common.Web.Versioning;
 using Xunit;
 using AnchorController = OneGround.ZGW.Zaken.Web.Controllers.v1._5.ZakenController;
 
@@ -16,7 +15,6 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Holds <see cref="ScopeMatrix"/> to the <c>[Scope]</c> attributes it was copied from, so a matrix cell always tests the scope an action
 /// actually asks for. Needs no containers: it reads attribute metadata only.
 /// </summary>
-[Collection(ZakenApiCollection.Name)]
 public class ScopeMatrixCompletenessTests
 {
     [Fact]
@@ -47,7 +45,7 @@ public class ScopeMatrixCompletenessTests
 
         foreach (var row in ScopeMatrix.Rows.Where(r => actions.ContainsKey(r.Name)))
         {
-            var (controller, action) = actions[row.Name];
+            var (_, action) = actions[row.Name];
 
             var scopes = ScopesOf(action);
             if (!scopes.ToHashSet().SetEquals(row.Scopes) || scopes.Length != row.Scopes.Length)
@@ -64,7 +62,7 @@ public class ScopeMatrixCompletenessTests
                 );
             }
 
-            var versions = ApiVersionsOf(controller, action);
+            var versions = row.ServedApiVersions;
             if (!versions.Contains(row.ApiVersion))
             {
                 mismatches.Add($"{row.Name}: the row has API version {row.ApiVersion}, the action serves [{string.Join(", ", versions)}]");
@@ -95,24 +93,12 @@ public class ScopeMatrixCompletenessTests
     // The scopes are a constructor argument the attribute keeps private, so they are read from its metadata.
     private static string[] ScopesOf(MethodInfo action)
     {
-        var attribute = Assert.Single(action.GetCustomAttributesData(), a => typeof(BaseScopeAttribute).IsAssignableFrom(a.AttributeType));
+        var declaring = action.GetCustomAttributesData().Any(IsScope) ? action : action.GetBaseDefinition();
+        var attribute = Assert.Single(declaring.GetCustomAttributesData(), IsScope);
         var scopes = (ReadOnlyCollection<CustomAttributeTypedArgument>)Assert.Single(attribute.ConstructorArguments).Value!;
 
         return scopes.Select(s => (string)s.Value).ToArray();
     }
 
-    // A controller declares the versions it serves either on the class or on each of its actions.
-    private static string[] ApiVersionsOf(Type controller, MethodInfo action)
-    {
-        return VersionsDeclaredOn(controller).Concat(VersionsDeclaredOn(action)).ToArray();
-    }
-
-    private static string[] VersionsDeclaredOn(MemberInfo member)
-    {
-        return member
-            .GetCustomAttributesData()
-            .Where(a => a.AttributeType == typeof(ZgwApiVersionAttribute))
-            .Select(a => (string)a.ConstructorArguments[0].Value)
-            .ToArray();
-    }
+    private static bool IsScope(CustomAttributeData attribute) => typeof(BaseScopeAttribute).IsAssignableFrom(attribute.AttributeType);
 }

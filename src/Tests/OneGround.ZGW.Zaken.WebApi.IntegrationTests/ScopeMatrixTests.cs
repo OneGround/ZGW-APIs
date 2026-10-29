@@ -30,15 +30,16 @@ public class ScopeMatrixTests
         CatalogiStub.InstallOn(_factory);
     }
 
-    public static IEnumerable<object[]> Rows() => ScopeMatrix.Rows.Select(r => new object[] { r.Name });
+    public static IEnumerable<object[]> Rows() => ScopeMatrix.Rows.SelectMany(r => r.ServedApiVersions.Select(v => new object[] { r.Name, v }));
 
-    public static IEnumerable<object[]> AcceptedScopes() => ScopeMatrix.Rows.SelectMany(r => r.Scopes.Select(s => new object[] { r.Name, s }));
+    public static IEnumerable<object[]> AcceptedScopes() =>
+        ScopeMatrix.Rows.SelectMany(r => r.ServedApiVersions.SelectMany(v => r.Scopes.Select(s => new object[] { r.Name, v, s })));
 
     [Theory]
     [MemberData(nameof(Rows))]
-    public async Task Client_with_every_scope_except_the_actions_is_forbidden(string row)
+    public async Task Client_with_every_scope_except_the_actions_is_forbidden(string row, string apiVersion)
     {
-        var matrixRow = ScopeMatrix.Named(row);
+        var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
         var clientId = ZrcClients.AuthorizedForAllScopesExcept(_factory, ZaakTypes.A, Maximum, matrixRow.Scopes);
 
         var response = await SendAsync(matrixRow, clientId);
@@ -48,9 +49,9 @@ public class ScopeMatrixTests
 
     [Theory]
     [MemberData(nameof(AcceptedScopes))]
-    public async Task Client_with_only_one_of_the_actions_scopes_gets_past_the_scope_filter(string row, string scope)
+    public async Task Client_with_only_one_of_the_actions_scopes_gets_past_the_scope_filter(string row, string apiVersion, string scope)
     {
-        var matrixRow = ScopeMatrix.Named(row);
+        var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
         var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, Maximum, scope);
 
         var response = await SendAsync(matrixRow, clientId);

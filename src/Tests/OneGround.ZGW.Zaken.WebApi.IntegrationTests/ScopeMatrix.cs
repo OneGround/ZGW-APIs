@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.Common.Web.Versioning;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using V1 = OneGround.ZGW.Zaken.Web.Controllers.v1;
 using V1_2 = OneGround.ZGW.Zaken.Web.Controllers.v1._2;
@@ -27,7 +29,20 @@ internal sealed record ScopeMatrixRow(
 {
     public string Name => $"{Controller.FullName!["OneGround.ZGW.Zaken.Web.Controllers.".Length..]}.{Action}";
 
+    public MethodInfo ActionMethod => Controller.GetMethod(Action, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)!;
+
+    // A controller declares the versions it serves either on the class or on each of its actions.
+    public string[] ServedApiVersions => VersionsDeclaredOn(Controller).Concat(VersionsDeclaredOn(ActionMethod)).ToArray();
+
     public override string ToString() => Name;
+
+    private static IEnumerable<string> VersionsDeclaredOn(MemberInfo member)
+    {
+        return member
+            .GetCustomAttributesData()
+            .Where(a => a.AttributeType == typeof(ZgwApiVersionAttribute))
+            .Select(a => (string)a.ConstructorArguments[0].Value);
+    }
 }
 
 /// <summary>

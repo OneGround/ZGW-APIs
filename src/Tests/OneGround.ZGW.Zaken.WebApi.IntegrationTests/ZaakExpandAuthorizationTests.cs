@@ -75,15 +75,16 @@ public class ZaakExpandAuthorizationTests
         VertrouwelijkheidAanduiding relatedVertrouwelijkheid
     )
     {
-        var related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid, hoofdzaakId: null);
-
         SeededZaak zaak;
+        SeededZaak related;
         switch (path)
         {
             case "hoofdzaak":
+                related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid);
                 zaak = await ZakenSeed.SeedZaakAsync(_factory, hoofdzaakId: related.Id);
                 break;
             case "relevanteanderezaken":
+                related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid);
                 zaak = await ZakenSeed.SeedZaakAsync(_factory, relevanteAndereZaakId: related.Id);
                 break;
             default:
