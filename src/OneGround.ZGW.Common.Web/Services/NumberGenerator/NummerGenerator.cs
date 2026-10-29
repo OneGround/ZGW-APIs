@@ -105,12 +105,6 @@ public class NummerGenerator<TContext> : INummerGenerator
 
     private async Task<OrganisatieNummer> GetOrCreateOrganisatieNummer(string rsin, string entity, CancellationToken cancellationToken = default)
     {
-        if (!_formats.TryGetValue(entity, out var format))
-        {
-            throw new InvalidOperationException($"No format defined for entity: {entity}");
-        }
-
-        _logger.LogDebug("Using format: {format} for entity: {entity}", format, entity);
         // If the organisatienummer entry not exists add a new one
         var organisatieNummer = await _context.OrganisatieNummers.SingleOrDefaultAsync(
             o => o.Rsin == rsin && o.EntiteitNaam == entity,
@@ -125,6 +119,14 @@ public class NummerGenerator<TContext> : INummerGenerator
         }
         else
         {
+            // Note: The configured format is only needed for the first number of an organisation (the format is stored with it afterwards)
+            if (!_formats.TryGetValue(entity, out var format))
+            {
+                throw new InvalidOperationException($"No format defined for entity: {entity}");
+            }
+
+            _logger.LogDebug("Using format: {format} for entity: {entity}", format, entity);
+
             organisatieNummer = new OrganisatieNummer
             {
                 Rsin = rsin,

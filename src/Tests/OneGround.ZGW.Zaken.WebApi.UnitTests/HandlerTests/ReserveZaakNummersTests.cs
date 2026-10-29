@@ -160,6 +160,16 @@ public class ReserveZaakNummersTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reserve_WithoutAConfiguredFormat_IsAValidationError_AndUsesNoNumber()
+    {
+        var result = await CreateSut(zakenFormat: null).Handle(Command(), CancellationToken.None);
+
+        Assert.Equal(CommandStatus.ValidationError, result.Status);
+        Assert.Equal("nonFieldErrors", result.Errors.Single().Name);
+        AssertNoNumberGenerated();
+    }
+
+    [Fact]
     public async Task Reserve_ChecksUniquenessAgainstTheZakenOfTheOrganisation()
     {
         _dbContext.Zaken.Add(

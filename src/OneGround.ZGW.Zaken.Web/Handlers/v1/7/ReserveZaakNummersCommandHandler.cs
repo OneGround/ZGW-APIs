@@ -65,7 +65,12 @@ class ReserveZaakNummersCommandHandler : ZGWBaseHandler, IRequestHandler<Reserve
         // The format is the one of the organisation (see INummerGenerator.GetFormatAsync).
         var format = await _nummerGenerator.GetFormatAsync(_rsin, NummerEntity, cancellationToken);
 
-        if (format != null && format.Contains(ZaaktypeTemplateKey))
+        if (format == null)
+        {
+            return Fail(new ValidationError("nonFieldErrors", ErrorCode.Invalid, "Er is geen formaat voor zaaknummers geconfigureerd."));
+        }
+
+        if (format.Contains(ZaaktypeTemplateKey))
         {
             return Fail(
                 new ValidationError(

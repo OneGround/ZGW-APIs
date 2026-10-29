@@ -52,6 +52,32 @@ public class NummerGeneratorTests
     }
 
     [Fact]
+    public async Task GenerateAsync_ShouldUseTheStoredFormat_WhenTheConfigurationEntryIsRemoved()
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            new ConfigurationBuilder().Build(),
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal($"B{_now.Year}-00000002", await nummerGenerator.GenerateAsync(_rsin, "besluiten"));
+    }
+
+    [Fact]
+    public async Task GenerateAsync_ShouldThrow_WhenNoFormatIsStoredOrConfigured()
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            new ConfigurationBuilder().Build(),
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => nummerGenerator.GenerateAsync(_rsin, "zaken"));
+    }
+
+    [Fact]
     public async Task GenerateAsync_ShouldGenerateUniqueFormat()
     {
         var mockDbContext = new UnitTestDbContext(await GetMockedDbContext());
