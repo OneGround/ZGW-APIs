@@ -6,9 +6,8 @@ using OneGround.ZGW.Common.Services;
 
 namespace OneGround.ZGW.Besluiten.ServiceAgent.v1;
 
-// Note: Identical implementation to BesluitenServiceAgent -- the only reason this is a distinct class is so
-// AddServiceAgent<IUserAuthBesluitenServiceAgent, UserAuthBesluitenServiceAgent> gets its own typed HttpClient (keyed by this class's full name)
-// wired with AuthorizationType.UserAccount, instead of sharing IBesluitenServiceAgent's own ServiceAccount-authenticated HttpClient registration.
+// Note: Same implementation as BesluitenServiceAgent; a distinct class because the typed HttpClient is keyed by the full class name, so this
+// one gets its own AuthorizationType.UserAccount client. Do not merge: the JWT forwarding would be lost.
 public class UserAuthBesluitenServiceAgent : BesluitenServiceAgent, IUserAuthBesluitenServiceAgent
 {
     public UserAuthBesluitenServiceAgent(

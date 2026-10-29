@@ -43,6 +43,8 @@ public class GetAllZaakNotitiesQueryParameters : QueryParameters
 
     /// <summary>
     /// Intern mag enkel een medewerker zien, extern mag gezien worden door medewerker en de initiator.
+    /// De API zelf beperkt de zichtbaarheid niet: een applicatie die de zaak mag lezen krijgt ook de interne notities.
+    /// De aanroepende applicatie is verantwoordelijk voor het tonen van intern alleen aan een medewerker.
     /// Uitdrukkelijk toegestane waarden: intern, extern.
     /// </summary>
     [FromQuery(Name = "notitieType")]
