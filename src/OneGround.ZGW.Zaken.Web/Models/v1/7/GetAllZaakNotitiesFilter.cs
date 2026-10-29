@@ -7,7 +7,7 @@ public class GetAllZaakNotitiesFilter
 {
     public string AangemaaktDoor { get; set; }
     public string AangemaaktDoor__icontains { get; set; }
-    public DateTime? Aanmaakdatum { get; set; }
+    public DateTimeWindow Aanmaakdatum { get; set; }
     public DateTime? Aanmaakdatum__gt { get; set; }
     public DateTime? Aanmaakdatum__gte { get; set; }
     public DateTime? Aanmaakdatum__lt { get; set; }
@@ -19,7 +19,7 @@ public class GetAllZaakNotitiesFilter
     public ZaakNotitieStatus? Status { get; set; }
     public string Tekst { get; set; }
     public string Tekst__icontains { get; set; }
-    public DateTime? Wijzigingsdatum { get; set; }
+    public DateTimeWindow Wijzigingsdatum { get; set; }
     public DateTime? Wijzigingsdatum__gt { get; set; }
     public DateTime? Wijzigingsdatum__gte { get; set; }
     public DateTime? Wijzigingsdatum__lt { get; set; }

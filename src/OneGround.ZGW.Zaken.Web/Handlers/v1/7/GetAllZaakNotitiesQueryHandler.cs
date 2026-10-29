@@ -78,6 +78,7 @@ class GetAllZaakNotitiesQueryHandler
     private Expression<Func<ZaakNotitie, bool>> GetZaakNotitieFilterPredicate(GetAllZaakNotitiesFilter filter)
     {
         // Note: A notitie that is never modified has the wijzigingsdatum equal to the aanmaakdatum
+        // Note: An exact aanmaakdatum/wijzigingsdatum matches the day or second that was given (stored timestamps have microseconds)
         var gerelateerdAanId = filter.GerelateerdAan == null ? (Guid?)null : UriHelper.GetResourceId(filter.GerelateerdAan);
         var aangemaaktDoorLike = LikePattern(filter.AangemaaktDoor__icontains);
         var onderwerpLike = LikePattern(filter.Onderwerp__icontains);
@@ -86,7 +87,7 @@ class GetAllZaakNotitiesQueryHandler
         return z =>
             (filter.AangemaaktDoor == null || z.AangemaaktDoor == filter.AangemaaktDoor)
             && (aangemaaktDoorLike == null || EF.Functions.ILike(z.AangemaaktDoor, aangemaaktDoorLike, LikeEscape))
-            && (filter.Aanmaakdatum == null || z.CreationTime == filter.Aanmaakdatum)
+            && (filter.Aanmaakdatum == null || (z.CreationTime >= filter.Aanmaakdatum.From && z.CreationTime < filter.Aanmaakdatum.Until))
             && (filter.Aanmaakdatum__gt == null || z.CreationTime > filter.Aanmaakdatum__gt)
             && (filter.Aanmaakdatum__gte == null || z.CreationTime >= filter.Aanmaakdatum__gte)
             && (filter.Aanmaakdatum__lt == null || z.CreationTime < filter.Aanmaakdatum__lt)
@@ -98,7 +99,13 @@ class GetAllZaakNotitiesQueryHandler
             && (filter.Status == null || z.Status == filter.Status)
             && (filter.Tekst == null || z.Tekst == filter.Tekst)
             && (tekstLike == null || EF.Functions.ILike(z.Tekst, tekstLike, LikeEscape))
-            && (filter.Wijzigingsdatum == null || (z.ModificationTime ?? z.CreationTime) == filter.Wijzigingsdatum)
+            && (
+                filter.Wijzigingsdatum == null
+                || (
+                    (z.ModificationTime ?? z.CreationTime) >= filter.Wijzigingsdatum.From
+                    && (z.ModificationTime ?? z.CreationTime) < filter.Wijzigingsdatum.Until
+                )
+            )
             && (filter.Wijzigingsdatum__gt == null || (z.ModificationTime ?? z.CreationTime) > filter.Wijzigingsdatum__gt)
             && (filter.Wijzigingsdatum__gte == null || (z.ModificationTime ?? z.CreationTime) >= filter.Wijzigingsdatum__gte)
             && (filter.Wijzigingsdatum__lt == null || (z.ModificationTime ?? z.CreationTime) < filter.Wijzigingsdatum__lt)

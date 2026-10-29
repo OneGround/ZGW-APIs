@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -291,6 +292,31 @@ public class ZaakNotitiesTests
         Assert.Equal(["Eén"], await ListTekstenAsync(clientId, zaakUrl, $"wijzigingsdatum__gt={yesterday}"));
         Assert.Empty(await ListTekstenAsync(clientId, zaakUrl, $"aanmaakdatum__gt={tomorrow}"));
         Assert.Empty(await ListTekstenAsync(clientId, zaakUrl, $"wijzigingsdatum__lte={yesterday}"));
+    }
+
+    [Fact]
+    public async Task List_exact_date_filters_match_the_given_day_or_second()
+    {
+        var clientId = NewClientWithAllAuthorizations();
+        var zaakUrl = await SeedZaakUrlAsync();
+        var notitie = await CreateAsync(clientId, zaakUrl, tekst: "Eén");
+
+        // Note: The stored timestamp has microseconds, the filter values do not
+        var created = notitie.Value<DateTime>("aanmaakdatum").ToUniversalTime();
+        string Escaped(DateTime value, string format) => Uri.EscapeDataString(value.ToString(format, CultureInfo.InvariantCulture));
+
+        var day = Escaped(created, "yyyy-MM-dd");
+        var otherDay = Escaped(created.AddDays(1), "yyyy-MM-dd");
+        var second = Escaped(created, "yyyy-MM-ddTHH:mm:ss'Z'");
+        var otherSecond = Escaped(created.AddSeconds(-2), "yyyy-MM-ddTHH:mm:ss'Z'");
+
+        foreach (var name in new[] { "aanmaakdatum", "wijzigingsdatum" })
+        {
+            Assert.Equal(["Eén"], await ListTekstenAsync(clientId, zaakUrl, $"{name}={day}"));
+            Assert.Equal(["Eén"], await ListTekstenAsync(clientId, zaakUrl, $"{name}={second}"));
+            Assert.Empty(await ListTekstenAsync(clientId, zaakUrl, $"{name}={otherDay}"));
+            Assert.Empty(await ListTekstenAsync(clientId, zaakUrl, $"{name}={otherSecond}"));
+        }
     }
 
     [Fact]
