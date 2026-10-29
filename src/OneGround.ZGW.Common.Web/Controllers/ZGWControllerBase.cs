@@ -38,6 +38,15 @@ public abstract class ZGWControllerBase : ControllerBase
         return HttpContext?.RequestedApiVersion >= version;
     }
 
+    // Note: one X-Warning header per warning
+    protected void AddWarningHeaders(CommandResult result)
+    {
+        foreach (var warning in result.Warnings)
+        {
+            Response.Headers.Append("X-Warning", warning);
+        }
+    }
+
     protected int? TryGetSridFromContentCrsHeader()
     {
         var acceptCrs = HttpContext.GetAcceptCrsHeader();

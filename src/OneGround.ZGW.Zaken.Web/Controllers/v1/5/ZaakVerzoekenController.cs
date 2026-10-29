@@ -32,8 +32,7 @@ namespace OneGround.ZGW.Zaken.Web.Controllers.v1._5;
 [Authorize]
 [Consumes("application/json")]
 [Produces("application/json")]
-[ZgwApiVersion(Api.LatestVersion_1_5)]
-[ZgwApiVersion(Api.LatestVersion_1_7)]
+[ZgwApiVersion(Api.LatestVersion_1_5, Deprecated = true)]
 public class ZaakVerzoekenController : ZGWControllerBase
 {
     public ZaakVerzoekenController(

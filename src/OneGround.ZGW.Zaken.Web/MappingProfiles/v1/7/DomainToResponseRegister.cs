@@ -135,6 +135,14 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.Zaak, src => MapsterUrlResolver.ResolveUrl(src.Zaak))
             .Ignore(dest => dest.Expand);
 
+        // Note: Only ZaakBesluit->v1._7.ZaakBesluitResponseDto is genuinely new for v1.7 -- same reasoning as above. Not polymorphic, so field
+        // mapping mirrors v1.DomainToResponseRegister's ZaakBesluit->ZaakBesluitResponseDto config exactly, with no ConstructUsing needed.
+        config
+            .NewConfig<ZaakBesluit, ZaakBesluitResponseDto>()
+            .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
+            .Map(dest => dest.Uuid, src => src.Id)
+            .Ignore(dest => dest.Expand);
+
         // Note: Only ZaakInformatieObject->v1._7.ZaakInformatieObjectResponseDto is genuinely new for
         // v1.7 -- same reasoning as above. Not polymorphic, so field mapping mirrors v1._5's
         // ZaakInformatieObject->ZaakInformatieObjectResponseDto config exactly, with no ConstructUsing

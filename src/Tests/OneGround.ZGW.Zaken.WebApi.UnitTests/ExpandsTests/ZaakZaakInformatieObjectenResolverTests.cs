@@ -7,12 +7,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.ServiceAgent;
-using OneGround.ZGW.Common.ServiceAgent.Expands;
 using OneGround.ZGW.Common.Web.Expands;
-using OneGround.ZGW.Documenten.Contracts.v1._7.Queries;
-using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
-using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Expands.v1._7;
@@ -36,7 +31,7 @@ public class ZaakZaakInformatieObjectenResolverTests
     // ZaakZaakInformatieObjectenResolver resolves IMediator from a fresh DI scope per call (see the
     // class doc comment: GetAllZaakInformatieObjectenQuery's handler can create a session-scoped
     // PostgreSQL temp table). A real ServiceCollection exercises that CreateScope() call for real,
-    // unlike a bare IMediator mock would. The DRC service agent is injected directly (no scope needed).
+    // unlike a bare IMediator mock would.
     private static IServiceProvider BuildServiceProvider(IMediator mediator)
     {
         var services = new ServiceCollection();
@@ -45,7 +40,7 @@ public class ZaakZaakInformatieObjectenResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_DrcConfirmsBothRelations_ReturnsBothMapped()
+    public async Task ResolveAsync_ZaakHasTwoRelations_ReturnsBothMapped()
     {
         var zio1 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000001"), InformatieObject = InformatieObjectUrl1 };
         var zio2 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000002"), InformatieObject = InformatieObjectUrl2 };
@@ -60,16 +55,6 @@ public class ZaakZaakInformatieObjectenResolverTests
             )
             .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
 
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.Is<GetAllObjectInformatieObjectenQueryParameters>(p => p.Object == ZaakUrl)))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>([
-                    new ObjectInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl1 },
-                    new ObjectInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl2 },
-                ])
-            );
-
         var mappedZio1 = new ZaakInformatieObjectResponseDto { Uuid = zio1.Id.ToString() };
         var mappedZio2 = new ZaakInformatieObjectResponseDto { Uuid = zio2.Id.ToString() };
         var mapperMock = new Mock<IMapper>();
@@ -80,9 +65,7 @@ public class ZaakZaakInformatieObjectenResolverTests
         var resolver = new ZaakZaakInformatieObjectenResolver(
             BuildServiceProvider(mediatorMock.Object),
             mapperMock.Object,
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
         );
 
         var result = await resolver.ResolveAsync(
@@ -96,63 +79,14 @@ public class ZaakZaakInformatieObjectenResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_DrcConfirmsOnlyOneRelation_FiltersOutTheOther()
-    {
-        var zio1 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000001"), InformatieObject = InformatieObjectUrl1 };
-        var zio2 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000002"), InformatieObject = InformatieObjectUrl2 };
-        IList<ZaakInformatieObject> zrcResult = [zio1, zio2];
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
-
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(
-                // Note: only informatieobject 1 is authorized per DRC -- zio2 must be filtered out
-                [
-                    new ObjectInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl1 },
-                ])
-            );
-
-        var mappedZio1 = new ZaakInformatieObjectResponseDto { Uuid = zio1.Id.ToString() };
-        var mapperMock = new Mock<IMapper>();
-        mapperMock
-            .Setup(m => m.Map<List<ZaakInformatieObjectResponseDto>>(It.Is<List<ZaakInformatieObject>>(l => l.Count == 1 && l[0] == zio1)))
-            .Returns([mappedZio1]);
-
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            mapperMock.Object,
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
-        );
-
-        var result = await resolver.ResolveAsync(
-            EntityWithTwoZaakInformatieObjecten,
-            new Dictionary<string, object>(),
-            new HashSet<string> { "zaakinformatieobjecten" }
-        );
-
-        var response = Assert.IsType<List<ZaakInformatieObjectResponseDto>>(result);
-        Assert.Equal([mappedZio1], response);
-    }
-
-    [Fact]
     public async Task ResolveAsync_NoZaakInformatieObjecten_ReturnsEmptyListWithoutQuerying()
     {
         var mediatorMock = new Mock<IMediator>();
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
 
         var resolver = new ZaakZaakInformatieObjectenResolver(
             BuildServiceProvider(mediatorMock.Object),
             Mock.Of<IMapper>(),
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
         );
         var entity = new ZaakResponseDto { Url = ZaakUrl, ZaakInformatieObjecten = null };
 
@@ -161,125 +95,6 @@ public class ZaakZaakInformatieObjectenResolverTests
         var response = Assert.IsType<List<ZaakInformatieObjectResponseDto>>(result);
         Assert.Empty(response);
         mediatorMock.Verify(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()), Times.Never);
-        documentenServiceAgentMock.Verify(
-            a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()),
-            Times.Never
-        );
-    }
-
-    [Fact]
-    public async Task ResolveAsync_DrcCallFails_ThrowsExpandExternalServiceException()
-    {
-        var zio1 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000001"), InformatieObject = InformatieObjectUrl1 };
-        IList<ZaakInformatieObject> zrcResult = [zio1];
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
-
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(
-                    new OneGround.ZGW.Common.Contracts.v1.ErrorResponse { Status = 500 },
-                    null
-                )
-            );
-
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            Mock.Of<IMapper>(),
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
-        );
-
-        var ex = await Assert.ThrowsAsync<ExpandExternalServiceException>(() =>
-            resolver.ResolveAsync(
-                EntityWithTwoZaakInformatieObjecten,
-                new Dictionary<string, object>(),
-                new HashSet<string> { "zaakinformatieobjecten" }
-            )
-        );
-
-        Assert.Equal("DRC", ex.ServiceName);
-        // Note: the url that was asked of DRC and the status it answered with -- not just the url of the zaak
-        Assert.Equal($"objectinformatieobjecten?object={EntityWithTwoZaakInformatieObjecten.Url}", ex.ServiceUrl);
-        Assert.Equal(500, ex.StatusCode);
-    }
-
-    [Theory]
-    [InlineData(403)]
-    [InlineData(404)]
-    public async Task ResolveAsync_DrcSaysTheCallerMayNotReadTheObjectInformatieObjecten_ResolvesToAnEmptyList(int status)
-    {
-        var zio1 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000001"), InformatieObject = InformatieObjectUrl1 };
-        IList<ZaakInformatieObject> zrcResult = [zio1];
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
-
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>(
-                    new OneGround.ZGW.Common.Contracts.v1.ErrorResponse { Status = status },
-                    null
-                )
-            );
-
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            Mock.Of<IMapper>(),
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
-        );
-
-        var result = await resolver.ResolveAsync(
-            EntityWithTwoZaakInformatieObjecten,
-            new Dictionary<string, object>(),
-            new HashSet<string> { "zaakinformatieobjecten" }
-        );
-
-        Assert.Empty(Assert.IsType<List<ZaakInformatieObjectResponseDto>>(result));
-    }
-
-    [Fact]
-    public async Task ResolveAsync_DrcAnswersWithoutABody_ThrowsExpandExternalServiceExceptionInsteadOfFailingOnTheMissingBody()
-    {
-        var zio1 = new ZaakInformatieObject { Id = new("00000000-0000-0000-0000-000000000001"), InformatieObject = InformatieObjectUrl1 };
-        IList<ZaakInformatieObject> zrcResult = [zio1];
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
-
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>((IEnumerable<ObjectInformatieObjectResponseDto>)null)
-            );
-
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            Mock.Of<IMapper>(),
-            documentenServiceAgentMock.Object,
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
-        );
-
-        await Assert.ThrowsAsync<ExpandExternalServiceException>(() =>
-            resolver.ResolveAsync(
-                EntityWithTwoZaakInformatieObjecten,
-                new Dictionary<string, object>(),
-                new HashSet<string> { "zaakinformatieobjecten" }
-            )
-        );
     }
 
     [Fact]
@@ -292,15 +107,6 @@ public class ZaakZaakInformatieObjectenResolverTests
             .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
 
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>([
-                    new ObjectInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl1 },
-                ])
-            );
-
         var mappedZio1 = new ZaakInformatieObjectResponseDto { Uuid = zio1.Id.ToString() };
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<List<ZaakInformatieObjectResponseDto>>(It.IsAny<List<ZaakInformatieObject>>())).Returns([mappedZio1]);
@@ -310,13 +116,7 @@ public class ZaakZaakInformatieObjectenResolverTests
         informatieobjectResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<ZaakInformatieObjectResponseDto>([informatieobjectResolverMock.Object]);
 
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            mapperMock.Object,
-            documentenServiceAgentMock.Object,
-            expandEngine,
-            ExpandCaches.ObjectInformatieObjecten()
-        );
+        var resolver = new ZaakZaakInformatieObjectenResolver(BuildServiceProvider(mediatorMock.Object), mapperMock.Object, expandEngine);
 
         await resolver.ResolveAsync(
             EntityWithTwoZaakInformatieObjecten,
@@ -340,15 +140,6 @@ public class ZaakZaakInformatieObjectenResolverTests
             .Setup(m => m.Send(It.IsAny<GetAllZaakInformatieObjectenQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResult<IList<ZaakInformatieObject>>(zrcResult, QueryStatus.OK));
 
-        var documentenServiceAgentMock = new Mock<IUserAuthDocumentenServiceAgent>();
-        documentenServiceAgentMock
-            .Setup(a => a.GetObjectInformatieObjectenAsync(It.IsAny<GetAllObjectInformatieObjectenQueryParameters>()))
-            .ReturnsAsync(
-                new ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>([
-                    new ObjectInformatieObjectResponseDto { InformatieObject = InformatieObjectUrl1 },
-                ])
-            );
-
         var mappedZio1 = new ZaakInformatieObjectResponseDto { Uuid = zio1.Id.ToString() };
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.Map<List<ZaakInformatieObjectResponseDto>>(It.IsAny<List<ZaakInformatieObject>>())).Returns([mappedZio1]);
@@ -358,13 +149,7 @@ public class ZaakZaakInformatieObjectenResolverTests
         informatieobjectResolverMock.SetupGet(r => r.Parent).Returns((string)null);
         var expandEngine = new ExpandEngine<ZaakInformatieObjectResponseDto>([informatieobjectResolverMock.Object]);
 
-        var resolver = new ZaakZaakInformatieObjectenResolver(
-            BuildServiceProvider(mediatorMock.Object),
-            mapperMock.Object,
-            documentenServiceAgentMock.Object,
-            expandEngine,
-            ExpandCaches.ObjectInformatieObjecten()
-        );
+        var resolver = new ZaakZaakInformatieObjectenResolver(BuildServiceProvider(mediatorMock.Object), mapperMock.Object, expandEngine);
 
         await resolver.ResolveAsync(
             EntityWithTwoZaakInformatieObjecten,
@@ -394,9 +179,7 @@ public class ZaakZaakInformatieObjectenResolverTests
         var resolver = new ZaakZaakInformatieObjectenResolver(
             BuildServiceProvider(Mock.Of<IMediator>()),
             Mock.Of<IMapper>(),
-            Mock.Of<IUserAuthDocumentenServiceAgent>(),
-            new ExpandEngine<ZaakInformatieObjectResponseDto>([]),
-            ExpandCaches.ObjectInformatieObjecten()
+            new ExpandEngine<ZaakInformatieObjectResponseDto>([])
         );
 
         Assert.Equal("zaakinformatieobjecten", resolver.Path);

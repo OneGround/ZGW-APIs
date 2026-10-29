@@ -21,6 +21,8 @@ using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 using Xunit;
 
+#pragma warning disable CS0618 // Note: oaoIdentificatie is deprecated, but still accepted and returned (#2576)
+
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.MappingTests;
 
 public class DomainToResponseProfileTests : IDisposable

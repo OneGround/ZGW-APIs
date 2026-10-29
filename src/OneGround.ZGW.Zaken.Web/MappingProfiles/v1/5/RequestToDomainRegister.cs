@@ -574,7 +574,7 @@ public class RequestToDomainRegister : IRegister
         if (source.ObjectIdentificatie.AdresAanduidingGrp != null)
         {
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_NumIdentificatie = source.ObjectIdentificatie.AdresAanduidingGrp.NumIdentificatie;
-            terreinGebouwdObjectZaakObject.AdresAanduidingGrp_OaoIdentificatie = source.ObjectIdentificatie.AdresAanduidingGrp.OaoIdentificatie;
+            AdresAanduidingGrpIdentificatie.Apply(terreinGebouwdObjectZaakObject, source.ObjectIdentificatie.AdresAanduidingGrp);
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_WplWoonplaatsNaam = source.ObjectIdentificatie.AdresAanduidingGrp.WplWoonplaatsNaam;
             terreinGebouwdObjectZaakObject.AdresAanduidingGrp_GorOpenbareRuimteNaam = source
                 .ObjectIdentificatie

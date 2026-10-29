@@ -22,7 +22,7 @@ public class TerreinGebouwdObjectZaakObjectDtoValidator : ZGWValidator<Zaken.Con
             .ChildRules(v =>
             {
                 v.CascadeRuleFor(a => a.NumIdentificatie).MaximumLength(100);
-                v.CascadeRuleFor(a => a.OaoIdentificatie).NotNull().NotEmpty().MaximumLength(100);
+                Web.Validators.v1.ZaakObject.AdresAanduidingGrpIdentificatieRules.Add(v);
                 v.CascadeRuleFor(a => a.WplWoonplaatsNaam).NotNull().NotEmpty().MaximumLength(80);
                 v.CascadeRuleFor(a => a.GorOpenbareRuimteNaam).NotNull().NotEmpty().MaximumLength(80);
                 v.CascadeRuleFor(a => a.AoaPostcode).MaximumLength(7);

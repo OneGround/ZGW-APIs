@@ -70,7 +70,7 @@ public class Startup
         services.AddZGWApi(
             "Zaken",
             Configuration,
-            Api.LatestVersion_1_5,
+            Api.LatestVersion_1_7,
             c =>
             {
                 c.NewtonsoftJsonOptions = (o) =>
@@ -109,6 +109,7 @@ public class Startup
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
         services.AddBesluitenServiceAgent(Configuration);
+        services.AddUserAuthBesluitenServiceAgent(Configuration); // For ZRC v1.7 expands (zaakbesluiten.besluit, evaluated by BRC as the calling client)
 
         // Expanders support _expand in responses (>= v1.5)
         services.AddExpandables(); // Note: Legacy Expand Engine v1.5
@@ -122,6 +123,7 @@ public class Startup
         services.AddZaakContactmomentenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKCONTACTMOMENT resource itself
         services.AddZaakEigenschappenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKEIGENSCHAP resource itself
         services.AddZaakInformatieObjectenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKINFORMATIEOBJECT resource itself
+        services.AddZaakBesluitenAPIExpands(); // Note: New Expand Engine v1.7 for the ZAAKBESLUIT resource itself
 
         services.AddScoped<ICatalogiServiceAgentDecorator, CatalogiServiceAgentDecorator>();
 

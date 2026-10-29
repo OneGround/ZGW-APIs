@@ -19,6 +19,8 @@ using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
+#pragma warning disable CS0618 // Note: oaoIdentificatie is deprecated, but still accepted and returned (#2576)
+
 namespace OneGround.ZGW.Zaken.Web.MappingProfiles.v1;
 
 public class DomainToResponseRegister : IRegister
@@ -151,6 +153,7 @@ public class DomainToResponseRegister : IRegister
                         GorOpenbareRuimteNaam = s.AdresAanduidingGrp_GorOpenbareRuimteNaam,
                         NumIdentificatie = s.AdresAanduidingGrp_NumIdentificatie,
                         OaoIdentificatie = s.AdresAanduidingGrp_OaoIdentificatie,
+                        AoaIdentificatie = s.AdresAanduidingGrp_OaoIdentificatie,
                         OgoLocatieAanduiding = s.AdresAanduidingGrp_OgoLocatieAanduiding,
                         WplWoonplaatsNaam = s.AdresAanduidingGrp_WplWoonplaatsNaam,
                     }
@@ -248,7 +251,7 @@ public class DomainToResponseRegister : IRegister
 
         config
             .NewConfig<TerreinGebouwdObjectZaakObject, TerreinGebouwdObjectZaakObjectRequestDto>()
-            .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<TerreinGebouwdObjectZaakObjectDto>(config))
+            .Map(dest => dest.ObjectIdentificatie, src => AdaptTerreinGebouwdObjectForPatchMerge(src, config))
             .Ignore(dest => dest.Version)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)
@@ -357,6 +360,24 @@ public class DomainToResponseRegister : IRegister
     // would not have those rules and would silently produce different (wrong) results for those
     // members. A null nested source needs no guard of its own: `.Adapt<T>(config)` on null returns null
     // (Mapster's own null-source handling), so the nested member comes out null rather than an empty DTO.
+
+    // Note: the existing object a PATCH is merged into. Only the deprecated oaoIdentificatie is filled, so that a payload with either of the two
+    // names wins over the stored value; with both filled, a payload with only one of them would leave the other holding the old value, and
+    // aoaIdentificatie would win over a changed oaoIdentificatie (#2576).
+    internal static TerreinGebouwdObjectZaakObjectDto AdaptTerreinGebouwdObjectForPatchMerge(
+        TerreinGebouwdObjectZaakObject source,
+        TypeAdapterConfig config
+    )
+    {
+        var objectIdentificatie = source.Adapt<TerreinGebouwdObjectZaakObjectDto>(config);
+
+        if (objectIdentificatie.AdresAanduidingGrp != null)
+        {
+            objectIdentificatie.AdresAanduidingGrp.AoaIdentificatie = null;
+        }
+
+        return objectIdentificatie;
+    }
 
     private static ZaakRolResponseDto CreateZaakRolResponseDto(ZaakRol source, TypeAdapterConfig config)
     {

@@ -138,4 +138,39 @@ public class ApiVersionCoverageTests
             "Operations with more than one 1.7 action:" + Environment.NewLine + string.Join(Environment.NewLine, ambiguous)
         );
     }
+
+    [Theory]
+    [InlineData("1.0", false)]
+    [InlineData("1.2", true)]
+    [InlineData("1.5", true)]
+    [InlineData("1.7", true)]
+    public void GetZaakEigenschap_HasAnETag_FromVersion12(string version, bool expectETag)
+    {
+        var actions = GetActions()
+            .Where(a => a.Verb == "GET" && a.Route == Web.Contracts.v1.ApiRoutes.ZaakEigenschappen.Get && a.Versions.Contains(version))
+            .ToList();
+
+        var action = Assert.Single(actions);
+        Assert.Equal(expectETag, action.HasETag);
+    }
+
+    [Theory]
+    [InlineData("1.0", false)]
+    [InlineData("1.2", true)]
+    [InlineData("1.5", true)]
+    [InlineData("1.7", true)]
+    public void HeadZaakEigenschap_ExistsFromVersion12_WithAnETag(string version, bool expectHead)
+    {
+        var actions = GetActions()
+            .Where(a => a.Verb == "HEAD" && a.Route == Web.Contracts.v1.ApiRoutes.ZaakEigenschappen.Get && a.Versions.Contains(version))
+            .ToList();
+
+        if (!expectHead)
+        {
+            Assert.Empty(actions);
+            return;
+        }
+
+        Assert.True(Assert.Single(actions).HasETag);
+    }
 }

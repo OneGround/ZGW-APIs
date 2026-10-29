@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # No git operations after checkout — don't leave GITHUB_TOKEN in .git/config.
           persist-credentials: false
@@ -33,7 +33,7 @@ jobs:
       - name: Install PowerShell
         uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0
         with:
-          Version: 7.5.0
+          Version: 7.6.6
 
       - name: Scan for real Dutch BSN/RSIN values
         shell: pwsh
