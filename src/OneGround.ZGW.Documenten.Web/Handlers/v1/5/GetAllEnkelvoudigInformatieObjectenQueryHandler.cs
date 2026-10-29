@@ -415,7 +415,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(body!, param);
     }
 
-    private static Expression<Func<EnkelvoudigInformatieObject, bool>> GetEnkelvoudigInformatieObjectFilterPredicate(
+    internal static Expression<Func<EnkelvoudigInformatieObject, bool>> GetEnkelvoudigInformatieObjectFilterPredicate(
         GetAllEnkelvoudigInformatieObjectenFilter filter
     )
     {
