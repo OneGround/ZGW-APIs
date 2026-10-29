@@ -29,7 +29,7 @@ public class EnkelvoudigInformatieObjectSearchRequestValidator : ZGWValidator<En
                 }
             );
 
-        CascadeRuleForEach(z => z.Uuid_In).IsGuid();
+        CascadeRuleForEach(z => z.Uuid__in).IsGuid();
 
         CascadeRuleFor(p => p.Bronorganisatie).IsRsin(required: false);
         CascadeRuleFor(p => p.ObjectInformatieObjecten_Object).IsUri();
