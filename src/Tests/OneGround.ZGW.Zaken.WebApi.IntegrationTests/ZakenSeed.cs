@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -8,7 +7,6 @@ using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
-using StackExchange.Redis;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -51,36 +49,6 @@ internal sealed record SeededZaak(
 
 internal static class ZakenSeed
 {
-    /// <summary>
-    /// Readies the shared factory for tests that seed and write: answers Catalogi lookups (<see cref="CatalogiStub"/>) and switches notifications
-    /// off with the API's own <c>Application:DontSendNotificaties</c> setting, because publishing one sets a RabbitMQ-only message priority the
-    /// in-memory bus rejects.
-    /// </summary>
-    public static void PrepareFactory(ZakenWebApplicationFactory factory)
-    {
-        CatalogiStub.InstallOn(factory);
-        EvictCachedCatalogiResponses(factory);
-
-        // Handlers read the setting per request, so a write after this one already sees it.
-        factory.Services.GetRequiredService<IConfiguration>()["Application:DontSendNotificaties"] = "true";
-    }
-
-    /// <summary>
-    /// Drops the Catalogi responses the API cached in Redis, before and after a test, so a test never reads the body of another test's stub for the same zaaktype URL.
-    /// </summary>
-    public static void EvictCachedCatalogiResponses(ZakenWebApplicationFactory factory)
-    {
-        var redis = factory.Services.GetRequiredService<IConnectionMultiplexer>();
-
-        foreach (var endPoint in redis.GetEndPoints())
-        {
-            foreach (var key in redis.GetServer(endPoint).Keys(pattern: "ZGW:ZTC:*"))
-            {
-                redis.GetDatabase().KeyDelete(key);
-            }
-        }
-    }
-
     /// <summary>
     /// Seeds a zaak of <paramref name="zaakType"/> owned by <paramref name="rsin"/>, closed (with an <c>einddatum</c>) when
     /// <paramref name="closed"/>, and with one <paramref name="resource"/> under it. It is the deelzaak of <paramref name="hoofdzaakId"/>

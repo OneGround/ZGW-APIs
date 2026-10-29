@@ -16,7 +16,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// <c>vertrouwelijk</c>; a related zaak of another zaaktype, or above that maximum, never shows up in the expansion, while the zaak itself is still returned.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakExpandAuthorizationTests : IDisposable
+public class ZaakExpandAuthorizationTests
 {
     private const VertrouwelijkheidAanduiding Maximum = VertrouwelijkheidAanduiding.vertrouwelijk;
 
@@ -28,13 +28,7 @@ public class ZaakExpandAuthorizationTests : IDisposable
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
 
-        ZakenSeed.PrepareFactory(_factory);
-    }
-
-    // The Catalogi responses the API cached for this test would otherwise outlive it and be read by the next test class.
-    public void Dispose()
-    {
-        ZakenSeed.EvictCachedCatalogiResponses(_factory);
+        CatalogiStub.InstallOn(_factory);
     }
 
     public static IEnumerable<object[]> ExpandPaths() =>

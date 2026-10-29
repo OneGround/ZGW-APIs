@@ -1,11 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
@@ -20,27 +18,20 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Write endpoints check the client's authorization against the zaaktype of the zaak they change, on every supported API version.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakWriteAuthorizationTests : IDisposable
+public class ZaakWriteAuthorizationTests
 {
     private const string Rsin = TestRsins.A;
-    private const string StatusType = "https://catalogi.integrationtest.invalid/api/v1/statustypen/3f1c2a5e-0000-4000-8000-0000000000c1";
+    private static readonly string StatusType = CatalogiStub.A.BeginStatusType;
 
     private readonly ZakenWebApplicationFactory _factory;
     private readonly HttpClient _client;
-    private readonly Func<HttpRequestMessage, HttpResponseMessage> _previousResponder;
 
     public ZaakWriteAuthorizationTests(ZakenApiFixture fixture)
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
 
-        _previousResponder = _factory.OutboundHttp.Responder;
-        _factory.OutboundHttp.Responder = request => TryRespondAsCatalogi(request) ?? _previousResponder(request);
-    }
-
-    public void Dispose()
-    {
-        _factory.OutboundHttp.Responder = _previousResponder;
+        CatalogiStub.InstallOn(_factory);
     }
 
     public static TheoryData<string> ApiVersions => [Api.LatestVersion_1_0, Api.LatestVersion_1_2, Api.LatestVersion_1_5, Api.LatestVersion_1_7];
@@ -267,26 +258,5 @@ public class ZaakWriteAuthorizationTests : IDisposable
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         return await context.ZaakStatussen.CountAsync(s => s.ZaakId == zaakId);
-    }
-
-    private static HttpResponseMessage TryRespondAsCatalogi(HttpRequestMessage request)
-    {
-        if (request.Method != HttpMethod.Get)
-            return null;
-
-        object body = request.RequestUri!.ToString() switch
-        {
-            ZaakTypes.A => new { url = ZaakTypes.A, statustypen = new[] { StatusType } },
-            StatusType => new { url = StatusType, isEindstatus = false },
-            _ => null,
-        };
-
-        if (body == null)
-            return null;
-
-        return new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json"),
-        };
     }
 }

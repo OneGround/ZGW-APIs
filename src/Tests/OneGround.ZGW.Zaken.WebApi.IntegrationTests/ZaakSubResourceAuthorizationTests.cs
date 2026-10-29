@@ -17,7 +17,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// authorization. Each request goes to a seeded zaak of zaaktype A at <c>geheim</c>, from a client holding every scope the action accepts.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakSubResourceAuthorizationTests : IDisposable
+public class ZaakSubResourceAuthorizationTests
 {
     private const VertrouwelijkheidAanduiding ZaakVertrouwelijkheid = VertrouwelijkheidAanduiding.geheim;
     private const VertrouwelijkheidAanduiding BelowZaak = VertrouwelijkheidAanduiding.vertrouwelijk;
@@ -123,13 +123,7 @@ public class ZaakSubResourceAuthorizationTests : IDisposable
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
 
-        ZakenSeed.PrepareFactory(_factory);
-    }
-
-    // The Catalogi responses the API cached for this test would otherwise outlive it and be read by the next test class.
-    public void Dispose()
-    {
-        ZakenSeed.EvictCachedCatalogiResponses(_factory);
+        CatalogiStub.InstallOn(_factory);
     }
 
     public static IEnumerable<object[]> EndpointRows() => Endpoints.Select(e => new object[] { e.Row });
