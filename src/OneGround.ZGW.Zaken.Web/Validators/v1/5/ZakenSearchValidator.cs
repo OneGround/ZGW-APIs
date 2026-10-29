@@ -48,7 +48,7 @@ public class ZakenCommonSearchableFields : ZGWValidator<IZakenCommonSearchableFi
         CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId).MaximumLength(9);
         CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__nietNatuurlijkPersoon__annIdentificatie).MaximumLength(17);
         CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__vestiging__vestigingsNummer).MaximumLength(24);
-        CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__medewerker__identificatie).MaximumLength(24);
+        CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__medewerker__identificatie).MaximumLength(254);
         CascadeRuleFor(p => p.Rol__betrokkeneIdentificatie__organisatorischeEenheid__identificatie).MaximumLength(24);
     }
 }

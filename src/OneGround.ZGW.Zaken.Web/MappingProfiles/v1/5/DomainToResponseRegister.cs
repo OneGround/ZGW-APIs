@@ -206,7 +206,7 @@ public class DomainToResponseRegister : IRegister
 
         config
             .NewConfig<TerreinGebouwdObjectZaakObject, TerreinGebouwdObjectZaakObjectRequestDto>()
-            .Map(dest => dest.ObjectIdentificatie, src => src.Adapt<Zaken.Contracts.v1.TerreinGebouwdObjectZaakObjectDto>(config))
+            .Map(dest => dest.ObjectIdentificatie, src => v1.DomainToResponseRegister.AdaptTerreinGebouwdObjectForPatchMerge(src, config))
             .Ignore(dest => dest.ZaakObjectType)
             .Ignore(dest => dest.Zaak)
             .Ignore(dest => dest.Object)

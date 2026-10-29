@@ -25,6 +25,14 @@ public class TerreinGebouwdObjectZaakObject : OwnedEntity, IBaseEntity
     [Column("adresaanduidinggrp_oaoidentificatie")]
     public string AdresAanduidingGrp_OaoIdentificatie { get; set; }
 
+    // Note: what the client sent under the deprecated (oao) and the correct (aoa) name of the identificatie of the adresAanduidingGrp (#2576). Not
+    // stored: only the update uses them, to tell which of two differing names the client actually changed (see AdresAanduidingGrpIdentificatie).
+    [NotMapped]
+    public string AdresAanduidingGrp_OaoIdentificatieAsSent { get; set; }
+
+    [NotMapped]
+    public string AdresAanduidingGrp_AoaIdentificatieAsSent { get; set; }
+
     [MaxLength(80)]
     [Column("adresaanduidinggrp_wplwoonplaatsnaam")]
     public string AdresAanduidingGrp_WplWoonplaatsNaam { get; set; }

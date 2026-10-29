@@ -11,4 +11,14 @@ public static class BesluitenServiceAgentExtensions
     {
         services.AddServiceAgent<IBesluitenServiceAgent, BesluitenServiceAgent>(ServiceRoleName.BRC, configuration);
     }
+
+    // Note: User authorized ServiceAgent (for user cross-API expands like ZRC->BRC)
+    public static void AddUserAuthBesluitenServiceAgent(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddServiceAgent<IUserAuthBesluitenServiceAgent, UserAuthBesluitenServiceAgent>(
+            ServiceRoleName.BRC,
+            configuration,
+            authorizationType: AuthorizationType.UserAccount
+        );
+    }
 }

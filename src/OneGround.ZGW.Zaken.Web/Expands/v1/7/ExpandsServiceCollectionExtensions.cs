@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
@@ -19,20 +19,12 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
 public static class ExpandsServiceCollectionExtensions
 {
-    // Note: per request, so the same zaak / status / document / OIO list is fetched once for all rows that expand to it. Every method that
+    // Note: per request, so the same zaak / status / document is fetched once for all rows that expand to it. Every method that
     // registers a resolver that needs one of these registers it itself (TryAdd, so it does not matter which are called, or in which order).
     private static void AddZaakLookup(IServiceCollection services)
     {
         services.TryAddScoped<IGenericCache<QueryResult<Zaak>>, GenericCache<QueryResult<Zaak>>>();
         services.TryAddScoped<IZaakLookup, ZaakLookup>();
-    }
-
-    private static void AddObjectInformatieObjectenCache(IServiceCollection services)
-    {
-        services.TryAddScoped<
-            IGenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>,
-            GenericCache<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>>
-        >();
     }
 
     private static void AddZaakInformatieObjectCaches(IServiceCollection services)
@@ -58,7 +50,6 @@ public static class ExpandsServiceCollectionExtensions
     public static void AddZakenAPIExpands(this IServiceCollection services)
     {
         AddZaakLookup(services);
-        AddObjectInformatieObjectenCache(services);
         // Note: one resolver per expand path. Some reuse the caches and engines that the other Add...APIExpands methods register (all of them
         // are called together in Startup.cs).
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
@@ -106,7 +97,6 @@ public static class ExpandsServiceCollectionExtensions
     public static void AddStatussenAPIExpands(this IServiceCollection services)
     {
         AddZaakLookup(services);
-        AddObjectInformatieObjectenCache(services);
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<StatusResponseDto>, StatusZaakInformatieObjectenResolver>();
@@ -192,6 +182,20 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped(sp => new ExpandEngine<ZaakEigenschapResponseDto>(sp.GetServices<IExpandResolver<ZaakEigenschapResponseDto>>()));
 
         services.AddScoped<IGenericCache<EigenschapResponseDto>, GenericCache<EigenschapResponseDto>>();
+    }
+
+    /// <summary>
+    /// Expand support for the ZAAKBESLUIT resource itself (both actions are on ZakenController), without a <c>fields</c> mechanism.
+    /// "besluit" is BRC-backed through the user-authenticated <see cref="OneGround.ZGW.Besluiten.ServiceAgent.v1.IUserAuthBesluitenServiceAgent"/>,
+    /// which has no per-url cache of its own, so the result is cached per request here.
+    /// </summary>
+    public static void AddZaakBesluitenAPIExpands(this IServiceCollection services)
+    {
+        services.TryAddScoped<IGenericCache<ServiceAgentResponse<BesluitResponseDto>>, GenericCache<ServiceAgentResponse<BesluitResponseDto>>>();
+        services.AddScoped<IExpandResolver<ZaakBesluitResponseDto>, ZaakBesluitBesluitResolver>();
+
+        services.AddScoped(sp => new ExpandValidator<ZaakBesluitResponseDto>(sp.GetServices<IExpandResolver<ZaakBesluitResponseDto>>()));
+        services.AddScoped(sp => new ExpandEngine<ZaakBesluitResponseDto>(sp.GetServices<IExpandResolver<ZaakBesluitResponseDto>>()));
     }
 
     /// <summary>

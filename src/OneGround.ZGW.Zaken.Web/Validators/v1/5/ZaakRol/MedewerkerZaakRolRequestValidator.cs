@@ -12,7 +12,7 @@ public class MedewerkerZaakRolRequestValidator : ZGWValidator<MedewerkerZaakRolR
         CascadeRuleFor(z => z.BetrokkeneIdentificatie)
             .ChildRules(v =>
             {
-                v.CascadeRuleFor(b => b.Identificatie).MaximumLength(24);
+                v.CascadeRuleFor(b => b.Identificatie).MaximumLength(254);
                 v.CascadeRuleFor(b => b.Achternaam).MaximumLength(200);
                 v.CascadeRuleFor(b => b.Voorletters).MaximumLength(20);
                 v.CascadeRuleFor(b => b.VoorvoegselAchternaam).MaximumLength(10);

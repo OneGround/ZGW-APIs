@@ -25,6 +25,7 @@ public class ExpandRegistrationTests
         [nameof(ExpandsServiceCollectionExtensions.AddZaakContactmomentenAPIExpands)] = s => s.AddZaakContactmomentenAPIExpands(),
         [nameof(ExpandsServiceCollectionExtensions.AddZaakEigenschappenAPIExpands)] = s => s.AddZaakEigenschappenAPIExpands(),
         [nameof(ExpandsServiceCollectionExtensions.AddZaakInformatieObjectenAPIExpands)] = s => s.AddZaakInformatieObjectenAPIExpands(),
+        [nameof(ExpandsServiceCollectionExtensions.AddZaakBesluitenAPIExpands)] = s => s.AddZaakBesluitenAPIExpands(),
     };
 
     public static TheoryData<string> MethodNames => new(Methods.Keys);

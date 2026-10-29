@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -19,6 +20,7 @@ public class NummerGeneratorTests
     private readonly Mock<ISqlCommandExecutor> _sqlCommandExecutor;
     private readonly DateTime _now = DateTime.Now;
     private readonly string _rsin = "999993653";
+    private const string OtherRsin = "999990482";
 
     public NummerGeneratorTests()
     {
@@ -50,6 +52,32 @@ public class NummerGeneratorTests
     }
 
     [Fact]
+    public async Task GenerateAsync_ShouldUseTheStoredFormat_WhenTheConfigurationEntryIsRemoved()
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            new ConfigurationBuilder().Build(),
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal($"B{_now.Year}-00000002", await nummerGenerator.GenerateAsync(_rsin, "besluiten"));
+    }
+
+    [Fact]
+    public async Task GenerateAsync_ShouldThrow_WhenNoFormatIsStoredOrConfigured()
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            new ConfigurationBuilder().Build(),
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => nummerGenerator.GenerateAsync(_rsin, "zaken"));
+    }
+
+    [Fact]
     public async Task GenerateAsync_ShouldGenerateUniqueFormat()
     {
         var mockDbContext = new UnitTestDbContext(await GetMockedDbContext());
@@ -61,6 +89,43 @@ public class NummerGeneratorTests
         );
         var result = await nummerGenerator.GenerateAsync(_rsin, "besluiten", format => format != $"B{_now.Year}-00000002");
         Assert.Equal($"B{_now.Year}-00000003", result);
+    }
+
+    [Theory]
+    [InlineData("zaken", "Z{yyyy}-{v^8}")] // Note: no number generated yet for the organisation, so the configured format
+    [InlineData("besluiten", "B{yyyy}-{v^8}")]
+    [InlineData("onbekend", null)]
+    public async Task GetFormatAsync_ShouldGiveTheConfiguredFormat_WhenTheOrganisationHasNone(string entity, string expectedFormat)
+    {
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            _mockedConfiguration,
+            new UnitTestDbContext(await GetMockedDbContext()),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal(expectedFormat, await nummerGenerator.GetFormatAsync(OtherRsin, entity));
+    }
+
+    [Fact]
+    public async Task GetFormatAsync_ShouldGiveTheFormatOfTheOrganisation_NotTheConfiguredOne()
+    {
+        var options = await GetMockedDbContext();
+        using (var context = new UnitTestDbContext(options))
+        {
+            // Note: the stored format of the organisation differs from the configured one
+            context.OrganisatieNummers.Single(o => o.Rsin == _rsin).Formaat = "X{yyyy}-{v^6}";
+            await context.SaveChangesAsync();
+        }
+
+        var nummerGenerator = new NummerGenerator<UnitTestDbContext>(
+            _mockedConfiguration,
+            new UnitTestDbContext(options),
+            _loggerMock.Object,
+            _sqlCommandExecutor.Object
+        );
+
+        Assert.Equal("X{yyyy}-{v^6}", await nummerGenerator.GetFormatAsync(_rsin, "besluiten"));
     }
 
     private async Task<DbContextOptions<UnitTestDbContext>> GetMockedDbContext()

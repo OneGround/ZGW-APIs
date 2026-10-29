@@ -59,6 +59,18 @@ public class NummerGenerator<TContext> : INummerGenerator
         return nummer;
     }
 
+    public async Task<string> GetFormatAsync(string rsin, string entity, CancellationToken cancellationToken = default)
+    {
+        // Note: the format is stored with the first number of an organisation, so a configuration that changed later does not apply to it
+        var stored = await _context
+            .OrganisatieNummers.AsNoTracking()
+            .Where(o => o.Rsin == rsin && o.EntiteitNaam == entity)
+            .Select(o => o.Formaat)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return stored ?? _formats.GetValueOrDefault(entity);
+    }
+
     public async Task<string> GenerateAsync(string rsin, string entity, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug($"{nameof(NummerGenerator<TContext>)}: Generating number for organization {{Rsin}} {{Entity}}", rsin, entity);
@@ -93,19 +105,28 @@ public class NummerGenerator<TContext> : INummerGenerator
 
     private async Task<OrganisatieNummer> GetOrCreateOrganisatieNummer(string rsin, string entity, CancellationToken cancellationToken = default)
     {
-        if (!_formats.TryGetValue(entity, out var format))
-        {
-            throw new InvalidOperationException($"No format defined for entity: {entity}");
-        }
-
-        _logger.LogDebug("Using format: {format} for entity: {entity}", format, entity);
         // If the organisatienummer entry not exists add a new one
         var organisatieNummer = await _context.OrganisatieNummers.SingleOrDefaultAsync(
             o => o.Rsin == rsin && o.EntiteitNaam == entity,
             cancellationToken
         );
-        if (organisatieNummer == null)
+
+        if (organisatieNummer != null)
         {
+            // Note: The context keeps the entity of an earlier call (e.g. a batch in one request) with its old counter, as a query does not
+            // overwrite the values of a tracked entity. Another request may have taken numbers since, so read the counter again (inside the lock).
+            await _context.Entry(organisatieNummer).ReloadAsync(cancellationToken);
+        }
+        else
+        {
+            // Note: The configured format is only needed for the first number of an organisation (the format is stored with it afterwards)
+            if (!_formats.TryGetValue(entity, out var format))
+            {
+                throw new InvalidOperationException($"No format defined for entity: {entity}");
+            }
+
+            _logger.LogDebug("Using format: {format} for entity: {entity}", format, entity);
+
             organisatieNummer = new OrganisatieNummer
             {
                 Rsin = rsin,

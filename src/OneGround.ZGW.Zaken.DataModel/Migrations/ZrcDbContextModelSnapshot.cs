@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:CollationDefinition:ci_collation", "@colStrength=secondary,@colStrength=secondary,icu,False")
-                .HasAnnotation("ProductVersion", "8.0.25")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pgcrypto");
@@ -966,6 +966,74 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                     b.ToTable("zaakkenmerken");
                 });
 
+            modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakNotitie", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AangemaaktDoor")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("aangemaaktdoor");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("createdby");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creationtime");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificationtime");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("modifiedby");
+
+                    b.Property<int>("NotitieType")
+                        .HasColumnType("integer")
+                        .HasColumnName("notitietype");
+
+                    b.Property<string>("Onderwerp")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("onderwerp");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("owner");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Tekst")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tekst");
+
+                    b.Property<Guid>("ZaakId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("zaak_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Owner");
+
+                    b.HasIndex("ZaakId");
+
+                    b.ToTable("zaaknotities");
+                });
+
             modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakObject.AanduidingWozObject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1690,8 +1758,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("achternaam");
 
                     b.Property<string>("Identificatie")
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
                         .HasColumnName("identificatie");
 
                     b.Property<string>("Voorletters")
@@ -2443,6 +2511,17 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                 {
                     b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
                         .WithMany("Kenmerken")
+                        .HasForeignKey("ZaakId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Zaak");
+                });
+
+            modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.ZaakNotitie", b =>
+                {
+                    b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
+                        .WithMany()
                         .HasForeignKey("ZaakId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

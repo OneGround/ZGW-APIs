@@ -106,9 +106,7 @@ public class ZaakRollenController : ZGWControllerBase
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.ZaakRollenPageSize));
         var filter = _mapper.Map<GetAllZaakRollenFilter>(queryParameters);
 
-        var result = await _mediator.Send(
-            new OneGround.ZGW.Zaken.Web.Handlers.v1._5.GetAllZaakRolQuery { GetAllZaakRolFilter = filter, Pagination = pagination }
-        );
+        var result = await _mediator.Send(new Handlers.v1._5.GetAllZaakRolQuery { GetAllZaakRolFilter = filter, Pagination = pagination });
 
         if (!_paginationHelper.ValidatePaginatedResponse(pagination, result.Result.Count))
         {
@@ -154,6 +152,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// </summary>
     /// <param name="queryParameters"></param>
     /// <param name="id">Unieke resource identifier (UUID4)</param>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
@@ -229,6 +228,7 @@ public class ZaakRollenController : ZGWControllerBase
     /// De headers voor een specifieke ROL bij een ZAAK opvragen.
     /// </summary>
     /// <response code="200">OK</response>
+    /// <response code="304">Not Modified</response>
     /// <response code="401">Unauthorized</response>
     /// <response code="403">Forbidden</response>
     /// <response code="404">Not found</response>
