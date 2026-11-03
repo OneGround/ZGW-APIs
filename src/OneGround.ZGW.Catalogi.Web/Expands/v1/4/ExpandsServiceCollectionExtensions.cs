@@ -137,5 +137,20 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<StatusTypeResponseDto>(sp.GetServices<IExpandResolver<StatusTypeResponseDto>>()));
+
+        //
+        // 9. Registration of the expand resolvers and engines for ZaakObjectTypeResponseDto
+
+        // Expand resolvers: one per expand path, registered as IExpandResolver<ZaakObjectTypeResponseDto>
+        services.AddScoped<IExpandResolver<ZaakObjectTypeResponseDto>, Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakObjectTypeResponseDto>, ZaakObjectType_ZaakType_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakObjectTypeResponseDto>, ZaakObjectType_ResultaatTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakObjectTypeResponseDto>, ZaakObjectType_StatusTypen_Resolver>();
+
+        // Lightweight path validation, for use in the controller
+        services.AddScoped(sp => new ExpandValidator<ZaakObjectTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakObjectTypeResponseDto>>()));
+
+        // Generic dispatcher, for use in the controller
+        services.AddScoped(sp => new ExpandEngine<ZaakObjectTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakObjectTypeResponseDto>>()));
     }
 }

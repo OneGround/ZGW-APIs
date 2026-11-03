@@ -41,5 +41,12 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllStatusTypenQueryParameters, Models.v1._3.GetAllStatusTypenFilter>()
             .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
+            .NewConfig<GetAllZaakObjectTypenQueryParameters, Models.v1._3.GetAllZaakObjectTypenFilter>()
+            .Map(dest => dest.AnderObjectType, src => ProfileHelper.BooleanFromString(src.AnderObjectType))
+            .Map(dest => dest.DatumBeginGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumBeginGeldigheid))
+            .Map(dest => dest.DatumEindeGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumEindeGeldigheid))
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
     }
 }

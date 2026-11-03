@@ -45,6 +45,8 @@ public static class QueryParameterValidationExtensions
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetRolTypeQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllStatusTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetStatusTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllZaakObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetZaakObjectTypeQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetCatalogusQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllBesluitTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllInformatieObjectTypenQueryParameters>>();

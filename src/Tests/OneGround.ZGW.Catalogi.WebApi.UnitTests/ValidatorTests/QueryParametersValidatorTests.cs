@@ -167,6 +167,63 @@ public class StatusTypenQueryParametersValidatorTests : QueryParametersValidator
     }
 }
 
+public class ZaakObjectTypenQueryParametersValidatorTests
+{
+    private readonly ZaakObjectTypenQueryParametersValidator _validator = new();
+
+    [Theory]
+    [InlineData("nope", true)]
+    [InlineData("true", false)]
+    [InlineData("false", false)]
+    public void AnderObjectType_MustBeABoolean(string anderObjectType, bool rejected)
+    {
+        var result = _validator.TestValidate(new Q.GetAllZaakObjectTypenQueryParameters { AnderObjectType = anderObjectType });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "AnderObjectType"));
+    }
+
+    [Theory]
+    [InlineData("DatumBeginGeldigheid")]
+    [InlineData("DatumEindeGeldigheid")]
+    [InlineData("DatumGeldigheid")]
+    public void TheDates_ThatAreNotADate_AreRejected(string property)
+    {
+        var model = new Q.GetAllZaakObjectTypenQueryParameters();
+        typeof(Q.GetAllZaakObjectTypenQueryParameters).GetProperty(property)!.SetValue(model, "not-a-date");
+
+        _validator.TestValidate(model).ShouldHaveValidationErrorFor(property);
+    }
+
+    [Theory]
+    [InlineData("DatumBeginGeldigheid")]
+    [InlineData("DatumEindeGeldigheid")]
+    [InlineData("DatumGeldigheid")]
+    public void TheDates_ThatAreADateOrAbsent_AreAccepted(string property)
+    {
+        var model = new Q.GetAllZaakObjectTypenQueryParameters();
+        _validator.TestValidate(model).ShouldNotHaveValidationErrorFor(property);
+
+        typeof(Q.GetAllZaakObjectTypenQueryParameters).GetProperty(property)!.SetValue(model, "2024-03-15");
+        _validator.TestValidate(model).ShouldNotHaveValidationErrorFor(property);
+    }
+
+    [Theory]
+    [InlineData("Catalogus")]
+    [InlineData("ZaakType")]
+    [InlineData("ObjectType")]
+    public void TheUrlFields_MustBeAUrl(string property)
+    {
+        var model = new Q.GetAllZaakObjectTypenQueryParameters();
+        typeof(Q.GetAllZaakObjectTypenQueryParameters).GetProperty(property)!.SetValue(model, "not-a-url");
+        _validator.TestValidate(model).ShouldHaveValidationErrorFor(property);
+
+        typeof(Q.GetAllZaakObjectTypenQueryParameters)
+            .GetProperty(property)!
+            .SetValue(model, "https://ztc.test/resource/11111111-1111-1111-1111-111111111111");
+        _validator.TestValidate(model).ShouldNotHaveValidationErrorFor(property);
+    }
+}
+
 public class CatalogussenQueryParametersValidatorTests
 {
     private readonly CatalogussenQueryParametersValidator _validator = new();

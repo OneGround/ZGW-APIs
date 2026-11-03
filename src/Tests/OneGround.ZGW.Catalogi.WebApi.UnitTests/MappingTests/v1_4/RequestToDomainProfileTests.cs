@@ -12,6 +12,7 @@ using InformatieObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1
 using ResultaatTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllResultaatTypenQueryParameters;
 using RolTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllRolTypenQueryParameters;
 using StatusTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllStatusTypenQueryParameters;
+using ZaakObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakObjectTypenQueryParameters;
 using ZaakTypenFilter = OneGround.ZGW.Catalogi.Web.Models.v1.GetAllZaakTypenFilter;
 using ZaakTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakTypenQueryParameters;
 
@@ -104,6 +105,31 @@ public class RequestToDomainProfileTests : IDisposable
         var result = Mapper.Map<GetAllStatusTypenFilter>(new StatusTypenQueryParameters { DatumGeldigheid = "2024-03-15" });
 
         Assert.Equal(new DateOnly(2024, 3, 15), result.DatumGeldigheid);
+    }
+
+    [Fact]
+    public void ZaakObjectTypen_maps_the_boolean_and_the_dates()
+    {
+        var source = new ZaakObjectTypenQueryParameters
+        {
+            AnderObjectType = "true",
+            DatumBeginGeldigheid = "2024-01-01",
+            DatumEindeGeldigheid = "2024-12-31",
+            DatumGeldigheid = "2024-03-15",
+        };
+
+        var result = Mapper.Map<GetAllZaakObjectTypenFilter>(source);
+
+        Assert.True(result.AnderObjectType);
+        Assert.Equal(new DateOnly(2024, 1, 1), result.DatumBeginGeldigheid);
+        Assert.Equal(new DateOnly(2024, 12, 31), result.DatumEindeGeldigheid);
+        Assert.Equal(new DateOnly(2024, 3, 15), result.DatumGeldigheid);
+    }
+
+    [Fact]
+    public void ZaakObjectTypen_without_anderObjecttype_maps_to_null()
+    {
+        Assert.Null(Mapper.Map<GetAllZaakObjectTypenFilter>(new ZaakObjectTypenQueryParameters { AnderObjectType = null }).AnderObjectType);
     }
 
     [Fact]
