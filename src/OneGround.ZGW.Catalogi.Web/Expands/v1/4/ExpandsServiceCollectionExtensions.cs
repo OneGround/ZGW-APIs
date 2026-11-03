@@ -19,6 +19,8 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Expand resolvers: one per expand path, registered as IExpandResolver<InformatieObjectTypeResponseDto>
         services.AddScoped<IExpandResolver<InformatieObjectTypeResponseDto>, Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<InformatieObjectTypeResponseDto>, InformatieObjectType_ZaakTypen_Resolver>();
+        services.AddScoped<IExpandResolver<InformatieObjectTypeResponseDto>, InformatieObjectType_BesluitTypen_Resolver>();
 
         // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<InformatieObjectTypeResponseDto>(
