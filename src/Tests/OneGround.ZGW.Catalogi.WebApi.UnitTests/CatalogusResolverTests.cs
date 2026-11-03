@@ -84,6 +84,24 @@ public class CatalogusResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_StatusTypeReferringToACatalogus_ReturnsTheMappedCatalogus()
+    {
+        var catalogus = new Catalogus();
+        var mapped = new CatalogusResponseDto();
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<CatalogusResponseDto>(catalogus)).Returns(mapped);
+        var resolver = CreateResolver(new QueryResult<Catalogus>(catalogus, QueryStatus.OK), mapperMock.Object);
+
+        var result = await resolver.ResolveAsync(
+            new StatusTypeResponseDto { Catalogus = CatalogusUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+
+        Assert.Same(mapped, result);
+    }
+
+    [Fact]
     public async Task ResolveAsync_RolTypeReferringToACatalogus_ReturnsTheMappedCatalogus()
     {
         var catalogus = new Catalogus();

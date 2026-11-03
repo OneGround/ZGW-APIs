@@ -8,7 +8,6 @@ using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using V3 = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using V4 = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.ExpandsTests;
@@ -29,7 +28,7 @@ public class Eigenschap_ZaakTypeResolverTests : ChildTypeResolverTestsBase<V4.Ei
             .ReturnsAsync((GetZaakTypeQuery q, CancellationToken _) => results(q.Id));
 }
 
-public class Eigenschap_StatusTypeResolverTests : ChildTypeResolverTestsBase<V4.EigenschapResponseDto, StatusType, V3.StatusTypeResponseDto>
+public class Eigenschap_StatusTypeResolverTests : ChildTypeResolverTestsBase<V4.EigenschapResponseDto, StatusType, V4.StatusTypeResponseDto>
 {
     protected override string Path => "statustype";
     protected override string Resource => "statustype";

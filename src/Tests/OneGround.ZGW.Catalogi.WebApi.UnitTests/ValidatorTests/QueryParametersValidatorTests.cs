@@ -148,6 +148,25 @@ public class RolTypenQueryParametersValidatorTests : QueryParametersValidatorTes
     }
 }
 
+public class StatusTypenQueryParametersValidatorTests : QueryParametersValidatorTestsBase<Q.GetAllStatusTypenQueryParameters>
+{
+    protected override IValidator<Q.GetAllStatusTypenQueryParameters> CreateValidator() => new StatusTypenQueryParametersValidator();
+
+    protected override void SetStatus(Q.GetAllStatusTypenQueryParameters model, string status) => model.Status = status;
+
+    protected override void SetDatumGeldigheid(Q.GetAllStatusTypenQueryParameters model, string datum) => model.DatumGeldigheid = datum;
+
+    [Theory]
+    [InlineData("not-a-url", true)]
+    [InlineData("https://ztc.test/zaaktypen/11111111-1111-1111-1111-111111111111", false)]
+    public void ZaakType_MustBeAUrl(string zaakType, bool rejected)
+    {
+        var result = new StatusTypenQueryParametersValidator().TestValidate(new Q.GetAllStatusTypenQueryParameters { ZaakType = zaakType });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "ZaakType"));
+    }
+}
+
 public class CatalogussenQueryParametersValidatorTests
 {
     private readonly CatalogussenQueryParametersValidator _validator = new();

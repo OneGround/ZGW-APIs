@@ -11,6 +11,7 @@ using InformatieObjectTypenFilter = OneGround.ZGW.Catalogi.Web.Models.v1.GetAllI
 using InformatieObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllInformatieObjectTypenQueryParameters;
 using ResultaatTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllResultaatTypenQueryParameters;
 using RolTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllRolTypenQueryParameters;
+using StatusTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllStatusTypenQueryParameters;
 using ZaakTypenFilter = OneGround.ZGW.Catalogi.Web.Models.v1.GetAllZaakTypenFilter;
 using ZaakTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakTypenQueryParameters;
 
@@ -98,6 +99,14 @@ public class RequestToDomainProfileTests : IDisposable
     }
 
     [Fact]
+    public void StatusTypen_maps_the_date()
+    {
+        var result = Mapper.Map<GetAllStatusTypenFilter>(new StatusTypenQueryParameters { DatumGeldigheid = "2024-03-15" });
+
+        Assert.Equal(new DateOnly(2024, 3, 15), result.DatumGeldigheid);
+    }
+
+    [Fact]
     public void A_date_that_cannot_be_parsed_maps_to_no_date()
     {
         // Note: the validator rejects such a date before the mapping is reached (see the validator tests); the mapping itself leaves it out
@@ -109,5 +118,6 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Null(Mapper.Map<GetAllEigenschappenFilter>(new EigenschappenQueryParameters { DatumGeldigheid = "not-a-date" }).DatumGeldigheid);
         Assert.Null(Mapper.Map<GetAllResultaatTypenFilter>(new ResultaatTypenQueryParameters { DatumGeldigheid = "not-a-date" }).DatumGeldigheid);
         Assert.Null(Mapper.Map<GetAllRolTypenFilter>(new RolTypenQueryParameters { DatumGeldigheid = "not-a-date" }).DatumGeldigheid);
+        Assert.Null(Mapper.Map<GetAllStatusTypenFilter>(new StatusTypenQueryParameters { DatumGeldigheid = "not-a-date" }).DatumGeldigheid);
     }
 }

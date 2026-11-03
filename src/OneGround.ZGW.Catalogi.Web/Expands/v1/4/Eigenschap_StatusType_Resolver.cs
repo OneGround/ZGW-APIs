@@ -6,7 +6,6 @@ using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using StatusTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses.StatusTypeResponseDto;
 
 namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 

@@ -37,5 +37,9 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllRolTypenQueryParameters, Models.v1._3.GetAllRolTypenFilter>()
             .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
+            .NewConfig<GetAllStatusTypenQueryParameters, Models.v1._3.GetAllStatusTypenFilter>()
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
     }
 }

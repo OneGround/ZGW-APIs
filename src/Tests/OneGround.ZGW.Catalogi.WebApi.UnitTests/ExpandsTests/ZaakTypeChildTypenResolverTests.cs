@@ -58,7 +58,7 @@ public class ZaakType_GerelateerdeZaakTypenResolverTests : ChildTypenResolverTes
             .ReturnsAsync((GetZaakTypeQuery q, CancellationToken _) => results(q.Id));
 }
 
-public class ZaakType_StatusTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, StatusType, V3.StatusTypeResponseDto>
+public class ZaakType_StatusTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, StatusType, V4.StatusTypeResponseDto>
 {
     protected override string Path => "statustypen";
     protected override string Resource => "statustype";

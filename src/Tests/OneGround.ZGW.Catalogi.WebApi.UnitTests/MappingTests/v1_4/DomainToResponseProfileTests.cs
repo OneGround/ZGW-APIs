@@ -178,4 +178,73 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
         Assert.Equal(Json(Mapper.Map<V13.RolTypeResponseDto>(source)), Json(result));
     }
+
+    [Fact]
+    public void StatusType_maps_like_v1_3_without_expand()
+    {
+        var zaakType = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+        };
+        var eigenschap = new Eigenschap { Id = Guid.NewGuid() };
+        var source = new StatusType
+        {
+            Id = Guid.NewGuid(),
+            Omschrijving = "Ontvangen",
+            ZaakType = zaakType,
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            StatusTypeVerplichteEigenschappen = [new StatusTypeVerplichteEigenschap { Eigenschap = eigenschap }],
+        };
+
+        var result = Mapper.Map<V14.StatusTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
+        Assert.Equal([ZtcMapperTestHost.Resolved(eigenschap)], result.Eigenschappen);
+        Assert.Equal(Json(Mapper.Map<V13.StatusTypeResponseDto>(source)), Json(result));
+    }
+
+    [Fact]
+    public void StatusType_without_loaded_eigenschappen_keeps_them_null_like_v1_3()
+    {
+        // Note: the v1.3 mapping fills the eigenschappen in an AfterMapping so that they stay null when they are not loaded; the v1.4 mapping inherits that
+        var source = new StatusType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = new ZaakType
+            {
+                Id = Guid.NewGuid(),
+                Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            },
+            StatusTypeVerplichteEigenschappen = null,
+        };
+
+        var result = Mapper.Map<V14.StatusTypeResponseDto>(source);
+
+        Assert.Null(result.Eigenschappen);
+        Assert.Equal(Json(Mapper.Map<V13.StatusTypeResponseDto>(source)), Json(result));
+    }
+
+    [Fact]
+    public void ResultaatType_without_loaded_besluittypen_keeps_them_null_like_v1_3()
+    {
+        // Note: the v1.3 mapping fills the besluittypen in an AfterMapping so that they stay null when they are not loaded; the v1.4 mapping inherits that
+        var source = new ResultaatType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = new ZaakType
+            {
+                Id = Guid.NewGuid(),
+                Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            },
+            ResultaatTypeBesluitTypen = null,
+        };
+
+        var result = Mapper.Map<V14.ResultaatTypeResponseDto>(source);
+
+        Assert.Null(result.BesluitTypen);
+        Assert.Equal(Json(Mapper.Map<V13.ResultaatTypeResponseDto>(source)), Json(result));
+    }
 }
