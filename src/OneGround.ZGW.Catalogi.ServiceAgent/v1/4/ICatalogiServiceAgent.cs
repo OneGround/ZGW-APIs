@@ -7,8 +7,6 @@ using OneGround.ZGW.Common.ServiceAgent;
 
 namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 
-// TODO: Align datacontracten (DTO's) when implemented new in v1.4 (e.g. ZaakTypeResponseDto, InformatieObjectTypeResponseDto, etc.) with v1.3 datacontracten (DTO's) to avoid duplication of code and to avoid breaking changes in the future.
-
 public interface ICatalogiServiceAgent
 {
     // Catalogus

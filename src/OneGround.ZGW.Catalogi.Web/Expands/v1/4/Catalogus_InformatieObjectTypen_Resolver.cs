@@ -11,8 +11,8 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 
 /// <summary>Resolves the "informatieobjecttypen" expand path of a Catalogus: the InformatieObjectTypen it refers to by URL.</summary>
-public class InformatieObjectTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
-    : CatalogusTypen_ResolverBase<InformatieObjectType, InformatieObjectTypeResponseDto>(serviceProvider, uriService)
+public class Catalogus_InformatieObjectTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
+    : ChildTypen_ResolverBase<CatalogusResponseDto, InformatieObjectType, InformatieObjectTypeResponseDto>(serviceProvider, uriService)
 {
     public override string Path => "informatieobjecttypen";
 

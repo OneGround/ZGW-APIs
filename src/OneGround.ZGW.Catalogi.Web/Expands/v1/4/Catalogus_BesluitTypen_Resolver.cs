@@ -11,8 +11,8 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 
 /// <summary>Resolves the "besluittypen" expand path of a Catalogus: the BesluitTypen it refers to by URL.</summary>
-public class BesluitTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
-    : CatalogusTypen_ResolverBase<BesluitType, BesluitTypeResponseDto>(serviceProvider, uriService)
+public class Catalogus_BesluitTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
+    : ChildTypen_ResolverBase<CatalogusResponseDto, BesluitType, BesluitTypeResponseDto>(serviceProvider, uriService)
 {
     public override string Path => "besluittypen";
 

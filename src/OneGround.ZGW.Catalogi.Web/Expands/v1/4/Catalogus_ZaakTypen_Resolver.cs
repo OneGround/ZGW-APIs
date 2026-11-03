@@ -11,8 +11,8 @@ using OneGround.ZGW.Common.Web.Services.UriServices;
 namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 
 /// <summary>Resolves the "zaaktypen" expand path of a Catalogus: the ZaakTypen it refers to by URL.</summary>
-public class ZaakTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
-    : CatalogusTypen_ResolverBase<ZaakType, ZaakTypeResponseDto>(serviceProvider, uriService)
+public class Catalogus_ZaakTypen_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
+    : ChildTypen_ResolverBase<CatalogusResponseDto, ZaakType, ZaakTypeResponseDto>(serviceProvider, uriService)
 {
     public override string Path => "zaaktypen";
 

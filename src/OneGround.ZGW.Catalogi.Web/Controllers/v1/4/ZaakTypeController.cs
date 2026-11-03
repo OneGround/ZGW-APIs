@@ -35,6 +35,10 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._4;
 [ZgwApiVersion(Api.LatestVersion_1_4)]
 public class ZaakTypeController : ZGWControllerBase
 {
+    // The expand paths of this resource, see the resolvers registered in ExpandsServiceCollectionExtensions
+    private const string AllowedExpand =
+        "catalogus,statustypen,resultaattypen,eigenschappen,roltypen,zaakobjecttypen,besluittypen,informatieobjecttypen";
+
     private readonly IPaginationHelper _paginationHelper;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<ZaakTypeResponseDto> _expandValidator;
@@ -78,7 +82,7 @@ public class ZaakTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
 
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
+        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: AllowedExpand, out var expandPaths);
         if (expandValidationResult is not null)
         {
             return expandValidationResult;
@@ -133,7 +137,7 @@ public class ZaakTypeController : ZGWControllerBase
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
 
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
+        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: AllowedExpand, out var expandPaths);
         if (expandValidationResult is not null)
         {
             return expandValidationResult;

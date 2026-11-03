@@ -35,6 +35,13 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<ZaakTypeResponseDto>
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_StatusTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_ResultaatTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_Eigenschappen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_RolTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_ZaakObjectTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_BesluitTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_InformatieObjectTypen_Resolver>();
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<ZaakTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakTypeResponseDto>>()));
@@ -58,9 +65,9 @@ public static partial class ExpandsServiceCollectionExtensions
         // 4. Registratie van expand resolvers en engines voor CatalogusResponseDto
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<CatalogusResponseDto>
-        services.AddScoped<IExpandResolver<CatalogusResponseDto>, ZaakTypen_Resolver>();
-        services.AddScoped<IExpandResolver<CatalogusResponseDto>, BesluitTypen_Resolver>();
-        services.AddScoped<IExpandResolver<CatalogusResponseDto>, InformatieObjectTypen_Resolver>();
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_ZaakTypen_Resolver>();
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_BesluitTypen_Resolver>();
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_InformatieObjectTypen_Resolver>();
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
