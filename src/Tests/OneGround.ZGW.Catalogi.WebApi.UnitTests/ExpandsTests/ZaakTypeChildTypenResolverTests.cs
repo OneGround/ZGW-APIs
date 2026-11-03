@@ -106,7 +106,7 @@ public class ZaakType_EigenschappenResolverTests : ChildTypenResolverTestsBase<V
             .ReturnsAsync((GetEigenschapQuery q, CancellationToken _) => results(q.Id));
 }
 
-public class ZaakType_RolTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, RolType, V3.RolTypeResponseDto>
+public class ZaakType_RolTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, RolType, V4.RolTypeResponseDto>
 {
     protected override string Path => "roltypen";
     protected override string Resource => "roltype";

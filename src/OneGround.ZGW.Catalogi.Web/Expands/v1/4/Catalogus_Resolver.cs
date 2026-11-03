@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 /// in another service and is fetched through a ServiceAgent -- ZTC owns the Catalogus itself, so
 /// this queries it locally through MediatR, like DRC's own-service InformatieObjectResolver does.
 /// The result is cached per request (keyed by catalogus URL, like DRC's InformatieObjectTypeCatalogusResolver),
-/// since a list of InformatieObjectType/ZaakType/BesluitType/Eigenschap/ResultaatType typically references only a handful of
+/// since a list of InformatieObjectType/ZaakType/BesluitType/Eigenschap/ResultaatType/RolType typically references only a handful of
 /// distinct catalogi. A CATALOGUS that is not available to the caller (NotFound/Forbidden) resolves to null,
 /// which the ExpandEngine stores in <c>_expand</c> as an empty object (<c>{}</c>), instead of failing the request, see
 /// <see cref="ExpandQueryStatus"/>.
@@ -33,7 +33,8 @@ public class Catalogus_Resolver
         IExpandResolver<ZaakTypeResponseDto>,
         IExpandResolver<BesluitTypeResponseDto>,
         IExpandResolver<EigenschapResponseDto>,
-        IExpandResolver<ResultaatTypeResponseDto>
+        IExpandResolver<ResultaatTypeResponseDto>,
+        IExpandResolver<RolTypeResponseDto>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IEntityUriService _uriService;
@@ -75,6 +76,9 @@ public class Catalogus_Resolver
         IReadOnlyDictionary<string, object> resolved,
         IReadOnlySet<string> requestedPaths
     ) => ResolveCatalogusAsync(entity.Catalogus);
+
+    public Task<object> ResolveAsync(RolTypeResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths) =>
+        ResolveCatalogusAsync(entity.Catalogus);
 
     // Note: A parent without a catalogus URL (e.g. a ResultaatType whose mapping has no ZaakType) has nothing to expand: null, which the ExpandEngine
     // stores in _expand as an empty object.

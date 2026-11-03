@@ -35,5 +35,7 @@ internal static class DomainToResponseMappings
             .NewConfig<ResultaatType, V4.ResultaatTypeResponseDto>()
             .Inherits<ResultaatType, V3.ResultaatTypeResponseDto>()
             .Ignore(dest => dest.Expand);
+
+        config.NewConfig<RolType, V4.RolTypeResponseDto>().Inherits<RolType, V3.RolTypeResponseDto>().Ignore(dest => dest.Expand);
     }
 }

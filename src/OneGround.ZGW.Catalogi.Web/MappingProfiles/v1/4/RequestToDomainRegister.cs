@@ -33,5 +33,9 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllResultaatTypenQueryParameters, Models.v1._3.GetAllResultaatTypenFilter>()
             .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
+            .NewConfig<GetAllRolTypenQueryParameters, Models.v1._3.GetAllRolTypenFilter>()
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
     }
 }

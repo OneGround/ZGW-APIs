@@ -116,6 +116,38 @@ public class ResultaatTypenQueryParametersValidatorTests : QueryParametersValida
     }
 }
 
+public class RolTypenQueryParametersValidatorTests : QueryParametersValidatorTestsBase<Q.GetAllRolTypenQueryParameters>
+{
+    protected override IValidator<Q.GetAllRolTypenQueryParameters> CreateValidator() => new RolTypenQueryParametersValidator();
+
+    protected override void SetStatus(Q.GetAllRolTypenQueryParameters model, string status) => model.Status = status;
+
+    protected override void SetDatumGeldigheid(Q.GetAllRolTypenQueryParameters model, string datum) => model.DatumGeldigheid = datum;
+
+    [Theory]
+    [InlineData("not-a-url", true)]
+    [InlineData("https://ztc.test/zaaktypen/11111111-1111-1111-1111-111111111111", false)]
+    public void ZaakType_MustBeAUrl(string zaakType, bool rejected)
+    {
+        var result = new RolTypenQueryParametersValidator().TestValidate(new Q.GetAllRolTypenQueryParameters { ZaakType = zaakType });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "ZaakType"));
+    }
+
+    [Theory]
+    [InlineData("nope", true)]
+    [InlineData("initiator", false)]
+    [InlineData("belanghebbende", false)]
+    public void OmschrijvingGeneriek_MustBeAGenericDescription(string omschrijvingGeneriek, bool rejected)
+    {
+        var result = new RolTypenQueryParametersValidator().TestValidate(
+            new Q.GetAllRolTypenQueryParameters { OmschrijvingGeneriek = omschrijvingGeneriek }
+        );
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "OmschrijvingGeneriek"));
+    }
+}
+
 public class CatalogussenQueryParametersValidatorTests
 {
     private readonly CatalogussenQueryParametersValidator _validator = new();
