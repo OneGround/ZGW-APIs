@@ -5,6 +5,7 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
@@ -23,6 +24,7 @@ public abstract class ChildTypenResolverTestsBase<TParent, TEntity, TResponseDto
     where TResponseDto : class, new()
 {
     private const string Url1 = "https://ztc.test/types/11111111-1111-1111-1111-111111111111";
+    private const string Url1Alternative = "HTTPS://ztc.test/types/11111111-1111-1111-1111-111111111111/";
     private const string Url2 = "https://ztc.test/types/22222222-2222-2222-2222-222222222222";
     private static readonly Guid Id1 = new("11111111-1111-1111-1111-111111111111");
     private static readonly Guid Id2 = new("22222222-2222-2222-2222-222222222222");
@@ -41,18 +43,30 @@ public abstract class ChildTypenResolverTestsBase<TParent, TEntity, TResponseDto
     /// <summary>Lets the mediator answer the query of the resolver with the result for the id in the query.</summary>
     protected abstract void SetupQuery(Mock<IMediator> mediator, Func<Guid, QueryResult<TEntity>> results);
 
+    /// <summary>The ids that the resolver has queried, in order.</summary>
+    private readonly List<Guid> _queried = [];
+
     private IExpandResolver<TParent> CreateResolver(Dictionary<Guid, QueryResult<TEntity>> results, IMapper mapper = null)
     {
         var mediatorMock = new Mock<IMediator>();
-        SetupQuery(mediatorMock, id => results[id]);
+        SetupQuery(
+            mediatorMock,
+            id =>
+            {
+                _queried.Add(id);
+                return results[id];
+            }
+        );
 
         var services = new ServiceCollection();
         services.AddScoped(_ => mediatorMock.Object);
         services.AddScoped(_ => mapper ?? Mock.Of<IMapper>());
+        services.AddScoped(typeof(IGenericCache<>), typeof(GenericCache<>));
 
         var uriServiceMock = new Mock<IEntityUriService>();
         uriServiceMock.Setup(u => u.GetId(Url1)).Returns(Id1);
         uriServiceMock.Setup(u => u.GetId(Url2)).Returns(Id2);
+        uriServiceMock.Setup(u => u.GetId(Url1Alternative)).Returns(Id1);
 
         return CreateResolver(services.BuildServiceProvider(), uriServiceMock.Object);
     }
@@ -105,6 +119,66 @@ public abstract class ChildTypenResolverTestsBase<TParent, TEntity, TResponseDto
         var result = (List<TResponseDto>)await Resolve(CreateResolver([]), null);
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_TwoParentsReferToTheSameType_QueriesItOnceAndSharesTheResult()
+    {
+        var entity = new TEntity();
+        var mapped = new TResponseDto();
+        var resolver = CreateResolver(new() { [Id1] = new QueryResult<TEntity>(entity, QueryStatus.OK) }, MapperReturning((entity, mapped)).Object);
+
+        var first = (List<TResponseDto>)await Resolve(resolver, Url1);
+        var second = (List<TResponseDto>)await Resolve(resolver, Url1);
+
+        Assert.Equal([Id1], _queried);
+        Assert.Same(mapped, Assert.Single(first));
+        Assert.Same(mapped, Assert.Single(second));
+    }
+
+    [Theory]
+    [InlineData(QueryStatus.NotFound)]
+    [InlineData(QueryStatus.Forbidden)]
+    public async Task ResolveAsync_TypeNotAvailableForTwoParents_QueriesItOnce(QueryStatus status)
+    {
+        var resolver = CreateResolver(new() { [Id1] = new QueryResult<TEntity>(null, status) });
+
+        var first = (List<TResponseDto>)await Resolve(resolver, Url1);
+        var second = (List<TResponseDto>)await Resolve(resolver, Url1);
+
+        Assert.Equal([Id1], _queried);
+        Assert.Empty(first);
+        Assert.Empty(second);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_QueryFailedForOneParent_IsQueriedAgainForTheNext()
+    {
+        var entity = new TEntity();
+        var mapped = new TResponseDto();
+        var results = new Dictionary<Guid, QueryResult<TEntity>> { [Id1] = new QueryResult<TEntity>(null, QueryStatus.Failed) };
+        var resolver = CreateResolver(results, MapperReturning((entity, mapped)).Object);
+
+        await Assert.ThrowsAsync<ExpandInternalQueryHandlerException>(() => Resolve(resolver, Url1));
+        results[Id1] = new QueryResult<TEntity>(entity, QueryStatus.OK);
+        var second = (List<TResponseDto>)await Resolve(resolver, Url1);
+
+        Assert.Equal([Id1, Id1], _queried);
+        Assert.Same(mapped, Assert.Single(second));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_ParentRefersToTheSameTypeByTwoUrls_ReturnsItOnceAndQueriesItOnce()
+    {
+        // Note: two spellings of the URL of one type (other case, a trailing slash) are one type
+        var entity = new TEntity();
+        var mapped = new TResponseDto();
+        var resolver = CreateResolver(new() { [Id1] = new QueryResult<TEntity>(entity, QueryStatus.OK) }, MapperReturning((entity, mapped)).Object);
+
+        var result = (List<TResponseDto>)await Resolve(resolver, Url1, Url1Alternative);
+
+        Assert.Same(mapped, Assert.Single(result));
+        Assert.Equal([Id1], _queried);
     }
 
     [Fact]

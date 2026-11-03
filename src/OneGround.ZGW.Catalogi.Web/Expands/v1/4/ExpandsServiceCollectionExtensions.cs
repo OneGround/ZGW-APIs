@@ -9,10 +9,10 @@ public static partial class ExpandsServiceCollectionExtensions
 {
     public static void AddCatalogiAPIExpands(this IServiceCollection services)
     {
-        // Registreer cache voor de Catalogus_Resolver: gedeeld (per scope/request) over de drie
-        // registraties hieronder, zodat een lijst met veel InformatieObjectType/ZaakType/BesluitType
-        // die naar dezelfde catalogus verwijzen die maar één keer opvraagt.
-        services.AddScoped<IGenericCache<CatalogusResponseDto>, GenericCache<CatalogusResponseDto>>();
+        // Registreer de caches van de expand resolvers: per scope/request en per response-type, gedeeld door alle resolvers van dat type.
+        // Zo wordt een catalogus (Catalogus_Resolver) of een type (ChildTypen_ResolverBase) waar meerdere entities in een lijst naar verwijzen
+        // maar één keer opgevraagd.
+        services.AddScoped(typeof(IGenericCache<>), typeof(GenericCache<>));
 
         //
         // 1. Registratie van expand resolvers en engines voor InformatieObjectTypeResponseDto

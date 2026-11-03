@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -44,25 +45,49 @@ public abstract class ChildTypen_ResolverBase<TParent, TEntity, TResponseDto> : 
 
     public async Task<object> ResolveAsync(TParent entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
-        // Note: Eigen scope (dus eigen DbContext) per aanroep. De types worden na elkaar opgevraagd, zodat één DbContext nooit
-        // concurrent gebruikt wordt.
-        using var scope = _serviceProvider.CreateScope();
+        // Note: De cache is van het request (de scope van deze resolver, niet de eigen scope hieronder) en gedeeld door alle resolvers van
+        // hetzelfde response-type: een type waar meerdere ouders in een lijst naar verwijzen wordt maar één keer opgevraagd.
+        // Dat DTO komt dan in meerdere ouders voor. Dat is veilig zolang de ingebedde types zelf niet geëxpand worden (de engine zou anders
+        // een _expand in het gedeelde object schrijven): voor geneste paden moet het DTO dus eerst gekopieerd worden.
+        var cache = _serviceProvider.GetRequiredService<IGenericCache<TResponseDto>>();
+
+        // Note: Eigen scope (dus eigen DbContext) per aanroep, die pas gemaakt wordt als een type niet al in de cache zit. De types worden na
+        // elkaar opgevraagd, zodat één DbContext nooit concurrent gebruikt wordt.
+        IServiceScope scope = null;
+        try
+        {
+            var types = new List<TResponseDto>();
+
+            // Note: Op id, niet op URL: twee URL's naar hetzelfde type (andere hoofdletters, een slash, een querystring) zijn één type.
+            foreach (var id in (GetUrls(entity) ?? []).Select(url => _uriService.GetId(url)).Distinct())
+            {
+                // Note: Een type dat niet beschikbaar is (null) wordt ook onthouden, een mislukte query niet (die wordt opnieuw geprobeerd).
+                var type = await cache.GetOrCacheAndGetAsync(id.ToString(), () => GetTypeAsync(scope ??= _serviceProvider.CreateScope(), id));
+                if (type is not null)
+                {
+                    types.Add(type);
+                }
+            }
+
+            return types;
+        }
+        finally
+        {
+            scope?.Dispose();
+        }
+    }
+
+    private async Task<TResponseDto> GetTypeAsync(IServiceScope scope, Guid id)
+    {
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-        var types = new List<TResponseDto>();
-
-        foreach (var url in (GetUrls(entity) ?? []).Distinct())
+        var result = await GetAsync(mediator, id);
+        if (!ExpandQueryStatus.IsAvailable(result.Status, Resource))
         {
-            var result = await GetAsync(mediator, _uriService.GetId(url));
-            if (!ExpandQueryStatus.IsAvailable(result.Status, Resource))
-            {
-                continue;
-            }
-
-            types.Add(mapper.Map<TResponseDto>(result.Result));
+            return default;
         }
 
-        return types;
+        return mapper.Map<TResponseDto>(result.Result);
     }
 }
