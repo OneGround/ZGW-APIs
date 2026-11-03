@@ -56,6 +56,9 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<BesluitTypeResponseDto>
         services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_ZaakTypen_Resolver>();
+        services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_InformatieObjectTypen_Resolver>();
+        services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_ResultaatTypen_Resolver>();
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<BesluitTypeResponseDto>(sp.GetServices<IExpandResolver<BesluitTypeResponseDto>>()));

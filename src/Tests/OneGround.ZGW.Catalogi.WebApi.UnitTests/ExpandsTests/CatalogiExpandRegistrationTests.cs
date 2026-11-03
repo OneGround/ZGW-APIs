@@ -56,11 +56,18 @@ public class CatalogiExpandRegistrationTests
     }
 
     [Fact]
-    public void BesluitTypeAndInformatieObjectType_OfferTheirCatalogus()
+    public void BesluitType_OffersTheCatalogusAndTheTypesItRefersTo()
     {
         using var provider = BuildServices();
 
-        Assert.Equal(["catalogus"], PathsOf<BesluitTypeResponseDto>(provider));
+        Assert.Equal(["catalogus", "informatieobjecttypen", "resultaattypen", "zaaktypen"], PathsOf<BesluitTypeResponseDto>(provider));
+    }
+
+    [Fact]
+    public void InformatieObjectType_OffersItsCatalogus()
+    {
+        using var provider = BuildServices();
+
         Assert.Equal(["catalogus"], PathsOf<InformatieObjectTypeResponseDto>(provider));
     }
 }
