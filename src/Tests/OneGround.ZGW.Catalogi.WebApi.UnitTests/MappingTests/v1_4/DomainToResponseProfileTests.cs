@@ -272,4 +272,33 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
         Assert.Equal(Json(Mapper.Map<V13.ZaakObjectTypeResponseDto>(source)), Json(result));
     }
+
+    [Fact]
+    public void ZaakObjectType_resultaattypen_and_statustypen_are_empty_lists_not_null_in_v1_3_and_v1_4()
+    {
+        // Note: the mapping has no source for these lists yet (pending the question to VNG), so they stay at the empty default of the response
+        var source = new ZaakObjectType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = new ZaakType
+            {
+                Id = Guid.NewGuid(),
+                Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            },
+        };
+
+        var v13 = Mapper.Map<V13.ZaakObjectTypeResponseDto>(source);
+        var v14 = Mapper.Map<V14.ZaakObjectTypeResponseDto>(source);
+
+        Assert.NotNull(v13.ResultaatTypen);
+        Assert.Empty(v13.ResultaatTypen);
+        Assert.NotNull(v13.StatusTypen);
+        Assert.Empty(v13.StatusTypen);
+        Assert.NotNull(v14.ResultaatTypen);
+        Assert.Empty(v14.ResultaatTypen);
+        Assert.NotNull(v14.StatusTypen);
+        Assert.Empty(v14.StatusTypen);
+        Assert.Contains("\"resultaattypen\":[]", Json(v14));
+        Assert.Contains("\"statustypen\":[]", Json(v14));
+    }
 }

@@ -435,6 +435,7 @@ internal static class DomainToResponseMappings
             .Map(dest => dest.ZaaktypeIdentificatie, src => src.ZaakType.Identificatie)
             // No source member yet -- the feeding navigations are commented out on the entity pending
             // the VNG question below. Unignore together with the two .Map calls once answered.
+            // Until then both lists stay at the empty default that the response DTO gives them (not null).
             .Ignore(dest => dest.ResultaatTypen)
             .Ignore(dest => dest.StatusTypen);
         // TODO: We ask VNG how the relations can be edited:
