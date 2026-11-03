@@ -46,23 +46,23 @@ public abstract class Types_ResolverBase<TParent, TEntity, TResponseDto> : IExpa
     /// <summary>Loads the types with the given URLs, those that are available to the caller and each only once.</summary>
     protected async Task<List<TResponseDto>> LoadTypesAsync(IEnumerable<string> urls)
     {
-        // Note: De cache is van het request (de scope van deze resolver, niet de eigen scope hieronder) en gedeeld door alle resolvers van
-        // hetzelfde response-type: een type waar meerdere ouders in een lijst naar verwijzen wordt maar één keer opgevraagd.
-        // Dat DTO komt dan in meerdere ouders voor. Dat is veilig zolang de ingebedde types zelf niet geëxpand worden (de engine zou anders
-        // een _expand in het gedeelde object schrijven): voor geneste paden moet het DTO dus eerst gekopieerd worden.
+        // Note: The cache belongs to the request (the scope of this resolver, not the scope that is made below for the queries) and is shared by all resolvers
+        // of the same response type: a type that several parents in a list refer to is only queried once.
+        // That DTO then appears in several parents. This is safe as long as the embedded types are not expanded themselves (the engine would
+        // otherwise write an _expand into the shared object): for nested paths the DTO must therefore be copied first.
         var cache = _serviceProvider.GetRequiredService<IGenericCache<TResponseDto>>();
 
-        // Note: Eigen scope (dus eigen DbContext) per aanroep, die pas gemaakt wordt als een type niet al in de cache zit. De types worden na
-        // elkaar opgevraagd, zodat één DbContext nooit concurrent gebruikt wordt.
+        // Note: A scope of its own (so a DbContext of its own) per call, which is only made when a type is not in the cache yet. The types are
+        // queried one after the other, so that one DbContext is never used concurrently.
         IServiceScope scope = null;
         try
         {
             var types = new List<TResponseDto>();
 
-            // Note: Op id, niet op URL: twee URL's naar hetzelfde type (andere hoofdletters, een slash, een querystring) zijn één type.
+            // Note: By id, not by URL: two URLs to the same type (other case, a trailing slash, a query string) are one type.
             foreach (var id in (urls ?? []).Select(url => _uriService.GetId(url)).Distinct())
             {
-                // Note: Een type dat niet beschikbaar is (null) wordt ook onthouden, een mislukte query niet (die wordt opnieuw geprobeerd).
+                // Note: A type that is not available (null) is remembered too, a failed query is not (it is tried again).
                 var type = await cache.GetOrCacheAndGetAsync(id.ToString(), () => GetTypeAsync(scope ??= _serviceProvider.CreateScope(), id));
                 if (type is not null)
                 {

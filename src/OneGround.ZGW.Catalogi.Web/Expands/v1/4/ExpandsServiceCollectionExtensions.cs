@@ -9,31 +9,31 @@ public static partial class ExpandsServiceCollectionExtensions
 {
     public static void AddCatalogiAPIExpands(this IServiceCollection services)
     {
-        // Registreer de caches van de expand resolvers: per scope/request en per response-type, gedeeld door alle resolvers van dat type.
-        // Zo wordt een catalogus (Catalogus_Resolver) of een type (ChildTypen_ResolverBase) waar meerdere entities in een lijst naar verwijzen
-        // maar één keer opgevraagd.
+        // Register the caches of the expand resolvers: per scope/request and per response type, shared by all resolvers of that type.
+        // So a catalogus (Catalogus_Resolver) or a type (Types_ResolverBase) that several entities in a list refer to
+        // is only queried once.
         services.AddScoped(typeof(IGenericCache<>), typeof(GenericCache<>));
 
         //
-        // 1. Registratie van expand resolvers en engines voor InformatieObjectTypeResponseDto
+        // 1. Registration of the expand resolvers and engines for InformatieObjectTypeResponseDto
 
-        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<InformatieObjectTypeResponseDto>
+        // Expand resolvers: one per expand path, registered as IExpandResolver<InformatieObjectTypeResponseDto>
         services.AddScoped<IExpandResolver<InformatieObjectTypeResponseDto>, Catalogus_Resolver>();
 
-        // Lichtgewicht pad-validatie voor gebruik in de controller
+        // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<InformatieObjectTypeResponseDto>(
             sp.GetServices<IExpandResolver<InformatieObjectTypeResponseDto>>()
         ));
 
-        // Generieke dispatcher voor gebruik in de handlers
+        // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<InformatieObjectTypeResponseDto>(
             sp.GetServices<IExpandResolver<InformatieObjectTypeResponseDto>>()
         ));
 
         //
-        // 2. Registratie van expand resolvers en engines voor ZaakTypeResponseDto
+        // 2. Registration of the expand resolvers and engines for ZaakTypeResponseDto
 
-        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<ZaakTypeResponseDto>
+        // Expand resolvers: one per expand path, registered as IExpandResolver<ZaakTypeResponseDto>
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, Catalogus_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_StatusTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_ResultaatTypen_Resolver>();
@@ -45,53 +45,53 @@ public static partial class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_DeelZaakTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_GerelateerdeZaakTypen_Resolver>();
 
-        // Lichtgewicht pad-validatie voor gebruik in de controller
+        // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakTypeResponseDto>>()));
 
-        // Generieke dispatcher voor gebruik in de handlers
+        // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<ZaakTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakTypeResponseDto>>()));
 
         //
-        // 3. Registratie van expand resolvers en engines voor BesluitTypeResponseDto
+        // 3. Registration of the expand resolvers and engines for BesluitTypeResponseDto
 
-        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<BesluitTypeResponseDto>
+        // Expand resolvers: one per expand path, registered as IExpandResolver<BesluitTypeResponseDto>
         services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, Catalogus_Resolver>();
         services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_ZaakTypen_Resolver>();
         services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_InformatieObjectTypen_Resolver>();
         services.AddScoped<IExpandResolver<BesluitTypeResponseDto>, BesluitType_ResultaatTypen_Resolver>();
 
-        // Lichtgewicht pad-validatie voor gebruik in de controller
+        // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<BesluitTypeResponseDto>(sp.GetServices<IExpandResolver<BesluitTypeResponseDto>>()));
 
-        // Generieke dispatcher voor gebruik in de handlers
+        // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<BesluitTypeResponseDto>(sp.GetServices<IExpandResolver<BesluitTypeResponseDto>>()));
 
         //
-        // 4. Registratie van expand resolvers en engines voor CatalogusResponseDto
+        // 4. Registration of the expand resolvers and engines for CatalogusResponseDto
 
-        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<CatalogusResponseDto>
+        // Expand resolvers: one per expand path, registered as IExpandResolver<CatalogusResponseDto>
         services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_ZaakTypen_Resolver>();
         services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_BesluitTypen_Resolver>();
         services.AddScoped<IExpandResolver<CatalogusResponseDto>, Catalogus_InformatieObjectTypen_Resolver>();
 
-        // Lichtgewicht pad-validatie voor gebruik in de controller
+        // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
 
-        // Generieke dispatcher voor gebruik in de controller
+        // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
 
         //
-        // 5. Registratie van expand resolvers en engines voor EigenschapResponseDto
+        // 5. Registration of the expand resolvers and engines for EigenschapResponseDto
 
-        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<EigenschapResponseDto>
+        // Expand resolvers: one per expand path, registered as IExpandResolver<EigenschapResponseDto>
         services.AddScoped<IExpandResolver<EigenschapResponseDto>, Catalogus_Resolver>();
         services.AddScoped<IExpandResolver<EigenschapResponseDto>, Eigenschap_ZaakType_Resolver>();
         services.AddScoped<IExpandResolver<EigenschapResponseDto>, Eigenschap_StatusType_Resolver>();
 
-        // Lichtgewicht pad-validatie voor gebruik in de controller
+        // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<EigenschapResponseDto>(sp.GetServices<IExpandResolver<EigenschapResponseDto>>()));
 
-        // Generieke dispatcher voor gebruik in de controller
+        // Generic dispatcher, for use in the controller
         services.AddScoped(sp => new ExpandEngine<EigenschapResponseDto>(sp.GetServices<IExpandResolver<EigenschapResponseDto>>()));
     }
 }
