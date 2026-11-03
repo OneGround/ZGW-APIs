@@ -8,7 +8,6 @@ using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using V3 = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using V4 = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.ExpandsTests;
@@ -47,7 +46,7 @@ public class BesluitType_InformatieObjectTypenResolverTests
 }
 
 public class BesluitType_ResultaatTypenResolverTests
-    : ChildTypenResolverTestsBase<V4.BesluitTypeResponseDto, ResultaatType, V3.ResultaatTypeResponseDto>
+    : ChildTypenResolverTestsBase<V4.BesluitTypeResponseDto, ResultaatType, V4.ResultaatTypeResponseDto>
 {
     protected override string Path => "resultaattypen";
     protected override string Resource => "resultaattype";

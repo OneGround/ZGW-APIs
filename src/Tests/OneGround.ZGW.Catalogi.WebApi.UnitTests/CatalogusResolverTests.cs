@@ -57,6 +57,50 @@ public class CatalogusResolverTests
         Assert.Same(mapped, await Resolve(resolver));
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task ResolveAsync_ParentWithoutCatalogusUrl_ResolvesToNullWithoutQuerying(string catalogusUrl)
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var services = new ServiceCollection();
+        services.AddScoped(_ => mediatorMock.Object);
+        services.AddScoped(_ => Mock.Of<IMapper>());
+        var resolver = new Catalogus_Resolver(
+            services.BuildServiceProvider(),
+            Mock.Of<IEntityUriService>(),
+            new GenericCache<CatalogusResponseDto>()
+        );
+
+        var result = await resolver.ResolveAsync(
+            new ResultaatTypeResponseDto { Catalogus = catalogusUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+
+        Assert.Null(result);
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetCatalogusQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_ResultaatTypeReferringToACatalogus_ReturnsTheMappedCatalogus()
+    {
+        var catalogus = new Catalogus();
+        var mapped = new CatalogusResponseDto();
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<CatalogusResponseDto>(catalogus)).Returns(mapped);
+        var resolver = CreateResolver(new QueryResult<Catalogus>(catalogus, QueryStatus.OK), mapperMock.Object);
+
+        var result = await resolver.ResolveAsync(
+            new ResultaatTypeResponseDto { Catalogus = CatalogusUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+
+        Assert.Same(mapped, result);
+    }
+
     [Fact]
     public async Task ResolveAsync_EigenschapReferringToACatalogus_ReturnsTheMappedCatalogus()
     {

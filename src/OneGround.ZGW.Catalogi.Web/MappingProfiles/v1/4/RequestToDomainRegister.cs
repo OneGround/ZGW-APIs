@@ -29,5 +29,9 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllEigenschappenQueryParameters, Models.v1._3.GetAllEigenschappenFilter>()
             .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
+
+        config
+            .NewConfig<GetAllResultaatTypenQueryParameters, Models.v1._3.GetAllResultaatTypenFilter>()
+            .Map(dest => dest.DatumGeldigheid, src => ProfileHelper.TryDateFromStringOptional(src.DatumGeldigheid));
     }
 }

@@ -124,6 +124,14 @@ public class CatalogiExpandRegistrationTests
     }
 
     [Fact]
+    public void ResultaatType_OffersTheCatalogusTheZaakTypeAndTheTypesItRefersTo()
+    {
+        using var provider = BuildServices();
+
+        Assert.Equal(["besluittypen", "catalogus", "informatieobjecttypen", "zaaktype"], PathsOf<ResultaatTypeResponseDto>(provider));
+    }
+
+    [Fact]
     public void Eigenschap_OffersTheCatalogusTheZaakTypeAndTheStatusType()
     {
         using var provider = BuildServices();

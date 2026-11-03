@@ -128,4 +128,30 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
         Assert.Equal(Json(Mapper.Map<V13.EigenschapResponseDto>(source)), Json(result));
     }
+
+    [Fact]
+    public void ResultaatType_maps_like_v1_3_without_expand()
+    {
+        var zaakType = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+        };
+        var besluitType = new BesluitType { Id = Guid.NewGuid() };
+        var source = new ResultaatType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = zaakType,
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            ResultaatTypeBesluitTypen = [new ResultaatTypeBesluitType { BesluitType = besluitType }],
+        };
+
+        var result = Mapper.Map<V14.ResultaatTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
+        Assert.Equal([ZtcMapperTestHost.Resolved(besluitType)], result.BesluitTypen);
+        Assert.Equal(Json(Mapper.Map<V13.ResultaatTypeResponseDto>(source)), Json(result));
+    }
 }

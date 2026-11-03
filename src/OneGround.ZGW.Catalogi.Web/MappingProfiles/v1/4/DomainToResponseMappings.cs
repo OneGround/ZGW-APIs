@@ -30,5 +30,10 @@ internal static class DomainToResponseMappings
             .Ignore(dest => dest.Expand);
 
         config.NewConfig<Eigenschap, V4.EigenschapResponseDto>().Inherits<Eigenschap, V3.EigenschapResponseDto>().Ignore(dest => dest.Expand);
+
+        config
+            .NewConfig<ResultaatType, V4.ResultaatTypeResponseDto>()
+            .Inherits<ResultaatType, V3.ResultaatTypeResponseDto>()
+            .Ignore(dest => dest.Expand);
     }
 }
