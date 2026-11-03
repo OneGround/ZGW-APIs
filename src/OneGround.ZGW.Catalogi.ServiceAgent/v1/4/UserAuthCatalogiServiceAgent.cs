@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
 
-namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
+namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 
 // Note: Identical implementation to CatalogiServiceAgent -- the only reason this is a distinct class is so
 // AddServiceAgent<IUserAuthCatalogiServiceAgent, UserAuthCatalogiServiceAgent> gets its own typed HttpClient (keyed by this class's full

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using OneGround.ZGW.Common.Contracts;
 
-namespace OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
+namespace OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 
-public class GetBesluitTypeQueryParameters : QueryParameters, IExpandParameter
+public class GetZaakTypeQueryParameters : QueryParameters, IExpandParameter
 {
     /// <summary>
     /// Expand het respons met sub-types.

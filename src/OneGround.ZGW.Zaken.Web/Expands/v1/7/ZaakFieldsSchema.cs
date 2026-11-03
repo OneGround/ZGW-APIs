@@ -5,6 +5,9 @@ using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
+using CatalogusResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.CatalogusResponseDto;
+using InformatieObjectTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.InformatieObjectTypeResponseDto;
+using ZaakTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 

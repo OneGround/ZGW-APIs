@@ -1,0 +1,107 @@
+using System;
+using MapsterMapper;
+using Newtonsoft.Json;
+using OneGround.ZGW.Catalogi.DataModel;
+using Xunit;
+using V13 = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using V14 = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+
+namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.MappingTests.v1_4;
+
+/// <summary>
+/// The v1.4 responses are the v1.3 responses plus <c>_expand</c>, mapped by inheriting the v1.3 mapping. These tests pin that: the v1.4 mapping has
+/// to give exactly the v1.3 response (serialized, so the property values, the order and the omitted <c>_expand</c> are all compared).
+/// </summary>
+public class DomainToResponseProfileTests : IDisposable
+{
+    private readonly ZtcMapperTestHost _host = new();
+    private IMapper Mapper => _host.Mapper;
+
+    public void Dispose() => _host.Dispose();
+
+    private static string Json(object value) => JsonConvert.SerializeObject(value);
+
+    [Fact]
+    public void Catalogus_maps_like_v1_3_without_expand()
+    {
+        var zaakType = new ZaakType { Id = Guid.NewGuid() };
+        var source = new Catalogus
+        {
+            Id = Guid.NewGuid(),
+            Domein = "ABC",
+            Rsin = "123456789",
+            Naam = "Catalogus",
+            ZaakTypes = [zaakType],
+            BesluitTypes = [],
+            InformatieObjectTypes = [],
+        };
+
+        var result = Mapper.Map<V14.CatalogusResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal([ZtcMapperTestHost.Resolved(zaakType)], result.ZaakTypen);
+        Assert.Equal(Json(Mapper.Map<V13.CatalogusResponseDto>(source)), Json(result));
+    }
+
+    [Fact]
+    public void ZaakType_maps_like_v1_3_without_expand()
+    {
+        var source = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            VersieDatum = new DateOnly(2020, 1, 6),
+            StatusTypen = [],
+            RolTypen = [],
+            ResultaatTypen = [],
+            Eigenschappen = [],
+            ZaakObjectTypen = [],
+            ZaakTypeGerelateerdeZaakTypen = [],
+        };
+
+        var result = Mapper.Map<V14.ZaakTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal(Json(Mapper.Map<V13.ZaakTypeResponseDto>(source)), Json(result));
+    }
+
+    [Fact]
+    public void BesluitType_maps_like_v1_3_without_expand()
+    {
+        var source = new BesluitType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            BesluitTypeZaakTypen = [],
+            BesluitTypeInformatieObjectTypen = [],
+        };
+
+        var result = Mapper.Map<V14.BesluitTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal(Json(Mapper.Map<V13.BesluitTypeResponseDto>(source)), Json(result));
+    }
+
+    [Fact]
+    public void InformatieObjectType_maps_like_v1_3_without_expand()
+    {
+        var source = new InformatieObjectType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+            BeginGeldigheid = new DateOnly(2020, 1, 2),
+            InformatieObjectTypeZaakTypen = [],
+            InformatieObjectTypeBesluitTypen = [],
+        };
+
+        var result = Mapper.Map<V14.InformatieObjectTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        Assert.Equal("2020-01-02", result.BeginGeldigheid);
+        Assert.Equal(Json(Mapper.Map<V13.InformatieObjectTypeResponseDto>(source)), Json(result));
+    }
+}

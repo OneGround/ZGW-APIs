@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 
-namespace OneGround.ZGW.Catalogi.Web.Expands.v1._3;
+namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 
 /// <summary>
 /// Resolves the "catalogus" expand path for entities that reference a Catalogus by URL

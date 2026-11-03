@@ -1,9 +1,9 @@
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Extensions;
 using OneGround.ZGW.Common.ServiceAgent.Caching;
 using Xunit;
 
@@ -21,9 +21,9 @@ public class UserAuthCatalogiServiceAgentWiringTests
         var configuration = new ConfigurationBuilder().Build();
 
         if (serviceAccountAgentToo)
-            services.AddCatalogiServiceAgent_v1_3(configuration);
+            services.AddCatalogiServiceAgent_v1_4(configuration);
 
-        services.AddUserAuthCatalogiServiceAgent_v1_3(configuration);
+        services.AddUserAuthCatalogiServiceAgent_v1_4(configuration);
 
         return services;
     }

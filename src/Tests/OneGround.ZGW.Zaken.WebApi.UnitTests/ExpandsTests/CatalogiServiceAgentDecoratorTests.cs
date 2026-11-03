@@ -1,12 +1,13 @@
 using System.Threading.Tasks;
 using Moq;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Expands;
 using Xunit;
+using ZaakTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ExpandsTests;
 

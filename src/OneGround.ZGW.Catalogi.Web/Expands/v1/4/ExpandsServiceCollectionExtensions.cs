@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
 
-namespace OneGround.ZGW.Catalogi.Web.Expands.v1._3;
+namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 
 public static partial class ExpandsServiceCollectionExtensions
 {
@@ -53,5 +53,19 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Generieke dispatcher voor gebruik in de handlers
         services.AddScoped(sp => new ExpandEngine<BesluitTypeResponseDto>(sp.GetServices<IExpandResolver<BesluitTypeResponseDto>>()));
+
+        //
+        // 4. Registratie van expand resolvers en engines voor CatalogusResponseDto
+
+        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<CatalogusResponseDto>
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, ZaakTypen_Resolver>();
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, BesluitTypen_Resolver>();
+        services.AddScoped<IExpandResolver<CatalogusResponseDto>, InformatieObjectTypen_Resolver>();
+
+        // Lichtgewicht pad-validatie voor gebruik in de controller
+        services.AddScoped(sp => new ExpandValidator<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
+
+        // Generieke dispatcher voor gebruik in de controller
+        services.AddScoped(sp => new ExpandEngine<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
     }
 }

@@ -143,6 +143,8 @@ public class CatalogusController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.Catalogussen.Create, Name = Operations.Catalogussen.Create)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(CatalogusResponseDto))]

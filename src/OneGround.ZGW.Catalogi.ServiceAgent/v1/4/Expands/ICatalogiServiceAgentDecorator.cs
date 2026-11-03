@@ -1,3 +1,3 @@
-namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
+namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
 
 public interface ICatalogiServiceAgentDecorator : ICatalogiServiceAgent { }

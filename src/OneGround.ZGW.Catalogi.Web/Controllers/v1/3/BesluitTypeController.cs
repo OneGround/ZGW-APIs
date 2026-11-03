@@ -21,7 +21,6 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
-using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
@@ -42,8 +41,6 @@ public class BesluitTypeController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IRequestMerger _requestMerger;
-    private readonly ExpandValidator<BesluitTypeResponseDto> _expandValidator;
-    private readonly ExpandEngine<BesluitTypeResponseDto> _expandEngine;
 
     public BesluitTypeController(
         ILogger<BesluitTypeController> logger,
@@ -53,17 +50,13 @@ public class BesluitTypeController : ZGWControllerBase
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
-        IValidatorService validatorService,
-        ExpandValidator<BesluitTypeResponseDto> expandValidator,
-        ExpandEngine<BesluitTypeResponseDto> expandEngine
+        IValidatorService validatorService
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
-        _expandValidator = expandValidator;
-        _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
@@ -79,18 +72,10 @@ public class BesluitTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.BesluitTypen.Get, Name = Operations.BesluitTypen.Read)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetBesluitTypeQueryParameters>))]
     [ETagFilter]
-    [Expand]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetBesluitTypeQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
-
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
-        if (expandValidationResult is not null)
-        {
-            return expandValidationResult;
-        }
 
         var result = await _mediator.Send(new GetBesluitTypeQuery { Id = id });
 
@@ -100,19 +85,6 @@ public class BesluitTypeController : ZGWControllerBase
         }
 
         var response = _mapper.Map<BesluitTypeResponseDto>(result.Result);
-
-        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
-        if (expandPaths is { Count: > 0 })
-        {
-            try
-            {
-                await _expandEngine.ResolveAsync(response, expandPaths);
-            }
-            catch (ExpandInternalQueryHandlerException ex)
-            {
-                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
-            }
-        }
 
         return Ok(response);
     }
@@ -129,12 +101,10 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpHead(ApiRoutes.BesluitTypen.Get, Name = Operations.BesluitTypen.ReadHead)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetBesluitTypeQueryParameters>))]
     [ETagFilter]
-    [Expand]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetBesluitTypeQueryParameters queryParameters)
+    public Task<IActionResult> HeadAsync(Guid id)
     {
-        return GetAsync(id, queryParameters);
+        return GetAsync(id);
     }
 
     /// <summary>
@@ -145,6 +115,8 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.BesluitTypen.Create, Name = Operations.BesluitTypen.Create)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(BesluitTypeResponseDto))]
@@ -189,16 +161,9 @@ public class BesluitTypeController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<BesluitTypeResponseDto>))]
     [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllBesluitTypenQueryParameters>))]
-    [Expand]
     public async Task<IActionResult> GetAllAsync([FromQuery] GetAllBesluitTypenQueryParameters queryParameters, int page = 1)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
-
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
-        if (expandValidationResult is not null)
-        {
-            return expandValidationResult;
-        }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.BesluitTypenPageSize));
         var filter = _mapper.Map<GetAllBesluitTypenFilter>(queryParameters);
@@ -211,19 +176,6 @@ public class BesluitTypeController : ZGWControllerBase
         }
 
         var statustypenResponse = _mapper.Map<List<BesluitTypeResponseDto>>(result.Result.PageResult);
-
-        // Handle optional expands on the returned DTOs. This is done after the mapping to the DTOs, because the expand resolvers are registered for the DTO type, not for the entity type.
-        if (expandPaths is { Count: > 0 })
-        {
-            try
-            {
-                await _expandEngine.ResolveListAsync(statustypenResponse, expandPaths);
-            }
-            catch (ExpandInternalQueryHandlerException ex)
-            {
-                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
-            }
-        }
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
@@ -242,6 +194,8 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.Update)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
@@ -290,6 +244,8 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.PartialUpdate)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
@@ -352,6 +308,8 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
     [HttpDelete(ApiRoutes.BesluitTypen.Delete, Name = Operations.BesluitTypen.Delete)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
@@ -384,6 +342,8 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.BesluitTypen.Publish, Name = Operations.BesluitTypen.Publish)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]

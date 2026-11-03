@@ -7,8 +7,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.Caching;
@@ -102,7 +103,8 @@ public class Startup
 
         services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
-        services.AddUserAuthCatalogiServiceAgent_v1_3(Configuration); // For ZRC v1.7 expands (evaluated by ZTC as the calling client)
+        services.AddCatalogiServiceAgent_v1_4(Configuration); // For ZRC/DRC v1.7 expands (ZTC 1.4)
+        services.AddUserAuthCatalogiServiceAgent_v1_4(Configuration); // For ZRC v1.7 expands (evaluated by ZTC as the calling client)
         services.AddDocumentenServiceAgent_v1_7(Configuration);
         services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
         services.AddUserAuthDocumentenServiceAgent_v1_7(Configuration); // For ZRC v1.7 expands (zaakinformatieobjecten.informatieobject)

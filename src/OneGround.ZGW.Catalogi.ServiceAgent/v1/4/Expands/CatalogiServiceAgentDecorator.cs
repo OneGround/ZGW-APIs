@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.ServiceAgent.Expands;
 
-namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
+namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
 
 /// <summary>
 /// Intercepts calls to the Catalogi service agent and wraps exceptions in an <see cref="ExpandExternalServiceException"/>.
@@ -15,7 +15,7 @@ namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
 /// Expands must be evaluated by ZTC as the calling client. The first call of a request therefore goes through the
 /// <see cref="IUserAuthCatalogiServiceAgent"/> (the caller's own token, no response cache). ZTC authorizes every read the same way (the scope
 /// <c>catalogi.lezen</c> and the RSIN, nothing per object), so once ZTC has accepted the caller, the remaining calls of that request go
-/// through the <see cref="ICatalogiServiceAgent"/> (v1.3), whose pipeline has the distributed (Redis) response cache, shared with the v1.5
+/// through the <see cref="ICatalogiServiceAgent"/> (v1.4), whose pipeline has the distributed (Redis) response cache, shared with the v1.5
 /// expands. A call that fails does not count as accepted, so the next call tries the caller's agent again.
 /// </para>
 /// <para>
@@ -41,7 +41,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         _cachedAgent = cachedAgent;
     }
 
-    public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(CatalogusRequestDto request) => throw new NotImplementedException();
+    public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(Contracts.v1._3.Requests.CatalogusRequestDto request) =>
+        throw new NotImplementedException();
 
     public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null) =>
         WrapAsync(besluitTypeUrl, agent => agent.GetBesluitTypeByUrlAsync(besluitTypeUrl, expand));
@@ -55,14 +56,14 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
     }
 
     public Task<ServiceAgentResponse<PagedResponse<CatalogusResponseDto>>> GetCatalogussenAsync(
-        Contracts.v1.Queries.GetAllCatalogussenQueryParameters parameters,
+        GetAllCatalogussenQueryParameters parameters,
         int page = 1
     )
     {
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl) =>
+    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl) =>
         WrapAsync(eigenschapUrl, agent => agent.GetEigenschapByUrlAsync(eigenschapUrl));
 
     public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
@@ -71,20 +72,20 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
     ) => WrapAsync(informatieObjectTypeUrl, agent => agent.GetInformatieObjectTypeByUrlAsync(informatieObjectTypeUrl, expand));
 
     public Task<ServiceAgentResponse<PagedResponse<InformatieObjectTypeResponseDto>>> GetInformatieObjectTypenAsync(
-        Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters parameters,
+        GetAllInformatieObjectTypenQueryParameters parameters,
         int page = 1
     )
     {
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl) =>
+    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl) =>
         WrapAsync(resultaatTypeUrl, agent => agent.GetResultaatTypeByUrlAsync(resultaatTypeUrl));
 
-    public Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl) =>
+    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl) =>
         WrapAsync(rolTypeUrl, agent => agent.GetRolTypeByUrlAsync(rolTypeUrl));
 
-    public Task<ServiceAgentResponse<PagedResponse<RolTypeResponseDto>>> GetRolTypenAsync(
+    public Task<ServiceAgentResponse<PagedResponse<Contracts.v1._3.Responses.RolTypeResponseDto>>> GetRolTypenAsync(
         Contracts.v1._3.Queries.GetAllRolTypenQueryParameters parameters,
         int page = 1
     )
@@ -92,27 +93,23 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<StatusTypeResponseDto>> GetStatusTypeByUrlAsync(string statusTypeUrl) =>
+    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.StatusTypeResponseDto>> GetStatusTypeByUrlAsync(string statusTypeUrl) =>
         WrapAsync(statusTypeUrl, agent => agent.GetStatusTypeByUrlAsync(statusTypeUrl));
 
-    public Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl) =>
+    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl) =>
         WrapAsync(zaakObjectTypeUrl, agent => agent.GetZaakObjectTypeByUrlAsync(zaakObjectTypeUrl));
 
     public Task<ServiceAgentResponse<ZaakTypeResponseDto>> GetZaakTypeByUrlAsync(string zaakTypeUrl, string expand = null) =>
         WrapAsync(zaakTypeUrl, agent => agent.GetZaakTypeByUrlAsync(zaakTypeUrl, expand));
 
-    public Task<ServiceAgentResponse<PagedResponse<ZaakTypeInformatieObjectTypeResponseDto>>> GetZaakTypeInformatieObjectTypenAsync(
-        Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters parameters,
-        int page = 1
-    )
+    public Task<
+        ServiceAgentResponse<PagedResponse<Contracts.v1._3.Responses.ZaakTypeInformatieObjectTypeResponseDto>>
+    > GetZaakTypeInformatieObjectTypenAsync(Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters parameters, int page = 1)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(
-        Contracts.v1.Queries.GetAllZaakTypenQueryParameters parameters,
-        int page = 1
-    )
+    public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(GetAllZaakTypenQueryParameters parameters, int page = 1)
     {
         throw new NotImplementedException();
     }

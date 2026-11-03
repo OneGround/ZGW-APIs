@@ -59,7 +59,6 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.InformatieObjectTypen)
             .Ignore(dest => dest.DeelZaakTypen)
             .Ignore(dest => dest.BesluitTypen)
-            .Ignore(dest => dest.Expand)
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -309,8 +308,7 @@ public class DomainToResponseRegister : IRegister
                         : MapsterUrlResolver.ResolveUrls(
                             src.InformatieObjectTypeBesluitTypen.Where(z => z.BesluitType != null).Select(b => b.BesluitType)
                         )
-            )
-            .Ignore(dest => dest.Expand);
+            );
 
         // Note: for PATCH operation
         config
@@ -362,7 +360,6 @@ public class DomainToResponseRegister : IRegister
             .Ignore(dest => dest.ResultaatTypen)
             .Ignore(dest => dest.ResultaatTypenOmschrijving)
             .Ignore(dest => dest.VastgelegdIn)
-            .Ignore(dest => dest.Expand)
             .Map(dest => dest.Catalogus, src => MapsterUrlResolver.ResolveUrl(src.Catalogus))
             .Map(dest => dest.ReactieTermijn, src => ProfileHelper.Fix0Period(src.ReactieTermijn))
             .Map(dest => dest.PublicatieTermijn, src => ProfileHelper.Fix0Period(src.PublicatieTermijn))
@@ -454,5 +451,28 @@ public class DomainToResponseRegister : IRegister
             .Map(dest => dest.EindeGeldigheid, src => ProfileHelper.StringDateFromDate(src.EindeGeldigheid))
             .Map(dest => dest.BeginObject, src => ProfileHelper.StringDateFromDate(src.BeginObject))
             .Map(dest => dest.EindeObject, src => ProfileHelper.StringDateFromDate(src.EindeObject));
+
+        // The v1.4 responses are the v1.3 responses plus _expand (filled by the expand engine, not by the mapping), so they inherit the v1.3 mapping.
+        // Note: They are registered here, right after the v1.3 mapping they inherit: Inherits copies the base mapping at the moment it is called and
+        // the order in which Mapster scans the registers is undefined, so a separate v1.4 register could silently inherit nothing.
+        config
+            .NewConfig<Catalogus, Catalogi.Contracts.v1._4.Responses.CatalogusResponseDto>()
+            .Inherits<Catalogus, CatalogusResponseDto>()
+            .Ignore(dest => dest.Expand);
+
+        config
+            .NewConfig<ZaakType, Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto>()
+            .Inherits<ZaakType, ZaakTypeResponseDto>()
+            .Ignore(dest => dest.Expand);
+
+        config
+            .NewConfig<BesluitType, Catalogi.Contracts.v1._4.Responses.BesluitTypeResponseDto>()
+            .Inherits<BesluitType, BesluitTypeResponseDto>()
+            .Ignore(dest => dest.Expand);
+
+        config
+            .NewConfig<InformatieObjectType, Catalogi.Contracts.v1._4.Responses.InformatieObjectTypeResponseDto>()
+            .Inherits<InformatieObjectType, InformatieObjectTypeResponseDto>()
+            .Ignore(dest => dest.Expand);
     }
 }

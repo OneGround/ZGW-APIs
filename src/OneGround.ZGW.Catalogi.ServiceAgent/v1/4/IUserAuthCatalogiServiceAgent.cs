@@ -1,4 +1,4 @@
-namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._3;
+namespace OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 
 // Note: User-authenticated (AuthorizationType.UserAccount, forwards the real caller's JWT) variant of ICatalogiServiceAgent, for cross-API
 // expands that must be evaluated by ZTC's own authorization model as the actual calling client, not as this backend's own per-RSIN

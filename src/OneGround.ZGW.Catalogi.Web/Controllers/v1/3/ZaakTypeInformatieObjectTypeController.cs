@@ -34,6 +34,7 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._3;
 [Consumes("application/json")]
 [Produces("application/json")]
 [ZgwApiVersion(Api.LatestVersion_1_3)]
+[ZgwApiVersion(Api.LatestVersion_1_4)]
 public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
 {
     private readonly ApplicationConfiguration _applicationConfiguration;
