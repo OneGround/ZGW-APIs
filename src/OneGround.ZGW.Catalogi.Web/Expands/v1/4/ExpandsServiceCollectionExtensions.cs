@@ -79,5 +79,19 @@ public static partial class ExpandsServiceCollectionExtensions
 
         // Generieke dispatcher voor gebruik in de controller
         services.AddScoped(sp => new ExpandEngine<CatalogusResponseDto>(sp.GetServices<IExpandResolver<CatalogusResponseDto>>()));
+
+        //
+        // 5. Registratie van expand resolvers en engines voor EigenschapResponseDto
+
+        // Expand resolvers — één per expand-pad, geregistreerd als IExpandResolver<EigenschapResponseDto>
+        services.AddScoped<IExpandResolver<EigenschapResponseDto>, Catalogus_Resolver>();
+        services.AddScoped<IExpandResolver<EigenschapResponseDto>, Eigenschap_ZaakType_Resolver>();
+        services.AddScoped<IExpandResolver<EigenschapResponseDto>, Eigenschap_StatusType_Resolver>();
+
+        // Lichtgewicht pad-validatie voor gebruik in de controller
+        services.AddScoped(sp => new ExpandValidator<EigenschapResponseDto>(sp.GetServices<IExpandResolver<EigenschapResponseDto>>()));
+
+        // Generieke dispatcher voor gebruik in de controller
+        services.AddScoped(sp => new ExpandEngine<EigenschapResponseDto>(sp.GetServices<IExpandResolver<EigenschapResponseDto>>()));
     }
 }

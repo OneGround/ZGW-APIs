@@ -57,6 +57,24 @@ public class CatalogusResolverTests
         Assert.Same(mapped, await Resolve(resolver));
     }
 
+    [Fact]
+    public async Task ResolveAsync_EigenschapReferringToACatalogus_ReturnsTheMappedCatalogus()
+    {
+        var catalogus = new Catalogus();
+        var mapped = new CatalogusResponseDto();
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.Map<CatalogusResponseDto>(catalogus)).Returns(mapped);
+        var resolver = CreateResolver(new QueryResult<Catalogus>(catalogus, QueryStatus.OK), mapperMock.Object);
+
+        var result = await resolver.ResolveAsync(
+            new EigenschapResponseDto { Catalogus = CatalogusUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+
+        Assert.Same(mapped, result);
+    }
+
     [Theory]
     [InlineData(QueryStatus.NotFound)]
     [InlineData(QueryStatus.Forbidden)]

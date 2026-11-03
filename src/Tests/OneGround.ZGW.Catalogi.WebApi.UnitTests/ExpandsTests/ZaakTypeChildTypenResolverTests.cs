@@ -90,7 +90,7 @@ public class ZaakType_ResultaatTypenResolverTests : ChildTypenResolverTestsBase<
             .ReturnsAsync((GetResultaatTypeQuery q, CancellationToken _) => results(q.Id));
 }
 
-public class ZaakType_EigenschappenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, Eigenschap, V3.EigenschapResponseDto>
+public class ZaakType_EigenschappenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, Eigenschap, V4.EigenschapResponseDto>
 {
     protected override string Path => "eigenschappen";
     protected override string Resource => "eigenschap";

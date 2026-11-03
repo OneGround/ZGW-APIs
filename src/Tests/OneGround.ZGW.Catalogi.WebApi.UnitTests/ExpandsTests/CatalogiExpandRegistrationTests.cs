@@ -49,7 +49,7 @@ public class CatalogiExpandRegistrationTests
         foreach (var resolverType in resolverTypes)
         {
             var baseType = resolverType;
-            while (baseType is not null && !(baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(ChildTypen_ResolverBase<,,>)))
+            while (baseType is not null && !(baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(Types_ResolverBase<,,>)))
             {
                 baseType = baseType.BaseType;
             }
@@ -121,6 +121,14 @@ public class CatalogiExpandRegistrationTests
         using var provider = BuildServices();
 
         Assert.Equal(["catalogus", "informatieobjecttypen", "resultaattypen", "zaaktypen"], PathsOf<BesluitTypeResponseDto>(provider));
+    }
+
+    [Fact]
+    public void Eigenschap_OffersTheCatalogusTheZaakTypeAndTheStatusType()
+    {
+        using var provider = BuildServices();
+
+        Assert.Equal(["catalogus", "statustype", "zaaktype"], PathsOf<EigenschapResponseDto>(provider));
     }
 
     [Fact]
