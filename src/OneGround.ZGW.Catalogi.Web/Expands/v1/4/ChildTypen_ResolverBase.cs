@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
@@ -51,7 +52,7 @@ public abstract class ChildTypen_ResolverBase<TParent, TEntity, TResponseDto> : 
 
         var types = new List<TResponseDto>();
 
-        foreach (var url in GetUrls(entity) ?? [])
+        foreach (var url in (GetUrls(entity) ?? []).Distinct())
         {
             var result = await GetAsync(mediator, _uriService.GetId(url));
             if (!ExpandQueryStatus.IsAvailable(result.Status, Resource))

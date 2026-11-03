@@ -42,6 +42,8 @@ public static partial class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_ZaakObjectTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_BesluitTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_InformatieObjectTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_DeelZaakTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_GerelateerdeZaakTypen_Resolver>();
 
         // Lichtgewicht pad-validatie voor gebruik in de controller
         services.AddScoped(sp => new ExpandValidator<ZaakTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakTypeResponseDto>>()));

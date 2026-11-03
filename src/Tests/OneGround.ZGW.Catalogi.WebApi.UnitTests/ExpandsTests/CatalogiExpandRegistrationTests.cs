@@ -39,7 +39,18 @@ public class CatalogiExpandRegistrationTests
         using var provider = BuildServices();
 
         Assert.Equal(
-            ["besluittypen", "catalogus", "eigenschappen", "informatieobjecttypen", "resultaattypen", "roltypen", "statustypen", "zaakobjecttypen"],
+            [
+                "besluittypen",
+                "catalogus",
+                "deelzaaktypen",
+                "eigenschappen",
+                "gerelateerdeZaaktypen",
+                "informatieobjecttypen",
+                "resultaattypen",
+                "roltypen",
+                "statustypen",
+                "zaakobjecttypen",
+            ],
             PathsOf<ZaakTypeResponseDto>(provider)
         );
     }

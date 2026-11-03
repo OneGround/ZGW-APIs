@@ -107,6 +107,18 @@ public abstract class ChildTypenResolverTestsBase<TParent, TEntity, TResponseDto
         Assert.Empty(result);
     }
 
+    [Fact]
+    public async Task ResolveAsync_ParentRefersToTheSameTypeTwice_ReturnsItOnce()
+    {
+        var entity = new TEntity();
+        var mapped = new TResponseDto();
+        var resolver = CreateResolver(new() { [Id1] = new QueryResult<TEntity>(entity, QueryStatus.OK) }, MapperReturning((entity, mapped)).Object);
+
+        var result = (List<TResponseDto>)await Resolve(resolver, Url1, Url1);
+
+        Assert.Same(mapped, Assert.Single(result));
+    }
+
     [Theory]
     [InlineData(QueryStatus.NotFound)]
     [InlineData(QueryStatus.Forbidden)]

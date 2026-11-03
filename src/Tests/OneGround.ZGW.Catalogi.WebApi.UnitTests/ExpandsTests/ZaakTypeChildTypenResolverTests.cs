@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using MediatR;
 using Moq;
@@ -12,6 +13,50 @@ using V3 = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using V4 = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 
 namespace OneGround.ZGW.Catalogi.WebApi.UnitTests.ExpandsTests;
+
+public class ZaakType_DeelZaakTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, ZaakType, V4.ZaakTypeResponseDto>
+{
+    protected override string Path => "deelzaaktypen";
+    protected override string Resource => "zaaktype";
+
+    protected override V4.ZaakTypeResponseDto CreateParent(params string[] urls) => new() { DeelZaakTypen = urls };
+
+    protected override IExpandResolver<V4.ZaakTypeResponseDto> CreateResolver(IServiceProvider serviceProvider, IEntityUriService uriService) =>
+        new ZaakType_DeelZaakTypen_Resolver(serviceProvider, uriService);
+
+    protected override void SetupQuery(Mock<IMediator> mediator, Func<Guid, QueryResult<ZaakType>> results) =>
+        mediator
+            .Setup(m => m.Send(It.IsAny<GetZaakTypeQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GetZaakTypeQuery q, CancellationToken _) => results(q.Id));
+}
+
+public class ZaakType_GerelateerdeZaakTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, ZaakType, V4.ZaakTypeResponseDto>
+{
+    protected override string Path => "gerelateerdeZaaktypen";
+    protected override string Resource => "zaaktype";
+
+    // Note: a gerelateerd zaaktype is more than a URL, the expand only holds the zaaktype it refers to
+    protected override V4.ZaakTypeResponseDto CreateParent(params string[] urls) =>
+        new()
+        {
+            GerelateerdeZaakTypen = urls
+                ?.Select(url => new Catalogi.Contracts.v1.GerelateerdeZaaktypeDto
+                {
+                    ZaakType = url,
+                    AardRelatie = "vervolg",
+                    Toelichting = "toelichting",
+                })
+                .ToList(),
+        };
+
+    protected override IExpandResolver<V4.ZaakTypeResponseDto> CreateResolver(IServiceProvider serviceProvider, IEntityUriService uriService) =>
+        new ZaakType_GerelateerdeZaakTypen_Resolver(serviceProvider, uriService);
+
+    protected override void SetupQuery(Mock<IMediator> mediator, Func<Guid, QueryResult<ZaakType>> results) =>
+        mediator
+            .Setup(m => m.Send(It.IsAny<GetZaakTypeQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GetZaakTypeQuery q, CancellationToken _) => results(q.Id));
+}
 
 public class ZaakType_StatusTypenResolverTests : ChildTypenResolverTestsBase<V4.ZaakTypeResponseDto, StatusType, V3.StatusTypeResponseDto>
 {
