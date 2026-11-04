@@ -336,6 +336,11 @@ public class ZaakObjectenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
         var zaakObjectResponse = _mapper.Map<Zaken.Contracts.v1._5.Responses.ZaakObject.ZaakObjectResponseDto>(result.Result);
 
         return Ok(zaakObjectResponse);
