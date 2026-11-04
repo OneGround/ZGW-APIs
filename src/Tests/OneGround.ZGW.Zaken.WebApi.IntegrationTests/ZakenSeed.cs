@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -318,6 +320,39 @@ internal static class ZakenSeed
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         return await context.Zaken.AnyAsync(z => z.Id == zaakId);
+    }
+
+    /// <summary>
+    /// The stored columns of the zaak and of every row under it, one line per row, to compare before and after a request.
+    /// </summary>
+    public static async Task<string> ZaakStateAsync(ZakenWebApplicationFactory factory, Guid zaakId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+        var rows = new List<object>();
+        rows.AddRange(await context.Zaken.AsNoTracking().Where(z => z.Id == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakStatussen.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakRollen.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakResultaten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakObjecten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakEigenschappen.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakBesluiten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakInformatieObjecten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakContactmomenten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakVerzoeken.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.KlantContacten.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+        rows.AddRange(await context.ZaakNotities.AsNoTracking().Where(r => r.ZaakId == zaakId).ToListAsync());
+
+        return string.Join(Environment.NewLine, rows.Select(row => Describe(context, row)).Order(StringComparer.Ordinal));
+    }
+
+    private static string Describe(ZrcDbContext context, object row)
+    {
+        var entityType = context.Model.FindEntityType(row.GetType())!;
+        var columns = entityType.GetProperties().Select(p => $"{p.Name}={p.PropertyInfo?.GetValue(row) ?? p.FieldInfo?.GetValue(row)}");
+
+        return $"{entityType.ShortName()}: {string.Join(", ", columns)}";
     }
 
     public static async Task<int> ZaakStatusCountAsync(ZakenWebApplicationFactory factory, Guid zaakId)

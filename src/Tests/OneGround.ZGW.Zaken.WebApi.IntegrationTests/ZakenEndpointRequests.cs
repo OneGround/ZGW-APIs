@@ -146,6 +146,9 @@ internal static class ZakenEndpointRequests
 
         var isPatch = row.Method == HttpMethod.Patch;
 
+        // A PUT writes a value the seed does not hold, so a saved replacement shows in ZakenSeed.ZaakStateAsync.
+        var isPut = row.Method == HttpMethod.Put;
+
         return row.Route switch
         {
             V1Routes.Zaken.Search => new { identificatie = zaak.Identificatie },
@@ -166,17 +169,17 @@ internal static class ZakenEndpointRequests
             {
                 zaak = zaak.Url,
                 resultaattype = zaak.Catalogi.ResultaatType,
-                toelichting = "",
+                toelichting = isPut ? "Bijgewerkt" : "",
             },
             V1Routes.ZaakRollen.Create => Rol(zaak),
             V1_5Routes.ZaakObjecten.Update when isPatch => new { relatieomschrijving = "Bijgewerkt" },
-            V1Routes.ZaakObjecten.Create or V1_5Routes.ZaakObjecten.Update => ZaakObject(zaak),
+            V1Routes.ZaakObjecten.Create or V1_5Routes.ZaakObjecten.Update => ZaakObject(zaak, isPut ? "Bijgewerkt" : ""),
             V1Routes.ZaakInformatieObjecten.Update when isPatch => new { titel = "Bijgewerkt" },
             V1Routes.ZaakInformatieObjecten.Create or V1Routes.ZaakInformatieObjecten.Update => new
             {
                 informatieobject = InformatieObjectUrl,
                 zaak = zaak.Url,
-                titel = "Integratietest",
+                titel = isPut ? "Bijgewerkt" : "Integratietest",
                 beschrijving = "",
             },
             V1Routes.KlantContacten.Create => new
@@ -196,7 +199,7 @@ internal static class ZakenEndpointRequests
             {
                 gerelateerdAan = zaak.Url,
                 onderwerp = "Integratietest",
-                tekst = "Integratietest",
+                tekst = isPut ? "Bijgewerkt" : "Integratietest",
             },
             _ => throw new ArgumentOutOfRangeException(nameof(row), row.Name, $"No request body for {row.Method} {row.Route}."),
         };

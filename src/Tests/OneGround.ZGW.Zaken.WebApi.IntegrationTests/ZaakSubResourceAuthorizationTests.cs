@@ -164,18 +164,20 @@ public class ZaakSubResourceAuthorizationTests(ZakenApiFixture fixture) : ZakenA
     [MemberData(nameof(EndpointRows))]
     public async Task Client_authorized_for_another_zaaktype_only_is_forbidden(string row, string apiVersion)
     {
-        var response = await SendAsync(row, apiVersion, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim);
+        var (response, before, after) = await SendRefusedAsync(row, apiVersion, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim);
 
         Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+        Assert.Equal(before, after);
     }
 
     [Theory]
     [MemberData(nameof(EndpointRows))]
     public async Task Client_whose_maximum_is_below_the_zaaks_vertrouwelijkheidaanduiding_is_forbidden(string row, string apiVersion)
     {
-        var response = await SendAsync(row, apiVersion, ZaakTypes.A, BelowZaak);
+        var (response, before, after) = await SendRefusedAsync(row, apiVersion, ZaakTypes.A, BelowZaak);
 
         Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+        Assert.Equal(before, after);
     }
 
     [Theory]
@@ -301,13 +303,41 @@ public class ZaakSubResourceAuthorizationTests(ZakenApiFixture fixture) : ZakenA
 
     private async Task<HttpResponseMessage> SendAsync(string row, string apiVersion, string clientZaakType, VertrouwelijkheidAanduiding clientMaximum)
     {
+        var (request, _) = await PrepareAsync(row, apiVersion, clientZaakType, clientMaximum);
+
+        return await Client.SendAsync(request);
+    }
+
+    // A refused request must leave the zaak as it was, so a handler that saves and then answers 403 still fails.
+    private async Task<(HttpResponseMessage Response, string Before, string After)> SendRefusedAsync(
+        string row,
+        string apiVersion,
+        string clientZaakType,
+        VertrouwelijkheidAanduiding clientMaximum
+    )
+    {
+        var (request, zaak) = await PrepareAsync(row, apiVersion, clientZaakType, clientMaximum);
+        var before = await ZakenSeed.ZaakStateAsync(Factory, zaak.Id);
+
+        var response = await Client.SendAsync(request);
+
+        return (response, before, await ZakenSeed.ZaakStateAsync(Factory, zaak.Id));
+    }
+
+    private async Task<(HttpRequestMessage Request, SeededZaak Zaak)> PrepareAsync(
+        string row,
+        string apiVersion,
+        string clientZaakType,
+        VertrouwelijkheidAanduiding clientMaximum
+    )
+    {
         var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
         var seeds = Endpoints.Single(e => e.Row == row).Seeds ?? matrixRow.Seeds;
 
         var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, resource: seeds);
         var clientId = ZrcClients.Authorized(Factory, clientZaakType, clientMaximum, matrixRow.Scopes);
 
-        return await Client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+        return (ZakenEndpointRequests.For(matrixRow, zaak, clientId), zaak);
     }
 
     private async Task<HttpResponseMessage> CreateZaakAsync(
