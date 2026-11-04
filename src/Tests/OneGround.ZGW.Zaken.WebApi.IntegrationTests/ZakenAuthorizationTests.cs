@@ -14,23 +14,14 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Authentication and scope checks on GET /zaken, run by the API's own [Authorize] attribute, scope filter and authorization resolver.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZakenAuthorizationTests
+public class ZakenAuthorizationTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const string Rsin = TestRsins.A;
-
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZakenAuthorizationTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
 
     [Fact]
     public async Task Request_without_authorization_header_is_unauthorized()
     {
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId: null, rsin: null));
+        var response = await Client.SendAsync(ZakenRequests.GetAllZaken(clientId: null, rsin: null));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -39,9 +30,9 @@ public class ZakenAuthorizationTests
     public async Task Client_without_rsin_claim_is_unauthorized()
     {
         var clientId = ZrcClients.NewClientId();
-        _factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
+        Factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
 
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, rsin: null));
+        var response = await Client.SendAsync(ZakenRequests.GetAllZaken(clientId, rsin: null));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(LookupsOf(clientId));
@@ -50,7 +41,7 @@ public class ZakenAuthorizationTests
     [Fact]
     public async Task Client_the_autorisaties_api_does_not_know_is_forbidden()
     {
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(ZrcClients.NewClientId(), Rsin));
+        var response = await Client.SendAsync(ZakenRequests.GetAllZaken(ZrcClients.NewClientId(), Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -59,9 +50,9 @@ public class ZakenAuthorizationTests
     public async Task Client_without_authorizations_is_forbidden()
     {
         var clientId = ZrcClients.NewClientId();
-        _factory.AutorisatiesApi.GrantNoAuthorizations(clientId);
+        Factory.AutorisatiesApi.GrantNoAuthorizations(clientId);
 
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
+        var response = await Client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -70,9 +61,9 @@ public class ZakenAuthorizationTests
     public async Task Client_authorized_to_read_zaken_of_a_zaaktype_gets_ok()
     {
         var clientId = ZrcClients.NewClientId();
-        _factory.AutorisatiesApi.Grant(clientId, Autorisatie(AuthorizationScopes.Zaken.Read));
+        Factory.AutorisatiesApi.Grant(clientId, Autorisatie(AuthorizationScopes.Zaken.Read));
 
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
+        var response = await Client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Single(LookupsOf(clientId));
@@ -80,7 +71,7 @@ public class ZakenAuthorizationTests
 
     private HttpRequestMessage[] LookupsOf(string clientId)
     {
-        return _factory.OutboundHttp.Requests.Where(r => r.RequestUri!.Query.Contains($"clientId={clientId}")).ToArray();
+        return Factory.OutboundHttp.Requests.Where(r => r.RequestUri!.Query.Contains($"clientId={clientId}")).ToArray();
     }
 
     private static AutorisatieResponseDto Autorisatie(string scope)

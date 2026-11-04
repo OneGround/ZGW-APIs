@@ -13,18 +13,9 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Per <see cref="ScopeMatrix"/> row, the scope filter denies a client holding every scope but the action's and lets one holding a single accepted scope through.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ScopeMatrixTests
+public class ScopeMatrixTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const VertrouwelijkheidAanduiding Maximum = VertrouwelijkheidAanduiding.zeer_geheim;
-
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ScopeMatrixTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
 
     public static IEnumerable<object[]> Rows() => ScopeMatrix.Rows.SelectMany(r => r.ServedApiVersions.Select(v => new object[] { r.Name, v }));
 
@@ -36,7 +27,7 @@ public class ScopeMatrixTests
     public async Task Client_with_every_scope_except_the_actions_is_forbidden(string row, string apiVersion)
     {
         var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
-        var clientId = ZrcClients.AuthorizedForAllScopesExcept(_factory, ZaakTypes.A, Maximum, matrixRow.Scopes);
+        var clientId = ZrcClients.AuthorizedForAllScopesExcept(Factory, ZaakTypes.A, Maximum, matrixRow.Scopes);
 
         var response = await SendAsync(matrixRow, clientId);
 
@@ -48,7 +39,7 @@ public class ScopeMatrixTests
     public async Task Client_with_only_one_of_the_actions_scopes_gets_past_the_scope_filter(string row, string apiVersion, string scope)
     {
         var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, Maximum, scope);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, Maximum, scope);
 
         var response = await SendAsync(matrixRow, clientId);
 
@@ -61,8 +52,8 @@ public class ScopeMatrixTests
     // Request validation runs before the scope filter, so a 403 in the denied cell also shows the shared request is well-formed.
     private async Task<HttpResponseMessage> SendAsync(ScopeMatrixRow row, string clientId)
     {
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, resource: row.Seeds);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, resource: row.Seeds);
 
-        return await _client.SendAsync(ZakenEndpointRequests.For(row, zaak, clientId));
+        return await Client.SendAsync(ZakenEndpointRequests.For(row, zaak, clientId));
     }
 }

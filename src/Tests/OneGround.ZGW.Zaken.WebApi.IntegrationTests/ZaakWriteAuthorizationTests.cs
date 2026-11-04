@@ -17,19 +17,10 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Write endpoints check the client's authorization against the zaaktype of the zaak they change, on every supported API version.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakWriteAuthorizationTests
+public class ZaakWriteAuthorizationTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const string Rsin = TestRsins.A;
     private static readonly string StatusType = CatalogiStub.A.BeginStatusType;
-
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZaakWriteAuthorizationTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
 
     public static TheoryData<string> ApiVersions => [Api.LatestVersion_1_0, Api.LatestVersion_1_2, Api.LatestVersion_1_5, Api.LatestVersion_1_7];
 
@@ -40,7 +31,7 @@ public class ZaakWriteAuthorizationTests
         var hoofdzaakId = await SeedZaakAsync(ZaakTypes.A);
         var deelzaakId = await SeedZaakAsync(ZaakTypes.B, hoofdzaakId);
 
-        var response = await _client.SendAsync(
+        var response = await Client.SendAsync(
             ZakenRequests.DeleteZaak(hoofdzaakId, NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Delete), Rsin, apiVersion)
         );
 
@@ -55,7 +46,7 @@ public class ZaakWriteAuthorizationTests
     {
         var zaakId = await SeedZaakAsync(ZaakTypes.A);
 
-        var response = await _client.SendAsync(
+        var response = await Client.SendAsync(
             ZakenRequests.CreateZaakStatus(StatusBody(zaakId), NewClient(ZaakTypes.B, AuthorizationScopes.Zaken.Create), Rsin, apiVersion)
         );
 
@@ -68,7 +59,7 @@ public class ZaakWriteAuthorizationTests
     {
         var zaakId = await SeedZaakAsync(ZaakTypes.A);
 
-        var response = await _client.SendAsync(
+        var response = await Client.SendAsync(
             ZakenRequests.CreateZaakObject(ZaakObjectBody(zaakId), NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Create), Rsin, apiVersion)
         );
 
@@ -100,14 +91,9 @@ public class ZaakWriteAuthorizationTests
 
     private static string ZaakUrl(Guid zaakId) => ZakenEndpointRequests.ZaakUrl(zaakId);
 
-    private string NewClient(string zaakType, string scope)
-    {
-        return ZrcClients.Authorized(_factory, zaakType, VertrouwelijkheidAanduiding.zeer_geheim, scope);
-    }
-
     private async Task<Guid> SeedZaakAsync(string zaakType, Guid? hoofdzaakId = null)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         var zaak = new Zaak
@@ -133,7 +119,7 @@ public class ZaakWriteAuthorizationTests
 
     private async Task<bool> ZaakExistsAsync(Guid zaakId)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         return await context.Zaken.AnyAsync(z => z.Id == zaakId);
@@ -141,7 +127,7 @@ public class ZaakWriteAuthorizationTests
 
     private async Task<bool> ZaakObjectExistsAsync(Guid zaakId)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         return await context.ZaakObjecten.AnyAsync(o => o.ZaakId == zaakId);

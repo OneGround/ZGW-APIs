@@ -18,7 +18,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Lists and searches over one seeded zaak (zaaktype A, <c>geheim</c>) follow the client's zaaktype and maximum vertrouwelijkheidaanduiding.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakSubResourceListAuthorizationTests
+public class ZaakSubResourceListAuthorizationTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const VertrouwelijkheidAanduiding ZaakVertrouwelijkheid = VertrouwelijkheidAanduiding.geheim;
     private const VertrouwelijkheidAanduiding BelowZaak = VertrouwelijkheidAanduiding.vertrouwelijk;
@@ -60,15 +60,6 @@ public class ZaakSubResourceListAuthorizationTests
         ScopeMatrix.Name<V1.ZakenController>(nameof(V1.ZakenController.GetAllZaakAuditTrailRegelsAsync)),
     ];
 
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZaakSubResourceListAuthorizationTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
-
     public static IEnumerable<object[]> FilteredListRows() => WithServedVersions(FilteredLists);
 
     public static IEnumerable<object[]> ListOfOneZaakRows() => WithServedVersions(ListsOfOneZaak);
@@ -79,7 +70,7 @@ public class ZaakSubResourceListAuthorizationTests
     {
         var (matrixRow, zaak) = await SeedAsync(row, apiVersion);
 
-        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, matrixRow.Scopes));
+        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, matrixRow.Scopes));
 
         Assert.Contains(listed, IsOf(zaak));
     }
@@ -93,7 +84,7 @@ public class ZaakSubResourceListAuthorizationTests
         var listed = await ListAsync(
             matrixRow,
             zaak,
-            ZrcClients.Authorized(_factory, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, matrixRow.Scopes)
+            ZrcClients.Authorized(Factory, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, matrixRow.Scopes)
         );
 
         Assert.DoesNotContain(listed, IsOf(zaak));
@@ -105,7 +96,7 @@ public class ZaakSubResourceListAuthorizationTests
     {
         var (matrixRow, zaak) = await SeedAsync(row, apiVersion);
 
-        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, matrixRow.Scopes));
+        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(Factory, ZaakTypes.A, BelowZaak, matrixRow.Scopes));
 
         Assert.DoesNotContain(listed, IsOf(zaak));
     }
@@ -116,7 +107,7 @@ public class ZaakSubResourceListAuthorizationTests
     {
         var (matrixRow, zaak) = await SeedAsync(row, apiVersion);
 
-        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, matrixRow.Scopes));
+        var listed = await ListAsync(matrixRow, zaak, ZrcClients.Authorized(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, matrixRow.Scopes));
 
         Assert.Contains(listed, IsOf(zaak));
     }
@@ -126,9 +117,9 @@ public class ZaakSubResourceListAuthorizationTests
     public async Task List_of_a_zaak_is_forbidden_for_a_client_authorized_for_another_zaaktype_only(string row, string apiVersion)
     {
         var (matrixRow, zaak) = await SeedAsync(row, apiVersion);
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, matrixRow.Scopes);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, matrixRow.Scopes);
 
-        var response = await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+        var response = await Client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -138,9 +129,9 @@ public class ZaakSubResourceListAuthorizationTests
     public async Task List_of_a_zaak_is_forbidden_above_the_clients_maximum_vertrouwelijkheidaanduiding(string row, string apiVersion)
     {
         var (matrixRow, zaak) = await SeedAsync(row, apiVersion);
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, matrixRow.Scopes);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, BelowZaak, matrixRow.Scopes);
 
-        var response = await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+        var response = await Client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -151,7 +142,7 @@ public class ZaakSubResourceListAuthorizationTests
     private async Task<(ScopeMatrixRow Row, SeededZaak Zaak)> SeedAsync(string row, string apiVersion)
     {
         var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, resource: matrixRow.Seeds);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, resource: matrixRow.Seeds);
 
         return (matrixRow, zaak);
     }
@@ -159,7 +150,7 @@ public class ZaakSubResourceListAuthorizationTests
     // How every listed item identifies itself: by its URL, or by its uuid in an audittrail.
     private async Task<string[]> ListAsync(ScopeMatrixRow row, SeededZaak zaak, string clientId)
     {
-        var response = await _client.SendAsync(ZakenEndpointRequests.For(row, zaak, clientId));
+        var response = await Client.SendAsync(ZakenEndpointRequests.For(row, zaak, clientId));
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"{row.Name} answered {(int)response.StatusCode}: {body}");

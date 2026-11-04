@@ -16,18 +16,9 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Related zaken pulled in by <c>GET /zaken/{id}?expand=...</c> (1.7) are left out when the client may not read them, while the zaak itself is returned.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakExpandAuthorizationTests
+public class ZaakExpandAuthorizationTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const VertrouwelijkheidAanduiding Maximum = VertrouwelijkheidAanduiding.vertrouwelijk;
-
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZaakExpandAuthorizationTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
 
     public static IEnumerable<object[]> ExpandPaths() =>
         [
@@ -77,21 +68,21 @@ public class ZaakExpandAuthorizationTests
         switch (path)
         {
             case "hoofdzaak":
-                related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid);
-                zaak = await ZakenSeed.SeedZaakAsync(_factory, hoofdzaakId: related.Id);
+                related = await ZakenSeed.SeedZaakAsync(Factory, relatedZaakType, relatedVertrouwelijkheid);
+                zaak = await ZakenSeed.SeedZaakAsync(Factory, hoofdzaakId: related.Id);
                 break;
             case "relevanteanderezaken":
-                related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid);
-                zaak = await ZakenSeed.SeedZaakAsync(_factory, relevanteAndereZaakId: related.Id);
+                related = await ZakenSeed.SeedZaakAsync(Factory, relatedZaakType, relatedVertrouwelijkheid);
+                zaak = await ZakenSeed.SeedZaakAsync(Factory, relevanteAndereZaakId: related.Id);
                 break;
             default:
                 // A deelzaak points at its hoofdzaak, so the related zaak is seeded as the child.
-                zaak = await ZakenSeed.SeedZaakAsync(_factory);
-                related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid, hoofdzaakId: zaak.Id);
+                zaak = await ZakenSeed.SeedZaakAsync(Factory);
+                related = await ZakenSeed.SeedZaakAsync(Factory, relatedZaakType, relatedVertrouwelijkheid, hoofdzaakId: zaak.Id);
                 break;
         }
 
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, Maximum, AuthorizationScopes.Zaken.Read);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, Maximum, AuthorizationScopes.Zaken.Read);
         var request = ZakenEndpointRequests.Create(
             HttpMethod.Get,
             $"/{V1Routes.Zaken.Get.Replace("{id}", zaak.Id.ToString())}?expand={path}",
@@ -100,6 +91,6 @@ public class ZaakExpandAuthorizationTests
             zaak.Rsin
         );
 
-        return (await _client.SendAsync(request), related);
+        return (await Client.SendAsync(request), related);
     }
 }

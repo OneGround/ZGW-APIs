@@ -16,7 +16,6 @@ using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Contracts.v1._7;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using Xunit;
-using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -25,26 +24,17 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// ones, which the in-memory provider cannot run), the paging, the status rule and the authorization of the zaak a notitie belongs to.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakNotitiesTests
+public class ZaakNotitiesTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const string Rsin = TestRsins.A;
     private const string OtherRsin = TestRsins.B;
-
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZaakNotitiesTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
 
     // ---- create and read
 
     [Fact]
     public async Task Create_gives_a_concept_intern_notitie_when_type_and_status_are_not_given()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
 
         var response = await SendAsync(HttpMethod.Post, "/" + ApiRoutes.ZaakNotities.Create, clientId, Body(zaakUrl, "Onderwerp", "Tekst"));
@@ -68,7 +58,12 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task Create_without_the_required_fields_is_a_bad_request()
     {
-        var response = await SendAsync(HttpMethod.Post, "/" + ApiRoutes.ZaakNotities.Create, NewClientWithAllAuthorizations(), new JObject());
+        var response = await SendAsync(
+            HttpMethod.Post,
+            "/" + ApiRoutes.ZaakNotities.Create,
+            ZrcClients.WithAllAuthorizations(Factory),
+            new JObject()
+        );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var names = (await ReadAsync(response))["invalidParams"]!.Select(p => p.Value<string>("name")).ToArray();
@@ -83,7 +78,7 @@ public class ZaakNotitiesTests
         var body = Body(await SeedZaakUrlAsync(), "Onderwerp", "Tekst");
         body["onbekend"] = "x";
 
-        var response = await SendAsync(HttpMethod.Post, "/" + ApiRoutes.ZaakNotities.Create, NewClientWithAllAuthorizations(), body);
+        var response = await SendAsync(HttpMethod.Post, "/" + ApiRoutes.ZaakNotities.Create, ZrcClients.WithAllAuthorizations(Factory), body);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -96,7 +91,7 @@ public class ZaakNotitiesTests
         var response = await SendAsync(
             HttpMethod.Post,
             "/" + ApiRoutes.ZaakNotities.Create,
-            NewClientWithAllAuthorizations(),
+            ZrcClients.WithAllAuthorizations(Factory),
             Body(unknownZaakUrl, "O", "T")
         );
 
@@ -109,7 +104,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task Put_replaces_the_notitie_and_patch_changes_only_the_given_fields()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         var notitie = await CreateAsync(clientId, zaakUrl, onderwerp: "Oud", tekst: "Oude tekst", aangemaaktDoor: "auteur");
         var path = new Uri(notitie.Value<string>("url")!).AbsolutePath;
@@ -135,8 +130,8 @@ public class ZaakNotitiesTests
     public async Task Patch_is_allowed_for_a_client_that_may_update_but_not_read()
     {
         var zaakUrl = await SeedZaakUrlAsync();
-        var notitie = await CreateAsync(NewClientWithAllAuthorizations(), zaakUrl);
-        var updateOnly = NewClientAuthorized(ZaakTypes.A, AuthorizationScopes.Zaken.Update);
+        var notitie = await CreateAsync(ZrcClients.WithAllAuthorizations(Factory), zaakUrl);
+        var updateOnly = NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Update);
         var path = new Uri(notitie.Value<string>("url")!).AbsolutePath;
 
         var patch = await SendAsync(HttpMethod.Patch, path, updateOnly, new JObject { ["tekst"] = "Alleen de tekst" });
@@ -149,7 +144,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task Put_without_type_and_status_keeps_the_stored_values()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         var notitie = await CreateAsync(clientId, zaakUrl, notitieType: "extern");
 
@@ -170,7 +165,7 @@ public class ZaakNotitiesTests
     public async Task Modifying_a_notitie_of_a_closed_zaak_without_forced_update_is_forbidden_with_an_explanation()
     {
         var zaakUrl = await SeedZaakUrlAsync(closed: true);
-        var withoutForcedUpdate = NewClientAuthorized(ZaakTypes.A, AuthorizationScopes.Zaken.Update);
+        var withoutForcedUpdate = NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Update);
 
         var response = await SendAsync(HttpMethod.Post, "/" + ApiRoutes.ZaakNotities.Create, withoutForcedUpdate, Body(zaakUrl, "O", "T"));
 
@@ -181,7 +176,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task A_definitief_notitie_cannot_be_changed_but_can_be_deleted()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         var notitie = await CreateAsync(clientId, zaakUrl);
         var path = new Uri(notitie.Value<string>("url")!).AbsolutePath;
@@ -201,7 +196,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task A_notitie_cannot_be_moved_to_another_zaak()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var notitie = await CreateAsync(clientId, await SeedZaakUrlAsync());
         var otherZaakUrl = await SeedZaakUrlAsync();
 
@@ -219,7 +214,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task Delete_removes_the_notitie()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var notitie = await CreateAsync(clientId, await SeedZaakUrlAsync());
         var path = new Uri(notitie.Value<string>("url")!).AbsolutePath;
 
@@ -233,7 +228,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task A_notitie_of_another_organisation_is_not_found()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var notitie = await CreateAsync(clientId, await SeedZaakUrlAsync(rsin: Rsin));
 
         var response = await SendAsync(HttpMethod.Get, new Uri(notitie.Value<string>("url")!).AbsolutePath, clientId, rsin: OtherRsin);
@@ -246,7 +241,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task List_filters_on_text_fields_type_and_status()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         await CreateAsync(clientId, zaakUrl, onderwerp: "Korting 100% akkoord", tekst: "Eerste", aangemaaktDoor: "Jan Jansen");
         await CreateAsync(clientId, zaakUrl, onderwerp: "Korting_100 akkoord", tekst: "Tweede", aangemaaktDoor: "Piet", notitieType: "extern");
@@ -266,7 +261,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task List_filters_on_the_dates()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         await CreateAsync(clientId, zaakUrl, tekst: "Eén");
 
@@ -282,7 +277,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task List_exact_date_filters_match_the_given_day_or_second()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         var notitie = await CreateAsync(clientId, zaakUrl, tekst: "Eén");
 
@@ -307,7 +302,7 @@ public class ZaakNotitiesTests
     [Fact]
     public async Task List_is_paged_with_the_given_pageSize()
     {
-        var clientId = NewClientWithAllAuthorizations();
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
         var zaakUrl = await SeedZaakUrlAsync();
         foreach (var tekst in new[] { "1", "2", "3" })
         {
@@ -335,7 +330,7 @@ public class ZaakNotitiesTests
     [InlineData("onbekend=1")]
     public async Task List_with_an_invalid_parameter_is_a_bad_request(string query)
     {
-        var response = await SendAsync(HttpMethod.Get, "/" + ApiRoutes.ZaakNotities.GetAll + "?" + query, NewClientWithAllAuthorizations());
+        var response = await SendAsync(HttpMethod.Get, "/" + ApiRoutes.ZaakNotities.GetAll + "?" + query, ZrcClients.WithAllAuthorizations(Factory));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -400,42 +395,16 @@ public class ZaakNotitiesTests
             request.Content = new StringContent(body.ToString(), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
         }
 
-        return await _client.SendAsync(request);
+        return await Client.SendAsync(request);
     }
 
     private static async Task<JObject> ReadAsync(HttpResponseMessage response) => JObject.Parse(await response.Content.ReadAsStringAsync());
 
-    private string ZaakUrl(Guid zaakId) => new Uri(_client.BaseAddress!, $"api/v1/zaken/{zaakId}").ToString();
-
-    private string NewClientWithAllAuthorizations()
-    {
-        var clientId = NewClientId();
-        _factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
-
-        return clientId;
-    }
-
-    private string NewClientAuthorized(string zaakType, string scope)
-    {
-        var clientId = NewClientId();
-
-        _factory.AutorisatiesApi.Grant(
-            clientId,
-            new AutorisatieResponseDto
-            {
-                Component = "zrc",
-                Scopes = [scope],
-                ZaakType = zaakType,
-                MaxVertrouwelijkheidaanduiding = nameof(VertrouwelijkheidAanduiding.zeer_geheim),
-            }
-        );
-
-        return clientId;
-    }
+    private string ZaakUrl(Guid zaakId) => new Uri(Client.BaseAddress!, $"api/v1/zaken/{zaakId}").ToString();
 
     private async Task<string> SeedZaakUrlAsync(string zaakType = ZaakTypes.A, string rsin = Rsin, bool closed = false)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         var zaak = new Zaak
@@ -458,6 +427,4 @@ public class ZaakNotitiesTests
 
         return ZaakUrl(zaak.Id);
     }
-
-    private static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 }

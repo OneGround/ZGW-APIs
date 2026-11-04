@@ -21,7 +21,7 @@ namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 /// Actions on one seeded zaak (zaaktype A, <c>geheim</c>) are allowed by the client's zaaktype and maximum vertrouwelijkheidaanduiding.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
-public class ZaakSubResourceAuthorizationTests
+public class ZaakSubResourceAuthorizationTests(ZakenApiFixture fixture) : ZakenApiTestBase(fixture)
 {
     private const VertrouwelijkheidAanduiding ZaakVertrouwelijkheid = VertrouwelijkheidAanduiding.geheim;
     private const VertrouwelijkheidAanduiding BelowZaak = VertrouwelijkheidAanduiding.vertrouwelijk;
@@ -142,15 +142,6 @@ public class ZaakSubResourceAuthorizationTests
         (ScopeMatrix.Name<V1_7.ZaakInformatieObjectenController>(nameof(V1_7.ZaakInformatieObjectenController.HeadAsync)), null),
     ];
 
-    private readonly ZakenWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ZaakSubResourceAuthorizationTests(ZakenApiFixture fixture)
-    {
-        _factory = fixture.Factory;
-        _client = _factory.CreateClient();
-    }
-
     public static IEnumerable<object[]> EndpointRows() =>
         Endpoints.SelectMany(e => ScopeMatrix.Named(e.Row).ServedApiVersions.Select(v => new object[] { e.Row, v }));
 
@@ -191,7 +182,7 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_of_a_zaaktype_the_client_may_create_zaken_for_is_created(string apiVersion)
     {
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, AuthorizationScopes.Zaken.Create);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, AuthorizationScopes.Zaken.Create);
 
         var response = await CreateZaakAsync(clientId, ZaakTypes.A, ZaakVertrouwelijkheid, apiVersion);
 
@@ -202,7 +193,7 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_of_a_zaaktype_outside_the_clients_authorization_is_not_created(string apiVersion)
     {
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
 
         var response = await CreateZaakAsync(clientId, ZaakTypes.B, ZaakVertrouwelijkheid, apiVersion);
 
@@ -213,7 +204,7 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_created(string apiVersion)
     {
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
 
         var response = await CreateZaakAsync(clientId, ZaakTypes.A, ZaakVertrouwelijkheid, apiVersion);
 
@@ -224,8 +215,8 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(StatusCreateVersions))]
     public async Task First_status_of_a_zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_set(string apiVersion)
     {
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
 
         var response = await AddStatusAsync(zaak, clientId, apiVersion);
 
@@ -236,8 +227,8 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(StatusCreateVersions))]
     public async Task First_status_of_a_zaak_within_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_forbidden(string apiVersion)
     {
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
-        var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(Factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
 
         var response = await AddStatusAsync(zaak, clientId, apiVersion);
 
@@ -251,7 +242,7 @@ public class ZaakSubResourceAuthorizationTests
         var (response, zaak) = await DeleteZaakAsync(ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.NoContent, await ZakenEndpointRequests.DescribeAsync(response));
-        Assert.False(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
+        Assert.False(await ZakenSeed.ZaakExistsAsync(Factory, zaak.Id));
     }
 
     [Theory]
@@ -261,7 +252,7 @@ public class ZaakSubResourceAuthorizationTests
         var (response, zaak) = await DeleteZaakAsync(ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
-        Assert.True(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
+        Assert.True(await ZakenSeed.ZaakExistsAsync(Factory, zaak.Id));
     }
 
     [Theory]
@@ -271,7 +262,7 @@ public class ZaakSubResourceAuthorizationTests
         var (response, zaak) = await DeleteZaakAsync(ZaakTypes.A, BelowZaak, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
-        Assert.True(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
+        Assert.True(await ZakenSeed.ZaakExistsAsync(Factory, zaak.Id));
     }
 
     // Every version any controller serves the operation on, so a theory follows the routing instead of a hand-kept list.
@@ -293,17 +284,17 @@ public class ZaakSubResourceAuthorizationTests
         {
             ApiVersion = apiVersion,
         };
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
-        var clientId = ZrcClients.Authorized(_factory, clientZaakType, clientMaximum, matrixRow.Scopes);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid);
+        var clientId = ZrcClients.Authorized(Factory, clientZaakType, clientMaximum, matrixRow.Scopes);
 
-        return (await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId)), zaak);
+        return (await Client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId)), zaak);
     }
 
     private async Task<HttpResponseMessage> AddStatusAsync(SeededZaak zaak, string clientId, string apiVersion)
     {
         var body = ZakenEndpointRequests.Status(zaak, zaak.Catalogi.BeginStatusType);
 
-        return await _client.SendAsync(
+        return await Client.SendAsync(
             ZakenEndpointRequests.Create(HttpMethod.Post, "/" + V1Routes.ZaakStatussen.Create, apiVersion, clientId, zaak.Rsin, body)
         );
     }
@@ -313,10 +304,10 @@ public class ZaakSubResourceAuthorizationTests
         var matrixRow = ScopeMatrix.Named(row) with { ApiVersion = apiVersion };
         var seeds = Endpoints.Single(e => e.Row == row).Seeds ?? matrixRow.Seeds;
 
-        var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, resource: seeds);
-        var clientId = ZrcClients.Authorized(_factory, clientZaakType, clientMaximum, matrixRow.Scopes);
+        var zaak = await ZakenSeed.SeedZaakAsync(Factory, ZaakTypes.A, ZaakVertrouwelijkheid, resource: seeds);
+        var clientId = ZrcClients.Authorized(Factory, clientZaakType, clientMaximum, matrixRow.Scopes);
 
-        return await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+        return await Client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
     }
 
     private async Task<HttpResponseMessage> CreateZaakAsync(
@@ -328,7 +319,7 @@ public class ZaakSubResourceAuthorizationTests
     {
         var body = ZakenEndpointRequests.Zaak(TestRsins.A, zaakType, vertrouwelijkheidAanduiding);
 
-        return await _client.SendAsync(
+        return await Client.SendAsync(
             ZakenEndpointRequests.Create(HttpMethod.Post, "/" + V1Routes.Zaken.Create, apiVersion, clientId, TestRsins.A, body)
         );
     }
