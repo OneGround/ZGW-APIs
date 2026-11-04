@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using OneGround.ZGW.Common.Web.Authorization;
 using Xunit;
 using AnchorController = OneGround.ZGW.Zaken.Web.Controllers.v1._5.ZakenController;
+using V1_7 = OneGround.ZGW.Zaken.Web.Controllers.v1._7;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// Holds <see cref="ScopeMatrix"/> to the <c>[Scope]</c> attributes it was copied from, so a matrix cell always tests the scope an action
-/// actually asks for. Needs no containers: it reads attribute metadata only.
+/// Holds <see cref="ScopeMatrix"/> to the <c>[Scope]</c> attributes it was copied from, reading attribute metadata only.
 /// </summary>
 public class ScopeMatrixCompletenessTests
 {
@@ -75,10 +75,38 @@ public class ScopeMatrixCompletenessTests
         );
     }
 
+    [Fact]
+    public void Every_matrix_row_on_one_zaak_has_zaaktype_and_vertrouwelijkheid_tests()
+    {
+        // Zaak list, read and create are covered by ZaakTypeAuthorizationTests and the zaak-create theories; a reservation has no zaak.
+        string[] notOnOneZaak =
+        [
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.GetAllAsync)}",
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.GetAsync)}",
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.AddAsync)}",
+            $"{nameof(V1_7.ZaaknummerReserverenController)}.{nameof(V1_7.ZaaknummerReserverenController.ReserveAsync)}",
+        ];
+
+        var covered = ZaakSubResourceAuthorizationTests
+            .Endpoints.Select(e => e.Row)
+            .Concat(ZaakSubResourceListAuthorizationTests.FilteredLists)
+            .Concat(ZaakSubResourceListAuthorizationTests.ListsOfOneZaak)
+            .ToHashSet();
+
+        var uncovered = ScopeMatrix
+            .Rows.Select(r => r.Name)
+            .Where(n => !covered.Contains(n) && !notOnOneZaak.Any(x => n.EndsWith("." + x, StringComparison.Ordinal)))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        Assert.True(
+            uncovered.Count == 0,
+            $"{uncovered.Count} matrix row(s) have no zaaktype/vertrouwelijkheid tests: {string.Join(", ", uncovered)}."
+        );
+    }
+
     private static Dictionary<string, (Type Controller, MethodInfo Action)> ScopedActions()
     {
-        const string ControllersNamespace = "OneGround.ZGW.Zaken.Web.Controllers.";
-
         return typeof(AnchorController)
             .Assembly.GetTypes()
             .Where(t => t.IsPublic && !t.IsAbstract && typeof(ControllerBase).IsAssignableFrom(t))
@@ -87,7 +115,7 @@ public class ScopeMatrixCompletenessTests
                     .Where(m => m.GetCustomAttributes<BaseScopeAttribute>(inherit: true).Any())
                     .Select(m => (Controller: t, Action: m))
             )
-            .ToDictionary(a => $"{a.Controller.FullName![ControllersNamespace.Length..]}.{a.Action.Name}");
+            .ToDictionary(a => ScopeMatrixRow.NameOf(a.Controller, a.Action.Name));
     }
 
     // The scopes are a constructor argument the attribute keeps private, so they are read from its metadata.

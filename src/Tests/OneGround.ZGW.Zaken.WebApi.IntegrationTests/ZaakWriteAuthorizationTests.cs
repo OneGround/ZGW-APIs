@@ -10,7 +10,6 @@ using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using Xunit;
-using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -38,20 +37,6 @@ public class ZaakWriteAuthorizationTests
 
     [Theory]
     [MemberData(nameof(ApiVersions))]
-    public async Task Deleting_a_zaak_of_a_zaaktype_the_client_is_not_authorized_for_is_forbidden(string apiVersion)
-    {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
-
-        var response = await _client.SendAsync(
-            ZakenRequests.DeleteZaak(zaakId, NewClient(ZaakTypes.B, AuthorizationScopes.Zaken.Delete), Rsin, apiVersion)
-        );
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.True(await ZaakExistsAsync(zaakId));
-    }
-
-    [Theory]
-    [MemberData(nameof(ApiVersions))]
     public async Task Deleting_a_zaak_with_a_deelzaak_the_client_is_not_authorized_for_is_forbidden(string apiVersion)
     {
         var hoofdzaakId = await SeedZaakAsync(ZaakTypes.A);
@@ -64,20 +49,6 @@ public class ZaakWriteAuthorizationTests
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.True(await ZaakExistsAsync(hoofdzaakId));
         Assert.True(await ZaakExistsAsync(deelzaakId));
-    }
-
-    [Theory]
-    [MemberData(nameof(ApiVersions))]
-    public async Task Deleting_a_zaak_of_a_zaaktype_the_client_is_authorized_for_removes_it(string apiVersion)
-    {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
-
-        var response = await _client.SendAsync(
-            ZakenRequests.DeleteZaak(zaakId, NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Delete), Rsin, apiVersion)
-        );
-
-        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.False(await ZaakExistsAsync(zaakId));
     }
 
     [Theory]
@@ -95,35 +66,6 @@ public class ZaakWriteAuthorizationTests
 
     [Theory]
     [MemberData(nameof(ApiVersions))]
-    public async Task Setting_the_first_status_with_only_the_create_scope_for_the_zaaktype_saves_it(string apiVersion)
-    {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
-
-        var response = await _client.SendAsync(
-            ZakenRequests.CreateZaakStatus(StatusBody(zaakId), NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Create), Rsin, apiVersion)
-        );
-
-        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Equal(1, await ZaakStatusCountAsync(zaakId));
-    }
-
-    [Theory]
-    [MemberData(nameof(ApiVersions))]
-    public async Task Setting_a_second_status_with_only_the_create_scope_for_the_zaaktype_is_forbidden(string apiVersion)
-    {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
-        await SeedZaakStatusAsync(zaakId);
-
-        var response = await _client.SendAsync(
-            ZakenRequests.CreateZaakStatus(StatusBody(zaakId), NewClient(ZaakTypes.A, AuthorizationScopes.Zaken.Create), Rsin, apiVersion)
-        );
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Equal(1, await ZaakStatusCountAsync(zaakId));
-    }
-
-    [Theory]
-    [MemberData(nameof(ApiVersions))]
     public async Task Creating_a_zaakobject_with_only_the_create_scope_for_the_zaaktype_saves_it(string apiVersion)
     {
         var zaakId = await SeedZaakAsync(ZaakTypes.A);
@@ -134,19 +76,6 @@ public class ZaakWriteAuthorizationTests
 
         Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.True(await ZaakObjectExistsAsync(zaakId));
-    }
-
-    [Theory]
-    [MemberData(nameof(ApiVersions))]
-    public async Task Creating_a_zaakobject_on_a_zaak_of_a_zaaktype_the_client_is_not_authorized_for_is_forbidden(string apiVersion)
-    {
-        var zaakId = await SeedZaakAsync(ZaakTypes.A);
-
-        var response = await _client.SendAsync(
-            ZakenRequests.CreateZaakObject(ZaakObjectBody(zaakId), NewClient(ZaakTypes.B, AuthorizationScopes.Zaken.Create), Rsin, apiVersion)
-        );
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     private static object StatusBody(Guid zaakId)
@@ -171,24 +100,11 @@ public class ZaakWriteAuthorizationTests
         };
     }
 
-    private static string ZaakUrl(Guid zaakId) => $"http://localhost/api/v1/zaken/{zaakId}";
+    private static string ZaakUrl(Guid zaakId) => ZakenEndpointRequests.ZaakUrl(zaakId);
 
     private string NewClient(string zaakType, string scope)
     {
-        var clientId = $"integration-test-{Guid.NewGuid():N}";
-
-        _factory.AutorisatiesApi.Grant(
-            clientId,
-            new AutorisatieResponseDto
-            {
-                Component = "zrc",
-                Scopes = [scope],
-                ZaakType = zaakType,
-                MaxVertrouwelijkheidaanduiding = nameof(VertrouwelijkheidAanduiding.zeer_geheim),
-            }
-        );
-
-        return clientId;
+        return ZrcClients.Authorized(_factory, zaakType, VertrouwelijkheidAanduiding.zeer_geheim, scope);
     }
 
     private async Task<Guid> SeedZaakAsync(string zaakType, Guid? hoofdzaakId = null)
@@ -231,32 +147,5 @@ public class ZaakWriteAuthorizationTests
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
 
         return await context.ZaakObjecten.AnyAsync(o => o.ZaakId == zaakId);
-    }
-
-    private async Task SeedZaakStatusAsync(Guid zaakId)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
-
-        context.ZaakStatussen.Add(
-            new ZaakStatus
-            {
-                Id = Guid.NewGuid(),
-                Owner = Rsin,
-                ZaakId = zaakId,
-                StatusType = StatusType,
-                DatumStatusGezet = DateTime.UtcNow.AddDays(-1),
-                IndicatieLaatstGezetteStatus = true,
-            }
-        );
-        await context.SaveChangesAsync();
-    }
-
-    private async Task<int> ZaakStatusCountAsync(Guid zaakId)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
-
-        return await context.ZaakStatussen.CountAsync(s => s.ZaakId == zaakId);
     }
 }

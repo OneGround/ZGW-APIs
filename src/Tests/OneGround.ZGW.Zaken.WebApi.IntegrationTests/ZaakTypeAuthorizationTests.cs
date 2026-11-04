@@ -10,7 +10,6 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.DataModel;
 using Xunit;
-using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -94,28 +93,12 @@ public class ZaakTypeAuthorizationTests
 
     private string NewClientAuthorizedToRead(string zaakType, VertrouwelijkheidAanduiding maximum = VertrouwelijkheidAanduiding.zeer_geheim)
     {
-        var clientId = NewClientId();
-
-        _factory.AutorisatiesApi.Grant(
-            clientId,
-            new AutorisatieResponseDto
-            {
-                Component = "zrc",
-                Scopes = [AuthorizationScopes.Zaken.Read],
-                ZaakType = zaakType,
-                MaxVertrouwelijkheidaanduiding = maximum.ToString(),
-            }
-        );
-
-        return clientId;
+        return ZrcClients.Authorized(_factory, zaakType, maximum, AuthorizationScopes.Zaken.Read);
     }
 
     private string NewClientWithAllAuthorizations()
     {
-        var clientId = NewClientId();
-        _factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
-
-        return clientId;
+        return ZrcClients.WithAllAuthorizations(_factory);
     }
 
     private async Task<JToken[]> GetAllZakenAsync(string clientId, string rsin)
@@ -156,6 +139,4 @@ public class ZaakTypeAuthorizationTests
 
         return zaak.Id;
     }
-
-    private static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 }

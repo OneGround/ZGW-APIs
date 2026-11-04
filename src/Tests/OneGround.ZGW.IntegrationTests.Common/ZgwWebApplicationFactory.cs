@@ -127,8 +127,6 @@ public abstract class ZgwWebApplicationFactory<TProgram> : WebApplicationFactory
             ["ConnectionStrings:DataProtectionConnectionString"] = containers.PostgreSqlConnectionString,
             ["Redis:ConnectionString"] = containers.RedisConnectionString,
             ["Application:SkipMigrationsAtStartup"] = "false",
-            // Publishing a notification sets a RabbitMQ-only message priority the in-memory test bus rejects.
-            ["Application:DontSendNotificaties"] = "true",
             ["HmacHasher:Latest"] = "v1",
             ["HmacHasher:HmacKey"] = "aW50ZWdyYXRpb24tdGVzdHMtb25seS1obWFjLWtleS1ub3QtYS1zZWNyZXQ=",
             ["Eventbus:HostName"] = "eventbus.integrationtest.invalid",

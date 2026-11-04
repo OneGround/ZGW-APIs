@@ -1,21 +1,21 @@
 using System;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using OneGround.ZGW.Common.DataModel;
-using OneGround.ZGW.IntegrationTests.Common.Authentication;
+using V1_2Routes = OneGround.ZGW.Zaken.Web.Contracts.v1._2.ApiRoutes;
+using V1_5Routes = OneGround.ZGW.Zaken.Web.Contracts.v1._5.ApiRoutes;
+using V1_7Routes = OneGround.ZGW.Zaken.Web.Contracts.v1._7.ApiRoutes;
+using V1Routes = OneGround.ZGW.Zaken.Web.Contracts.v1.ApiRoutes;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// Builds a well-formed request for any <see cref="ScopeMatrixRow"/> on a <see cref="SeededZaak"/>, with the identity headers the test
-/// authentication reads. A list request is filtered down to the seeded zaak, so other tests' data never shows up in it.
+/// Builds a well-formed request for any <see cref="ScopeMatrixRow"/> on a <see cref="SeededZaak"/>, with list requests filtered down to that zaak.
 /// </summary>
 internal static class ZakenEndpointRequests
 {
     // The in-process test server answers on this base address, and the API builds its resource URLs on it.
-    private const string BaseAddress = "http://localhost/api/v1/";
+    private const string BaseAddress = "http://localhost/";
 
     public const string BesluitUrl = "https://besluiten.integrationtest.invalid/api/v1/besluiten/3f1c2a5e-0007-4000-8000-000000000001";
     public const string InformatieObjectUrl =
@@ -24,7 +24,7 @@ internal static class ZakenEndpointRequests
         "https://contactmomenten.integrationtest.invalid/api/v1/contactmomenten/3f1c2a5e-0009-4000-8000-000000000001";
     public const string VerzoekUrl = "https://verzoeken.integrationtest.invalid/api/v1/verzoeken/3f1c2a5e-0010-4000-8000-000000000001";
 
-    public static string Url(string relativePath) => BaseAddress + relativePath;
+    public static string ZaakUrl(Guid id) => BaseAddress + V1Routes.Zaken.Get.Replace("{id}", id.ToString());
 
     /// <summary>
     /// The request <paramref name="row"/> describes, on <paramref name="zaak"/> and the resource seeded under it.
@@ -33,7 +33,7 @@ internal static class ZakenEndpointRequests
     {
         var path = row.Route.Replace("{zaak_uuid}", zaak.Id.ToString());
 
-        if (path.StartsWith("api/v1/zaken/{id}", StringComparison.Ordinal))
+        if (row.Route == V1Routes.Zaken.Get)
             path = path.Replace("{id}", zaak.Id.ToString());
 
         if (path.Contains("{id}") || path.Contains("{uuid}"))
@@ -43,8 +43,8 @@ internal static class ZakenEndpointRequests
         {
             path += row.Route switch
             {
-                "api/v1/zaken" => $"?identificatie={zaak.Identificatie}",
-                "api/v1/zaaknotities" => $"?gerelateerdAan={Uri.EscapeDataString(zaak.Url)}",
+                V1Routes.Zaken.GetAll => $"?identificatie={zaak.Identificatie}",
+                V1_7Routes.ZaakNotities.GetAll => $"?gerelateerdAan={Uri.EscapeDataString(zaak.Url)}",
                 _ => $"?zaak={Uri.EscapeDataString(zaak.Url)}",
             };
         }
@@ -61,18 +61,9 @@ internal static class ZakenEndpointRequests
         object body = null
     )
     {
-        var request = new HttpRequestMessage(method, pathAndQuery);
-        request.Headers.Add("Api-Version", apiVersion);
-        request.Headers.Add("Accept-Crs", "EPSG:4326");
-        request.Headers.Authorization = TestIdentity.Create(clientId, rsin);
+        var request = ZakenRequests.Create(method, pathAndQuery, clientId, rsin, apiVersion);
 
-        if (body != null)
-        {
-            request.Headers.Add("Content-Crs", "EPSG:4326");
-            request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-        }
-
-        return request;
+        return body == null ? request : ZakenRequests.WithJson(request, body);
     }
 
     /// <summary>
@@ -153,43 +144,42 @@ internal static class ZakenEndpointRequests
         if (row.Method == HttpMethod.Get || row.Method == HttpMethod.Head || row.Method == HttpMethod.Delete)
             return null;
 
-        var resource = row.Route.Replace("{zaak_uuid}/", "").Replace("/{uuid}", "").Replace("/{id}", "");
         var isPatch = row.Method == HttpMethod.Patch;
 
-        return resource switch
+        return row.Route switch
         {
-            "api/v1/zaken/_zoek" => new { identificatie = zaak.Identificatie },
-            "api/v1/zaken" when row.Method == HttpMethod.Post => Zaak(zaak.Rsin, zaak.ZaakType, zaak.VertrouwelijkheidAanduiding),
-            "api/v1/zaken" when isPatch => new { omschrijving = "Bijgewerkt" },
-            "api/v1/zaken" => Zaak(zaak.Rsin, zaak.ZaakType, zaak.VertrouwelijkheidAanduiding, zaak.Identificatie),
-            "api/v1/zaken/besluiten" => new { besluit = BesluitUrl },
-            "api/v1/zaken/zaakeigenschappen" when isPatch => new { waarde = "Bijgewerkt" },
-            "api/v1/zaken/zaakeigenschappen" => new
+            V1Routes.Zaken.Search => new { identificatie = zaak.Identificatie },
+            V1Routes.Zaken.Create when row.Method == HttpMethod.Post => Zaak(zaak.Rsin, zaak.ZaakType, zaak.VertrouwelijkheidAanduiding),
+            V1Routes.Zaken.Update when isPatch => new { omschrijving = "Bijgewerkt" },
+            V1Routes.Zaken.Update => Zaak(zaak.Rsin, zaak.ZaakType, zaak.VertrouwelijkheidAanduiding, zaak.Identificatie),
+            V1Routes.ZaakBesluiten.Create => new { besluit = BesluitUrl },
+            V1_2Routes.ZaakEigenschappen.Update when isPatch => new { waarde = "Bijgewerkt" },
+            V1Routes.ZaakEigenschappen.Create or V1_2Routes.ZaakEigenschappen.Update => new
             {
                 zaak = zaak.Url,
                 eigenschap = zaak.Catalogi.Eigenschap,
                 waarde = "Integratietest",
             },
-            "api/v1/statussen" => Status(zaak, zaak.Catalogi.BeginStatusType),
-            "api/v1/resultaten" when isPatch => new { toelichting = "Bijgewerkt" },
-            "api/v1/resultaten" => new
+            V1Routes.ZaakStatussen.Create => Status(zaak, zaak.Catalogi.BeginStatusType),
+            V1Routes.ZaakResultaten.Update when isPatch => new { toelichting = "Bijgewerkt" },
+            V1Routes.ZaakResultaten.Create or V1Routes.ZaakResultaten.Update => new
             {
                 zaak = zaak.Url,
                 resultaattype = zaak.Catalogi.ResultaatType,
                 toelichting = "",
             },
-            "api/v1/rollen" => Rol(zaak),
-            "api/v1/zaakobjecten" when isPatch => new { relatieomschrijving = "Bijgewerkt" },
-            "api/v1/zaakobjecten" => ZaakObject(zaak),
-            "api/v1/zaakinformatieobjecten" when isPatch => new { titel = "Bijgewerkt" },
-            "api/v1/zaakinformatieobjecten" => new
+            V1Routes.ZaakRollen.Create => Rol(zaak),
+            V1_5Routes.ZaakObjecten.Update when isPatch => new { relatieomschrijving = "Bijgewerkt" },
+            V1Routes.ZaakObjecten.Create or V1_5Routes.ZaakObjecten.Update => ZaakObject(zaak),
+            V1Routes.ZaakInformatieObjecten.Update when isPatch => new { titel = "Bijgewerkt" },
+            V1Routes.ZaakInformatieObjecten.Create or V1Routes.ZaakInformatieObjecten.Update => new
             {
                 informatieobject = InformatieObjectUrl,
                 zaak = zaak.Url,
                 titel = "Integratietest",
                 beschrijving = "",
             },
-            "api/v1/klantcontacten" => new
+            V1Routes.KlantContacten.Create => new
             {
                 zaak = zaak.Url,
                 identificatie = "ITEST",
@@ -198,11 +188,11 @@ internal static class ZakenEndpointRequests
                 onderwerp = "Integratietest",
                 toelichting = "",
             },
-            "api/v1/zaakcontactmomenten" => new { zaak = zaak.Url, contactmoment = ContactmomentUrl },
-            "api/v1/zaakverzoeken" => new { zaak = zaak.Url, verzoek = VerzoekUrl },
-            "api/v1/zaaknummer_reserveren" => new { bronorganisatie = zaak.Rsin, aantal = 1 },
-            "api/v1/zaaknotities" when isPatch => new { tekst = "Bijgewerkt" },
-            "api/v1/zaaknotities" => new
+            V1_5Routes.ZaakContactmomenten.Create => new { zaak = zaak.Url, contactmoment = ContactmomentUrl },
+            V1_5Routes.ZaakVerzoeken.Create => new { zaak = zaak.Url, verzoek = VerzoekUrl },
+            V1_7Routes.ZaaknummerReserveren.Create => new { bronorganisatie = zaak.Rsin, aantal = 1 },
+            V1_7Routes.ZaakNotities.Update when isPatch => new { tekst = "Bijgewerkt" },
+            V1_7Routes.ZaakNotities.Create or V1_7Routes.ZaakNotities.Update => new
             {
                 gerelateerdAan = zaak.Url,
                 onderwerp = "Integratietest",

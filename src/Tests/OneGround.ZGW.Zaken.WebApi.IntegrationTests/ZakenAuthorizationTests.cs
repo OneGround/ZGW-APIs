@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -39,7 +38,7 @@ public class ZakenAuthorizationTests
     [Fact]
     public async Task Client_without_rsin_claim_is_unauthorized()
     {
-        var clientId = NewClientId();
+        var clientId = ZrcClients.NewClientId();
         _factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
 
         var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, rsin: null));
@@ -51,7 +50,7 @@ public class ZakenAuthorizationTests
     [Fact]
     public async Task Client_the_autorisaties_api_does_not_know_is_forbidden()
     {
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(NewClientId(), Rsin));
+        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(ZrcClients.NewClientId(), Rsin));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -59,19 +58,8 @@ public class ZakenAuthorizationTests
     [Fact]
     public async Task Client_without_authorizations_is_forbidden()
     {
-        var clientId = NewClientId();
+        var clientId = ZrcClients.NewClientId();
         _factory.AutorisatiesApi.GrantNoAuthorizations(clientId);
-
-        var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Client_authorized_for_another_scope_only_is_forbidden()
-    {
-        var clientId = NewClientId();
-        _factory.AutorisatiesApi.Grant(clientId, Autorisatie(AuthorizationScopes.Zaken.Create));
 
         var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
 
@@ -81,7 +69,7 @@ public class ZakenAuthorizationTests
     [Fact]
     public async Task Client_authorized_to_read_zaken_of_a_zaaktype_gets_ok()
     {
-        var clientId = NewClientId();
+        var clientId = ZrcClients.NewClientId();
         _factory.AutorisatiesApi.Grant(clientId, Autorisatie(AuthorizationScopes.Zaken.Read));
 
         var response = await _client.SendAsync(ZakenRequests.GetAllZaken(clientId, Rsin));
@@ -105,6 +93,4 @@ public class ZakenAuthorizationTests
             MaxVertrouwelijkheidaanduiding = nameof(VertrouwelijkheidAanduiding.zeer_geheim),
         };
     }
-
-    private static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
 }

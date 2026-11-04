@@ -7,12 +7,15 @@ using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using Xunit;
+using V1 = OneGround.ZGW.Zaken.Web.Controllers.v1;
+using V1_5 = OneGround.ZGW.Zaken.Web.Controllers.v1._5;
+using V1_7 = OneGround.ZGW.Zaken.Web.Controllers.v1._7;
+using V1Routes = OneGround.ZGW.Zaken.Web.Contracts.v1.ApiRoutes;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// What a scope allows beyond getting past the scope filter, decided in the handlers: modifying a closed zaak, setting a zaak's statuses and
-/// reopening a closed zaak. Each test runs on API versions 1.0, 1.5 and 1.7.
+/// What a scope allows beyond the scope filter, decided in the handlers: modifying a closed zaak, setting statuses and reopening a zaak.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
 public class ZaakScopeSemanticsTests
@@ -30,25 +33,17 @@ public class ZaakScopeSemanticsTests
         CatalogiStub.InstallOn(_factory);
     }
 
-    public static IEnumerable<object[]> Versions() =>
-        [
-            [Api.LatestVersion_1_0],
-            [Api.LatestVersion_1_5],
-            [Api.LatestVersion_1_7],
-        ];
-
-    // The zaak update, partial update and rol create row of each version.
     public static IEnumerable<object[]> ClosedZaakModifications() =>
         [
-            ["v1.ZakenController.UpdateAsync"],
-            ["v1.ZakenController.PartialUpdateAsync"],
-            ["v1.ZaakRollenController.AddAsync"],
-            ["v1._5.ZakenController.UpdateAsync"],
-            ["v1._5.ZakenController.PartialUpdateAsync"],
-            ["v1._5.ZaakRollenController.AddAsync"],
-            ["v1._7.ZakenController.UpdateAsync"],
-            ["v1._7.ZakenController.PartialUpdateAsync"],
-            ["v1._7.ZaakRollenController.AddAsync"],
+            [ScopeMatrix.Name<V1.ZakenController>(nameof(V1.ZakenController.UpdateAsync))],
+            [ScopeMatrix.Name<V1.ZakenController>(nameof(V1.ZakenController.PartialUpdateAsync))],
+            [ScopeMatrix.Name<V1.ZaakRollenController>(nameof(V1.ZaakRollenController.AddAsync))],
+            [ScopeMatrix.Name<V1_5.ZakenController>(nameof(V1_5.ZakenController.UpdateAsync))],
+            [ScopeMatrix.Name<V1_5.ZakenController>(nameof(V1_5.ZakenController.PartialUpdateAsync))],
+            [ScopeMatrix.Name<V1_5.ZaakRollenController>(nameof(V1_5.ZaakRollenController.AddAsync))],
+            [ScopeMatrix.Name<V1_7.ZakenController>(nameof(V1_7.ZakenController.UpdateAsync))],
+            [ScopeMatrix.Name<V1_7.ZakenController>(nameof(V1_7.ZakenController.PartialUpdateAsync))],
+            [ScopeMatrix.Name<V1_7.ZaakRollenController>(nameof(V1_7.ZaakRollenController.AddAsync))],
         ];
 
     [Theory]
@@ -70,7 +65,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task First_status_is_set_with_only_the_create_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory);
@@ -82,7 +77,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Second_status_is_not_set_with_only_the_create_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory);
@@ -96,7 +91,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Second_status_is_set_with_the_add_status_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, resource: ZaakResource.Status);
@@ -108,7 +103,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Closed_zaak_is_not_reopened_with_only_the_add_status_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, closed: true, resource: ZaakResource.Status);
@@ -120,7 +115,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Closed_zaak_is_reopened_with_the_reopen_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, closed: true, resource: ZaakResource.Status);
@@ -144,6 +139,8 @@ public class ZaakScopeSemanticsTests
     {
         var body = ZakenEndpointRequests.Status(zaak, statusType, DateTime.UtcNow.AddMinutes(-minutesAgo));
 
-        return await _client.SendAsync(ZakenEndpointRequests.Create(HttpMethod.Post, "/api/v1/statussen", apiVersion, clientId, zaak.Rsin, body));
+        return await _client.SendAsync(
+            ZakenEndpointRequests.Create(HttpMethod.Post, "/" + V1Routes.ZaakStatussen.Create, apiVersion, clientId, zaak.Rsin, body)
+        );
     }
 }

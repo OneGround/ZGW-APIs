@@ -43,7 +43,7 @@ internal sealed record SeededZaak(
     Guid? ResourceId
 )
 {
-    public string Url => ZakenEndpointRequests.Url($"zaken/{Id}");
+    public string Url => ZakenEndpointRequests.ZaakUrl(Id);
 
     public CatalogiZaakType Catalogi => CatalogiStub.Of(ZaakType);
 }
@@ -51,9 +51,7 @@ internal sealed record SeededZaak(
 internal static class ZakenSeed
 {
     /// <summary>
-    /// Seeds a zaak of <paramref name="zaakType"/> owned by <paramref name="rsin"/>, closed (with an <c>einddatum</c>) when
-    /// <paramref name="closed"/>, and with one <paramref name="resource"/> under it. It is the deelzaak of <paramref name="hoofdzaakId"/>
-    /// and has a relevante andere zaak when given one.
+    /// Seeds a zaak of <paramref name="zaakType"/> for <paramref name="rsin"/>, optionally closed, with one <paramref name="resource"/>, a hoofdzaak and a relevante andere zaak.
     /// </summary>
     public static async Task<SeededZaak> SeedZaakAsync(
         ZakenWebApplicationFactory factory,
@@ -101,7 +99,7 @@ internal static class ZakenSeed
                 {
                     Id = Guid.NewGuid(),
                     Owner = rsin,
-                    Url = ZakenEndpointRequests.Url($"zaken/{relevant}"),
+                    Url = ZakenEndpointRequests.ZaakUrl(relevant),
                     AardRelatie = "vervolg",
                 },
             ];
@@ -270,10 +268,10 @@ internal static class ZakenSeed
                         Actie = "create",
                         ActieWeergave = "Object aangemaakt",
                         Resultaat = 201,
-                        HoofdObject = ZakenEndpointRequests.Url($"zaken/{zaak.Id}"),
+                        HoofdObject = ZakenEndpointRequests.ZaakUrl(zaak.Id),
                         HoofdObjectId = zaak.Id,
                         Resource = "zaak",
-                        ResourceUrl = ZakenEndpointRequests.Url($"zaken/{zaak.Id}"),
+                        ResourceUrl = ZakenEndpointRequests.ZaakUrl(zaak.Id),
                         ResourceWeergave = zaak.Identificatie,
                         Toelichting = "",
                         AanmaakDatum = registered,

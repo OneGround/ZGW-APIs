@@ -8,12 +8,12 @@ using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
 using OneGround.ZGW.Zaken.Web.Controllers;
 using Xunit;
+using V1Routes = OneGround.ZGW.Zaken.Web.Contracts.v1.ApiRoutes;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// The zaken that <c>GET /zaken/{id}?expand=...</c> pulls in beside the requested one (API version 1.7). The client may read zaaktype A up to
-/// <c>vertrouwelijk</c>; a related zaak of another zaaktype, or above that maximum, never shows up in the expansion, while the zaak itself is still returned.
+/// Related zaken pulled in by <c>GET /zaken/{id}?expand=...</c> (1.7) are left out when the client may not read them, while the zaak itself is returned.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
 public class ZaakExpandAuthorizationTests
@@ -68,7 +68,6 @@ public class ZaakExpandAuthorizationTests
         Assert.DoesNotContain(related.Identificatie, await response.Content.ReadAsStringAsync());
     }
 
-    // Seeds zaak X (zaaktype A, openbaar) and a related zaak Y in the role the path expands, then reads X with the expansion.
     private async Task<(HttpResponseMessage Response, SeededZaak Related)> ExpandAsync(
         string path,
         string relatedZaakType,
@@ -88,7 +87,7 @@ public class ZaakExpandAuthorizationTests
                 zaak = await ZakenSeed.SeedZaakAsync(_factory, relevanteAndereZaakId: related.Id);
                 break;
             default:
-                // A deelzaak points at its hoofdzaak, so the related zaak becomes the child of X.
+                // A deelzaak points at its hoofdzaak, so the related zaak is seeded as the child.
                 zaak = await ZakenSeed.SeedZaakAsync(_factory);
                 related = await ZakenSeed.SeedZaakAsync(_factory, relatedZaakType, relatedVertrouwelijkheid, hoofdzaakId: zaak.Id);
                 break;
@@ -97,7 +96,7 @@ public class ZaakExpandAuthorizationTests
         var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, Maximum, AuthorizationScopes.Zaken.Read);
         var request = ZakenEndpointRequests.Create(
             HttpMethod.Get,
-            $"/api/v1/zaken/{zaak.Id}?expand={path}",
+            $"/{V1Routes.Zaken.Get.Replace("{id}", zaak.Id.ToString())}?expand={path}",
             Api.LatestVersion_1_7,
             clientId,
             zaak.Rsin

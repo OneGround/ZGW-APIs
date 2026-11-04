@@ -38,7 +38,7 @@ internal static class ZakenRequests
         return WithJson(Create(HttpMethod.Post, "/" + ApiRoutes.ZaakObjecten.Create, clientId, rsin, apiVersion), body);
     }
 
-    private static HttpRequestMessage Create(HttpMethod method, string path, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
+    internal static HttpRequestMessage Create(HttpMethod method, string path, string clientId, string rsin, string apiVersion = Api.LatestVersion_1_0)
     {
         var request = new HttpRequestMessage(method, path);
         request.Headers.Add("Api-Version", apiVersion);
@@ -52,7 +52,7 @@ internal static class ZakenRequests
         return request;
     }
 
-    private static HttpRequestMessage WithJson(HttpRequestMessage request, object body)
+    internal static HttpRequestMessage WithJson(HttpRequestMessage request, object body)
     {
         request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
         request.Content.Headers.Add("Content-Crs", "EPSG:4326");

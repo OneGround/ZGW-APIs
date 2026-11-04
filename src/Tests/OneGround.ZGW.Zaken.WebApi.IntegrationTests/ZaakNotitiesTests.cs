@@ -104,21 +104,6 @@ public class ZaakNotitiesTests
         Assert.Equal("gerelateerdAan", (await ReadAsync(response))["invalidParams"]![0]!.Value<string>("name"));
     }
 
-    [Fact]
-    public async Task Create_for_a_zaak_of_a_zaaktype_the_client_may_not_update_is_forbidden()
-    {
-        var zaakUrl = await SeedZaakUrlAsync(ZaakTypes.A);
-
-        var response = await SendAsync(
-            HttpMethod.Post,
-            "/" + ApiRoutes.ZaakNotities.Create,
-            NewClientAuthorized(ZaakTypes.B, AuthorizationScopes.Zaken.Update),
-            Body(zaakUrl, "O", "T")
-        );
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
     // ---- update
 
     [Fact]
@@ -353,33 +338,6 @@ public class ZaakNotitiesTests
         var response = await SendAsync(HttpMethod.Get, "/" + ApiRoutes.ZaakNotities.GetAll + "?" + query, NewClientWithAllAuthorizations());
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task List_only_has_the_notities_of_zaken_the_client_is_authorized_for()
-    {
-        var zaakUrl = await SeedZaakUrlAsync(ZaakTypes.A);
-        await CreateAsync(NewClientWithAllAuthorizations(), zaakUrl, tekst: "Zichtbaar");
-
-        var forA = await ListTekstenAsync(NewClientAuthorized(ZaakTypes.A, AuthorizationScopes.Zaken.Read), zaakUrl);
-        var forB = await ListTekstenAsync(NewClientAuthorized(ZaakTypes.B, AuthorizationScopes.Zaken.Read), zaakUrl);
-
-        Assert.Equal(["Zichtbaar"], forA);
-        Assert.Empty(forB);
-    }
-
-    [Fact]
-    public async Task A_notitie_of_a_zaak_the_client_may_not_read_is_forbidden()
-    {
-        var notitie = await CreateAsync(NewClientWithAllAuthorizations(), await SeedZaakUrlAsync(ZaakTypes.A));
-
-        var response = await SendAsync(
-            HttpMethod.Get,
-            new Uri(notitie.Value<string>("url")!).AbsolutePath,
-            NewClientAuthorized(ZaakTypes.B, AuthorizationScopes.Zaken.Read)
-        );
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     // ---- helpers

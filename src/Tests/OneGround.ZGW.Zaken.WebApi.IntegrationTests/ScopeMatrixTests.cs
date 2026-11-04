@@ -10,9 +10,7 @@ using Xunit;
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
-/// Per <see cref="ScopeMatrix"/> row, the scope filter denies a client holding every scope but the action's, and lets a client holding just one
-/// of them through. Both cells send the same request: request validation runs before the scope filter, so a 403 in the denied cell shows the
-/// request was well-formed, and the accepted cell's response came from past the filter.
+/// Per <see cref="ScopeMatrix"/> row, the scope filter denies a client holding every scope but the action's and lets one holding a single accepted scope through.
 /// </summary>
 [Collection(ZakenApiCollection.Name)]
 public class ScopeMatrixTests
@@ -62,6 +60,7 @@ public class ScopeMatrixTests
         );
     }
 
+    // Request validation runs before the scope filter, so a 403 in the denied cell also shows the shared request is well-formed.
     private async Task<HttpResponseMessage> SendAsync(ScopeMatrixRow row, string clientId)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, resource: row.Seeds);
