@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using OneGround.ZGW.Common.Web.Authorization;
 using Xunit;
 using AnchorController = OneGround.ZGW.Zaken.Web.Controllers.v1._5.ZakenController;
+using V1_7 = OneGround.ZGW.Zaken.Web.Controllers.v1._7;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -80,10 +81,10 @@ public class ScopeMatrixCompletenessTests
         // Zaak list, read and create are covered by ZaakTypeAuthorizationTests and the zaak-create theories; a reservation has no zaak.
         string[] notOnOneZaak =
         [
-            "ZakenController.GetAllAsync",
-            "ZakenController.GetAsync",
-            "ZakenController.AddAsync",
-            "ZaaknummerReserverenController.ReserveAsync",
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.GetAllAsync)}",
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.GetAsync)}",
+            $"{nameof(V1_7.ZakenController)}.{nameof(V1_7.ZakenController.AddAsync)}",
+            $"{nameof(V1_7.ZaaknummerReserverenController)}.{nameof(V1_7.ZaaknummerReserverenController.ReserveAsync)}",
         ];
 
         var covered = ZaakSubResourceAuthorizationTests
