@@ -67,8 +67,6 @@ public class ZaakSubResourceListAuthorizationTests
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
-
-        CatalogiStub.InstallOn(_factory);
     }
 
     public static IEnumerable<object[]> FilteredListRows() => WithServedVersions(FilteredLists);

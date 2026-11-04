@@ -29,8 +29,6 @@ public class ZaakScopeSemanticsTests
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
-
-        CatalogiStub.InstallOn(_factory);
     }
 
     public static IEnumerable<object[]> ClosedZaakModifications() =>

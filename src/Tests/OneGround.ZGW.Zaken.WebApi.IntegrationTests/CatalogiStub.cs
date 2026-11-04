@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Newtonsoft.Json;
 using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
 using OneGround.ZGW.IntegrationTests.Common;
-using OneGround.ZGW.IntegrationTests.Common.Http;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
@@ -45,8 +43,6 @@ internal static class CatalogiStub
 
     private static readonly Dictionary<string, object> Resources = CreateResources();
 
-    private static readonly ConditionalWeakTable<StubOutboundHttp, object> Installed = new();
-
     public static CatalogiZaakType Of(string zaakType)
     {
         return zaakType switch
@@ -55,26 +51,6 @@ internal static class CatalogiStub
             ZaakTypes.B => B,
             _ => throw new ArgumentOutOfRangeException(nameof(zaakType), zaakType, "No Catalogi stub for this zaaktype."),
         };
-    }
-
-    /// <summary>
-    /// Chains the stub, and <see cref="DocumentenStub"/> and <see cref="BesluitenStub"/> after it, after the factory's own responder, once per factory,
-    /// so a request none of them answers still fails.
-    /// </summary>
-    public static void InstallOn(ZakenWebApplicationFactory factory)
-    {
-        var outboundHttp = factory.OutboundHttp;
-
-        lock (Installed)
-        {
-            if (Installed.TryGetValue(outboundHttp, out _))
-                return;
-
-            var previous = outboundHttp.Responder;
-            outboundHttp.Responder = request => previous?.Invoke(request) ?? TryRespond(request) ?? DocumentenStub.TryRespond(request) ?? BesluitenStub.TryRespond(request);
-
-            Installed.Add(outboundHttp, null);
-        }
     }
 
     /// <summary>

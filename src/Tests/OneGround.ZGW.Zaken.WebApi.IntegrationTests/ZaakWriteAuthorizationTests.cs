@@ -29,8 +29,6 @@ public class ZaakWriteAuthorizationTests
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
-
-        CatalogiStub.InstallOn(_factory);
     }
 
     public static TheoryData<string> ApiVersions => [Api.LatestVersion_1_0, Api.LatestVersion_1_2, Api.LatestVersion_1_5, Api.LatestVersion_1_7];

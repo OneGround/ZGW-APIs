@@ -24,8 +24,6 @@ public class ScopeMatrixTests
     {
         _factory = fixture.Factory;
         _client = _factory.CreateClient();
-
-        CatalogiStub.InstallOn(_factory);
     }
 
     public static IEnumerable<object[]> Rows() => ScopeMatrix.Rows.SelectMany(r => r.ServedApiVersions.Select(v => new object[] { r.Name, v }));
