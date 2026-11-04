@@ -21,8 +21,8 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllEnkelvoudigInformatieObjectenQueryParameters, GetAllEnkelvoudigInformatieObjectenFilter>()
             .Map(dest => dest.Trefwoorden_In, src => ProfileHelper.ArrayFromString(src.Trefwoorden))
-            // Not present on these query parameters -- only the search-request DTO config below has Uuid_In.
-            .Ignore(dest => dest.Uuid_In)
+            // Not present on these query parameters -- only the search-request DTO config below has Uuid__in.
+            .Ignore(dest => dest.Uuid__in)
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -41,8 +41,8 @@ public class RequestToDomainRegister : IRegister
                     if (src.Trefwoorden == null)
                         dest.Trefwoorden_In = null;
 
-                    if (src.Uuid_In == null)
-                        dest.Uuid_In = null;
+                    if (src.Uuid__in == null)
+                        dest.Uuid__in = null;
                 }
             ); // Note: Don't map to an empty list!! (EF Where Query on NULL)
 

@@ -21,8 +21,8 @@ public class EnkelvoudigInformatieObjectSearchRequestDto : IDocumentenCommonSear
     [JsonProperty("objectinformatieobjecten_objectType")]
     public string ObjectInformatieObjecten_ObjectType { get; set; }
 
-    [JsonProperty("uuid_In")]
-    public string[] Uuid_In { get; set; }
+    [JsonProperty("uuid__in")]
+    public string[] Uuid__in { get; set; }
 
     [JsonProperty("expand")]
     public string Expand { get; set; }

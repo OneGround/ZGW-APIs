@@ -4623,8 +4623,8 @@ namespace OneGround.ZGW.Documenten.ClientProxy.v1._5
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.0.7.0 (NJsonSchema v11.0.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class EnkelvoudigInformatieObjectSearchRequestDto
     {
-        [Newtonsoft.Json.JsonProperty("uuid_In", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Uuid_In { get; set; }
+        [Newtonsoft.Json.JsonProperty("uuid__in", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Uuid__in { get; set; }
 
         [Newtonsoft.Json.JsonProperty("expand", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Expand { get; set; }

@@ -17,8 +17,8 @@ public class EnkelvoudigInformatieObjectSearchRequestValidator : ZGWValidator<En
             .ExpandsValid(SupportedExpands.GetAll("enkelvoudiginformatieobject"))
             .IsExpandEnabled(applicationConfiguration.ExpandSettings.Search);
 
-        CascadeRuleFor(z => z.Uuid_In).NotNull();
+        CascadeRuleFor(z => z.Uuid__in).NotNull();
 
-        CascadeRuleForEach(z => z.Uuid_In).NotNull().NotEmpty().IsGuid();
+        CascadeRuleForEach(z => z.Uuid__in).NotNull().NotEmpty().IsGuid();
     }
 }

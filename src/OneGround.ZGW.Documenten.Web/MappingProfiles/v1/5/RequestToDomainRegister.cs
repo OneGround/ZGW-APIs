@@ -26,8 +26,8 @@ public class RequestToDomainRegister : IRegister
         config
             .NewConfig<GetAllEnkelvoudigInformatieObjectenQueryParameters, GetAllEnkelvoudigInformatieObjectenFilter>()
             .Map(dest => dest.Trefwoorden_In, src => ProfileHelper.ArrayFromString(src.Trefwoorden))
-            // Not present on these query parameters -- only the search-request DTO config below has Uuid_In.
-            .Ignore(dest => dest.Uuid_In)
+            // Not present on these query parameters -- only the search-request DTO config below has Uuid__in.
+            .Ignore(dest => dest.Uuid__in)
             .AfterMapping(
                 (src, dest) =>
                 {
@@ -39,7 +39,7 @@ public class RequestToDomainRegister : IRegister
         // for enkelvoudiginformatieobject search endpoint
         config
             .NewConfig<EnkelvoudigInformatieObjectSearchRequestDto, GetAllEnkelvoudigInformatieObjectenFilter>()
-            .Map(dest => dest.Uuid_In, src => src.Uuid_In)
+            .Map(dest => dest.Uuid__in, src => src.Uuid__in)
             .Ignore(dest => dest.Bronorganisatie)
             .Ignore(dest => dest.Identificatie)
             .Ignore(dest => dest.Trefwoorden_In) // Not supported on this search endpoint.

@@ -4,6 +4,6 @@ public class GetAllEnkelvoudigInformatieObjectenFilter
 {
     public string Bronorganisatie { get; set; }
     public string Identificatie { get; set; }
-    public string[] Uuid_In { get; set; } = null;
+    public string[] Uuid__in { get; set; } = null;
     public string[] Trefwoorden_In { get; set; } = null;
 }

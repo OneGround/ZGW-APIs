@@ -146,21 +146,21 @@ public class RequestToDomainProfileTests : IDisposable
     {
         // Setup: the search DTO has no Trefwoorden concept at all - Trefwoorden_In is Ignore()'d and
         // then forced to null via .AfterMapping, exactly like the query-parameters config above.
-        var value = new EnkelvoudigInformatieObjectSearchRequestDto { Uuid_In = ["11111111-1111-1111-1111-111111111111"] };
+        var value = new EnkelvoudigInformatieObjectSearchRequestDto { Uuid__in = ["11111111-1111-1111-1111-111111111111"] };
 
         // Act
         var result = _mapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);
 
         // Assert
         Assert.Null(result.Trefwoorden_In);
-        Assert.Equal(value.Uuid_In, result.Uuid_In);
+        Assert.Equal(value.Uuid__in, result.Uuid__in);
     }
 
     [Fact]
     public void EnkelvoudigInformatieObjectSearchRequestDto_Ignores_Bronorganisatie_And_Identificatie()
     {
         // Setup
-        var value = new EnkelvoudigInformatieObjectSearchRequestDto { Uuid_In = ["11111111-1111-1111-1111-111111111111"] };
+        var value = new EnkelvoudigInformatieObjectSearchRequestDto { Uuid__in = ["11111111-1111-1111-1111-111111111111"] };
 
         // Act
         var result = _mapper.Map<Web.Models.v1._5.GetAllEnkelvoudigInformatieObjectenFilter>(value);

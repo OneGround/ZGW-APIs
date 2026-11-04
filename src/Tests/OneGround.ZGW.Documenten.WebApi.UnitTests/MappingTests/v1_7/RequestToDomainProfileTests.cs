@@ -41,9 +41,9 @@ public class RequestToDomainProfileTests : IDisposable
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(queryParameters);
 
         Assert.Null(filter.Trefwoorden_In);
-        // Uuid_In is not present on these query parameters at all (only the search-request DTO has it),
+        // Uuid__in is not present on these query parameters at all (only the search-request DTO has it),
         // so it must stay null here too -- same silent-zero-rows risk class as Trefwoorden_In.
-        Assert.Null(filter.Uuid_In);
+        Assert.Null(filter.Uuid__in);
     }
 
     [Fact]
@@ -56,16 +56,16 @@ public class RequestToDomainProfileTests : IDisposable
         Assert.Equal(["een", "twee"], filter.Trefwoorden_In);
     }
 
-    /// <summary>Both resets on the search map, which v1.5's equivalent does not have for Uuid_In.</summary>
+    /// <summary>Both resets on the search map, which v1.5's equivalent does not have for Uuid__in.</summary>
     [Fact]
     public void Search_request_with_no_trefwoorden_and_no_uuids_leaves_both_filters_null()
     {
-        var searchRequest = new EnkelvoudigInformatieObjectSearchRequestDto { Trefwoorden = null, Uuid_In = null };
+        var searchRequest = new EnkelvoudigInformatieObjectSearchRequestDto { Trefwoorden = null, Uuid__in = null };
 
         var filter = _mapper.Map<GetAllEnkelvoudigInformatieObjectenFilter>(searchRequest);
 
         Assert.Null(filter.Trefwoorden_In);
-        Assert.Null(filter.Uuid_In);
+        Assert.Null(filter.Uuid__in);
     }
 
     /// <summary>

@@ -154,7 +154,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         var filterModel = request.GetAllEnkelvoudigInformatieObjectenFilter;
 
         var enableSort =
-            !string.IsNullOrEmpty(filterModel.Identificatie) || (filterModel.Trefwoorden_In?.Any() ?? false) || (filterModel.Uuid_In?.Any() ?? false)
+            !string.IsNullOrEmpty(filterModel.Identificatie) || (filterModel.Trefwoorden_In?.Any() ?? false) || (filterModel.Uuid__in?.Any() ?? false)
                 ? "on"
                 : "off";
 
@@ -327,7 +327,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
                 bool anyFiltersSet =
                     !string.IsNullOrEmpty(filterModel.Identificatie)
                     || !string.IsNullOrEmpty(filterModel.Bronorganisatie)
-                    || (filterModel.Uuid_In != null && filterModel.Uuid_In.Any())
+                    || (filterModel.Uuid__in != null && filterModel.Uuid__in.Any())
                     || (filterModel.Trefwoorden_In != null && filterModel.Trefwoorden_In.Any())
                     || !string.IsNullOrEmpty(filterModel.ObjectInformatieObjecten_Object)
                     || !string.IsNullOrEmpty(filterModel.ObjectInformatieObjecten_ObjectType);
@@ -430,12 +430,12 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         return Expression.Lambda<Func<EnkelvoudigInformatieObject, bool>>(body!, param);
     }
 
-    private static Expression<Func<EnkelvoudigInformatieObject, bool>> GetEnkelvoudigInformatieObjectFilterPredicate(
+    internal static Expression<Func<EnkelvoudigInformatieObject, bool>> GetEnkelvoudigInformatieObjectFilterPredicate(
         GetAllEnkelvoudigInformatieObjectenFilter filter
     )
     {
-        var filterUuid_In = filter
-            .Uuid_In?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? parsedUuid : (Guid?)null)
+        var filterUuid__in = filter
+            .Uuid__in?.Select(uuid => Guid.TryParse(uuid, out var parsedUuid) ? parsedUuid : (Guid?)null)
             .Where(parsedUuid => parsedUuid != null)
             .Select(parsedUuid => parsedUuid!.Value)
             .ToList();
@@ -460,13 +460,13 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
 
         if (!hasVersieFilters)
         {
-            return e => filterUuid_In == null || !filterUuid_In.Any() || filterUuid_In.Contains(e.Id);
+            return e => filterUuid__in == null || !filterUuid__in.Any() || filterUuid__in.Contains(e.Id);
         }
 
         return e =>
             (filter.Bronorganisatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Bronorganisatie == filter.Bronorganisatie)
             && (filter.Identificatie == null || e.LatestEnkelvoudigInformatieObjectVersie.Identificatie == filter.Identificatie)
-            && (filterUuid_In == null || filterUuid_In.Contains(e.Id))
+            && (filterUuid__in == null || filterUuid__in.Contains(e.Id))
             && (filterTrefwoorden_In == null || e.LatestEnkelvoudigInformatieObjectVersie.Trefwoorden.Any(t => filterTrefwoorden_In.Contains(t)))
             && (
                 filter.ObjectInformatieObjecten_Object == null
