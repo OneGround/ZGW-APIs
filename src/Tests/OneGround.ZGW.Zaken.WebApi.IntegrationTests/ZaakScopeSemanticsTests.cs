@@ -65,7 +65,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.StatusCreateVersions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task First_status_is_set_with_only_the_create_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory);
@@ -77,7 +77,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.StatusCreateVersions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Second_status_is_not_set_with_only_the_create_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory);
@@ -91,7 +91,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.StatusCreateVersions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Second_status_is_set_with_the_add_status_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, resource: ZaakResource.Status);
@@ -103,7 +103,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.StatusCreateVersions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Closed_zaak_is_not_reopened_with_only_the_add_status_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, closed: true, resource: ZaakResource.Status);
@@ -115,7 +115,7 @@ public class ZaakScopeSemanticsTests
     }
 
     [Theory]
-    [MemberData(nameof(ZaakSubResourceAuthorizationTests.Versions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
+    [MemberData(nameof(ZaakSubResourceAuthorizationTests.StatusCreateVersions), MemberType = typeof(ZaakSubResourceAuthorizationTests))]
     public async Task Closed_zaak_is_reopened_with_the_reopen_scope(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, closed: true, resource: ZaakResource.Status);

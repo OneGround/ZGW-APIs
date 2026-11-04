@@ -156,12 +156,11 @@ public class ZaakSubResourceAuthorizationTests
     public static IEnumerable<object[]> EndpointRows() =>
         Endpoints.SelectMany(e => ScopeMatrix.Named(e.Row).ServedApiVersions.Select(v => new object[] { e.Row, v }));
 
-    public static IEnumerable<object[]> Versions() =>
-        [
-            [Api.LatestVersion_1_0],
-            [Api.LatestVersion_1_5],
-            [Api.LatestVersion_1_7],
-        ];
+    public static IEnumerable<object[]> ZaakCreateVersions() => VersionsServing(HttpMethod.Post, V1Routes.Zaken.Create);
+
+    public static IEnumerable<object[]> StatusCreateVersions() => VersionsServing(HttpMethod.Post, V1Routes.ZaakStatussen.Create);
+
+    public static IEnumerable<object[]> ZaakDeleteVersions() => VersionsServing(HttpMethod.Delete, V1Routes.Zaken.Delete);
 
     [Theory]
     [MemberData(nameof(EndpointRows))]
@@ -194,7 +193,7 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_of_a_zaaktype_the_client_may_create_zaken_for_is_created(string apiVersion)
     {
         var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, ZaakVertrouwelijkheid, AuthorizationScopes.Zaken.Create);
@@ -205,7 +204,7 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_of_a_zaaktype_outside_the_clients_authorization_is_not_created(string apiVersion)
     {
         var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Create);
@@ -216,7 +215,7 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakCreateVersions))]
     public async Task Zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_created(string apiVersion)
     {
         var clientId = ZrcClients.Authorized(_factory, ZaakTypes.A, BelowZaak, AuthorizationScopes.Zaken.Create);
@@ -227,7 +226,7 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(StatusCreateVersions))]
     public async Task First_status_of_a_zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_set(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
@@ -239,7 +238,7 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(StatusCreateVersions))]
     public async Task First_status_of_a_zaak_within_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_forbidden(string apiVersion)
     {
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
@@ -251,13 +250,22 @@ public class ZaakSubResourceAuthorizationTests
     }
 
     [Theory]
-    [MemberData(nameof(Versions))]
+    [MemberData(nameof(ZaakDeleteVersions))]
     public async Task Zaak_is_deleted_by_a_client_authorized_for_it_on_every_version(string apiVersion)
     {
         var response = await DeleteZaakAsync(ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.NoContent, await ZakenEndpointRequests.DescribeAsync(response));
     }
+
+    // Every version any controller serves the operation on, so a theory follows the routing instead of a hand-kept list.
+    private static IEnumerable<object[]> VersionsServing(HttpMethod method, string route) =>
+        ScopeMatrix
+            .Rows.Where(r => r.Method == method && r.Route == route)
+            .SelectMany(r => r.ServedApiVersions)
+            .Distinct()
+            .Order(StringComparer.Ordinal)
+            .Select(v => new object[] { v });
 
     private async Task<HttpResponseMessage> DeleteZaakAsync(string clientZaakType, VertrouwelijkheidAanduiding clientMaximum, string apiVersion)
     {
