@@ -168,10 +168,7 @@ public class ZaakSubResourceAuthorizationTests
     {
         var response = await SendAsync(row, apiVersion, ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim);
 
-        Assert.True(
-            response.StatusCode is not (HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) && (int)response.StatusCode < 500,
-            await ZakenEndpointRequests.DescribeAsync(response)
-        );
+        Assert.True(response.IsSuccessStatusCode, await ZakenEndpointRequests.DescribeAsync(response));
     }
 
     [Theory]
@@ -253,9 +250,30 @@ public class ZaakSubResourceAuthorizationTests
     [MemberData(nameof(ZaakDeleteVersions))]
     public async Task Zaak_is_deleted_by_a_client_authorized_for_it_on_every_version(string apiVersion)
     {
-        var response = await DeleteZaakAsync(ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
+        var (response, zaak) = await DeleteZaakAsync(ZaakTypes.A, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
 
         Assert.True(response.StatusCode == HttpStatusCode.NoContent, await ZakenEndpointRequests.DescribeAsync(response));
+        Assert.False(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
+    }
+
+    [Theory]
+    [MemberData(nameof(ZaakDeleteVersions))]
+    public async Task Zaak_of_another_zaaktype_is_not_deleted(string apiVersion)
+    {
+        var (response, zaak) = await DeleteZaakAsync(ZaakTypes.B, VertrouwelijkheidAanduiding.zeer_geheim, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+        Assert.True(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
+    }
+
+    [Theory]
+    [MemberData(nameof(ZaakDeleteVersions))]
+    public async Task Zaak_above_the_clients_maximum_vertrouwelijkheidaanduiding_is_not_deleted(string apiVersion)
+    {
+        var (response, zaak) = await DeleteZaakAsync(ZaakTypes.A, BelowZaak, apiVersion);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(response));
+        Assert.True(await ZakenSeed.ZaakExistsAsync(_factory, zaak.Id));
     }
 
     // Every version any controller serves the operation on, so a theory follows the routing instead of a hand-kept list.
@@ -267,7 +285,11 @@ public class ZaakSubResourceAuthorizationTests
             .Order(StringComparer.Ordinal)
             .Select(v => new object[] { v });
 
-    private async Task<HttpResponseMessage> DeleteZaakAsync(string clientZaakType, VertrouwelijkheidAanduiding clientMaximum, string apiVersion)
+    private async Task<(HttpResponseMessage Response, SeededZaak Zaak)> DeleteZaakAsync(
+        string clientZaakType,
+        VertrouwelijkheidAanduiding clientMaximum,
+        string apiVersion
+    )
     {
         var matrixRow = ScopeMatrix.Named(ScopeMatrix.Name<V1.ZakenController>(nameof(V1.ZakenController.DeleteAsync))) with
         {
@@ -276,7 +298,7 @@ public class ZaakSubResourceAuthorizationTests
         var zaak = await ZakenSeed.SeedZaakAsync(_factory, ZaakTypes.A, ZaakVertrouwelijkheid);
         var clientId = ZrcClients.Authorized(_factory, clientZaakType, clientMaximum, matrixRow.Scopes);
 
-        return await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId));
+        return (await _client.SendAsync(ZakenEndpointRequests.For(matrixRow, zaak, clientId)), zaak);
     }
 
     private async Task<HttpResponseMessage> AddStatusAsync(SeededZaak zaak, string clientId, string apiVersion)

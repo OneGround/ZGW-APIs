@@ -36,6 +36,9 @@ internal static class CatalogiStub
     // The type of the document behind ZakenEndpointRequests.InformatieObjectUrl, which both zaaktypes allow.
     public const string InformatieObjectType = BaseUrl + "/informatieobjecttypen/3f1c2a5e-0000-4000-8000-0000000000d0";
 
+    // The type of the besluit behind ZakenEndpointRequests.BesluitUrl, which both zaaktypes allow.
+    public const string BesluitType = BaseUrl + "/besluittypen/3f1c2a5e-0000-4000-8000-0000000000e0";
+
     public static readonly CatalogiZaakType A = Create(ZaakTypes.A, 'a');
 
     public static readonly CatalogiZaakType B = Create(ZaakTypes.B, 'b');
@@ -55,7 +58,8 @@ internal static class CatalogiStub
     }
 
     /// <summary>
-    /// Chains the stub, and <see cref="DocumentenStub"/> after it, after the factory's own responder, once per factory, so a request neither of them answers still fails.
+    /// Chains the stub, and <see cref="DocumentenStub"/> and <see cref="BesluitenStub"/> after it, after the factory's own responder, once per factory,
+    /// so a request none of them answers still fails.
     /// </summary>
     public static void InstallOn(ZakenWebApplicationFactory factory)
     {
@@ -67,7 +71,7 @@ internal static class CatalogiStub
                 return;
 
             var previous = outboundHttp.Responder;
-            outboundHttp.Responder = request => previous?.Invoke(request) ?? TryRespond(request) ?? DocumentenStub.TryRespond(request);
+            outboundHttp.Responder = request => previous?.Invoke(request) ?? TryRespond(request) ?? DocumentenStub.TryRespond(request) ?? BesluitenStub.TryRespond(request);
 
             Installed.Add(outboundHttp, null);
         }
@@ -136,7 +140,7 @@ internal static class CatalogiStub
                 Trefwoorden = [],
                 Verantwoordingsrelatie = [],
                 ProductenOfDiensten = [],
-                BesluitTypen = [],
+                BesluitTypen = [BesluitType],
                 DeelZaakTypen = [],
                 GerelateerdeZaakTypen = [],
                 StatusTypen = [zaakType.BeginStatusType, zaakType.EindStatusType],
@@ -232,6 +236,40 @@ internal static class DocumentenStub
         return new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(JsonConvert.SerializeObject(informatieObject), Encoding.UTF8, "application/json"),
+        };
+    }
+}
+
+/// <summary>
+/// Answers the Besluiten lookup of <see cref="ZakenEndpointRequests.BesluitUrl"/>, which a zaakbesluit create makes before it saves;
+/// any other request to the Besluiten API gets a 404.
+/// </summary>
+internal static class BesluitenStub
+{
+    private const string BaseUrl = "https://besluiten.integrationtest.invalid/api/v1";
+
+    public static HttpResponseMessage TryRespond(HttpRequestMessage request)
+    {
+        var uri = request.RequestUri!;
+        if (!uri.GetLeftPart(UriPartial.Path).StartsWith(BaseUrl + "/", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (request.Method != HttpMethod.Get || uri.GetLeftPart(UriPartial.Path) != ZakenEndpointRequests.BesluitUrl)
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+
+        var besluit = new
+        {
+            url = ZakenEndpointRequests.BesluitUrl,
+            identificatie = "ITEST",
+            verantwoordelijkeOrganisatie = TestRsins.A,
+            besluittype = CatalogiStub.BesluitType,
+            datum = "2020-01-01",
+            ingangsdatum = "2020-01-01",
+        };
+
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonConvert.SerializeObject(besluit), Encoding.UTF8, "application/json"),
         };
     }
 }

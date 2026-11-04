@@ -88,6 +88,7 @@ public class ZaakScopeSemanticsTests
 
         Assert.True(first.StatusCode == HttpStatusCode.Created, await ZakenEndpointRequests.DescribeAsync(first));
         Assert.True(second.StatusCode == HttpStatusCode.Forbidden, await ZakenEndpointRequests.DescribeAsync(second));
+        Assert.Equal(1, await ZakenSeed.ZaakStatusCountAsync(_factory, zaak.Id));
     }
 
     [Theory]

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.DataAccess.AuditTrail;
@@ -87,6 +88,7 @@ internal static class ZakenSeed
             Archiefnominatie = closed ? ArchiefNominatie.blijvend_bewaren : null,
             Archiefstatus = ArchiefStatus.nog_te_archiveren,
             CatalogusId = Guid.Parse(CatalogiStub.Catalogus[^36..]),
+            // Only a legacy zaak reads its audit trail from the AuditTrailRegels table, where the regel is seeded.
             LegacyAuditTrail = resource == ZaakResource.AuditTrailRegel,
             HoofdzaakId = hoofdzaakId,
         };
@@ -308,5 +310,21 @@ internal static class ZakenSeed
             resource,
             resource == ZaakResource.None ? null : resourceId
         );
+    }
+
+    public static async Task<bool> ZaakExistsAsync(ZakenWebApplicationFactory factory, Guid zaakId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+        return await context.Zaken.AnyAsync(z => z.Id == zaakId);
+    }
+
+    public static async Task<int> ZaakStatusCountAsync(ZakenWebApplicationFactory factory, Guid zaakId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+        return await context.ZaakStatussen.CountAsync(s => s.ZaakId == zaakId);
     }
 }
