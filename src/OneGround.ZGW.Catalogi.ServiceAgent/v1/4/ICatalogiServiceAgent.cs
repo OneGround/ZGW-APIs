@@ -23,17 +23,14 @@ public interface ICatalogiServiceAgent
     Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(GetAllZaakTypenQueryParameters parameters, int page = 1);
 
     // StatusType
-    Task<ServiceAgentResponse<Contracts.v1._3.Responses.StatusTypeResponseDto>> GetStatusTypeByUrlAsync(string statusTypeUrl);
+    Task<ServiceAgentResponse<StatusTypeResponseDto>> GetStatusTypeByUrlAsync(string statusTypeUrl);
 
     // ResultaatType
-    Task<ServiceAgentResponse<Contracts.v1._3.Responses.ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl);
+    Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl);
 
     // RolType
-    Task<ServiceAgentResponse<Contracts.v1._3.Responses.RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl);
-    Task<ServiceAgentResponse<PagedResponse<Contracts.v1._3.Responses.RolTypeResponseDto>>> GetRolTypenAsync(
-        Contracts.v1._3.Queries.GetAllRolTypenQueryParameters parameters,
-        int page = 1
-    );
+    Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl);
+    Task<ServiceAgentResponse<PagedResponse<RolTypeResponseDto>>> GetRolTypenAsync(GetAllRolTypenQueryParameters parameters, int page = 1);
 
     // InformatieObjectType
     Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(
@@ -46,13 +43,14 @@ public interface ICatalogiServiceAgent
     );
 
     // Eigenschap
-    Task<ServiceAgentResponse<Contracts.v1._3.Responses.EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl);
+    Task<ServiceAgentResponse<EigenschapResponseDto>> GetEigenschapByUrlAsync(string eigenschapUrl);
 
     // ZaakType-InformatieObjectType
-    Task<
-        ServiceAgentResponse<PagedResponse<Contracts.v1._3.Responses.ZaakTypeInformatieObjectTypeResponseDto>>
-    > GetZaakTypeInformatieObjectTypenAsync(Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters parameters, int page = 1);
+    Task<ServiceAgentResponse<PagedResponse<ZaakTypeInformatieObjectTypeResponseDto>>> GetZaakTypeInformatieObjectTypenAsync(
+        GetAllZaakTypeInformatieObjectTypenQueryParameters parameters,
+        int page = 1
+    );
 
     // ZaakObjectTypeDto
-    Task<ServiceAgentResponse<Contracts.v1._3.Responses.ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl);
+    Task<ServiceAgentResponse<ZaakObjectTypeResponseDto>> GetZaakObjectTypeByUrlAsync(string zaakObjectTypeUrl);
 }

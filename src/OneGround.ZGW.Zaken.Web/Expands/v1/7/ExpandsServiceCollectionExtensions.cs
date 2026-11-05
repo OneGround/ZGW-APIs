@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OneGround.ZGW.Besluiten.Contracts.v1.Responses;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.ServiceAgent;
@@ -14,9 +14,6 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
-using CatalogusResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.CatalogusResponseDto;
-using InformatieObjectTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.InformatieObjectTypeResponseDto;
-using ZaakTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
