@@ -224,6 +224,67 @@ public class ZaakObjectTypenQueryParametersValidatorTests
     }
 }
 
+public class ZaakTypeInformatieObjectTypenQueryParametersValidatorTests
+{
+    private readonly ZaakTypeInformatieObjectTypenQueryParametersValidator _validator = new();
+
+    [Theory]
+    [InlineData("not-a-url", true)]
+    [InlineData("https://ztc.test/zaaktypen/11111111-1111-1111-1111-111111111111", false)]
+    public void ZaakType_MustBeAUrl(string zaakType, bool rejected)
+    {
+        var result = _validator.TestValidate(new Q.GetAllZaakTypeInformatieObjectTypenQueryParameters { ZaakType = zaakType });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "ZaakType"));
+    }
+
+    [Theory]
+    [InlineData("https://ztc.test/informatieobjecttypen/11111111-1111-1111-1111-111111111111", true)]
+    [InlineData("Aanvraag", false)]
+    public void InformatieObjectType_IsAnOmschrijvingAndNoUrl(string informatieObjectType, bool rejected)
+    {
+        var result = _validator.TestValidate(
+            new Q.GetAllZaakTypeInformatieObjectTypenQueryParameters { InformatieObjectType = informatieObjectType }
+        );
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "InformatieObjectType"));
+    }
+
+    [Fact]
+    public void InformatieObjectType_LongerThan100Characters_IsRejected()
+    {
+        var result = _validator.TestValidate(
+            new Q.GetAllZaakTypeInformatieObjectTypenQueryParameters { InformatieObjectType = new string('a', 101) }
+        );
+
+        Assert.Contains(result.Errors, e => e.PropertyName == "InformatieObjectType");
+    }
+
+    [Theory]
+    [InlineData("nope", true)]
+    [InlineData("inkomend", false)]
+    [InlineData("intern", false)]
+    [InlineData("uitgaand", false)]
+    public void Richting_MustBeADirection(string richting, bool rejected)
+    {
+        var result = _validator.TestValidate(new Q.GetAllZaakTypeInformatieObjectTypenQueryParameters { Richting = richting });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "Richting"));
+    }
+
+    [Theory]
+    [InlineData("nope", true)]
+    [InlineData("alles", false)]
+    [InlineData("concept", false)]
+    [InlineData("definitief", false)]
+    public void Status_MustBeAConceptStatus(string status, bool rejected)
+    {
+        var result = _validator.TestValidate(new Q.GetAllZaakTypeInformatieObjectTypenQueryParameters { Status = status });
+
+        Assert.Equal(rejected, result.Errors.Exists(e => e.PropertyName == "Status"));
+    }
+}
+
 public class CatalogussenQueryParametersValidatorTests
 {
     private readonly CatalogussenQueryParametersValidator _validator = new();

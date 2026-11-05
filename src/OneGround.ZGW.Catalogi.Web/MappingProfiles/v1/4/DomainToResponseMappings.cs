@@ -44,5 +44,10 @@ internal static class DomainToResponseMappings
             .NewConfig<ZaakObjectType, V4.ZaakObjectTypeResponseDto>()
             .Inherits<ZaakObjectType, V3.ZaakObjectTypeResponseDto>()
             .Ignore(dest => dest.Expand);
+
+        config
+            .NewConfig<ZaakTypeInformatieObjectType, V4.ZaakTypeInformatieObjectTypeResponseDto>()
+            .Inherits<ZaakTypeInformatieObjectType, V3.ZaakTypeInformatieObjectTypeResponseDto>()
+            .Ignore(dest => dest.Expand);
     }
 }

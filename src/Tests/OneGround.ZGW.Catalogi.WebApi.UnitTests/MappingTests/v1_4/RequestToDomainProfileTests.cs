@@ -13,6 +13,7 @@ using ResultaatTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Que
 using RolTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllRolTypenQueryParameters;
 using StatusTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllStatusTypenQueryParameters;
 using ZaakObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakObjectTypenQueryParameters;
+using ZaakTypeInformatieObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters;
 using ZaakTypenFilter = OneGround.ZGW.Catalogi.Web.Models.v1.GetAllZaakTypenFilter;
 using ZaakTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakTypenQueryParameters;
 
@@ -130,6 +131,25 @@ public class RequestToDomainProfileTests : IDisposable
     public void ZaakObjectTypen_without_anderObjecttype_maps_to_null()
     {
         Assert.Null(Mapper.Map<GetAllZaakObjectTypenFilter>(new ZaakObjectTypenQueryParameters { AnderObjectType = null }).AnderObjectType);
+    }
+
+    [Fact]
+    public void ZaakTypeInformatieObjectTypen_maps_the_filters()
+    {
+        var source = new ZaakTypeInformatieObjectTypenQueryParameters
+        {
+            ZaakType = "https://ztc.test/zaaktypen/11111111-1111-1111-1111-111111111111",
+            InformatieObjectType = "Aanvraag",
+            Richting = "uitgaand",
+            Status = "concept",
+        };
+
+        var result = Mapper.Map<GetAllZaakTypeInformatieObjectTypenFilter>(source);
+
+        Assert.Equal(source.ZaakType, result.ZaakType);
+        Assert.Equal("Aanvraag", result.InformatieObjectType);
+        Assert.Equal(Richting.uitgaand, result.Richting);
+        Assert.Equal(ConceptStatus.concept, result.Status);
     }
 
     [Fact]

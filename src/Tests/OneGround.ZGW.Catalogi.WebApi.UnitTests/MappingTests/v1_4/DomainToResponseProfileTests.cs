@@ -301,4 +301,33 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Contains("\"resultaattypen\":[]", Json(v14));
         Assert.Contains("\"statustypen\":[]", Json(v14));
     }
+
+    [Fact]
+    public void ZaakTypeInformatieObjectType_maps_like_v1_3_without_expand()
+    {
+        var zaakType = new ZaakType
+        {
+            Id = Guid.NewGuid(),
+            Catalogus = new Catalogus { Id = Guid.NewGuid() },
+        };
+        var statusType = new StatusType { Id = Guid.NewGuid() };
+        var source = new ZaakTypeInformatieObjectType
+        {
+            Id = Guid.NewGuid(),
+            ZaakType = zaakType,
+            StatusType = statusType,
+            InformatieObjectTypeOmschrijving = "Aanvraag",
+            Richting = Richting.inkomend,
+            VolgNummer = 3,
+        };
+
+        var result = Mapper.Map<V14.ZaakTypeInformatieObjectTypeResponseDto>(source);
+
+        Assert.Null(result.Expand);
+        // Note: the informatieobjecttype of a zaaktype-informatieobjecttype is the omschrijving, not a URL
+        Assert.Equal("Aanvraag", result.InformatieObjectType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
+        Assert.Equal(ZtcMapperTestHost.Resolved(statusType), result.StatusType);
+        Assert.Equal(Json(Mapper.Map<V13.ZaakTypeInformatieObjectTypeResponseDto>(source)), Json(result));
+    }
 }

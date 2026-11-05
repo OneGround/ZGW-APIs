@@ -15,6 +15,7 @@ using OneGround.ZGW.Common.Services;
 using BesluitTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.BesluitTypeResponseDto;
 using CatalogusResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.CatalogusResponseDto;
 using GetAllRolTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._3.Queries.GetAllRolTypenQueryParameters;
+using GetAllZaakTypeInformatieObjectTypenQueryParameters = OneGround.ZGW.Catalogi.Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters;
 using InformatieObjectTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.InformatieObjectTypeResponseDto;
 using ZaakTypeResponseDto = OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto;
 
