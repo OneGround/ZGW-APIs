@@ -1,0 +1,75 @@
+name: CI Third-Party Notices
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci-third-party-notices.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  third-party-notices:
+    name: Check third-party notices are up to date
+    runs-on: ubuntu-latest
+
+    env:
+      NUGET_LICENSE_VERSION: '4.0.18'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for changed files
+        id: changed-files
+        uses: ./.github/actions/check-changed-files
+        with:
+          paths_to_check: |
+            src/
+            THIRD-PARTY-NOTICES.md
+            third-party-licenses/
+            .github/workflows/ci-third-party-notices.yml
+
+      - name: Setup .NET
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install nuget-license
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: dotnet tool install --global nuget-license --version ${{ env.NUGET_LICENSE_VERSION }}
+
+      - name: Restore dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: dotnet restore src/ZGW.all.sln
+
+      - name: Regenerate notices
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          rm -rf third-party-licenses
+          nuget-license -i src/ZGW.all.sln -t -exclude-projects "*Tests*" -o Markdown -fo THIRD-PARTY-NOTICES.md -d third-party-licenses
+          ver=$(grep -oP 'Include="Hangfire.Core" Version="\K[^"]+' src/Directory.Packages.props)
+          for f in COPYING COPYING.LESSER; do
+            cp ~/.nuget/packages/hangfire.core/$ver/$f third-party-licenses/Hangfire.Core__$ver.$f.txt
+          done
+
+      - name: Fail if notices are out of date
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          changes=$(git status --porcelain --untracked-files=all -- THIRD-PARTY-NOTICES.md third-party-licenses)
+          if [ -n "$changes" ]; then
+            echo "::error::THIRD-PARTY-NOTICES.md or third-party-licenses/ is out of date. Regenerate them with the commands in this workflow and commit the result."
+            echo "$changes"
+            exit 1
+          fi
