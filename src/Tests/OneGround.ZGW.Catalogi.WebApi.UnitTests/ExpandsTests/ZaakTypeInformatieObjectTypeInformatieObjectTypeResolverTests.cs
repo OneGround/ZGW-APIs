@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Expands.v1._4;
@@ -32,7 +33,8 @@ public class ZaakTypeInformatieObjectType_InformatieObjectTypeResolverTests
 
     private ZaakTypeInformatieObjectType_InformatieObjectType_Resolver CreateResolver(
         IReadOnlyList<InformatieObjectType> found,
-        Func<InformatieObjectType, V4.InformatieObjectTypeResponseDto> map = null
+        Func<InformatieObjectType, V4.InformatieObjectTypeResponseDto> map = null,
+        ILogger<ZaakTypeInformatieObjectType_InformatieObjectType_Resolver> logger = null
     )
     {
         var mediatorMock = new Mock<IMediator>();
@@ -42,8 +44,10 @@ public class ZaakTypeInformatieObjectType_InformatieObjectTypeResolverTests
                 (GetAllInformatieObjectTypenQuery q, CancellationToken _) =>
                 {
                     _queries.Add(q);
+                    // Note: Like the real query: the requested page of all the matches, and the number of all the matches
+                    var page = found.Skip((q.Pagination.Page - 1) * q.Pagination.Size).Take(q.Pagination.Size).ToList();
                     return new QueryResult<PagedResult<InformatieObjectType>>(
-                        new PagedResult<InformatieObjectType> { PageResult = found.ToList(), Count = found.Count },
+                        new PagedResult<InformatieObjectType> { PageResult = page, Count = found.Count },
                         QueryStatus.OK
                     );
                 }
@@ -58,6 +62,10 @@ public class ZaakTypeInformatieObjectType_InformatieObjectTypeResolverTests
         services.AddScoped(_ => mediatorMock.Object);
         services.AddScoped(_ => mapperMock.Object);
         services.AddScoped(typeof(IGenericCache<>), typeof(GenericCache<>));
+        if (logger is not null)
+        {
+            services.AddSingleton(logger);
+        }
 
         var uriServiceMock = new Mock<IEntityUriService>();
         uriServiceMock.Setup(u => u.GetId(CatalogusUrl)).Returns(CatalogusId);
@@ -101,6 +109,38 @@ public class ZaakTypeInformatieObjectType_InformatieObjectTypeResolverTests
         var resolver = CreateResolver([older, newest, middle], i => i == newest ? mappedNewest : new V4.InformatieObjectTypeResponseDto());
 
         Assert.Same(mappedNewest, await Resolve(resolver));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_MoreVersionsThanFitOnOnePage_ReturnsTheNewestOfTheFirstPageAndLogsAWarning()
+    {
+        // Note: the query has no order on the geldigheid, so with more matches than the page holds the newest one can be missed; that is logged
+        var versions = Enumerable.Range(0, 150).Select(i => Version(1900 + i % 100)).ToList();
+        var newestOfFirstPage = versions.Take(100).MaxBy(v => v.BeginGeldigheid);
+        var mapped = new V4.InformatieObjectTypeResponseDto();
+        var logger = new Mock<ILogger<ZaakTypeInformatieObjectType_InformatieObjectType_Resolver>>();
+        var resolver = CreateResolver(versions, i => i == newestOfFirstPage ? mapped : new V4.InformatieObjectTypeResponseDto(), logger.Object);
+
+        Assert.Same(mapped, await Resolve(resolver));
+        Assert.Single(_queries);
+        logger.Verify(
+            l => l.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task ResolveAsync_NotMoreVersionsThanFitOnOnePage_LogsNoWarning()
+    {
+        var logger = new Mock<ILogger<ZaakTypeInformatieObjectType_InformatieObjectType_Resolver>>();
+        var resolver = CreateResolver([Version(2020), Version(2022)], logger: logger.Object);
+
+        await Resolve(resolver);
+
+        logger.Verify(
+            l => l.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Never
+        );
     }
 
     [Fact]

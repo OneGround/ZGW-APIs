@@ -17,7 +17,7 @@ namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 /// (InformatieObjectType, ZaakType, BesluitType, ...). Unlike DRC/ZRC -- where the Catalogus lives
 /// in another service and is fetched through a ServiceAgent -- ZTC owns the Catalogus itself, so
 /// this queries it locally through MediatR, like DRC's own-service InformatieObjectResolver does.
-/// The result is cached per request (keyed by catalogus URL, like DRC's InformatieObjectTypeCatalogusResolver),
+/// The result is cached per request (keyed by the id of the catalogus, so two spellings of its URL are one catalogus),
 /// since a list of InformatieObjectType/ZaakType/BesluitType/Eigenschap/ResultaatType/RolType/StatusType/ZaakObjectType/ZaakTypeInformatieObjectType typically references only a handful of
 /// distinct catalogi. A CATALOGUS that is not available to the caller (NotFound/Forbidden) resolves to null,
 /// which the ExpandEngine stores in <c>_expand</c> as an empty object (<c>{}</c>), instead of failing the request, see
@@ -106,18 +106,23 @@ public class Catalogus_Resolver
     private Task<object> ResolveCatalogusAsync(string catalogusUrl) =>
         string.IsNullOrWhiteSpace(catalogusUrl) ? Task.FromResult<object>(null) : LoadCatalogusAsync(catalogusUrl);
 
-    private async Task<object> LoadCatalogusAsync(string catalogusUrl) =>
-        await _catalogusCache.GetOrCacheAndGetAsync(
-            $"key_{catalogusUrl}",
+    private async Task<object> LoadCatalogusAsync(string catalogusUrl)
+    {
+        // Note: By id, not by URL: two URLs to the same catalogus (other case, a trailing slash, a query string) are one catalogus, like in
+        // Types_ResolverBase.
+        var id = _uriService.GetId(catalogusUrl);
+
+        return await _catalogusCache.GetOrCacheAndGetAsync(
+            id.ToString(),
             async () =>
             {
-                // Note: Eigen scope (dus eigen DbContext) per aanroep, zodat concurrente resolves voor
-                // verschillende entities uit dezelfde lijst nooit dezelfde scoped DbContext-instantie delen.
+                // Note: A scope of its own (so a DbContext of its own) per query, which is only made when the catalogus is not in the cache yet.
+                // The cache belongs to the request, the scope does not.
                 using var scope = _serviceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
 
-                var result = await mediator.Send(new GetCatalogusQuery { Id = _uriService.GetId(catalogusUrl) });
+                var result = await mediator.Send(new GetCatalogusQuery { Id = id });
                 if (!ExpandQueryStatus.IsAvailable(result.Status, "catalogus"))
                 {
                     return null;
@@ -126,4 +131,5 @@ public class Catalogus_Resolver
                 return mapper.Map<CatalogusResponseDto>(result.Result);
             }
         );
+    }
 }

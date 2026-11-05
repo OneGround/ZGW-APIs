@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Caching;
@@ -25,7 +26,8 @@ namespace OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 public class ZaakTypeInformatieObjectType_InformatieObjectType_Resolver(IServiceProvider serviceProvider, IEntityUriService uriService)
     : IExpandResolver<ZaakTypeInformatieObjectTypeResponseDto>
 {
-    // Note: More than the versions of one omschrijving that can be valid at the same time
+    // Note: More than the versions of one omschrijving that can be valid at the same time. The query has no order on the geldigheid, so the newest
+    // version is picked from this one page; a warning is logged if there are more matches than fit on it.
     private const int MaxVersions = 100;
 
     public string Path => "informatieobjecttype";
@@ -75,7 +77,19 @@ public class ZaakTypeInformatieObjectType_InformatieObjectType_Resolver(IService
             return null;
         }
 
-        var newest = result.Result.PageResult.OrderByDescending(i => i.BeginGeldigheid).FirstOrDefault();
+        if (result.Result.Count > MaxVersions)
+        {
+            serviceProvider
+                .GetService<ILogger<ZaakTypeInformatieObjectType_InformatieObjectType_Resolver>>()
+                ?.LogWarning(
+                    "{Count} informatieobjecttypen with omschrijving '{Omschrijving}' are valid today; the informatieobjecttype expand picks the newest of the first {MaxVersions}",
+                    result.Result.Count,
+                    omschrijving,
+                    MaxVersions
+                );
+        }
+
+        var newest = result.Result.PageResult.MaxBy(i => i.BeginGeldigheid);
 
         return newest is null ? null : mapper.Map<InformatieObjectTypeResponseDto>(newest);
     }

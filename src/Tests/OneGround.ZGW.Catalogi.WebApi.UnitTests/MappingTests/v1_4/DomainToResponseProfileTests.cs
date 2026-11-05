@@ -29,7 +29,7 @@ public class DomainToResponseProfileTests : IDisposable
         {
             Id = Guid.NewGuid(),
             Domein = "ABC",
-            Rsin = "123456789",
+            Rsin = "999993653",
             Naam = "Catalogus",
             ZaakTypes = [zaakType],
             BesluitTypes = [],

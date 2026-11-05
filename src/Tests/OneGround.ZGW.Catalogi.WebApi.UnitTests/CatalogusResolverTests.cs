@@ -13,6 +13,7 @@ using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Expands;
+using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using Xunit;
 
@@ -189,6 +190,38 @@ public class CatalogusResolverTests
         );
 
         Assert.Same(mapped, result);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_TwoSpellingsOfTheSameCatalogusUrl_QueryTheCatalogusOnce()
+    {
+        // Note: the cache is keyed by id, so another case or a trailing slash is the same catalogus
+        const string otherSpelling = "https://ZTC.test/catalogussen/11111111-1111-1111-1111-111111111111/";
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetCatalogusQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryResult<Catalogus>(new Catalogus(), QueryStatus.OK));
+        var services = new ServiceCollection();
+        services.AddScoped(_ => mediatorMock.Object);
+        services.AddScoped(_ => Mock.Of<IMapper>(m => m.Map<CatalogusResponseDto>(It.IsAny<Catalogus>()) == new CatalogusResponseDto()));
+        var uriServiceMock = new Mock<IEntityUriService>();
+        // Note: the real id extraction, so the test shows that the spellings collapse to the same id
+        uriServiceMock.Setup(u => u.GetId(It.IsAny<string>())).Returns((string url) => UriHelper.GetResourceId(url));
+        var resolver = new Catalogus_Resolver(services.BuildServiceProvider(), uriServiceMock.Object, new GenericCache<CatalogusResponseDto>());
+
+        var first = await resolver.ResolveAsync(
+            new ZaakTypeResponseDto { Catalogus = CatalogusUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+        var second = await resolver.ResolveAsync(
+            new ZaakTypeResponseDto { Catalogus = otherSpelling },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "catalogus" }
+        );
+
+        Assert.Same(first, second);
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetCatalogusQuery>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Theory]
