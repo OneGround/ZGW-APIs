@@ -1,0 +1,82 @@
+name: CI Third-Party Notices
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**/*.csproj'
+      - 'src/**/*.props'
+      - 'src/ZGW.all.sln'
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
+      - '.github/workflows/ci-third-party-notices.yml'
+      - '.github/scripts/Update-ThirdPartyNotices.ps1'
+      - '.github/scripts/third-party-notices-overrides.json'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  third-party-notices:
+    name: Check third-party notices are up to date
+    runs-on: ubuntu-latest
+
+    env:
+      NUGET_LICENSE_VERSION: '4.0.18'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for changed files
+        id: changed-files
+        uses: ./.github/actions/check-changed-files
+        with:
+          paths_to_check: |
+            src/*.csproj
+            src/*.props
+            src/ZGW.all.sln
+            THIRD-PARTY-NOTICES.md
+            third-party-licenses/
+            .github/workflows/ci-third-party-notices.yml
+            .github/scripts/Update-ThirdPartyNotices.ps1
+            .github/scripts/third-party-notices-overrides.json
+
+      - name: Setup .NET
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install PowerShell
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0
+        with:
+          Version: 7.6.6
+
+      - name: Install nuget-license
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: dotnet tool install --global nuget-license --version ${{ env.NUGET_LICENSE_VERSION }}
+
+      - name: Regenerate notices
+        if: steps.changed-files.outputs.any_changed == 'true'
+        shell: pwsh
+        run: ./.github/scripts/Update-ThirdPartyNotices.ps1
+
+      - name: Fail if notices are out of date
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          changes=$(git status --porcelain --untracked-files=all -- THIRD-PARTY-NOTICES.md third-party-licenses)
+          if [ -n "$changes" ]; then
+            echo "::error::Third-party notices are out of date. Run 'pwsh ./.github/scripts/Update-ThirdPartyNotices.ps1' from the repository root and commit THIRD-PARTY-NOTICES.md and third-party-licenses/."
+            echo "$changes"
+            exit 1
+          fi

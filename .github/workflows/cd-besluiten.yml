@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cd-besluiten.yml
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Besluiten.WebApi/ZGW.Besluiten.WebApi.csproj
       - 'src/OneGround.ZGW.Autorisaties.Contracts/**'

@@ -20,6 +20,8 @@ LABEL org.opencontainers.image.source="https://github.com/OneGround/ZGW-APIs" \
 WORKDIR /app
 
 COPY LICENSE ./
+COPY THIRD-PARTY-NOTICES.md ./
+COPY third-party-licenses/ ./third-party-licenses/
 
 COPY --from=build /app/publish .
 

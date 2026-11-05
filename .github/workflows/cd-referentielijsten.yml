@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cd-referentielijsten.yml
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Referentielijsten.WebApi/ZGW.Referentielijsten.WebApi.csproj
       - 'src/OneGround.ZGW.Common.Abstractions/**'
