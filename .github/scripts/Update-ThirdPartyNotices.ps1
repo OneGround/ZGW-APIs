@@ -45,7 +45,8 @@ foreach ($row in Get-Content $noticesFile | Select-Object -Skip 2) {
         $files += Get-Item (Join-Path $packageDir ($license.'#text' -replace '\\', '/'))
     }
     foreach ($file in $files) {
-        Copy-Item $file.FullName (Join-Path $packagesDir "${id}__${version}.$($file.Name)")
+        # Copy-Item would keep the 744 mode NuGet gives extracted files on Linux, which git reports as a change.
+        [IO.File]::WriteAllBytes((Join-Path $packagesDir "${id}__${version}.$($file.Name)"), [IO.File]::ReadAllBytes($file.FullName))
     }
     if ($cells[4] -eq 'PostgreSQL') {
         $repoUrl = $cells[8].TrimEnd('/')
