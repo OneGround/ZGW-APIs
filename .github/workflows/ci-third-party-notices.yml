@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/**/*.csproj'
       - 'src/**/*.props'
+      - 'src/ZGW.all.sln'
       - 'THIRD-PARTY-NOTICES.md'
       - 'third-party-licenses/**'
       - '.github/workflows/ci-third-party-notices.yml'
@@ -42,6 +43,7 @@ jobs:
           paths_to_check: |
             src/*.csproj
             src/*.props
+            src/ZGW.all.sln
             THIRD-PARTY-NOTICES.md
             third-party-licenses/
             .github/workflows/ci-third-party-notices.yml

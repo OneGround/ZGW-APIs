@@ -7,6 +7,7 @@ $solution = Join-Path $rootDir 'src/ZGW.all.sln'
 $overrides = Join-Path $PSScriptRoot 'third-party-notices-overrides.json'
 $noticesFile = Join-Path $rootDir 'THIRD-PARTY-NOTICES.md'
 $packagesDir = Join-Path $rootDir 'third-party-licenses/nuget'
+$upstreamDir = Join-Path $rootDir 'third-party-licenses/upstream'
 
 if (-not (Get-Command nuget-license -ErrorAction SilentlyContinue)) {
     Write-Error "nuget-license is not installed. Run: dotnet tool install --global nuget-license --version $nugetLicenseVersion"
@@ -45,6 +46,13 @@ foreach ($row in Get-Content $noticesFile | Select-Object -Skip 2) {
     }
     foreach ($file in $files) {
         Copy-Item $file.FullName (Join-Path $packagesDir "${id}__${version}.$($file.Name)")
+    }
+    if ($cells[4] -eq 'PostgreSQL') {
+        $repoUrl = $cells[8].TrimEnd('/')
+        $upstreamFile = Join-Path $upstreamDir "$(Split-Path $repoUrl -Leaf)__${version}.LICENSE"
+        if (-not (Test-Path $upstreamFile)) {
+            Write-Error "$id $version has a project-specific license text that its package does not ship. Save $($repoUrl -replace '^https://github.com/', 'https://raw.githubusercontent.com/')/v$version/LICENSE as $upstreamFile."
+        }
     }
 }
 
