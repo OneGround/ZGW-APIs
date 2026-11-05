@@ -33,12 +33,12 @@ public class RequestToDomainProfileTests : IDisposable
     [Fact]
     public void Catalogussen_maps_the_lists_of_domeinen_and_rsins()
     {
-        var source = new CatalogussenQueryParameters { Domein__in = "ABC,DEF", Rsin__in = "123456782,111222333" };
+        var source = new CatalogussenQueryParameters { Domein__in = "ABC,DEF", Rsin__in = "999993653,999990482" };
 
         var result = Mapper.Map<CatalogussenFilter>(source);
 
         Assert.Equal(["ABC", "DEF"], result.Domein__in);
-        Assert.Equal(["123456782", "111222333"], result.Rsin__in);
+        Assert.Equal(["999993653", "999990482"], result.Rsin__in);
     }
 
     [Fact]

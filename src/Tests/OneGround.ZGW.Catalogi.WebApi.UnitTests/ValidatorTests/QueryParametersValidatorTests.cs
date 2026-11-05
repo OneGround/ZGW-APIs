@@ -310,7 +310,7 @@ public class CatalogussenQueryParametersValidatorTests
     [Fact]
     public void Rsin_ThatIsAnRsin_IsAccepted()
     {
-        _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Rsin = "123456782" }).ShouldNotHaveValidationErrorFor("Rsin");
+        _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Rsin = "999993653" }).ShouldNotHaveValidationErrorFor("Rsin");
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class CatalogussenQueryParametersValidatorTests
     [Fact]
     public void ListOfRsins_WithOneThatIsNotAnRsin_IsRejected()
     {
-        var result = _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Rsin__in = "123456782,123" });
+        var result = _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Rsin__in = "999993653,123" });
 
         Assert.Contains(result.Errors, e => e.PropertyName.Contains("rsin__in"));
     }
@@ -332,7 +332,7 @@ public class CatalogussenQueryParametersValidatorTests
     [Fact]
     public void ListsThatAreValid_AreAccepted()
     {
-        var result = _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Domein__in = "ABC,DEF", Rsin__in = "123456782,111222333" });
+        var result = _validator.TestValidate(new Q.GetAllCatalogussenQueryParameters { Domein__in = "ABC,DEF", Rsin__in = "999993653,999990482" });
 
         Assert.True(result.Errors.Count == 0, string.Join("; ", result.Errors.ConvertAll(e => e.PropertyName + ": " + e.ErrorMessage)));
     }
