@@ -5,8 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'src/**'
+      - 'src/**/*.csproj'
+      - 'src/**/*.props'
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
       - '.github/workflows/ci-third-party-notices.yml'
+      - '.github/scripts/Update-ThirdPartyNotices.ps1'
+      - '.github/scripts/third-party-notices-overrides.json'
   pull_request:
     branches:
       - main
@@ -35,10 +40,13 @@ jobs:
         uses: ./.github/actions/check-changed-files
         with:
           paths_to_check: |
-            src/
+            src/*.csproj
+            src/*.props
             THIRD-PARTY-NOTICES.md
             third-party-licenses/
             .github/workflows/ci-third-party-notices.yml
+            .github/scripts/Update-ThirdPartyNotices.ps1
+            .github/scripts/third-party-notices-overrides.json
 
       - name: Setup .NET
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -46,30 +54,27 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Install PowerShell
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1.2.0
+        with:
+          Version: 7.6.6
+
       - name: Install nuget-license
         if: steps.changed-files.outputs.any_changed == 'true'
         run: dotnet tool install --global nuget-license --version ${{ env.NUGET_LICENSE_VERSION }}
 
-      - name: Restore dependencies
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: dotnet restore src/ZGW.all.sln
-
       - name: Regenerate notices
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          rm -rf third-party-licenses
-          nuget-license -i src/ZGW.all.sln -t -exclude-projects "*Tests*" -o Markdown -fo THIRD-PARTY-NOTICES.md -d third-party-licenses
-          ver=$(grep -oP 'Include="Hangfire.Core" Version="\K[^"]+' src/Directory.Packages.props)
-          for f in COPYING COPYING.LESSER; do
-            cp ~/.nuget/packages/hangfire.core/$ver/$f third-party-licenses/Hangfire.Core__$ver.$f.txt
-          done
+        shell: pwsh
+        run: ./.github/scripts/Update-ThirdPartyNotices.ps1
 
       - name: Fail if notices are out of date
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           changes=$(git status --porcelain --untracked-files=all -- THIRD-PARTY-NOTICES.md third-party-licenses)
           if [ -n "$changes" ]; then
-            echo "::error::THIRD-PARTY-NOTICES.md or third-party-licenses/ is out of date. Regenerate them with the commands in this workflow and commit the result."
+            echo "::error::Third-party notices are out of date. Run 'pwsh ./.github/scripts/Update-ThirdPartyNotices.ps1' from the repository root and commit THIRD-PARTY-NOTICES.md and third-party-licenses/."
             echo "$changes"
             exit 1
           fi

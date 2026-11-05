@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cd-notificaties.yml
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Notificaties.WebApi/ZGW.Notificaties.WebApi.csproj
 ## > src/OneGround.ZGW.Notificaties.Messaging.Listener/ZGW.Notificaties.Messaging.Listener.csproj
