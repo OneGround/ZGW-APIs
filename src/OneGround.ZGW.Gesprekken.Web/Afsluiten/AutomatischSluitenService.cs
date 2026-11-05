@@ -75,9 +75,8 @@ public class AutomatischSluitenService : BackgroundService
 
         var grens = nu.AddDays(-_applicationConfiguration.AutomatischSluitenNaDagen);
         var verlopen = await db
-            .Gesprekken.Where(g =>
-                g.MomentEindeGesprek == null && (g.Bijdragen.Max(b => (DateTime?)b.Leveringsmoment) ?? g.AanvangsmomentGesprek) < grens
-            )
+            .Gesprekken.Include(g => g.Deelnames)
+            .Where(g => g.MomentEindeGesprek == null && (g.Bijdragen.Max(b => (DateTime?)b.Leveringsmoment) ?? g.AanvangsmomentGesprek) < grens)
             .ToListAsync(cancellationToken);
 
         foreach (var gesprek in verlopen)

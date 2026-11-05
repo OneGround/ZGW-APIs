@@ -45,13 +45,16 @@ binnen 2 werkdagen.") and `Application:AutomatischAntwoordNaam` the display name
 A gesprek is a slow chat, so its contactmoment has only taken place once it is closed. There is no klantcontact at the
 start. When a gesprek is closed, by `eindigen` or automatically, the registration creates one klantcontact in
 Klantinteracties and fills `contactmoment` (read-only, `null` while the gesprek runs). `gesprek.beeindigd` carries the
-URL. A running gesprek can be found through the filters on partij and zaak.
+URL. A running gesprek can be found through the filters on partij and zaak. The klantcontact has no message text, but
+it is linked to the gesprek and the zaak (onderwerpobjecten) and to the deelnames that refer to this Klantinteracties
+(betrokkenen, actorklantcontacten).
 
 - `Klantinteracties:Api` and `Klantinteracties:Token` configure the Klantinteracties API. Without them, or when it does
   not accept the klantcontact, the gesprek still closes and `contactmoment` stays `null`.
 - `Application:AutomatischSluitenNaDagen` (default 3; 0 turns it off): a background job closes a gesprek after this many
   days without a new bijdrage, every `Application:AutomatischSluitenIntervalMinuten` (default 60). With several instances
-  each runs the job; closing is not yet coordinated between them.
+  each runs the job; closing is not yet coordinated between them. `Services:GRC:Api` must hold the public address of
+  this API: the job has no request to build the URL of the gesprek from.
 
 ## Bijlagen
 
