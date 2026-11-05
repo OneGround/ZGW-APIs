@@ -133,6 +133,8 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ZaakTypeInformatieObjectTypen.Create, Name = Operations.ZaakTypeInformatieObjectTypen.Create)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ZaakTypeInformatieObjectTypeResponseDto))]
@@ -175,6 +177,8 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.ZaakTypeInformatieObjectTypen.Update, Name = Operations.ZaakTypeInformatieObjectTypen.Update)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeInformatieObjectTypeResponseDto))]
@@ -220,6 +224,8 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.ZaakTypeInformatieObjectTypen.Update, Name = Operations.ZaakTypeInformatieObjectTypen.PartialUpdate)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeInformatieObjectTypeResponseDto))]
@@ -286,6 +292,8 @@ public class ZaakTypeInformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpDelete(ApiRoutes.ZaakTypeInformatieObjectTypen.Delete, Name = Operations.ZaakTypeInformatieObjectTypen.Delete)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> DeleteAsync(Guid id)

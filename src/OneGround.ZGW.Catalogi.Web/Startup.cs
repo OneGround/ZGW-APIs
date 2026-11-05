@@ -9,7 +9,7 @@ using OneGround.ZGW.Autorisaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.BusinessRules;
 using OneGround.ZGW.Catalogi.Web.Controllers;
-using OneGround.ZGW.Catalogi.Web.Expands.v1._3;
+using OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 using OneGround.ZGW.Catalogi.Web.Extensions;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Catalogi.Web.Services;
@@ -56,6 +56,7 @@ public class Startup
             "Catalogi",
             Configuration,
             Api.LatestVersion_1_3,
+            //Api.LatestVersion_1_4, TODO: Uncomment this line (and remove the old 1.3 line) when the API is ready for version 1.4.0
             c =>
             {
                 c.MvcOptions = o =>
@@ -109,7 +110,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddCatalogiAPIExpands(); // New Expand Engine v1.3.3
+        services.AddCatalogiAPIExpands(); // New Expand Engine (v1.4)
 
         services.AddNotificatiesService(Configuration);
         services.AddScoped<IZaakTypeInformatieObjectTypenBusinessRuleService, ZaakTypeInformatieObjectTypenBusinessRuleService>();

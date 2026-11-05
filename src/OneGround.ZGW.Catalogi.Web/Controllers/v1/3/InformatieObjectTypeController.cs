@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
 using OneGround.ZGW.Catalogi.DataModel;
@@ -20,7 +19,6 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Controllers;
-using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Filters;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services;
@@ -41,8 +39,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
     private readonly IValidatorService _validatorService;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IRequestMerger _requestMerger;
-    private readonly ExpandValidator<InformatieObjectTypeResponseDto> _expandValidator;
-    private readonly ExpandEngine<InformatieObjectTypeResponseDto> _expandEngine;
 
     public InformatieObjectTypeController(
         ILogger<InformatieObjectTypeController> logger,
@@ -52,17 +48,13 @@ public class InformatieObjectTypeController : ZGWControllerBase
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
         IValidatorService validatorService,
-        IErrorResponseBuilder errorResponseBuilder,
-        ExpandValidator<InformatieObjectTypeResponseDto> expandValidator,
-        ExpandEngine<InformatieObjectTypeResponseDto> expandEngine
+        IErrorResponseBuilder errorResponseBuilder
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
         _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
         _validatorService = validatorService;
-        _expandValidator = expandValidator;
-        _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
     }
 
@@ -79,17 +71,13 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.InformatieObjectTypen.GetAll, Name = Operations.InformatieObjectTypen.List)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(PagedResponse<InformatieObjectTypeResponseDto>))]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetAllInformatieObjectTypenQueryParameters>))]
-    [Expand]
-    public async Task<IActionResult> GetAllAsync([FromQuery] GetAllInformatieObjectTypenQueryParameters queryParameters, int page = 1)
+    [ServiceFilter(typeof(ValidateQueryParametersFilter<Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters>))]
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters queryParameters,
+        int page = 1
+    )
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromQuery}, {Page}", nameof(GetAllAsync), queryParameters, page);
-
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
-        if (expandValidationResult is not null)
-        {
-            return expandValidationResult;
-        }
 
         var pagination = _mapper.Map<PaginationFilter>(new PaginationQuery(page, _applicationConfiguration.InformatieObjectTypenPageSize));
         var filter = _mapper.Map<Models.v1.GetAllInformatieObjectTypenFilter>(queryParameters);
@@ -104,19 +92,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
         }
 
         var informatieObjectTypenResponse = _mapper.Map<List<InformatieObjectTypeResponseDto>>(result.Result.PageResult);
-
-        // Handle optional expands on the returned DTOs. This is done after the mapping to the DTOs, because the expand resolvers are registered for the DTO type, not for the entity type.
-        if (expandPaths is { Count: > 0 })
-        {
-            try
-            {
-                await _expandEngine.ResolveListAsync(informatieObjectTypenResponse, expandPaths);
-            }
-            catch (ExpandInternalQueryHandlerException ex)
-            {
-                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
-            }
-        }
 
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(
             queryParameters,
@@ -140,18 +115,10 @@ public class InformatieObjectTypeController : ZGWControllerBase
     [HttpGet(ApiRoutes.InformatieObjectTypen.Get, Name = Operations.InformatieObjectTypen.Read)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetInformatieObjectTypeQueryParameters>))]
     [ETagFilter]
-    [Expand]
-    public async Task<IActionResult> GetAsync(Guid id, [FromQuery] GetInformatieObjectTypeQueryParameters queryParameters)
+    public async Task<IActionResult> GetAsync(Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(GetAsync), id);
-
-        var expandValidationResult = ValidateExpand(_expandValidator, queryParameters.Expand, allowedExpand: "catalogus", out var expandPaths);
-        if (expandValidationResult is not null)
-        {
-            return expandValidationResult;
-        }
 
         var result = await _mediator.Send(new GetInformatieObjectTypeQuery { Id = id });
 
@@ -161,19 +128,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
         }
 
         var informatieObjectTypeResponseDto = _mapper.Map<InformatieObjectTypeResponseDto>(result.Result);
-
-        // Handle optional expands on the returned DTO. This is done after the mapping to the DTO, because the expand resolvers are registered for the DTO type, not for the entity type.
-        if (expandPaths is { Count: > 0 })
-        {
-            try
-            {
-                await _expandEngine.ResolveAsync(informatieObjectTypeResponseDto, expandPaths);
-            }
-            catch (ExpandInternalQueryHandlerException ex)
-            {
-                return InterneQueryHandlerFout(ex.Resource, ex.StatusCode);
-            }
-        }
 
         return Ok(informatieObjectTypeResponseDto);
     }
@@ -190,12 +144,10 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpHead(ApiRoutes.InformatieObjectTypen.Get, Name = Operations.InformatieObjectTypen.ReadHead)]
     [Scope(AuthorizationScopes.Catalogi.Read)]
-    [ServiceFilter(typeof(ValidateQueryParametersFilter<GetInformatieObjectTypeQueryParameters>))]
     [ETagFilter]
-    [Expand]
-    public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetInformatieObjectTypeQueryParameters queryParameters)
+    public Task<IActionResult> HeadAsync(Guid id)
     {
-        return GetAsync(id, queryParameters);
+        return GetAsync(id);
     }
 
     /// <summary>
@@ -206,6 +158,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.InformatieObjectTypen.Create, Name = Operations.InformatieObjectTypen.Create)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -242,6 +196,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.Update)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -285,6 +241,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.PartialUpdate)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -341,6 +299,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpDelete(ApiRoutes.InformatieObjectTypen.Delete, Name = Operations.InformatieObjectTypen.Delete)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> DeleteAsync(Guid id)
@@ -374,6 +334,8 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.InformatieObjectTypen.Publish, Name = Operations.InformatieObjectTypen.Publish)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]

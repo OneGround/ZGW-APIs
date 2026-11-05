@@ -154,6 +154,8 @@ public class ZaakObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ZaakObjectTypen.Create, Name = Operations.ZaakObjectTypen.Create)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ZaakObjectTypeResponseDto))]
@@ -189,6 +191,8 @@ public class ZaakObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.ZaakObjectTypen.Update, Name = Operations.ZaakObjectTypen.Update)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakObjectTypeResponseDto))]
@@ -235,6 +239,8 @@ public class ZaakObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.ZaakObjectTypen.Update, Name = Operations.ZaakObjectTypen.PartialUpdate)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakObjectTypeResponseDto))]
@@ -294,6 +300,8 @@ public class ZaakObjectTypeController : ZGWControllerBase
     /// <response code="429">Too Many Requests</response>
     /// <response code="500">Internal Server Error</response>
     [HttpDelete(ApiRoutes.ZaakObjectTypen.Delete, Name = Operations.ZaakObjectTypen.Delete)]
+    [ZgwApiVersion(Api.LatestVersion_1_3)]
+    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> DeleteAsync(Guid id)

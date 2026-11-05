@@ -12,12 +12,9 @@ public static class QueryParameterValidationExtensions
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllInformatieObjectTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._2.Queries.GetAllInformatieObjectTypenQueryParameters>>();
-        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllInformatieObjectTypenQueryParameters>>();
-        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetInformatieObjectTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllBesluitTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllBesluitTypenQueryParameters>>();
-        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetBesluitTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllEigenschappenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllEigenschappenQueryParameters>>();
@@ -34,10 +31,30 @@ public static class QueryParameterValidationExtensions
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakObjectTypenQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllZaakTypenQueryParameters>>();
-        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakTypenQueryParameters>>();
-        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetZaakTypeQueryParameters>>();
 
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._3.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters>>();
+
+        // v1.4
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllCatalogussenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllEigenschappenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetEigenschapQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllResultaatTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetResultaatTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllRolTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetRolTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllStatusTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetStatusTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllZaakObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetZaakObjectTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllZaakTypeInformatieObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetZaakTypeInformatieObjectTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetCatalogusQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllBesluitTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllInformatieObjectTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetAllZaakTypenQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetBesluitTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetInformatieObjectTypeQueryParameters>>();
+        services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetZaakTypeQueryParameters>>();
     }
 }

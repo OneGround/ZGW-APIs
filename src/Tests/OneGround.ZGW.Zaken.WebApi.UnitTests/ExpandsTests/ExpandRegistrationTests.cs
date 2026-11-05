@@ -68,6 +68,37 @@ public class ExpandRegistrationTests
     }
 
     [Fact]
+    public void EveryCacheOfAResolver_IsRegisteredByOneOfTheMethods()
+    {
+        // Note: the ZTC type caches (zaaktype, catalogus, informatieobjecttype) are registered by one method for all the others, so this looks
+        // at all methods together. A cache of the wrong (e.g. an older ZTC contract version) type would only show as a 500 at request time.
+        var services = new ServiceCollection();
+        foreach (var register in Methods.Values)
+        {
+            register(services);
+        }
+
+        var missing = services
+            .Where(d =>
+                d.ImplementationType is not null
+                && d.ServiceType.IsGenericType
+                && d.ServiceType.GetGenericTypeDefinition() == typeof(IExpandResolver<>)
+            )
+            .SelectMany(d =>
+                d.ImplementationType.GetConstructors()
+                    .Single()
+                    .GetParameters()
+                    .Select(p => p.ParameterType)
+                    .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IGenericCache<>))
+                    .Where(t => !services.Any(s => s.ServiceType == t))
+                    .Select(t => $"{d.ImplementationType.Name} needs {t}")
+            )
+            .ToList();
+
+        Assert.True(missing.Count == 0, string.Join(Environment.NewLine, missing));
+    }
+
+    [Fact]
     public void CallingTheMethodsTwice_DoesNotRegisterAnythingTwice()
     {
         var services = new ServiceCollection();

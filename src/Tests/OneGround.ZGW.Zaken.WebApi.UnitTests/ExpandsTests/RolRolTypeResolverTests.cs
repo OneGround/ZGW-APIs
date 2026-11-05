@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Expands;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;

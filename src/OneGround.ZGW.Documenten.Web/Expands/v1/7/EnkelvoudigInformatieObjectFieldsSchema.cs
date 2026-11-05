@@ -1,4 +1,4 @@
-using OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
 

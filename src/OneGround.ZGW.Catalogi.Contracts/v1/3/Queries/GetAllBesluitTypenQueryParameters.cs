@@ -3,7 +3,7 @@ using OneGround.ZGW.Common.Contracts;
 
 namespace OneGround.ZGW.Catalogi.Contracts.v1._3.Queries;
 
-public class GetAllBesluitTypenQueryParameters : QueryParameters, IExpandParameter
+public class GetAllBesluitTypenQueryParameters : QueryParameters
 {
     /// <summary>
     /// URL-referentie naar de CATALOGUS waartoe dit BESLUITTYPE behoort.
@@ -43,10 +43,4 @@ public class GetAllBesluitTypenQueryParameters : QueryParameters, IExpandParamet
     /// </summary>
     [FromQuery(Name = "datumGeldigheid")]
     public string DatumGeldigheid { get; set; }
-
-    /// <summary>
-    /// Expand het respons met sub-types.
-    /// </summary>
-    [FromQuery(Name = "expand")]
-    public string Expand { get; set; }
 }
