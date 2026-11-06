@@ -56,6 +56,31 @@ internal static class ZakenSeed
     /// <summary>
     /// Seeds a zaak of <paramref name="zaakType"/> for <paramref name="rsin"/>, optionally closed, with one <paramref name="resource"/>, a hoofdzaak and a relevante andere zaak.
     /// </summary>
+    /// <summary>
+    /// Adds a relevanteAndereZaken reference from the zaak <paramref name="zaakId"/> to the zaak <paramref name="relevanteAndereZaakId"/>.
+    /// </summary>
+    public static async Task AddRelevanteAndereZaakAsync(ZakenWebApplicationFactory factory, Guid zaakId, Guid relevanteAndereZaakId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+
+        var owner = await context.Zaken.Where(z => z.Id == zaakId).Select(z => z.Owner).SingleAsync();
+
+        context.RelevanteAndereZaken.Add(
+            new RelevanteAndereZaak
+            {
+                Id = Guid.NewGuid(),
+                Owner = owner,
+                ZaakId = zaakId,
+                Url = ZakenEndpointRequests.ZaakUrl(relevanteAndereZaakId),
+                GerelateerdeZaakId = relevanteAndereZaakId,
+                AardRelatie = "vervolg",
+            }
+        );
+
+        await context.SaveChangesAsync();
+    }
+
     public static async Task<SeededZaak> SeedZaakAsync(
         ZakenWebApplicationFactory factory,
         string zaakType = ZaakTypes.A,
@@ -104,6 +129,7 @@ internal static class ZakenSeed
                     Id = Guid.NewGuid(),
                     Owner = rsin,
                     Url = ZakenEndpointRequests.ZaakUrl(relevant),
+                    GerelateerdeZaakId = relevant,
                     AardRelatie = "vervolg",
                 },
             ];

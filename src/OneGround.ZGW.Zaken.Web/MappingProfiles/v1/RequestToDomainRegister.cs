@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using NodaTime.Text;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Helpers;
+using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1.Queries;
 using OneGround.ZGW.Zaken.Contracts.v1.Requests;
@@ -114,7 +115,8 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.CreatedBy)
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.ModifiedBy)
-            .Ignore(dest => dest.Owner);
+            .Ignore(dest => dest.Owner)
+            .Map(dest => dest.GerelateerdeZaakId, src => UriHelper.TryGetResourceId(src.Url));
 
         config
             .NewConfig<ZaakKenmerkDto, ZaakKenmerk>()

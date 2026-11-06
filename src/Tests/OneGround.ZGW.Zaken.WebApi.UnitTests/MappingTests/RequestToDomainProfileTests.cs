@@ -158,6 +158,30 @@ public class RequestToDomainProfileTests : IDisposable
     }
 
     [Fact]
+    public void RelevanteAndereZaakDto_Maps_The_Id_Of_The_Referenced_Zaak()
+    {
+        var id = Guid.NewGuid();
+        var source = new RelevanteAndereZaakDto { Url = $"https://example.test/api/v1/zaken/{id}", AardRelatie = "vervolg" };
+
+        var result = _mapper.Map<RelevanteAndereZaak>(source);
+
+        Assert.Equal(id, result.GerelateerdeZaakId);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not a url")]
+    [InlineData("https://example.test/api/v1/zaken/no-guid")]
+    public void RelevanteAndereZaakDto_With_An_Url_Without_A_Zaak_Id_Maps_To_No_Id(string url)
+    {
+        var source = new RelevanteAndereZaakDto { Url = url, AardRelatie = "vervolg" };
+
+        var result = _mapper.Map<RelevanteAndereZaak>(source);
+
+        Assert.Null(result.GerelateerdeZaakId);
+    }
+
+    [Fact]
     public void ZaakKenmerkDto_Maps_To_ZaakKenmerk()
     {
         var source = new ZaakKenmerkDto { Bron = "bron", Kenmerk = "kenmerk" };
