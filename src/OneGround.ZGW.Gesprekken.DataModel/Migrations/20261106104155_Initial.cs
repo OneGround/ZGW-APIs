@@ -19,6 +19,55 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                 .Annotation("Npgsql:PostgresExtension:postgis", ",,");
 
             migrationBuilder.CreateTable(
+                name: "bestanden",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    bestandsnaam = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    bestandsomvang = table.Column<long>(type: "bigint", nullable: false),
+                    contenttype = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    titel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    sleutel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    aangemaaktop = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    verlooptop = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    geuploadop = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    owner = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
+                    creationtime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    modificationtime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    createdby = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    modifiedby = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_bestanden", x => x.id);
+                }
+            );
+
+            migrationBuilder.CreateTable(
+                name: "events",
+                columns: table => new
+                {
+                    sequence = table
+                        .Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    gesprek_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subject = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    aanleidingzaak = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    geredigeerd = table.Column<bool>(type: "boolean", nullable: false),
+                    data = table.Column<string>(type: "jsonb", nullable: false),
+                    owner = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_events", x => x.sequence);
+                }
+            );
+
+            migrationBuilder.CreateTable(
                 name: "finished_data_migrations",
                 columns: table => new
                 {
@@ -43,9 +92,14 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                     aanleidingzaak = table.Column<string>(
                         type: "character varying(1000)",
                         maxLength: 1000,
-                        nullable: false,
+                        nullable: true,
                         collation: "ci_collation"
                     ),
+                    aanleidingthema = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    aanleidingproductdienst = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    aanleidingagendaafspraak = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    aanleidingplan = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    contactmoment = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     aanvangsmomentgesprek = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     momenteindegesprek = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     owner = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
@@ -88,14 +142,10 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     gesprek_id = table.Column<Guid>(type: "uuid", nullable: false),
                     type = table.Column<int>(type: "integer", nullable: false),
-                    partij = table.Column<Guid>(type: "uuid", nullable: true),
+                    partij = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true, collation: "ci_collation"),
                     actor = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true, collation: "ci_collation"),
                     naam = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    emailadres = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: false),
-                    bsn = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: true),
-                    rsin = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: true),
-                    kvknummer = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
-                    vestigingsnummer = table.Column<string>(type: "character varying(12)", maxLength: 12, nullable: true),
+                    namens = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     aanvangsmomentdeelname = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     momenteindedeelname = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     owner = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
@@ -125,7 +175,8 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                     gesprek_id = table.Column<Guid>(type: "uuid", nullable: false),
                     verzender_id = table.Column<Guid>(type: "uuid", nullable: false),
                     isreactieop_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    tekstgespreksbijdrage = table.Column<string>(type: "text", nullable: false),
+                    tekstgespreksbijdrage = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: false),
+                    automatisch = table.Column<bool>(type: "boolean", nullable: false),
                     leveringsmoment = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     owner = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
                     creationtime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -159,8 +210,11 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     gespreksbijdrage_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    versienummer = table.Column<int>(type: "integer", nullable: false),
-                    enkelvoudiginformatieobject = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    bestand_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    titel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    bestandsnaam = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    contenttype = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    bestandsomvang = table.Column<long>(type: "bigint", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -202,7 +256,15 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                 }
             );
 
+            migrationBuilder.CreateIndex(name: "IX_bijlagen_bestand_id", table: "bijlagen", column: "bestand_id", unique: true);
+
             migrationBuilder.CreateIndex(name: "IX_bijlagen_gespreksbijdrage_id", table: "bijlagen", column: "gespreksbijdrage_id");
+
+            migrationBuilder.CreateIndex(name: "IX_events_aanleidingzaak", table: "events", column: "aanleidingzaak");
+
+            migrationBuilder.CreateIndex(name: "IX_events_event_id", table: "events", column: "event_id", unique: true);
+
+            migrationBuilder.CreateIndex(name: "IX_events_owner_sequence", table: "events", columns: new[] { "owner", "sequence" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_gelezengespreksbijdragen_gespreksbijdrage_id_gespreksdeelna~",
@@ -210,6 +272,8 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                 columns: new[] { "gespreksbijdrage_id", "gespreksdeelname_id" },
                 unique: true
             );
+
+            migrationBuilder.CreateIndex(name: "IX_gesprekken_aanleidingplan", table: "gesprekken", column: "aanleidingplan");
 
             migrationBuilder.CreateIndex(name: "IX_gesprekken_aanleidingzaak", table: "gesprekken", column: "aanleidingzaak");
 
@@ -240,7 +304,11 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(name: "bestanden");
+
             migrationBuilder.DropTable(name: "bijlagen");
+
+            migrationBuilder.DropTable(name: "events");
 
             migrationBuilder.DropTable(name: "finished_data_migrations");
 

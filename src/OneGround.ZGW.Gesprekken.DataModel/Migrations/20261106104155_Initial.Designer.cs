@@ -12,8 +12,8 @@ using OneGround.ZGW.Gesprekken.DataModel;
 namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
 {
     [DbContext(typeof(GrcDbContext))]
-    [Migration("20261102092737_AanleidingenUrlsEnRedactie")]
-    partial class AanleidingenUrlsEnRedactie
+    [Migration("20261106104155_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,6 +101,84 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                     b.ToTable("organisatie_nummers");
                 });
 
+            modelBuilder.Entity("OneGround.ZGW.Gesprekken.DataModel.Bestand", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AangemaaktOp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("aangemaaktop");
+
+                    b.Property<string>("Bestandsnaam")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("bestandsnaam");
+
+                    b.Property<long>("Bestandsomvang")
+                        .HasColumnType("bigint")
+                        .HasColumnName("bestandsomvang");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("contenttype");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("createdby");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creationtime");
+
+                    b.Property<DateTime?>("GeuploadOp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("geuploadop");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificationtime");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("modifiedby");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("owner");
+
+                    b.Property<string>("Sleutel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("sleutel");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Titel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("titel");
+
+                    b.Property<DateTime>("VerlooptOp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verlooptop");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("bestanden");
+                });
+
             modelBuilder.Entity("OneGround.ZGW.Gesprekken.DataModel.Bijlage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -108,21 +186,37 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("EnkelvoudigInformatieobject")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("enkelvoudiginformatieobject");
+                    b.Property<Guid>("BestandId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("bestand_id");
+
+                    b.Property<string>("Bestandsnaam")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("bestandsnaam");
+
+                    b.Property<long?>("Bestandsomvang")
+                        .HasColumnType("bigint")
+                        .HasColumnName("bestandsomvang");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("contenttype");
 
                     b.Property<Guid>("GespreksbijdrageId")
                         .HasColumnType("uuid")
                         .HasColumnName("gespreksbijdrage_id");
 
-                    b.Property<int>("Versienummer")
-                        .HasColumnType("integer")
-                        .HasColumnName("versienummer");
+                    b.Property<string>("Titel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("titel");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BestandId")
+                        .IsUnique();
 
                     b.HasIndex("GespreksbijdrageId");
 
@@ -192,6 +286,11 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("aanleidingagendaafspraak");
 
+                    b.Property<string>("AanleidingPlan")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("aanleidingplan");
+
                     b.Property<string>("AanleidingProductDienst")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -203,7 +302,6 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnName("aanleidingthema");
 
                     b.Property<string>("AanleidingZaak")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("aanleidingzaak")
@@ -260,6 +358,8 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AanleidingPlan");
+
                     b.HasIndex("AanleidingZaak");
 
                     b.HasIndex("AanvangsmomentGesprek");
@@ -280,7 +380,6 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Sequence"));
 
                     b.Property<string>("AanleidingZaak")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("aanleidingzaak");
@@ -342,6 +441,10 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<bool>("Automatisch")
+                        .HasColumnType("boolean")
+                        .HasColumnName("automatisch");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(50)
@@ -415,11 +518,6 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnName("actor")
                         .UseCollation("ci_collation");
 
-                    b.Property<string>("Bsn")
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)")
-                        .HasColumnName("bsn");
-
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -429,19 +527,9 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationtime");
 
-                    b.Property<string>("Emailadres")
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)")
-                        .HasColumnName("emailadres");
-
                     b.Property<Guid>("GesprekId")
                         .HasColumnType("uuid")
                         .HasColumnName("gesprek_id");
-
-                    b.Property<string>("KvkNummer")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)")
-                        .HasColumnName("kvknummer");
 
                     b.Property<DateTime?>("ModificationTime")
                         .HasColumnType("timestamp with time zone")
@@ -462,6 +550,11 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("naam");
 
+                    b.Property<string>("Namens")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("namens");
+
                     b.Property<string>("Owner")
                         .IsRequired()
                         .HasMaxLength(9)
@@ -474,19 +567,9 @@ namespace OneGround.ZGW.Gesprekken.DataModel.Migrations
                         .HasColumnName("partij")
                         .UseCollation("ci_collation");
 
-                    b.Property<string>("Rsin")
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)")
-                        .HasColumnName("rsin");
-
                     b.Property<int>("Type")
                         .HasColumnType("integer")
                         .HasColumnName("type");
-
-                    b.Property<string>("Vestigingsnummer")
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)")
-                        .HasColumnName("vestigingsnummer");
 
                     b.HasKey("Id");
 
