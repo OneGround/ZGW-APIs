@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Gesprekken.WebApi</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Gesprekken.WebApi</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="..\appsettings.Shared.json">
+      <Link>appsettings.Shared.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="OneGround.ZGW.Gesprekken.WebApi.IntegrationTests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Gesprekken.Web\ZGW.Gesprekken.Web.csproj" />
+  </ItemGroup>
+</Project>

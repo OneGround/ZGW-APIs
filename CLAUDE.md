@@ -58,6 +58,7 @@ Each API has a Dutch name and a 2–3 letter role code (`ServiceRoleName` in `On
 | ZRC | Zaken | Zaakregistratie | Cases + links to docs/decisions/contacts |
 | DRC | Documenten | Documentregistratie | Information objects (documents, media) |
 | BRC | Besluiten | Besluitregistratie | Decisions |
+| GRC | Gesprekken | Gesprekregistratie | Conversations about a zaak (experimental, draft MijnGesprekken model) |
 | NRC | Notificaties | Notificatieroutering | Subscriptions + change notifications |
 | AC | Autorisaties | Autorisatie | App access/authorization |
 | RL | Referentielijsten | — | Reference lists (process/result types etc.) served from static data bundled in `Web/Data/`; no DB |

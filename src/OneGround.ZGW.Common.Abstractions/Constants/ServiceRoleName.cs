@@ -9,6 +9,7 @@ namespace OneGround.ZGW.Common.Constants
         public const string BRC = "BRC";
         public const string AC = "AC";
         public const string RL = "RL";
+        public const string GRC = "GRC";
         public const string IDP = "IDP";
 
         // Hangfire Listeners

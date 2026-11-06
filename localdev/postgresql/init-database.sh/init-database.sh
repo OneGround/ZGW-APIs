@@ -87,7 +87,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE ROLE oneground_user WITH LOGIN PASSWORD 'oneground_user' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
 EOSQL
 
-DATABASES="ac_db brc_db drc_db nrc_db zrc_db ztc_db"
+DATABASES="ac_db brc_db drc_db grc_db nrc_db zrc_db ztc_db"
 
 for db in $DATABASES; do
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "CREATE DATABASE $db;"

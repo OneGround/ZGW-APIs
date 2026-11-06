@@ -8,4 +8,5 @@ public enum Component
     ztc,
     drc,
     brc,
+    grc,
 }
