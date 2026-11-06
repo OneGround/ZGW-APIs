@@ -54,9 +54,6 @@ internal sealed record SeededZaak(
 internal static class ZakenSeed
 {
     /// <summary>
-    /// Seeds a zaak of <paramref name="zaakType"/> for <paramref name="rsin"/>, optionally closed, with one <paramref name="resource"/>, a hoofdzaak and a relevante andere zaak.
-    /// </summary>
-    /// <summary>
     /// Adds a relevanteAndereZaken reference from the zaak <paramref name="zaakId"/> to the zaak <paramref name="relevanteAndereZaakId"/>.
     /// </summary>
     public static async Task AddRelevanteAndereZaakAsync(ZakenWebApplicationFactory factory, Guid zaakId, Guid relevanteAndereZaakId)
@@ -81,6 +78,9 @@ internal static class ZakenSeed
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Seeds a zaak of <paramref name="zaakType"/> for <paramref name="rsin"/>, optionally closed, with one <paramref name="resource"/>, a hoofdzaak and a relevante andere zaak.
+    /// </summary>
     public static async Task<SeededZaak> SeedZaakAsync(
         ZakenWebApplicationFactory factory,
         string zaakType = ZaakTypes.A,

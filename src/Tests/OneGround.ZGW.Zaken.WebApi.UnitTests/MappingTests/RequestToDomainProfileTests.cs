@@ -169,9 +169,28 @@ public class RequestToDomainProfileTests : IDisposable
     }
 
     [Theory]
+    [InlineData("https://example.test/api/v1/zaken/{0}/")]
+    [InlineData("https://example.test/api/v1/ZAKEN/{0}")]
+    [InlineData("https://example.test/api/v1/zaken/{0}?x=1")]
+    public void RelevanteAndereZaakDto_Maps_The_Id_Of_The_Referenced_Zaak_Whatever_The_Url_Notation(string urlFormat)
+    {
+        var id = Guid.NewGuid();
+        var source = new RelevanteAndereZaakDto { Url = string.Format(urlFormat, id), AardRelatie = "vervolg" };
+
+        var result = _mapper.Map<RelevanteAndereZaak>(source);
+
+        Assert.Equal(id, result.GerelateerdeZaakId);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("not a url")]
+    [InlineData("/api/v1/zaken/3f1c2a5e-0007-4000-8000-000000000001")]
+    [InlineData("ftp://example.test/api/v1/zaken/3f1c2a5e-0007-4000-8000-000000000001")]
     [InlineData("https://example.test/api/v1/zaken/no-guid")]
+    [InlineData("https://example.test/api/v1/enkelvoudiginformatieobjecten/3f1c2a5e-0007-4000-8000-000000000001")]
+    // A url of a sub-resource of a zaak holds the id of that sub-resource, not of the zaak
+    [InlineData("https://example.test/api/v1/zaken/3f1c2a5e-0007-4000-8000-000000000001/rollen/3f1c2a5e-0007-4000-8000-000000000002")]
     public void RelevanteAndereZaakDto_With_An_Url_Without_A_Zaak_Id_Maps_To_No_Id(string url)
     {
         var source = new RelevanteAndereZaakDto { Url = url, AardRelatie = "vervolg" };

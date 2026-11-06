@@ -24,7 +24,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:CollationDefinition:ci_collation", "@colStrength=secondary,@colStrength=secondary,icu,False")
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pgcrypto");
@@ -598,7 +598,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("processobjectaard");
 
-                    b.PrimitiveCollection<List<string>>("ProductenOfDiensten")
+                    b.Property<List<string>>("ProductenOfDiensten")
                         .HasColumnType("text[]")
                         .HasColumnName("productenofdiensten");
 
@@ -2106,7 +2106,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationtime");
 
-                    b.PrimitiveCollection<List<string>>("Handelsnaam")
+                    b.Property<List<string>>("Handelsnaam")
                         .HasColumnType("text[]")
                         .HasColumnName("handelsnaam");
 

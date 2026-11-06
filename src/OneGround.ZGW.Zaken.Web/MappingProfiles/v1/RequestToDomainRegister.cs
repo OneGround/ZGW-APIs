@@ -116,7 +116,7 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.ModifiedBy)
             .Ignore(dest => dest.Owner)
-            .Map(dest => dest.GerelateerdeZaakId, src => UriHelper.TryGetResourceId(src.Url));
+            .Map(dest => dest.GerelateerdeZaakId, src => UriHelper.TryGetResourceId(src.Url, "zaken"));
 
         config
             .NewConfig<ZaakKenmerkDto, ZaakKenmerk>()
