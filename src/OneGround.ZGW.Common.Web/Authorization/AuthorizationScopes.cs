@@ -50,6 +50,19 @@ public class AuthorizationScopes
         public const string Delete = _entity + ".verwijderen";
     }
 
+    public static class Gesprekken
+    {
+        private const string _entity = "gesprekken";
+
+        public const string Read = _entity + ".lezen";
+
+        public const string Create = _entity + ".aanmaken";
+
+        public const string Update = _entity + ".bijwerken";
+
+        public const string Redigeren = _entity + ".redigeren";
+    }
+
     public static class Notificaties
     {
         private const string _entity = "notificaties";

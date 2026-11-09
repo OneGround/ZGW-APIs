@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>OneGround.ZGW.Gesprekken.DataModel</RootNamespace>
+    <AssemblyName>OneGround.ZGW.Gesprekken.DataModel</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Common.DataModel\ZGW.Common.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.DataAccess\ZGW.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

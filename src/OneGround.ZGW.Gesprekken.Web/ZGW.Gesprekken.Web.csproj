@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>OneGround.ZGW.Gesprekken.Web</AssemblyName>
+    <RootNamespace>OneGround.ZGW.Gesprekken.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneGround.ZGW.Autorisaties.ServiceAgent\ZGW.Autorisaties.ServiceAgent.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common.Web\ZGW.Common.Web.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Common\ZGW.Common.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Gesprekken.Contracts\ZGW.Gesprekken.Contracts.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Gesprekken.DataModel\ZGW.Gesprekken.DataModel.csproj" />
+    <ProjectReference Include="..\OneGround.ZGW.Zaken.ServiceAgent\ZGW.Zaken.ServiceAgent.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>OneGround.ZGW.Gesprekken.WebApi.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>
