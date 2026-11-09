@@ -1,1 +1,2 @@
 *.sh txt eol=lf
+third-party-licenses/** -text
