@@ -117,18 +117,37 @@ public class EventStreamTests
         await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, FlowBody.NewGesprek(_factory.NewZaak()), rsin);
         await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, FlowBody.NewGesprek(_factory.NewZaak()), rsin);
 
+        long seen;
         using (var scope = _factory.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<GrcDbContext>();
             var oldest = await context.Events.Where(e => e.Owner == rsin).OrderBy(e => e.Sequence).Take(2).ToListAsync();
+            seen = oldest[0].Sequence;
             context.Events.RemoveRange(oldest);
             await context.SaveChangesAsync();
         }
 
-        var response = await SendAsync(HttpMethod.Get, "/api/v1/events", clientId, rsin: rsin, lastEventId: "0");
+        // A client that had seen the first, now removed, event
+        var response = await SendAsync(HttpMethod.Get, "/api/v1/events", clientId, rsin: rsin, lastEventId: seen.ToString());
 
         Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
         Assert.Equal("cursor-verlopen", (await ReadAsync(response)).Value<string>("code"));
+    }
+
+    [Fact]
+    public async Task The_cursor_of_a_tenant_without_events_stays_valid_when_other_tenants_have_events()
+    {
+        // The sequence is shared, so the first event of this tenant comes after the events of the other tests
+        const string rsin = TestRsins.E;
+        var clientId = NewClient();
+        var cursor = await HeadAsync(clientId, rsin);
+        var zaak = _factory.NewZaak();
+        await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, FlowBody.NewGesprek(zaak), rsin);
+
+        var events = await ReadEventsAsync(clientId, cursor, count: 1, $"aanleidingZaak={Uri.EscapeDataString(zaak)}", rsin);
+
+        Assert.Equal("0", cursor);
+        Assert.Equal("nl.vng.gesprekken.gesprek.aangemaakt", Assert.Single(events).Value<string>("type"));
     }
 
     [Fact]

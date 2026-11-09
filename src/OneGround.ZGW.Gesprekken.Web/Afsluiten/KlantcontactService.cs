@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Gesprekken.DataModel;
@@ -88,7 +89,7 @@ public class KlantinteractiesKlantcontactService : IKlantcontactService
 
             return klantcontact.Value<string>("url");
         }
-        catch (HttpRequestException e)
+        catch (Exception e) when (IsStoring(e, cancellationToken))
         {
             _logger.LogWarning(e, "Klantinteracties is not reachable; no klantcontact for gesprek {Id}", gesprek.Id);
             return null;
@@ -172,11 +173,15 @@ public class KlantinteractiesKlantcontactService : IKlantcontactService
                 _logger.LogWarning("Klantinteracties answered {Status} on {Collectie}", (int)response.StatusCode, collectie);
             }
         }
-        catch (HttpRequestException e)
+        catch (Exception e) when (IsStoring(e, cancellationToken))
         {
             _logger.LogWarning(e, "Klantinteracties is not reachable for {Collectie}", collectie);
         }
     }
+
+    // A failure of Klantinteracties (unreachable, a time-out or an unreadable answer) must not stop closing the gesprek
+    private static bool IsStoring(Exception e, CancellationToken cancellationToken) =>
+        e is HttpRequestException or JsonReaderException || (e is TaskCanceledException && !cancellationToken.IsCancellationRequested);
 
     private HttpRequestMessage NewRequest(string collectie, object body)
     {

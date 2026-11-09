@@ -98,6 +98,22 @@ public class BestandenTests
     }
 
     [Fact]
+    public async Task The_same_bestand_twice_in_one_bijdrage_is_refused()
+    {
+        var clientId = NewClient();
+        var sessie = await StartUploadAsync(clientId);
+        _factory.Opslag.Upload(sessie.Value<string>("uploadUrl"), 1024);
+        var bestandUrl = sessie["bestand"]!.Value<string>("url");
+
+        var body = FlowBody.NewGesprek(_factory.NewZaak());
+        body["eersteBijdrage"]!["bijlagen"] = new JArray(new JObject { ["bestand"] = bestandUrl }, new JObject { ["bestand"] = bestandUrl });
+        var response = await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, body);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("eersteBijdrage.bijlagen.1.bestand", (await ReadAsync(response))["invalidParams"]!.Single().Value<string>("name"));
+    }
+
+    [Fact]
     public async Task Redacting_a_bijdrage_removes_its_bestanden()
     {
         var clientId = NewClient();

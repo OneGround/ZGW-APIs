@@ -23,6 +23,13 @@ public interface IGesprekEventReader
     Task<long?> GetOldestAsync(string rsin, CancellationToken cancellationToken);
 
     Task<List<GesprekEventRecord>> ReadAfterAsync(string rsin, long cursor, GesprekEventFilter filter, int max, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// True if the events after this cursor are no longer complete. The sequence is shared by all tenants, so a gap
+    /// before the oldest event of a tenant says nothing; a cursor is gone when it was the sequence of an event of
+    /// this tenant that has been removed. Cursor 0 (the head of a tenant without events) is never gone.
+    /// </summary>
+    Task<bool> IsGoneAsync(string rsin, long cursor, CancellationToken cancellationToken);
 }
 
 public class GesprekEventReader : IGesprekEventReader
@@ -39,6 +46,16 @@ public class GesprekEventReader : IGesprekEventReader
 
     public Task<long?> GetOldestAsync(string rsin, CancellationToken cancellationToken) =>
         _context.Events.AsNoTracking().Where(e => e.Owner == rsin).MinAsync(e => (long?)e.Sequence, cancellationToken);
+
+    public async Task<bool> IsGoneAsync(string rsin, long cursor, CancellationToken cancellationToken)
+    {
+        if (cursor == 0 || await GetOldestAsync(rsin, cancellationToken) is not { } oldest || cursor >= oldest)
+        {
+            return false;
+        }
+
+        return !await _context.Events.AsNoTracking().AnyAsync(e => e.Owner == rsin && e.Sequence == cursor, cancellationToken);
+    }
 
     public Task<List<GesprekEventRecord>> ReadAfterAsync(
         string rsin,

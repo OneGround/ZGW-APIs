@@ -148,6 +148,24 @@ public class KlantcontactServiceTests
     }
 
     [Fact]
+    public async Task A_time_out_does_not_stop_closing_the_gesprek()
+    {
+        var handler = new StubHandler(_ => throw new TaskCanceledException("time-out"));
+
+        Assert.Null(await Service(handler, "https://kic.example/api/v1").MaakAanAsync(Gesprek, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task An_unreadable_answer_does_not_stop_closing_the_gesprek()
+    {
+        var handler = new StubHandler(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent("<html>", Encoding.UTF8, "text/html") })
+        );
+
+        Assert.Null(await Service(handler, "https://kic.example/api/v1").MaakAanAsync(Gesprek, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task A_refusal_does_not_stop_closing_the_gesprek()
     {
         var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));

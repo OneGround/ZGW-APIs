@@ -87,7 +87,7 @@ public class EventsController : ZGWControllerBase
             await WriteErrorAsync(StatusCodes.Status400BadRequest, "invalid", "Last-Event-ID is geen geldige cursor.");
             return;
         }
-        else if (await _reader.GetOldestAsync(rsin, cancellationToken) is { } oldest && cursor < oldest - 1)
+        else if (await _reader.IsGoneAsync(rsin, cursor, cancellationToken))
         {
             await WriteErrorAsync(
                 StatusCodes.Status410Gone,

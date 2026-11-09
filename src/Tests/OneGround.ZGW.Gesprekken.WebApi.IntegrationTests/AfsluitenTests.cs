@@ -58,7 +58,7 @@ public class AfsluitenTests
     }
 
     [Fact]
-    public async Task A_gesprek_closes_after_three_days_without_a_new_bijdrage()
+    public async Task A_gesprek_closes_three_days_after_the_last_bijdrage_of_the_gemeente()
     {
         var clientId = NewClient();
         var stil = await ReadAsync(await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, FlowBody.NewGesprek(_factory.NewZaak())));
@@ -86,6 +86,36 @@ public class AfsluitenTests
         var gesprekId = Guid.Parse(stil.Value<string>("uuid"));
         var beeindigd = await db.Events.SingleAsync(e => e.GesprekId == gesprekId && e.Type == "nl.vng.gesprekken.gesprek.beeindigd");
         Assert.Contains("/gesprekken/", beeindigd.Subject);
+    }
+
+    [Fact]
+    public async Task A_gesprek_waiting_for_the_gemeente_stays_open()
+    {
+        var clientId = NewClient();
+        var gesprek = await ReadAsync(await SendAsync(HttpMethod.Post, "/api/v1/gesprekken", clientId, FlowBody.NewGesprek(_factory.NewZaak())));
+        var uuid = gesprek.Value<string>("uuid");
+        var detail = await ReadAsync(await SendAsync(HttpMethod.Get, $"/api/v1/gesprekken/{uuid}", clientId));
+        var inwoner = detail["gespreksdeelnames"]!.Single(d => d.Value<string>("type") == "partij").Value<string>("url");
+        var vraag = new JObject
+        {
+            ["gesprek"] = gesprek.Value<string>("url"),
+            ["tekstGespreksBijdrage"] = "Nog een vraag.",
+            ["verzender"] = new JObject { ["gespreksdeelname"] = inwoner },
+        };
+        Assert.Equal(HttpStatusCode.Created, (await SendAsync(HttpMethod.Post, "/api/v1/gespreksbijdragen", clientId, vraag)).StatusCode);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<GrcDbContext>();
+            var id = Guid.Parse(uuid);
+            var oud = DateTime.UtcNow.AddDays(-4);
+            await context.Gespreksbijdragen.Where(b => b.GesprekId == id).ExecuteUpdateAsync(u => u.SetProperty(b => b.Leveringsmoment, oud));
+        }
+
+        await _factory.Services.GetRequiredService<AutomatischSluitenService>().SluitVerlopenGesprekkenAsync(DateTime.UtcNow, CancellationToken.None);
+
+        var open = await ReadAsync(await SendAsync(HttpMethod.Get, $"/api/v1/gesprekken/{uuid}", clientId));
+        Assert.Null(open.Value<string>("momentEindeGesprek"));
     }
 
     [Fact]

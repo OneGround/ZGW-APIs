@@ -53,7 +53,7 @@ public class AutomatischSluitenService : BackgroundService
             {
                 await SluitVerlopenGesprekkenAsync(DateTime.UtcNow, stoppingToken);
             }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (Exception e) when (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogError(e, "Closing gesprekken after the term failed");
             }
@@ -76,7 +76,15 @@ public class AutomatischSluitenService : BackgroundService
         var grens = nu.AddDays(-_applicationConfiguration.AutomatischSluitenNaDagen);
         var verlopen = await db
             .Gesprekken.Include(g => g.Deelnames)
-            .Where(g => g.MomentEindeGesprek == null && (g.Bijdragen.Max(b => (DateTime?)b.Leveringsmoment) ?? g.AanvangsmomentGesprek) < grens)
+            .Where(g => g.MomentEindeGesprek == null)
+            // Only a gesprek waiting for the inwoner: its last bijdrage (not an automatic one) is from the gemeente
+            .Where(g =>
+                g.Bijdragen.Where(b => !b.Automatisch)
+                    .OrderByDescending(b => b.Leveringsmoment)
+                    .Select(b => (DeelnameType?)b.Verzender.Type)
+                    .FirstOrDefault() == DeelnameType.actor
+            )
+            .Where(g => g.Bijdragen.Where(b => !b.Automatisch).Max(b => (DateTime?)b.Leveringsmoment) < grens)
             .ToListAsync(cancellationToken);
 
         foreach (var gesprek in verlopen)

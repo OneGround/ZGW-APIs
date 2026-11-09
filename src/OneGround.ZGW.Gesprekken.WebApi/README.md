@@ -50,9 +50,12 @@ it is linked to the gesprek and the zaak (onderwerpobjecten) and to the deelname
 (betrokkenen, actorklantcontacten).
 
 - `Klantinteracties:Api` and `Klantinteracties:Token` configure the Klantinteracties API. Without them, or when it does
-  not accept the klantcontact, the gesprek still closes and `contactmoment` stays `null`.
-- `Application:AutomatischSluitenNaDagen` (default 3; 0 turns it off): a background job closes a gesprek after this many
-  days without a new bijdrage, every `Application:AutomatischSluitenIntervalMinuten` (default 60). With several instances
+  not accept the klantcontact, is not reachable or does not answer in time, the gesprek still closes and `contactmoment`
+  stays `null`; there is no retry. This is one setting for the whole installation: the klantcontacten of every
+  organisation go to the same Klantinteracties with the same token, so for now this only fits a single organisation.
+- `Application:AutomatischSluitenNaDagen` (default 3; 0 turns it off): a background job closes a gesprek that waits for
+  the inwoner, this many days after the last bijdrage of the gemeente (an actor; automatic replies do not count). A
+  gesprek whose last bijdrage is from the inwoner waits for the gemeente and does not close. The job runs every `Application:AutomatischSluitenIntervalMinuten` (default 60). With several instances
   each runs the job; closing is not yet coordinated between them. `Services:GRC:Api` must hold the public address of
   this API: the job has no request to build the URL of the gesprek from.
 

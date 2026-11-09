@@ -73,11 +73,18 @@ public class BestandService : IBestandService
     )
     {
         var errors = new List<ValidationError>();
+        var gezien = new HashSet<Guid>();
 
         for (var i = 0; i < bijlagen.Count; i++)
         {
             var bijlage = bijlagen[i];
             var veld = $"{pad}.{i}.bestand";
+
+            if (!gezien.Add(bijlage.BestandId))
+            {
+                errors.Add(new ValidationError(veld, ErrorCodes.BestandAlGekoppeld, "Het bestand staat al eerder in deze bijdrage."));
+                continue;
+            }
 
             var bestand = await _context.Bestanden.SingleOrDefaultAsync(b => b.Id == bijlage.BestandId && b.Owner == rsin, cancellationToken);
             if (bestand == null)
