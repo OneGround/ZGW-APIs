@@ -34,9 +34,11 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace OneGround.ZGW.Zaken.Web.Controllers.v1._7;
 
 // Note: Only GetAllAsync/GetAsync/HeadAsync use the new (v1.7) ExpandEngine and the new
-// v1._7.Responses.ZaakRol.RolResponseDto (which implements IExpandable). Add/Delete's payload does
-// not change for 1.7, so they keep using the v1 (unversioned) Request/Response DTOs and the v1
-// MediatR commands they already send -- same reasoning as Controllers/v1/7/ZaakResultatenController.cs.
+// v1._7.Responses.ZaakRol.RolResponseDto (which implements IExpandable). AddAsync mirrors v1.5's own
+// ZaakRollenController (v1._5 Request/Response DTOs and the v1._5 MediatR command): the v1 (unversioned)
+// types predate ContactpersoonRol and the v1.5 Vestiging identification (KvKNummer). DeleteAsync's payload
+// does not change for 1.7, so it keeps the v1 MediatR command -- same reasoning as
+// Controllers/v1/7/ZaakResultatenController.cs.
 // Rol has no Update/PartialUpdate action at any version. There is no "fields" mechanism here --
 // unlike Zaken's /_zoek, the ZRC 1.7.0 spec only adds "expand" for rollen.
 // GetAll/Get/Head instead send the v1._5-namespaced GetAllZaakRolQuery/GetZaakRolQuery (fully
@@ -253,14 +255,14 @@ public class ZaakRollenController : ZGWControllerBase
     [HttpPost(ApiRoutes.ZaakRollen.Create, Name = Operations.ZaakRollen.Create)]
     [Scope(AuthorizationScopes.Zaken.Update, AuthorizationScopes.Zaken.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(Zaken.Contracts.v1.Responses.ZaakRol.ZaakRolResponseDto))]
-    public async Task<IActionResult> AddAsync([FromBody] Zaken.Contracts.v1.Requests.ZaakRol.ZaakRolRequestDto zaakRolRequest)
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(Zaken.Contracts.v1._5.Responses.ZaakRol.ZaakRolResponseDto))]
+    public async Task<IActionResult> AddAsync([FromBody] Zaken.Contracts.v1._5.Requests.ZaakRol.ZaakRolRequestDto zaakRolRequest)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), zaakRolRequest);
 
         ZaakRol zaakrol = _mapper.Map<ZaakRol>(zaakRolRequest);
 
-        var result = await _mediator.Send(new Handlers.v1.CreateZaakRolCommand { ZaakRol = zaakrol, ZaakUrl = zaakRolRequest.Zaak });
+        var result = await _mediator.Send(new Handlers.v1._5.CreateZaakRolCommand { ZaakRol = zaakrol, ZaakUrl = zaakRolRequest.Zaak });
 
         if (result.Status == CommandStatus.NotFound)
         {
@@ -277,7 +279,7 @@ public class ZaakRollenController : ZGWControllerBase
             return _errorResponseBuilder.Forbidden();
         }
 
-        var response = _mapper.Map<Zaken.Contracts.v1.Responses.ZaakRol.ZaakRolResponseDto>(result.Result);
+        var response = _mapper.Map<Zaken.Contracts.v1._5.Responses.ZaakRol.ZaakRolResponseDto>(result.Result);
 
         return Created(response.Url, response);
     }

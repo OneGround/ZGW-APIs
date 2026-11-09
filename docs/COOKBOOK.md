@@ -37,6 +37,18 @@ architecture (project layering, request flow, conventions) see [`../CLAUDE.md`](
 3. Review the generated file in `Migrations/` — check it doesn't silently drop/alter columns holding DataProtection-encrypted or HMAC-hashed data (see [`DATAPROTECTION.md`](DATAPROTECTION.md)).
 4. Do not hand-edit already-applied migrations; add a new one instead.
 
+## Add or update a NuGet package
+
+1. Set the version in `src/Directory.Packages.props` (central package management); the `.csproj` `<PackageReference>` has no `Version`.
+2. Regenerate the third-party notices from the repository root:
+   ```bash
+   dotnet tool install --global nuget-license --version 4.0.18   # once
+   pwsh ./.github/scripts/Update-ThirdPartyNotices.ps1
+   ```
+3. If the script fails with a validation error, the package uses a license outside the allowed list in `Update-ThirdPartyNotices.ps1`. That needs a decision before merging; if it is accepted, add it to the list and add its text to `third-party-licenses/spdx/`.
+4. If you bumped a package listed in `.github/scripts/third-party-notices-overrides.json` (Hangfire, and packages whose metadata lacks a copyright line), update its `Version` there and check its license and copyright still match.
+5. Commit `THIRD-PARTY-NOTICES.md` and `third-party-licenses/` together with the package change. CI fails with "Third-party notices are out of date" if you forget.
+
 ## Call another API from a handler
 
 (inter-service, never direct DB access)

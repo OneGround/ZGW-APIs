@@ -24,3 +24,4 @@
 
 - [ ] Self-review completed
 - [ ] Documentation updated (if needed)
+- [ ] Third-party notices regenerated with `.github/scripts/Update-ThirdPartyNotices.ps1` (if NuGet packages changed)
