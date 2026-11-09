@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cd-catalogi.yml
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Catalogi.WebApi/ZGW.Catalogi.WebApi.csproj
       - 'src/OneGround.ZGW.Autorisaties.Contracts/**'
