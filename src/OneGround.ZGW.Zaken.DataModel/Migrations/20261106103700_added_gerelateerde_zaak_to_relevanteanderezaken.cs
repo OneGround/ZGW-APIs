@@ -15,6 +15,23 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
             // column behind without the migration being recorded, and the next run must be able to pick up where it stopped.
             migrationBuilder.Sql("ALTER TABLE relevanteanderezaken ADD COLUMN IF NOT EXISTS gerelateerde_zaak_id uuid NULL;");
 
+            // A concurrent index build that failed or was cancelled leaves an INVALID index behind, which IF NOT EXISTS below would skip: drop it
+            // first so it is built again. (An invalid index is not used, so dropping it does not affect queries.)
+            migrationBuilder.Sql(
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+                        WHERE c.relname = 'IX_relevanteanderezaken_gerelateerde_zaak_id' AND NOT i.indisvalid
+                    ) THEN
+                        DROP INDEX "IX_relevanteanderezaken_gerelateerde_zaak_id";
+                    END IF;
+                END $$;
+                """,
+                suppressTransaction: true
+            );
+
             // CONCURRENTLY: does not block writes to relevanteanderezaken while the index is built. This is not possible inside a transaction.
             migrationBuilder.Sql(
                 """
