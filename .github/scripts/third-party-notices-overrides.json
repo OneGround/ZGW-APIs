@@ -8,5 +8,5 @@
   { "Id": "IdentityStream.Hangfire.Console", "Version": "2.0.0", "License": "MIT", "Copyright": "Copyright (c) 2016 Alexey Skalozub, Copyright (c) 2023 IdentityStream AS" },
   { "Id": "Mono.TextTemplating", "Version": "3.0.0", "License": "MIT", "Copyright": "Copyright (c) 2009-2011 Novell, Inc., Copyright (c) 2011-2016 Xamarin Inc., Copyright (c) Microsoft Corp., Copyright (c) The contributors" },
   { "Id": "Scrutor", "Version": "3.3.0", "License": "MIT", "Copyright": "Copyright (c) 2015 Kristian Hellang" },
-  { "Id": "Swashbuckle.AspNetCore", "Version": "10.2.3", "License": "MIT", "Copyright": "Copyright (c) 2016 Richard Morris" }
+  { "Id": "Swashbuckle.AspNetCore", "Version": "10.3.1", "License": "MIT", "Copyright": "Copyright (c) 2016 Richard Morris" }
 ]
