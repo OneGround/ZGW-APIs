@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cd-documenten.yml
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'third-party-licenses/**'
 ## GENERATED PATH LIST, DO NOT MODIFY CONTENT MANUALLY ##
 ## > src/OneGround.ZGW.Documenten.WebApi/ZGW.Documenten.WebApi.csproj
 ## > src/OneGround.ZGW.Documenten.Messaging.Listener/ZGW.Documenten.Messaging.Listener.csproj
