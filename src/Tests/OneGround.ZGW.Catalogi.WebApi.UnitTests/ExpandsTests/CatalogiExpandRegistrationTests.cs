@@ -6,6 +6,7 @@ using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Web.Expands;
+using OneGround.ZGW.Common.Web.Http;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using Xunit;
 
@@ -20,6 +21,7 @@ public class CatalogiExpandRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(Mock.Of<IEntityUriService>());
+        services.AddSingleton(Mock.Of<IExternalJsonClient>());
         services.AddCatalogiAPIExpands();
         return services.BuildServiceProvider();
     }
@@ -108,6 +110,7 @@ public class CatalogiExpandRegistrationTests
                 "informatieobjecttypen",
                 "resultaattypen",
                 "roltypen",
+                "selectielijstprocestype",
                 "statustypen",
                 "zaakobjecttypen",
             ],
@@ -128,7 +131,10 @@ public class CatalogiExpandRegistrationTests
     {
         using var provider = BuildServices();
 
-        Assert.Equal(["besluittypen", "catalogus", "informatieobjecttypen", "zaaktype"], PathsOf<ResultaatTypeResponseDto>(provider));
+        Assert.Equal(
+            ["besluittypen", "catalogus", "informatieobjecttypen", "resultaattypeomschrijving", "selectielijstklasse", "zaaktype"],
+            PathsOf<ResultaatTypeResponseDto>(provider)
+        );
     }
 
     [Fact]

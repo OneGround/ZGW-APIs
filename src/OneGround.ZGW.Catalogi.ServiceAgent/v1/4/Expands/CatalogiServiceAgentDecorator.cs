@@ -79,8 +79,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         throw new NotImplementedException();
     }
 
-    public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl) =>
-        WrapAsync(resultaatTypeUrl, agent => agent.GetResultaatTypeByUrlAsync(resultaatTypeUrl));
+    public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl, string expand = null) =>
+        WrapAsync(resultaatTypeUrl, agent => agent.GetResultaatTypeByUrlAsync(resultaatTypeUrl, expand));
 
     public Task<ServiceAgentResponse<RolTypeResponseDto>> GetRolTypeByUrlAsync(string rolTypeUrl) =>
         WrapAsync(rolTypeUrl, agent => agent.GetRolTypeByUrlAsync(rolTypeUrl));

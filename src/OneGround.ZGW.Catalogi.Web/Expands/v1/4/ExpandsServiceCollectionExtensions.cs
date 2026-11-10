@@ -46,6 +46,8 @@ public static partial class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_InformatieObjectTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_DeelZaakTypen_Resolver>();
         services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_GerelateerdeZaakTypen_Resolver>();
+        // Note: the selectielijst resolvers fetch an external document, which needs IExternalJsonClient (AddExternalJsonClient in Startup.cs)
+        services.AddScoped<IExpandResolver<ZaakTypeResponseDto>, ZaakType_SelectielijstProcestype_Resolver>();
 
         // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<ZaakTypeResponseDto>(sp.GetServices<IExpandResolver<ZaakTypeResponseDto>>()));
@@ -104,6 +106,8 @@ public static partial class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ResultaatTypeResponseDto>, ResultaatType_ZaakType_Resolver>();
         services.AddScoped<IExpandResolver<ResultaatTypeResponseDto>, ResultaatType_BesluitTypen_Resolver>();
         services.AddScoped<IExpandResolver<ResultaatTypeResponseDto>, ResultaatType_InformatieObjectTypen_Resolver>();
+        services.AddScoped<IExpandResolver<ResultaatTypeResponseDto>, ResultaatType_ResultaatTypeOmschrijving_Resolver>();
+        services.AddScoped<IExpandResolver<ResultaatTypeResponseDto>, ResultaatType_SelectielijstKlasse_Resolver>();
 
         // Lightweight path validation, for use in the controller
         services.AddScoped(sp => new ExpandValidator<ResultaatTypeResponseDto>(sp.GetServices<IExpandResolver<ResultaatTypeResponseDto>>()));

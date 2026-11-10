@@ -162,6 +162,7 @@ public class ZaakDeelzakenResolverTests
                 ("deelzaken.zaaktype.catalogus", "deelzaken.zaaktype"),
                 ("deelzaken.zaaktype.resultaattypen", "deelzaken.zaaktype"),
                 ("deelzaken.zaaktype.statustypen", "deelzaken.zaaktype"),
+                ("deelzaken.zaaktype.selectielijstprocestype", "deelzaken.zaaktype"),
                 ("deelzaken.status", "deelzaken"),
                 ("deelzaken.status.statustype", "deelzaken.status"),
                 ("deelzaken.resultaat", "deelzaken"),

@@ -56,10 +56,13 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeCatalogusResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResultaatTypenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeStatusTypenResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeSelectielijstProcestypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResultaatTypeResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatTypeOmschrijvingResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatTypeSelectielijstklasseResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakRollenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakObjectenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakZaakContactmomentenResolver>();

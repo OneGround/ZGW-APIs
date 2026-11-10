@@ -23,6 +23,7 @@ using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Extensions.ApplicationBuilder;
 using OneGround.ZGW.Common.Web.Extensions.ServiceCollection;
 using OneGround.ZGW.Common.Web.HealthChecks;
+using OneGround.ZGW.Common.Web.Http;
 using OneGround.ZGW.Common.Web.Logging;
 using OneGround.ZGW.Common.Web.Middleware;
 using OneGround.ZGW.Common.Web.Services;
@@ -110,6 +111,7 @@ public class Startup
 
         services.AddCommonServices();
 
+        services.AddExternalJsonClient(Configuration.GetSection("Application:ExternalJson")); // Note: For the "selectielijstprocestype"/"resultaattypeomschrijving"/"selectielijstklasse" expands
         services.AddCatalogiAPIExpands(); // New Expand Engine (v1.4)
 
         services.AddNotificatiesService(Configuration);

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
@@ -14,7 +15,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// resolver), but registered against <see cref="IExpandResolver{ZaakResponseDto}"/> instead, since
 /// this is reached through Zaken's own ExpandEngine (via "resultaat", see
 /// <see cref="ZaakResultaatResolver"/>). Reuses the same <see cref="IGenericCache{ResultaatTypeResponseDto}"/>
-/// registered by <c>AddResultatenAPIExpands</c>.
+/// registered by <c>AddResultatenAPIExpands</c>. When "resultaattypeomschrijving" and/or "selectielijstklasse" are requested too, ZTC is asked to
+/// embed them on the resultaattype (via <c>expand</c>), so their own resolvers never need a separate round-trip.
 /// </summary>
 public class ZaakResultaatResultaatTypeResolver : IExpandResolver<ZaakResponseDto>
 {
@@ -30,6 +32,9 @@ public class ZaakResultaatResultaatTypeResolver : IExpandResolver<ZaakResponseDt
         _resultaattypeCache = resultaattypeCache;
     }
 
+    // Note: the children of "resultaat.resultaattype" that ZTC can embed on the resultaattype itself; each is the name of the expand in ZTC and the suffix of the path
+    private static readonly string[] ChildExpands = ["resultaattypeomschrijving", "selectielijstklasse"];
+
     public string Path => "resultaat.resultaattype";
     public string Parent => "resultaat";
 
@@ -40,9 +45,15 @@ public class ZaakResultaatResultaatTypeResolver : IExpandResolver<ZaakResponseDt
             return null;
         }
 
+        // Note: ZTC embeds every expand listed here (comma separated) on the resultaattype it returns. The order of ChildExpands is fixed, so the
+        // same set of requested paths always gives the same expand string, and so the same cache key.
+        var expands = ChildExpands.Where(c => requestedPaths.Contains($"{Path}.{c}")).ToList();
+        var expand = expands.Count == 0 ? null : string.Join(",", expands);
+
+        // Note: the expand is part of the key -- the same resultaattype is a different object with and without its embedded documents
         return await _resultaattypeCache.GetOrCacheAndGetAsync(
-            $"key_{resultaat.ResultaatType}",
-            async () => (await _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaat.ResultaatType)).Response
+            expand is null ? $"key_{resultaat.ResultaatType}" : $"key_{resultaat.ResultaatType}_{expand}",
+            async () => (await _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaat.ResultaatType, expand)).Response
         );
     }
 }

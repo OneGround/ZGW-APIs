@@ -20,10 +20,14 @@ public static class ZaakFieldsSchema
             .Entity<ZaakTypeResponseDto, CatalogusResponseDto>("catalogus")
             .Entity<ZaakTypeResponseDto, ResultaatTypeResponseDto>("resultaattypen")
             .Entity<ZaakTypeResponseDto, StatusTypeResponseDto>("statustypen")
+            // Note: the content of these external documents is unknown to us (see ZaakExternalJsonResolver), so they can only be requested as a whole
+            .OpaqueEntity<ZaakTypeResponseDto>("selectielijstprocestype")
             .Entity<ZaakResponseDto, StatusResponseDto>("status")
             .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
             .Entity<ZaakResponseDto, ResultaatResponseDto>("resultaat")
             .Entity<ResultaatResponseDto, ResultaatTypeResponseDto>("resultaattype")
+            .OpaqueEntity<ResultaatTypeResponseDto>("resultaattypeomschrijving")
+            .OpaqueEntity<ResultaatTypeResponseDto>("selectielijstklasse")
             .Entity<ZaakResponseDto, RolResponseDto>("rollen")
             .Entity<RolResponseDto, RolTypeResponseDto>("roltype")
             // Note: "betrokkeneIdentificatie" is an inline, polymorphic nested object -- its shape
