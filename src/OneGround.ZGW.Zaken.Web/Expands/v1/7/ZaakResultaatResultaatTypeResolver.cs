@@ -51,9 +51,11 @@ public class ZaakResultaatResultaatTypeResolver : IExpandResolver<ZaakResponseDt
         var expand = expands.Count == 0 ? null : string.Join(",", expands);
 
         // Note: the expand is part of the key -- the same resultaattype is a different object with and without its embedded documents
-        return await _resultaattypeCache.GetOrCacheAndGetAsync(
-            expand is null ? $"key_{resultaat.ResultaatType}" : $"key_{resultaat.ResultaatType}_{expand}",
-            async () => (await _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaat.ResultaatType, expand)).Response
-        );
+        var cacheKey = expand is null ? $"key_{resultaat.ResultaatType}" : $"key_{resultaat.ResultaatType}_{expand}";
+
+        async Task<ResultaatTypeResponseDto> GetResultaatTypeAsync() =>
+            (await _catalogiServiceAgent.GetResultaatTypeByUrlAsync(resultaat.ResultaatType, expand)).Response;
+
+        return await _resultaattypeCache.GetOrCacheAndGetAsync(cacheKey, GetResultaatTypeAsync);
     }
 }
