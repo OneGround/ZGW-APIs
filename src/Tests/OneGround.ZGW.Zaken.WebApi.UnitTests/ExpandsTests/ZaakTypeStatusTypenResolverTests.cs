@@ -11,7 +11,7 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ExpandsTests;
 public class ZaakTypeStatusTypenResolverTests
 {
     [Fact]
-    public async Task ResolveAsync_ParentZaaktypeAlreadyHasResultaattypenExpanded_ReadsThemFromParent()
+    public async Task ResolveAsync_ParentZaaktypeAlreadyHasStatustypenExpanded_ReadsThemFromParent()
     {
         var statustypen = new List<StatusTypeResponseDto>
         {
