@@ -171,6 +171,14 @@ public partial class ZrcDbContext : BaseDbContext, IDbContextWithAuditTrail, IDa
         //    .HasIndex(p => p.VertrouwelijkheidAanduiding);
         modelBuilder.Entity<Zaak>().HasIndex(p => new { p.Owner, p.Identificatie });
 
+        // Deleting a zaak removes the relevanteAndereZaken relations that point at it (the relations of the zaak itself go via ZaakId).
+        modelBuilder
+            .Entity<RelevanteAndereZaak>()
+            .HasOne<Zaak>()
+            .WithMany()
+            .HasForeignKey(p => p.GerelateerdeZaakId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<ZaakResultaat>().HasIndex(p => p.ResultaatType);
 
         modelBuilder.Entity<ZaakResultaat>().HasIndex(p => p.Owner);

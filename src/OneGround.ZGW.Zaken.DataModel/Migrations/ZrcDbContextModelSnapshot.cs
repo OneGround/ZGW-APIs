@@ -444,6 +444,10 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationtime");
 
+                    b.Property<Guid?>("GerelateerdeZaakId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gerelateerde_zaak_id");
+
                     b.Property<DateTime?>("ModificationTime")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modificationtime");
@@ -470,6 +474,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("zaak_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GerelateerdeZaakId");
 
                     b.HasIndex("ZaakId");
 
@@ -2439,6 +2445,11 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
 
             modelBuilder.Entity("OneGround.ZGW.Zaken.DataModel.RelevanteAndereZaak", b =>
                 {
+                    b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", null)
+                        .WithMany()
+                        .HasForeignKey("GerelateerdeZaakId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
                         .WithMany("RelevanteAndereZaken")
                         .HasForeignKey("ZaakId")

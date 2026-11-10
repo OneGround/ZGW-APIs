@@ -27,6 +27,8 @@ public class RelevanteAndereZaak : OwnedEntity, IAuditableEntity
     [Column("modifiedby")]
     public string ModifiedBy { get; set; }
 
+    // Note: Superseded by GerelateerdeZaakId. Once all existing rows have been migrated (DataMigrator) this column can be phased out;
+    // the url is then built from GerelateerdeZaakId.
     [Required]
     [MaxLength(1000)]
     [Column("url")]
@@ -37,6 +39,12 @@ public class RelevanteAndereZaak : OwnedEntity, IAuditableEntity
 
     [ForeignKey("ZaakId")]
     public Zaak Zaak { get; set; }
+
+    /// <summary>
+    /// The zaak <see cref="Url"/> refers to. Deleting that zaak removes this relation (cascade); null until existing rows have been backfilled.
+    /// </summary>
+    [Column("gerelateerde_zaak_id")]
+    public Guid? GerelateerdeZaakId { get; set; }
 
     [Required]
     [MaxLength(20)]
