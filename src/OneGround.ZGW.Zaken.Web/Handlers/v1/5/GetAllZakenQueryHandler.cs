@@ -9,10 +9,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
@@ -120,28 +120,60 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         // Log to audit trail if BSN, Vestigingsnummer (KvK), Rsin is used in the filter, as this means we are retrieving a list of zaken for a specific person/vestiging/organisatie, which is a privacy-sensitive action worth logging
         if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn))
         {
-            await LogToAuditTrail(result, "BSN", cancellationToken);
+            await LogToAuditTrail(
+                result,
+                "BSN",
+                request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__natuurlijkPersoon__inpBsn,
+                cancellationToken
+            );
         }
         if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__vestiging__vestigingsNummer))
         {
-            await LogToAuditTrail(result, "Vestigingsnummer", cancellationToken);
+            await LogToAuditTrail(
+                result,
+                "Vestigingsnummer",
+                request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__vestiging__vestigingsNummer,
+                cancellationToken
+            );
         }
         if (!string.IsNullOrEmpty(request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId))
         {
-            await LogToAuditTrail(result, "NnpId", cancellationToken);
+            await LogToAuditTrail(
+                result,
+                "NnpId",
+                request.GetAllZakenFilter.Rol__betrokkeneIdentificatie__nietNatuurlijkPersoon__innNnpId,
+                cancellationToken
+            );
         }
 
         return new QueryResult<PagedResult<Zaak>>(result, QueryStatus.OK);
     }
 
-    private async Task LogToAuditTrail(PagedResult<Zaak> result, string field, CancellationToken cancellationToken)
+    private async Task LogToAuditTrail(PagedResult<Zaak> result, string field, string filterValue, CancellationToken cancellationToken)
     {
+        var actionDisplayName = $"Op {field} gefilterde lijst van zaken opgevraagd";
+
+        // A search without results has no zaak to log on, so record one list entry with a keyed hash of the searched value (never the value itself).
+        if (result.Count == 0)
+        {
+            var hash = _hashRotationService.CreateLatestHash(filterValue);
+            using var listAuditTrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false);
+
+            await listAuditTrail.GetFilteredListAsync(
+                actionDisplayName,
+                $"Geen zaken gevonden. Filter-hash (sleutelversie {hash.Version}): {hash.Hash}",
+                cancellationToken
+            );
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         // Note: Write 'retrieve' actie to audittrail for each zaak retrieved in this query (max 100 due to pagination setting)
         foreach (var zaak in result.PageResult)
         {
             using var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: zaak.LegacyAuditTrail);
 
-            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: $"Op {field} gefilterde lijst van zaken opgevraagd", cancellationToken);
+            await audittrail.GetAsync(zaak, zaak, overruleActieWeergave: actionDisplayName, cancellationToken);
         }
         await _context.SaveChangesAsync(cancellationToken);
     }
@@ -162,15 +194,21 @@ class GetAllZakenQueryHandler : ZakenBaseHandler<GetAllZakenQueryHandler>, IRequ
         CancellationToken cancellationToken
     )
     {
-        // Create a key for the current request+Rsin (uri contains the query-parameters/geo as well)
-        var key = ObjectHasher.ComputeSha1Hash(
-            new
-            {
-                Rsin = _rsin,
-                GetAllZakenFilter = filter,
-                Geometrie = geometrie?.ToString(),
-            }
-        );
+        // Key per request+Rsin+authorization. Keyed (HMAC) rather than a plain hash because the filter can hold a BSN,
+        // which a plain hash of a 9-digit value would expose to anyone who can read the cache.
+        var key = _hashRotationService
+            .CreateLatestHash(
+                JsonConvert.SerializeObject(
+                    new
+                    {
+                        Rsin = _rsin,
+                        Authorization = _authorizationContext.Authorization.GetCacheKeyFingerprint(),
+                        GetAllZakenFilter = filter,
+                        Geometrie = geometrie?.ToString(),
+                    }
+                )
+            )
+            .Hash;
 
         // Note: Cache the Count from SQL for 1 minute
         int totalCount = await _cache.GetAsync(

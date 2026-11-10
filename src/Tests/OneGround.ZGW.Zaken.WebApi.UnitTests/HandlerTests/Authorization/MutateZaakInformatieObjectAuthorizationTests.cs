@@ -5,14 +5,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
+using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.Documenten.Contracts.v1._7.Responses;
+using OneGround.ZGW.Documenten.ServiceAgent.v1._7;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.BusinessRules;
 using Xunit;
@@ -112,6 +117,199 @@ public class MutateZaakInformatieObjectAuthorizationTests : IDisposable
 
         Assert.Equal(CommandStatus.OK, result.Status);
         Assert.False(_context.ZaakInformatieObjecten.Any(z => z.Id == id));
+    }
+
+    [Fact]
+    public async Task Update_with_a_status_of_the_same_zaak_sets_the_status()
+    {
+        var id = await SeedZaakInformatieObjectAsync(ZaakTypeA);
+        var zaakId = _context.ZaakInformatieObjecten.Single(z => z.Id == id).ZaakId;
+        var statusId = await SeedStatusAsync(zaakId);
+
+        var result = await UpdateWithStatusAsync(id, statusId);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        Assert.Equal(statusId, _context.ZaakInformatieObjecten.Single(z => z.Id == id).StatusId);
+    }
+
+    [Fact]
+    public async Task Update_with_a_status_of_another_zaak_is_rejected()
+    {
+        var id = await SeedZaakInformatieObjectAsync(ZaakTypeA);
+        var otherZaak = NewZaak(CurrentTenant, ZaakTypeA);
+        _context.Zaken.Add(otherZaak);
+        await _context.SaveChangesAsync();
+        var statusId = await SeedStatusAsync(otherZaak.Id);
+
+        var result = await UpdateWithStatusAsync(id, statusId);
+
+        Assert.Equal(CommandStatus.ValidationError, result.Status);
+        Assert.Contains(result.Errors, e => e.Name == "status" && e.Code == ErrorCode.Invalid);
+        Assert.Null(_context.ZaakInformatieObjecten.Single(z => z.Id == id).StatusId);
+    }
+
+    [Fact]
+    public async Task Update_keeping_a_stored_status_of_another_zaak_is_accepted()
+    {
+        var id = await SeedZaakInformatieObjectAsync(ZaakTypeA);
+        var otherZaak = NewZaak(CurrentTenant, ZaakTypeA);
+        _context.Zaken.Add(otherZaak);
+        await _context.SaveChangesAsync();
+        var statusId = await SeedStatusAsync(otherZaak.Id);
+        _context.ZaakInformatieObjecten.Single(z => z.Id == id).StatusId = statusId;
+        await _context.SaveChangesAsync();
+        _context.ChangeTracker.Clear();
+
+        var result = await UpdateWithStatusAsync(id, statusId);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        Assert.Equal(statusId, _context.ZaakInformatieObjecten.Single(z => z.Id == id).StatusId);
+    }
+
+    [Fact]
+    public async Task Create_with_a_status_of_the_same_zaak_sets_the_status()
+    {
+        var zaak = await SeedZaakAsync();
+        var statusId = await SeedStatusAsync(zaak.Id);
+
+        var result = await CreateWithStatusAsync(zaak.Id, statusId);
+
+        Assert.Equal(CommandStatus.OK, result.Status);
+        Assert.Equal(statusId, result.Result.StatusId);
+    }
+
+    [Fact]
+    public async Task Create_with_a_status_of_another_zaak_is_rejected()
+    {
+        var zaak = await SeedZaakAsync();
+        var otherZaak = await SeedZaakAsync();
+        var statusId = await SeedStatusAsync(otherZaak.Id);
+
+        var result = await CreateWithStatusAsync(zaak.Id, statusId);
+
+        Assert.Equal(CommandStatus.ValidationError, result.Status);
+        Assert.Contains(result.Errors, e => e.Name == "status" && e.Code == ErrorCode.Invalid);
+        Assert.False(_context.ZaakInformatieObjecten.Any(z => z.ZaakId == zaak.Id));
+    }
+
+    private async Task<Zaak> SeedZaakAsync()
+    {
+        var zaak = NewZaak(CurrentTenant, ZaakTypeA);
+        _context.Zaken.Add(zaak);
+        await _context.SaveChangesAsync();
+        _context.ChangeTracker.Clear();
+        return zaak;
+    }
+
+    private Task<CommandResult<ZaakInformatieObject>> CreateWithStatusAsync(Guid zaakId, Guid statusId)
+    {
+        const string statusUrl = "http://zaken.local/api/v1/statussen/status-under-test";
+        const string informatieObjectType = "http://catalogi.local/api/v1/informatieobjecttypen/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+        var uriService = new Mock<IEntityUriService>();
+        uriService.Setup(s => s.GetId(ZaakUrl)).Returns(zaakId);
+        uriService.Setup(s => s.GetId(statusUrl)).Returns(statusId);
+        var catalogi = new Mock<ICatalogiServiceAgent>();
+        catalogi
+            .Setup(a => a.GetZaakTypeByUrlAsync(It.IsAny<string>()))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { InformatieObjectTypen = [informatieObjectType] }));
+        var documenten = new Mock<ICachedDocumentenServiceAgent>();
+        documenten
+            .Setup(a => a.GetEnkelvoudigInformatieObjectByUrlAsync(It.IsAny<string>()))
+            .ReturnsAsync(
+                new ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>(
+                    new EnkelvoudigInformatieObjectResponseDto { InformatieObjectType = informatieObjectType }
+                )
+            );
+        var client = Client(UpdateScopes, Permission(ZaakTypeA, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Update));
+
+        return new V1_5.CreateZaakInformatieObjectCommandHandler(
+            NullLogger<V1_5.CreateZaakInformatieObjectCommandHandler>.Instance,
+            CreateConfiguration(),
+            _context,
+            _businessRules.Object,
+            Mock.Of<INotificatieService>(),
+            _auditTrailFactory.Object,
+            uriService.Object,
+            _closedZaakRule.Object,
+            catalogi.Object,
+            documenten.Object,
+            client,
+            KenmerkenResolver().Object
+        ).Handle(
+            new V1_5.CreateZaakInformatieObjectCommand
+            {
+                ZaakInformatieObject = new ZaakInformatieObject
+                {
+                    Id = Guid.NewGuid(),
+                    InformatieObject = $"http://documenten.local/api/v1/enkelvoudiginformatieobjecten/{Guid.NewGuid()}",
+                    Titel = "new titel",
+                    CreationTime = DateTime.UtcNow,
+                },
+                ZaakUrl = ZaakUrl,
+                StatusUrl = statusUrl,
+            },
+            CancellationToken.None
+        );
+    }
+
+    private async Task<Guid> SeedStatusAsync(Guid zaakId)
+    {
+        var status = new ZaakStatus
+        {
+            Id = Guid.NewGuid(),
+            Owner = CurrentTenant,
+            ZaakId = zaakId,
+            StatusType = "http://catalogi.local/api/v1/statustypen/dddddddd-dddd-dddd-dddd-dddddddddddd",
+            DatumStatusGezet = DateTime.UtcNow,
+            CreationTime = DateTime.UtcNow,
+        };
+
+        _context.ZaakStatussen.Add(status);
+        await _context.SaveChangesAsync();
+        _context.ChangeTracker.Clear();
+
+        return status.Id;
+    }
+
+    private Task<CommandResult<ZaakInformatieObject>> UpdateWithStatusAsync(Guid id, Guid statusId)
+    {
+        const string statusUrl = "http://zaken.local/api/v1/statussen/status-under-test";
+        var uriService = new Mock<IEntityUriService>();
+        uriService.Setup(s => s.GetId(statusUrl)).Returns(statusId);
+        _businessRules
+            .Setup(r =>
+                r.ValidateAsync(
+                    It.IsAny<ZaakInformatieObject>(),
+                    It.IsAny<ZaakInformatieObject>(),
+                    It.IsAny<string>(),
+                    It.IsAny<List<ValidationError>>()
+                )
+            )
+            .ReturnsAsync((ZaakInformatieObject _, ZaakInformatieObject _, string _, List<ValidationError> errors) => errors.Count == 0);
+        var client = Client(UpdateScopes, Permission(ZaakTypeA, VertrouwelijkheidAanduiding.zeer_geheim, AuthorizationScopes.Zaken.Update));
+
+        return new V1_5.UpdateZaakInformatieObjectCommandHandler(
+            NullLogger<V1_5.UpdateZaakInformatieObjectCommandHandler>.Instance,
+            CreateConfiguration(),
+            _context,
+            uriService.Object,
+            _businessRules.Object,
+            Mock.Of<INotificatieService>(),
+            Mock.Of<IEntityUpdater<ZaakInformatieObject>>(),
+            _auditTrailFactory.Object,
+            _closedZaakRule.Object,
+            client,
+            KenmerkenResolver().Object
+        ).Handle(
+            new V1_5.UpdateZaakInformatieObjectCommand
+            {
+                Id = id,
+                ZaakInformatieObject = new ZaakInformatieObject { Titel = "changed titel" },
+                ZaakUrl = ZaakUrl,
+                StatusUrl = statusUrl,
+            },
+            CancellationToken.None
+        );
     }
 
     private async Task<Guid> SeedZaakInformatieObjectAsync(string zaakType)

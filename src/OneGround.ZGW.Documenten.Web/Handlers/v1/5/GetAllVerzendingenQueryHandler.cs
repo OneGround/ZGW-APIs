@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -113,7 +112,7 @@ class GetAllVerzendingenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllVerzendingenFilter = filter });
+        var key = GetCountCacheKey(filter);
 
         int totalCount = await _cache.GetAsync(
             key,
@@ -134,7 +133,7 @@ class GetAllVerzendingenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllVerzendingenFilter = filterModel });
+        var key = GetCountCacheKey(filterModel);
 
         int totalCount = await _cache.GetAsync(
             key,

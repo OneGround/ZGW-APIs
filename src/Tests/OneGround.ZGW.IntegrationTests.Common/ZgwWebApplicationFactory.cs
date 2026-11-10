@@ -170,6 +170,9 @@ public static class TestRsins
     public const string E = "000000103";
     public const string F = "000000115";
     public const string G = "000000127";
+    public const string H = "000000139";
+    public const string I = "000000206";
+    public const string J = "000000218";
 
-    public static readonly string[] All = [A, B, C, D, E, F, G];
+    public static readonly string[] All = [A, B, C, D, E, F, G, H, I, J];
 }

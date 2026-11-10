@@ -20,6 +20,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="OneGround.ZGW.Documenten.WebApi.IntegrationTests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Documenten.Web\ZGW.Documenten.Web.csproj" />
   </ItemGroup>
 </Project>

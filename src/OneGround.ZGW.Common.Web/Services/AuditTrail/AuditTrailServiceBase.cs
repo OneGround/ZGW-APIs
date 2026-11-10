@@ -150,6 +150,19 @@ public abstract class AuditTrailServiceBase : IAuditTrailService
             );
     }
 
+    public virtual Task GetFilteredListAsync(string actionDisplayName, string explanation, CancellationToken cancellationToken = default)
+    {
+        return WriteAsync(
+            AuditActie.retrieve,
+            actionDisplayName,
+            "(lijst van)",
+            "(lijst van)",
+            HttpStatusCode.OK,
+            toelichting: explanation,
+            cancellationToken: cancellationToken
+        );
+    }
+
     public virtual Task DestroyedAsync(IBaseEntity entity, IUrlEntity subEntity, CancellationToken cancellationToken = default)
     {
         return WriteAsync(

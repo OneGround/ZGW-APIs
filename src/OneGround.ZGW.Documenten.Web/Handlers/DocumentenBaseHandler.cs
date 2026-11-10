@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Handlers;
 using OneGround.ZGW.Common.Web.Services;
@@ -55,6 +56,26 @@ public abstract class DocumentenBaseHandler<T> : ZGWBaseHandler
     {
         _notificatieService = notificatieService;
     }
+
+    /// <summary>
+    /// Count cache key per rsin, authorization and filter; the filter type keeps resources and API versions apart.
+    /// </summary>
+    protected string GetCountCacheKey<TFilter>(TFilter filter) =>
+        ObjectHasher.ComputeSha1Hash(
+            new
+            {
+                Rsin = _rsin,
+                Authorization = _authorizationContext.Authorization.GetCacheKeyFingerprint(),
+                Filter = typeof(TFilter).FullName,
+                Value = filter,
+            }
+        );
+
+    /// <summary>
+    /// Page-anchor cache key per rsin, authorization, page and filter.
+    /// </summary>
+    protected string GetPageAnchorCacheKey<TFilter>(TFilter filter, int page) =>
+        $"anchors:{_rsin}:{_authorizationContext.Authorization.GetCacheKeyFingerprint()}:{page}:{ObjectHasher.ComputeSha1Hash(new { Filter = typeof(TFilter).FullName, Value = filter })}";
 
     private static Resource GetEntityResource(IInformatieObjectEntity informatieObjectEntity) =>
         informatieObjectEntity switch
