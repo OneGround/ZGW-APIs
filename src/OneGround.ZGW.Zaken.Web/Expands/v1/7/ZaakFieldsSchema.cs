@@ -19,6 +19,7 @@ public static class ZaakFieldsSchema
             .Entity<ZaakResponseDto, ZaakTypeResponseDto>("zaaktype")
             .Entity<ZaakTypeResponseDto, CatalogusResponseDto>("catalogus")
             .Entity<ZaakTypeResponseDto, ResultaatTypeResponseDto>("resultaattypen")
+            .Entity<ZaakTypeResponseDto, StatusTypeResponseDto>("statustypen")
             .Entity<ZaakResponseDto, StatusResponseDto>("status")
             .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
             .Entity<ZaakResponseDto, ResultaatResponseDto>("resultaat")

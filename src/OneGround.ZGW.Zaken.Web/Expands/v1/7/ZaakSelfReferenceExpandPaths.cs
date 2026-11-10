@@ -17,6 +17,7 @@ internal static class ZaakSelfReferenceExpandPaths
             ($"{rootPath}.zaaktype", rootPath),
             ($"{rootPath}.zaaktype.catalogus", $"{rootPath}.zaaktype"),
             ($"{rootPath}.zaaktype.resultaattypen", $"{rootPath}.zaaktype"),
+            ($"{rootPath}.zaaktype.statustypen", $"{rootPath}.zaaktype"),
             ($"{rootPath}.status", rootPath),
             ($"{rootPath}.status.statustype", $"{rootPath}.status"),
             ($"{rootPath}.resultaat", rootPath),

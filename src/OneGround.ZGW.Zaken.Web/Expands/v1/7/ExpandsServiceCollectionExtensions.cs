@@ -55,6 +55,7 @@ public static class ExpandsServiceCollectionExtensions
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeCatalogusResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeResultaatTypenResolver>();
+        services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakTypeStatusTypenResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakStatusStatusTypeResolver>();
         services.AddScoped<IExpandResolver<ZaakResponseDto>, ZaakResultaatResolver>();

@@ -92,6 +92,27 @@ public class ZaakTypeResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_StatustypenRequested_PassesExpandStatustypenToServiceAgent()
+    {
+        var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "statustypen"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+
+        var result = await resolver.ResolveAsync(
+            new ZaakResponseDto { Zaaktype = ZaakTypeUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.statustypen" }
+        );
+
+        Assert.Same(zaaktype, result);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "statustypen"), Times.Once);
+    }
+
+    [Fact]
     public async Task ResolveAsync_SameZaaktypeWithAndWithoutCatalogus_IsNotMixedUpByTheSharedCache()
     {
         // Note: the top-level "zaaktype" and the nested "hoofdzaak.zaaktype.catalogus" share one cache within a request

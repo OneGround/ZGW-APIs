@@ -12,8 +12,8 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "zaaktype" expand path. Mirrors DRC 1.7's
 /// InformatieObjectTypeResolver: if "zaaktype.catalogus" is also requested, it asks ZTC to embed
-/// the catalogus and/or resultaattypen on its own response (via <c>expand</c>), so <see cref="ZaakTypeCatalogusResolver"/>
-/// and <see cref="ZaakTypeResultaatTypenResolver"/> never need a separate round-trip.
+/// the catalogus, resultaattypen and/or statustypen on its own response (via <c>expand</c>), so <see cref="ZaakTypeCatalogusResolver"/>
+/// <see cref="ZaakTypeResultaatTypenResolver"/> and <see cref="ZaakTypeStatusTypenResolver"/> never need a separate round-trip.
 /// </summary>
 public class ZaakTypeResolver : IExpandResolver<ZaakResponseDto>
 {
@@ -27,7 +27,7 @@ public class ZaakTypeResolver : IExpandResolver<ZaakResponseDto>
     }
 
     // Note: the children of "zaaktype" that ZTC can embed on the zaaktype itself; each is the name of the expand in ZTC and the suffix of the path
-    private static readonly string[] ChildExpands = ["catalogus", "resultaattypen"];
+    private static readonly string[] ChildExpands = ["catalogus", "resultaattypen", "statustypen"];
 
     public string Path => "zaaktype";
     public string Parent => null;
