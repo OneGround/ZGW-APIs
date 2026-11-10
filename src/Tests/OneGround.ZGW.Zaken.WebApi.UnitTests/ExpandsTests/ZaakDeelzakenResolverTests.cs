@@ -160,6 +160,7 @@ public class ZaakDeelzakenResolverTests
             [
                 ("deelzaken.zaaktype", "deelzaken"),
                 ("deelzaken.zaaktype.catalogus", "deelzaken.zaaktype"),
+                ("deelzaken.zaaktype.resultaattypen", "deelzaken.zaaktype"),
                 ("deelzaken.status", "deelzaken"),
                 ("deelzaken.status.statustype", "deelzaken.status"),
                 ("deelzaken.resultaat", "deelzaken"),

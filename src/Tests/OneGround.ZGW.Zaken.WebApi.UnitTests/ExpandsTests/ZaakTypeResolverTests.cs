@@ -50,6 +50,48 @@ public class ZaakTypeResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_ResultaattypenRequested_PassesExpandResultaattypenToServiceAgent()
+    {
+        var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "resultaattypen"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+
+        var result = await resolver.ResolveAsync(
+            new ZaakResponseDto { Zaaktype = ZaakTypeUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.resultaattypen" }
+        );
+
+        Assert.Same(zaaktype, result);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "resultaattypen"), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_CatalogusAndResultaattypenRequested_PassesBothExpandsToServiceAgent()
+    {
+        var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "catalogus,resultaattypen"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+
+        var result = await resolver.ResolveAsync(
+            new ZaakResponseDto { Zaaktype = ZaakTypeUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.catalogus", "zaaktype.resultaattypen" }
+        );
+
+        Assert.Same(zaaktype, result);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "catalogus,resultaattypen"), Times.Once);
+    }
+
+    [Fact]
     public async Task ResolveAsync_SameZaaktypeWithAndWithoutCatalogus_IsNotMixedUpByTheSharedCache()
     {
         // Note: the top-level "zaaktype" and the nested "hoofdzaak.zaaktype.catalogus" share one cache within a request
@@ -78,6 +120,66 @@ public class ZaakTypeResolverTests
         Assert.Same(withCatalogus, second);
         Assert.Same(withCatalogus, secondAgain);
         serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, It.IsAny<string>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_SameZaaktypeWithAndWithoutResultaattypen_IsNotMixedUpByTheSharedCache()
+    {
+        var withoutResultaattypen = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var withResultaattypen = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, null))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(withoutResultaattypen));
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "resultaattypen"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(withResultaattypen));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+        var entity = new ZaakResponseDto { Zaaktype = ZaakTypeUrl };
+
+        var first = await resolver.ResolveAsync(entity, new Dictionary<string, object>(), new HashSet<string> { "zaaktype" });
+        var second = await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.resultaattypen" }
+        );
+        var secondAgain = await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.resultaattypen" }
+        );
+
+        Assert.Same(withoutResultaattypen, first);
+        Assert.Same(withResultaattypen, second);
+        Assert.Same(withResultaattypen, secondAgain);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, It.IsAny<string>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_ExpandOrderDoesNotDependOnTheOrderOfTheRequestedPaths()
+    {
+        var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "catalogus,resultaattypen"))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+        var entity = new ZaakResponseDto { Zaaktype = ZaakTypeUrl };
+
+        await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.resultaattypen", "zaaktype.catalogus" }
+        );
+        await resolver.ResolveAsync(
+            entity,
+            new Dictionary<string, object>(),
+            new HashSet<string> { "zaaktype", "zaaktype.catalogus", "zaaktype.resultaattypen" }
+        );
+
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "catalogus,resultaattypen"), Times.Once);
     }
 
     [Fact]

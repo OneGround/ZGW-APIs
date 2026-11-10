@@ -13,6 +13,7 @@ public class ZaakFieldsSchemaTests
         [
             "zaaktype",
             "zaaktype.catalogus",
+            "zaaktype.resultaattypen",
             "status",
             "status.statustype",
             "resultaat",
@@ -31,6 +32,7 @@ public class ZaakFieldsSchemaTests
             "hoofdzaak",
             "hoofdzaak.zaaktype",
             "hoofdzaak.zaaktype.catalogus",
+            "hoofdzaak.zaaktype.resultaattypen",
             "hoofdzaak.status",
             "hoofdzaak.status.statustype",
             "hoofdzaak.resultaat",
@@ -48,6 +50,7 @@ public class ZaakFieldsSchemaTests
             "deelzaken",
             "deelzaken.zaaktype",
             "deelzaken.zaaktype.catalogus",
+            "deelzaken.zaaktype.resultaattypen",
             "deelzaken.status",
             "deelzaken.status.statustype",
             "deelzaken.resultaat",
