@@ -1,3 +1,4 @@
+using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Http;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 
@@ -6,7 +7,7 @@ namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 /// <summary>
 /// Resolves the top-level "communicatiekanaal" expand path from the communicatiekanaal url of the ZAAK.
 /// </summary>
-public class ZaakCommunicatiekanaalResolver : ZaakExternalJsonResolver
+public class ZaakCommunicatiekanaalResolver : ExternalJsonResolver<ZaakResponseDto>
 {
     public ZaakCommunicatiekanaalResolver(IExternalJsonClient externalJsonClient)
         : base(externalJsonClient) { }
