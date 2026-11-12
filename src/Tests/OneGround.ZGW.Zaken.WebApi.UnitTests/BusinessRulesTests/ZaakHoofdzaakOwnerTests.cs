@@ -33,7 +33,7 @@ public class ZaakHoofdzaakOwnerTests : IDisposable
         var update = NewUpdate();
         var errors = new List<ValidationError>();
 
-        var valid = await CreateService().ValidateAsync(existing, update, HoofdzaakUrl, errors);
+        var valid = await CreateService().ValidateAsync(existing, update, HoofdzaakUrl, [], errors);
 
         Assert.False(valid);
         var error = Assert.Single(errors);
@@ -54,7 +54,7 @@ public class ZaakHoofdzaakOwnerTests : IDisposable
         };
         var errors = new List<ValidationError>();
 
-        var valid = await CreateService().ValidateAsync(add, HoofdzaakUrl, ignoreZaakTypeValidation: true, errors);
+        var valid = await CreateService().ValidateAsync(add, HoofdzaakUrl, [], ignoreZaakTypeValidation: true, errors);
 
         Assert.False(valid);
         Assert.Contains(errors, e => e.Name == "hoofdzaak" && e.Code == ErrorCode.NoMatch);
@@ -68,7 +68,7 @@ public class ZaakHoofdzaakOwnerTests : IDisposable
         var update = NewUpdate();
         var errors = new List<ValidationError>();
 
-        var valid = await CreateService().ValidateAsync(existing, update, HoofdzaakUrl, errors);
+        var valid = await CreateService().ValidateAsync(existing, update, HoofdzaakUrl, [], errors);
 
         Assert.True(valid);
         Assert.Empty(errors);

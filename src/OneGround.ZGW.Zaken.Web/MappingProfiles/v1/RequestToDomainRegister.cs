@@ -116,7 +116,12 @@ public class RequestToDomainRegister : IRegister
             .Ignore(dest => dest.ModificationTime)
             .Ignore(dest => dest.ModifiedBy)
             .Ignore(dest => dest.Owner)
-            .Map(dest => dest.GerelateerdeZaakId, src => UriHelper.TryGetResourceId(src.Url, "zaken"));
+            // Note: the request url is not stored, the relation is kept by the id of the referenced zaak only
+#pragma warning disable CS0618 // Url is obsolete on purpose: it is explicitly ignored so that it is never written
+            .Ignore(dest => dest.Url)
+#pragma warning restore CS0618
+            // Note: an url without a zaak id maps to Guid.Empty; the request validators and ZaakBusinessRuleService reject such an url before the entity is saved
+            .Map(dest => dest.GerelateerdeZaakId, src => UriHelper.TryGetResourceId(src.Url, "zaken") ?? Guid.Empty);
 
         config
             .NewConfig<ZaakKenmerkDto, ZaakKenmerk>()

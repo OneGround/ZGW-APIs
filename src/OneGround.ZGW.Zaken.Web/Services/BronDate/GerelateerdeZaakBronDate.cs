@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Contracts.v1;
+using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.Contracts.v1.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
@@ -15,11 +16,13 @@ public class GerelateerdeZaakBronDate : IBronDateService
 {
     private readonly IZakenServiceAgent _zakenServiceAgent;
     private readonly ZrcDbContext _context;
+    private readonly IEntityUriService _uriService;
 
-    public GerelateerdeZaakBronDate(IZakenServiceAgent zakenServiceAgent, ZrcDbContext context)
+    public GerelateerdeZaakBronDate(IZakenServiceAgent zakenServiceAgent, ZrcDbContext context, IEntityUriService uriService)
     {
         _zakenServiceAgent = zakenServiceAgent;
         _context = context;
+        _uriService = uriService;
     }
 
     public async Task<DateOnly?> GetAsync(Zaak zaak, List<ArchiveValidationError> errors, CancellationToken cancellationToken)
@@ -39,7 +42,7 @@ public class GerelateerdeZaakBronDate : IBronDateService
         }
 
         var maxDate = DateOnly.MinValue;
-        foreach (var relevantZaakUrl in relevanteAndereZaken.Select(z => z.Url))
+        foreach (var relevantZaakUrl in relevanteAndereZaken.Select(z => _uriService.GetZaakUri(z.GerelateerdeZaakId)))
         {
             var relevantZaak = await GetZaakAsync(relevantZaakUrl, errors);
             if (string.IsNullOrEmpty(relevantZaak.Einddatum))

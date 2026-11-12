@@ -70,7 +70,15 @@ class CreateZaakCommandHandler : ZakenBaseHandler<CreateZaakCommandHandler>, IRe
 
         var errors = new List<ValidationError>();
 
-        if (!await _zaakBusinessRuleService.ValidateAsync(zaak, request.HoofdzaakUrl, _applicationConfiguration.IgnoreZaakTypeValidation, errors))
+        if (
+            !await _zaakBusinessRuleService.ValidateAsync(
+                zaak,
+                request.HoofdzaakUrl,
+                request.RelevanteAndereZaakUrls,
+                _applicationConfiguration.IgnoreZaakTypeValidation,
+                errors
+            )
+        )
         {
             return new CommandResult<Zaak>(null, CommandStatus.ValidationError, errors.ToArray());
         }
@@ -174,5 +182,6 @@ class CreateZaakCommand : IRequest<CommandResult<Zaak>>
 {
     public Zaak Zaak { get; internal set; }
     public string HoofdzaakUrl { get; internal set; }
+    public IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; } = [];
     public int? SRID { get; internal set; }
 }

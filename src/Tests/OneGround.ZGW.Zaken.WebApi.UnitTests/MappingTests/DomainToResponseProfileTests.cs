@@ -242,12 +242,9 @@ public class DomainToResponseProfileTests : IDisposable
         var result = _mapper.Map<RelevanteAndereZaakDto>(value);
 
         Assert.Equal(value.AardRelatie, result.AardRelatie);
-        // Intentionally NOT wrapped in ZrcMapperTestHost.Resolved(...), unlike every other Url assertion in
-        // this file. This pair is a bare NewConfig with no resolver rule, so dest.Url really is a same-name
-        // convention copy of a plain string column - the raw value is the correct expectation here. It doubles
-        // as the control proving the host's prefixing mock discriminates resolver-backed members from
-        // convention copies, rather than uniformly demanding a prefix. Do not "align" it with the others.
-        Assert.Equal(value.Url, result.Url);
+        // The url is built from the id of the referenced zaak, never read from the stored url column
+        Assert.Equal(ZrcMapperTestHost.ResolvedZaak(value.GerelateerdeZaakId), result.Url);
+        Assert.NotEqual(value.Url, result.Url);
     }
 
     [Fact]

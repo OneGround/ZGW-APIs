@@ -242,6 +242,7 @@ public class ZakenController : ZGWControllerBase
             {
                 Zaak = zaak,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
                 SRID = srid,
             }
         );
@@ -393,6 +394,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
                 SRID = srid,
             }
         );
@@ -474,6 +476,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = mergedZaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = mergedZaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
                 IsPartialUpdate = true,
                 SRID = mergedZaakRequest.Zaakgeometrie != null ? srid.Value : null,
             }
