@@ -115,14 +115,16 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return GetAsync<EigenschapResponseDto>(new Uri(eigenschapUrl));
     }
 
-    public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl)
+    public Task<ServiceAgentResponse<ResultaatTypeResponseDto>> GetResultaatTypeByUrlAsync(string resultaatTypeUrl, string expand = null)
     {
         if (!EnsureValidResource(ServiceRoleName.ZTC, resultaatTypeUrl, "resultaattypen", out var errorResponse))
             return Task.FromResult(new ServiceAgentResponse<ResultaatTypeResponseDto>(errorResponse));
 
         Logger.LogDebug("Resultaattypen bevragen op '{resultaatTypeUrl}'....", resultaatTypeUrl);
 
-        return GetAsync<ResultaatTypeResponseDto>(new Uri(resultaatTypeUrl));
+        var url = new Uri(resultaatTypeUrl).AddQueryParameter("expand", expand);
+
+        return GetAsync<ResultaatTypeResponseDto>(url);
     }
 
     public Task<ServiceAgentResponse<InformatieObjectTypeResponseDto>> GetInformatieObjectTypeByUrlAsync(

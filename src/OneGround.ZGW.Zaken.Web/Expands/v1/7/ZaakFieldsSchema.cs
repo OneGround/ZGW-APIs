@@ -18,10 +18,16 @@ public static class ZaakFieldsSchema
         new FieldsSchemaBuilder()
             .Entity<ZaakResponseDto, ZaakTypeResponseDto>("zaaktype")
             .Entity<ZaakTypeResponseDto, CatalogusResponseDto>("catalogus")
+            .Entity<ZaakTypeResponseDto, ResultaatTypeResponseDto>("resultaattypen")
+            .Entity<ZaakTypeResponseDto, StatusTypeResponseDto>("statustypen")
+            // Note: the content of these external documents is unknown to us (see ExternalJsonResolver), so they can only be requested as a whole
+            .OpaqueEntity<ZaakTypeResponseDto>("selectielijstprocestype")
             .Entity<ZaakResponseDto, StatusResponseDto>("status")
             .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
             .Entity<ZaakResponseDto, ResultaatResponseDto>("resultaat")
             .Entity<ResultaatResponseDto, ResultaatTypeResponseDto>("resultaattype")
+            .OpaqueEntity<ResultaatTypeResponseDto>("resultaattypeomschrijving")
+            .OpaqueEntity<ResultaatTypeResponseDto>("selectielijstklasse")
             .Entity<ZaakResponseDto, RolResponseDto>("rollen")
             .Entity<RolResponseDto, RolTypeResponseDto>("roltype")
             // Note: "betrokkeneIdentificatie" is an inline, polymorphic nested object -- its shape
@@ -91,7 +97,7 @@ public static class ZaakFieldsSchema
             // not by this schema entry -- the entity-type registration itself is necessarily the same
             // ZaakResponseDto graph shared by every "Zaak-shaped" expand root.
             .Entity<ZaakResponseDto, ZaakResponseDto>("relevanteanderezaken")
-            // Note: the content of these two comes from an external API and is unknown to us (see ZaakExternalJsonResolver), so a field
+            // Note: the content of these two comes from an external API and is unknown to us (see ExternalJsonResolver), so a field
             // selection on them is impossible. They can only be requested as a whole: { "communicatiekanaal": [] }.
             .OpaqueEntity<ZaakResponseDto>("communicatiekanaal")
             .OpaqueEntity<ZaakResponseDto>("selectielijstklasse")

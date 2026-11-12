@@ -284,6 +284,9 @@ public class ZaakHoofdzaakResolverTests
             [
                 ("hoofdzaak.zaaktype", "hoofdzaak"),
                 ("hoofdzaak.zaaktype.catalogus", "hoofdzaak.zaaktype"),
+                ("hoofdzaak.zaaktype.resultaattypen", "hoofdzaak.zaaktype"),
+                ("hoofdzaak.zaaktype.statustypen", "hoofdzaak.zaaktype"),
+                ("hoofdzaak.zaaktype.selectielijstprocestype", "hoofdzaak.zaaktype"),
                 ("hoofdzaak.status", "hoofdzaak"),
                 ("hoofdzaak.status.statustype", "hoofdzaak.status"),
                 ("hoofdzaak.resultaat", "hoofdzaak"),
