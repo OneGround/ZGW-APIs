@@ -12,7 +12,7 @@ using Xunit;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.ExpandsTests;
 
-public class ZaakExternalJsonResolversTests
+public class ZaakCommunicatiekanaalAndSelectielijstklasseResolverTests
 {
     private const string KanaalUrl = "https://api.example.test/kanalen/telefoon";
     private const string KlasseUrl = "https://api.example.test/klassen/42";
