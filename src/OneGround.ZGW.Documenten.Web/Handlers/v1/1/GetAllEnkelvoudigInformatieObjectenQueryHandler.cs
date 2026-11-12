@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -29,7 +28,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     private readonly IDistributedCacheHelper _cache;
     private readonly IInformatieObjectAuthorizationTempTableService _informatieObjectAuthorizationTempTableService;
 
-    // TTL for cached count. Count for a given (rsin, page, filter) tuple are stable within this window.
+    // TTL for cached count. Count for a given (rsin, authorization, page, filter) tuple are stable within this window.
     private static readonly TimeSpan CountCacheLifetime = TimeSpan.FromMinutes(5);
 
     public GetAllEnkelvoudigInformatieObjectenQueryHandler(
@@ -116,7 +115,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+        var key = GetCountCacheKey(filterModel);
 
         return await _cache.GetAsync(
             key,
@@ -154,7 +153,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
+        var key = GetCountCacheKey(filter);
 
         return await _cache.GetAsync(
             key,

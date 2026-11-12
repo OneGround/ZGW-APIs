@@ -95,6 +95,11 @@ class UpdateZaakInformatieObjectCommandHandler
             {
                 errors.Add(new ValidationError("status", ErrorCode.DoesNotExist, "Ongeldige hyperlink - Object bestaat niet."));
             }
+            // Only a changed status is checked, so rows stored before this check can still be updated with their current status.
+            else if (status.Id != zaakInformatieObject.StatusId && status.ZaakId != zaakInformatieObject.ZaakId)
+            {
+                errors.Add(new ValidationError("status", ErrorCode.Invalid, "De status hoort niet bij de zaak van dit zaakinformatieobject."));
+            }
         }
 
         if (

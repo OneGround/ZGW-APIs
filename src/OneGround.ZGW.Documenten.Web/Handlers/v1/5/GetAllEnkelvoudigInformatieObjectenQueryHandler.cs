@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.Handlers;
-using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Common.Web.Services.UriServices;
@@ -34,7 +33,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
     private readonly IInformatieObjectAuthorizationTempTableService _informatieObjectAuthorizationTempTableService;
     private readonly IConfiguration _configuration;
 
-    // TTL for cached count/page anchors. Count/Anchors for a given (rsin, page, filter) tuple are stable within this window.
+    // TTL for cached count/page anchors. Count/Anchors for a given (rsin, authorization, page, filter) tuple are stable within this window.
     private static readonly TimeSpan CountCacheLifetime = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan AnchorCacheLifetime = TimeSpan.FromMinutes(5);
 
@@ -206,12 +205,10 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var filterHash = ObjectHasher.ComputeSha1Hash(request.GetAllEnkelvoudigInformatieObjectenFilter);
-
         PageAnchor? anchor = null;
         if (request.Pagination.Page > 1)
         {
-            var previousAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 2}:{filterHash}";
+            var previousAnchorKey = GetPageAnchorCacheKey(request.GetAllEnkelvoudigInformatieObjectenFilter, request.Pagination.Page - 2);
 
             // Look up the previous page's composite anchor in the distributed cache.
             // A sentinel (PageAnchor.Sentinel) is stored when no real anchor is available yet,
@@ -268,10 +265,10 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         if (result.Count > 0 && (!useSeekMethod || result.Count == request.Pagination.Size))
         {
             var last = pageData[^1];
-            var currentAnchorKey = $"anchors:{_rsin}:{request.Pagination.Page - 1}:{filterHash}";
+            var currentAnchorKey = GetPageAnchorCacheKey(request.GetAllEnkelvoudigInformatieObjectenFilter, request.Pagination.Page - 1);
 
             // GetAsync uses get-or-add semantics — if a key already exists within the TTL the
-            // existing entry is kept. The anchor for a given (rsin, page, filter) is stable
+            // existing entry is kept. The anchor for a given (rsin, authorization, page, filter) is stable
             // within the TTL window, so this is acceptable.
             await _cache.GetAsync(
                 currentAnchorKey,
@@ -297,7 +294,7 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filterModel });
+        var key = GetCountCacheKey(filterModel);
 
         return await _cache.GetAsync(
             key,
@@ -339,8 +336,8 @@ class GetAllEnkelvoudigInformatieObjectenQueryHandler
         CancellationToken cancellationToken
     )
     {
-        // Create a key for the current request+Rsin (uri contains the query-parameters as well)
-        var key = ObjectHasher.ComputeSha1Hash(new { Rsin = _rsin, GetAllEnkelvoudigInformatieObjectenFilter = filter });
+        // Create a key for the current request+Rsin+authorization (uri contains the query-parameters as well)
+        var key = GetCountCacheKey(filter);
 
         // Note: Cache the Count from SQL for 5 minutes to avoid repeated expensive queries until the cache expires.
         int totalCount = await _cache.GetAsync(

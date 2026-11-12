@@ -115,6 +115,10 @@ class CreateZaakInformatieObjectCommandHandler
             {
                 errors.Add(new ValidationError("status", ErrorCode.DoesNotExist, "Ongeldige hyperlink - Object bestaat niet."));
             }
+            else if (status.ZaakId != zaak.Id)
+            {
+                errors.Add(new ValidationError("status", ErrorCode.Invalid, "De status hoort niet bij de zaak van dit zaakinformatieobject."));
+            }
         }
 
         var informatieObject = await GetInformatieObjectAsync(zaakInformatieObject, errors);

@@ -28,6 +28,7 @@ public interface IAuditTrailService : IDisposable
 
     Task GetListAsync(int count, int totalCount, int page, CancellationToken cancellationToken = default);
     Task GetListAsync(int totalCount, CancellationToken cancellationToken = default);
+    Task GetFilteredListAsync(string actionDisplayName, string explanation, CancellationToken cancellationToken = default);
 
     // Retrieval methods for audit trail entries
     Task<IEnumerable<AuditTrailRegel>> GetAuditTrailEntriesAsync(Guid hoofdobjectId, CancellationToken cancellationToken = default);
