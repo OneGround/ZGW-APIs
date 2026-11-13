@@ -51,13 +51,12 @@ internal sealed class ZrcMapperTestHost : IDisposable
     /// this, never against <c>entity.Url</c> — the latter is what convention mapping produces on its own.</summary>
     internal static string Resolved(IUrlEntity entity) => $"{BaseUrl}{entity.Url}";
 
-    /// <summary>The url the mocked <see cref="IEntityUriService"/> builds for the zaak with the given id (segments overload).</summary>
+    /// <summary>The url the mocked <see cref="IEntityUriService"/> builds for the zaak with the given id (as <c>Zaak.Url</c> would resolve).</summary>
     internal static string ResolvedZaak(Guid zaakId) => $"{BaseUrl}/zaken/{zaakId}";
 
     public ZrcMapperTestHost()
     {
         UriService.Setup(s => s.GetUri(It.IsAny<IUrlEntity>())).Returns<IUrlEntity>(Resolved);
-        UriService.Setup(s => s.GetUri(It.IsAny<string[]>())).Returns<string[]>(segments => $"{BaseUrl}/{string.Join('/', segments)}");
 
         var services = new ServiceCollection();
         services.AddSingleton(UriService.Object);

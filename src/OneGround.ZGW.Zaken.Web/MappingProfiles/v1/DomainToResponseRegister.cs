@@ -83,7 +83,7 @@ public class DomainToResponseRegister : IRegister
         // Note: the url is built from the id of the referenced zaak, not read from the stored url column
         config
             .NewConfig<RelevanteAndereZaak, RelevanteAndereZaakDto>()
-            .Map(dest => dest.Url, src => MapContext.Current.GetService<IEntityUriService>().GetZaakUri(src.GerelateerdeZaakId));
+            .Map(dest => dest.Url, src => MapContext.Current.GetService<IEntityUriService>().GetRequestZaakUri(src.GerelateerdeZaakId));
         config.NewConfig<ZaakKenmerk, ZaakKenmerkDto>();
         config.NewConfig<ZaakVerlenging, ZaakVerlengingDto>();
         config.NewConfig<ZaakOpschorting, ZaakOpschortingDto>();

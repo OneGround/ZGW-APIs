@@ -42,10 +42,13 @@ public class GerelateerdeZaakBronDate : IBronDateService
         }
 
         var maxDate = DateOnly.MinValue;
-        foreach (var relevantZaakUrl in relevanteAndereZaken.Select(z => _uriService.GetZaakUri(z.GerelateerdeZaakId)))
+        // Note: the lookup goes through the zaken service agent, which only accepts urls of the configured ZRC address (not of the address of this request)
+        foreach (var relevantZaakUrl in relevanteAndereZaken.Select(z => _uriService.GetZrcZaakUri(z.GerelateerdeZaakId)))
         {
             var relevantZaak = await GetZaakAsync(relevantZaakUrl, errors);
-            if (string.IsNullOrEmpty(relevantZaak.Einddatum))
+
+            // A failed lookup has been added to the errors; there is no zaak to read the einddatum from
+            if (relevantZaak == null || string.IsNullOrEmpty(relevantZaak.Einddatum))
                 continue;
 
             var date = DateOnly.Parse(relevantZaak.Einddatum);
