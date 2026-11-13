@@ -11,6 +11,8 @@ using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
 
+#pragma warning disable CS0618 // RelevanteAndereZaak.Url is obsolete: the seeds still fill it to simulate rows created before it was phased out
+
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
 
 /// <summary>
@@ -56,7 +58,13 @@ internal static class ZakenSeed
     /// <summary>
     /// Adds a relevanteAndereZaken reference from the zaak <paramref name="zaakId"/> to the zaak <paramref name="relevanteAndereZaakId"/>.
     /// </summary>
-    public static async Task AddRelevanteAndereZaakAsync(ZakenWebApplicationFactory factory, Guid zaakId, Guid relevanteAndereZaakId)
+    public static async Task AddRelevanteAndereZaakAsync(
+        ZakenWebApplicationFactory factory,
+        Guid zaakId,
+        Guid relevanteAndereZaakId,
+        string storedUrl = null,
+        bool withoutUrl = false
+    )
     {
         using var scope = factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
@@ -69,7 +77,7 @@ internal static class ZakenSeed
                 Id = Guid.NewGuid(),
                 Owner = owner,
                 ZaakId = zaakId,
-                Url = ZakenEndpointRequests.ZaakUrl(relevanteAndereZaakId),
+                Url = withoutUrl ? null : storedUrl ?? ZakenEndpointRequests.ZaakUrl(relevanteAndereZaakId),
                 GerelateerdeZaakId = relevanteAndereZaakId,
                 AardRelatie = "vervolg",
             }

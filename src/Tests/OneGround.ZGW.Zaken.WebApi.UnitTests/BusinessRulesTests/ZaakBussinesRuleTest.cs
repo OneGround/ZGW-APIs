@@ -38,7 +38,7 @@ public class ZaakBusinessRuleTest
 
         var errors = new List<ValidationError>();
 
-        var valid = await svc.ValidateAsync(actualZaak, updateZaak, "", errors);
+        var valid = await svc.ValidateAsync(actualZaak, updateZaak, "", [], errors);
 
         Assert.False(valid, "Validaton failed expected");
         Assert.True(errors.Count == 1, "Validaton error message expected");

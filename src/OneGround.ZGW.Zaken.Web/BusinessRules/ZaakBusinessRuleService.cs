@@ -43,7 +43,13 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         _notificatiesServiceAgent = notificatiesServiceAgent;
     }
 
-    public async Task<bool> ValidateAsync(Zaak zaakAdd, string hoofdzaakUrl, bool ignoreZaakTypeValidation, List<ValidationError> errors)
+    public async Task<bool> ValidateAsync(
+        Zaak zaakAdd,
+        string hoofdzaakUrl,
+        IEnumerable<string> relevanteAndereZaakUrls,
+        bool ignoreZaakTypeValidation,
+        List<ValidationError> errors
+    )
     {
         // 1. Add rules
         if (!string.IsNullOrEmpty(zaakAdd.Identificatie))
@@ -79,10 +85,16 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         }
 
         // 2. Common rules (valid for Add Zaak and Update Zaak)
-        return await ValidateZaakAsync(null, zaakAdd, hoofdzaakUrl, errors, validatedZaatType);
+        return await ValidateZaakAsync(null, zaakAdd, hoofdzaakUrl, relevanteAndereZaakUrls, errors, validatedZaatType);
     }
 
-    public async Task<bool> ValidateAsync(Zaak zaakExisting, Zaak zaakUpdate, string hoofdzaakUrl, List<ValidationError> errors)
+    public async Task<bool> ValidateAsync(
+        Zaak zaakExisting,
+        Zaak zaakUpdate,
+        string hoofdzaakUrl,
+        IEnumerable<string> relevanteAndereZaakUrls,
+        List<ValidationError> errors
+    )
     {
         // 1. Update rules
         if (!string.IsNullOrEmpty(zaakUpdate.Identificatie) && zaakExisting.Identificatie != zaakUpdate.Identificatie)
@@ -107,7 +119,7 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         }
 
         // 2. Common rules (valid for Add Zaak and Update Zaak)
-        return await ValidateZaakAsync(zaakExisting, zaakUpdate, hoofdzaakUrl, errors);
+        return await ValidateZaakAsync(zaakExisting, zaakUpdate, hoofdzaakUrl, relevanteAndereZaakUrls, errors);
     }
 
     public async Task<bool> ValidateZaakDocumentenArchivedStatusAsync(Zaak existingZaak, List<ValidationError> errors)
@@ -156,6 +168,7 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         Zaak zaakExisting,
         Zaak zaakForValidation,
         string hoofdzaakUrl,
+        IEnumerable<string> relevanteAndereZaakUrls,
         List<ValidationError> errors,
         ServiceAgentResponse<ZaakTypeResponseDto> validateZaaktype = null
     )
@@ -181,8 +194,20 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         }
 
         // zrc-011: Valideren relevanteAndereZaken op de Zaak-resource
-        foreach (var (url, index) in zaakForValidation.RelevanteAndereZaken.Select(z => z.Url).WithIndex())
+        // Note: a relation the zaak already has was validated when it was added. On an update (PUT/PATCH) its url is rebuilt from the stored id on the
+        // address of the current request, which the service agent does not necessarily accept, so only new relations are validated.
+        var existingZaakIds = zaakExisting?.RelevanteAndereZaken?.Select(r => r.GerelateerdeZaakId).ToHashSet() ?? [];
+        foreach (var (url, index) in (relevanteAndereZaakUrls ?? []).WithIndex())
         {
+            if (
+                !string.IsNullOrEmpty(url)
+                && OneGround.ZGW.Common.Web.Helpers.UriHelper.TryGetResourceId(url, "zaken") is { } zaakId
+                && existingZaakIds.Contains(zaakId)
+            )
+            {
+                continue;
+            }
+
             await ValidateRelevanteAndereZaak(url, index, errors);
         }
 
@@ -349,15 +374,26 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         return result;
     }
 
+    // Note: the url the client sent is validated (it is fetched through the service agent, which rejects an url of another host). The relation is
+    // stored by the id of the referenced zaak, so the url must also contain one.
     private async Task ValidateRelevanteAndereZaak(string zaakUrl, int index, List<ValidationError> errors)
     {
+        if (string.IsNullOrEmpty(zaakUrl))
+        {
+            errors.Add(new ValidationError($"relevanteAndereZaken.{index}.url", ErrorCode.Required, "Dit veld is vereist."));
+            return;
+        }
+
         var result = await _zakenServiceAgent.GetZaakByUrlAsync(zaakUrl);
 
         if (!result.Success)
         {
             errors.Add(new ValidationError($"relevanteAndereZaken.{index}.url", result.Error.Code, result.Error.Title));
         }
-        else if (!ResourceTypeValidator.IsOfType("zaken", zaakUrl))
+        else if (
+            !ResourceTypeValidator.IsOfType("zaken", zaakUrl)
+            || OneGround.ZGW.Common.Web.Helpers.UriHelper.TryGetResourceId(zaakUrl, "zaken") == null
+        )
         {
             errors.Add(
                 new ValidationError(

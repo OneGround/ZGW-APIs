@@ -63,7 +63,15 @@ class UpdateZaakCommandHandler : ZakenBaseHandler<UpdateZaakCommandHandler>, IRe
             return new CommandResult<Zaak>(null, CommandStatus.Forbidden, errors.ToArray());
         }
 
-        if (!await _zaakBusinessRuleService.ValidateAsync(request.OriginalZaak, request.Zaak, request.HoofdzaakUrl, errors))
+        if (
+            !await _zaakBusinessRuleService.ValidateAsync(
+                request.OriginalZaak,
+                request.Zaak,
+                request.HoofdzaakUrl,
+                request.RelevanteAndereZaakUrls,
+                errors
+            )
+        )
         {
             return new CommandResult<Zaak>(null, CommandStatus.ValidationError, errors.ToArray());
         }
@@ -192,6 +200,7 @@ class UpdateZaakCommand : IRequest<CommandResult<Zaak>>
     public Zaak OriginalZaak { get; internal set; }
     public Guid Id { get; internal set; }
     public string HoofdzaakUrl { get; internal set; }
+    public required IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
     public int? SRID { get; internal set; }
 }

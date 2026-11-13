@@ -444,7 +444,7 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationtime");
 
-                    b.Property<Guid?>("GerelateerdeZaakId")
+                    b.Property<Guid>("GerelateerdeZaakId")
                         .HasColumnType("uuid")
                         .HasColumnName("gerelateerde_zaak_id");
 
@@ -464,7 +464,6 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                         .HasColumnName("owner");
 
                     b.Property<string>("Url")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("url");
@@ -2448,7 +2447,8 @@ namespace OneGround.ZGW.Zaken.DataModel.Migrations
                     b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", null)
                         .WithMany()
                         .HasForeignKey("GerelateerdeZaakId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("OneGround.ZGW.Zaken.DataModel.Zaak", "Zaak")
                         .WithMany("RelevanteAndereZaken")

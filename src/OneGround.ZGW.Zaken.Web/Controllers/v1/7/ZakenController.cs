@@ -31,6 +31,7 @@ using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.Configuration;
+using OneGround.ZGW.Zaken.Web.Extensions;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace OneGround.ZGW.Zaken.Web.Controllers.v1._7;
@@ -356,6 +357,7 @@ public class ZakenController : ZGWControllerBase
             {
                 Zaak = zaak,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken.GetUrls(),
                 SRID = srid,
             }
         );
@@ -533,6 +535,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken.GetUrls(),
                 SRID = srid,
             }
         );
@@ -620,6 +623,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = mergedZaakRequest.Hoofdzaak,
+                RelevanteAndereZaakUrls = mergedZaakRequest.RelevanteAndereZaken.GetUrls(),
                 IsPartialUpdate = true,
                 SRID = mergedZaakRequest.Zaakgeometrie != null ? srid.Value : null,
             }

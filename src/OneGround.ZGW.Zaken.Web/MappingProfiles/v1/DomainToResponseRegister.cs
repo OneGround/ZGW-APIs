@@ -7,6 +7,7 @@ using OneGround.ZGW.Common;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.Helpers;
 using OneGround.ZGW.Common.Web.Mapping.Mapster;
+using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess.AuditTrail;
 using OneGround.ZGW.Zaken.Contracts.v1;
 using OneGround.ZGW.Zaken.Contracts.v1._2;
@@ -18,6 +19,7 @@ using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakRol;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.DataModel.ZaakObject;
 using OneGround.ZGW.Zaken.DataModel.ZaakRol;
+using OneGround.ZGW.Zaken.Web.Services;
 
 #pragma warning disable CS0618 // Note: oaoIdentificatie is deprecated, but still accepted and returned (#2576)
 
@@ -78,7 +80,10 @@ public class DomainToResponseRegister : IRegister
         // test host on the real configuration. Same rule as the RequestToDomainRegister note for the reverse
         // direction, and as the v1.5 sibling registers.
 
-        config.NewConfig<RelevanteAndereZaak, RelevanteAndereZaakDto>();
+        // Note: the url is built from the id of the referenced zaak, not read from the stored url column
+        config
+            .NewConfig<RelevanteAndereZaak, RelevanteAndereZaakDto>()
+            .Map(dest => dest.Url, src => MapContext.Current.GetService<IEntityUriService>().GetRequestZaakUri(src.GerelateerdeZaakId));
         config.NewConfig<ZaakKenmerk, ZaakKenmerkDto>();
         config.NewConfig<ZaakVerlenging, ZaakVerlengingDto>();
         config.NewConfig<ZaakOpschorting, ZaakOpschortingDto>();

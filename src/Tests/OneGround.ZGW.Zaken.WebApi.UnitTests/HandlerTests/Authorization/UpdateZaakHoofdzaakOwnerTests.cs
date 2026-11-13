@@ -34,7 +34,15 @@ public class UpdateZaakHoofdzaakOwnerTests : IDisposable
     {
         // Simulate validation passing, to prove the handler's own lookup is owner-filtered too.
         _businessRules
-            .Setup(r => r.ValidateAsync(It.IsAny<Zaak>(), It.IsAny<Zaak>(), It.IsAny<string>(), It.IsAny<List<ValidationError>>()))
+            .Setup(r =>
+                r.ValidateAsync(
+                    It.IsAny<Zaak>(),
+                    It.IsAny<Zaak>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IEnumerable<string>>(),
+                    It.IsAny<List<ValidationError>>()
+                )
+            )
             .ReturnsAsync(true);
         _closedZaakRule.Setup(r => r.ValidateClosedZaakModificationRule(It.IsAny<Zaak>(), It.IsAny<List<ValidationError>>())).Returns(true);
     }
@@ -84,6 +92,7 @@ public class UpdateZaakHoofdzaakOwnerTests : IDisposable
                     OriginalZaak = original,
                     Zaak = new Zaak { Zaaktype = ZaakTypeA },
                     HoofdzaakUrl = HoofdzaakUrl,
+                    RelevanteAndereZaakUrls = [],
                 },
                 CancellationToken.None
             ),
@@ -106,6 +115,7 @@ public class UpdateZaakHoofdzaakOwnerTests : IDisposable
                     OriginalZaak = original,
                     Zaak = new Zaak { Zaaktype = ZaakTypeA },
                     HoofdzaakUrl = HoofdzaakUrl,
+                    RelevanteAndereZaakUrls = [],
                     SRID = 28992,
                 },
                 CancellationToken.None

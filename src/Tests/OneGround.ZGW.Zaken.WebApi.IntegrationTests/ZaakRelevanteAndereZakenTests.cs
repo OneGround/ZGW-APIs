@@ -78,6 +78,73 @@ public class ZaakRelevanteAndereZakenTests(ZakenApiFixture fixture) : ZakenApiTe
         Assert.False(await context.RelevanteAndereZaken.AnyAsync(r => r.ZaakId == referencing.Id));
     }
 
+    [Fact]
+    public async Task The_url_of_a_relevanteAndereZaak_is_built_from_the_id_of_the_referenced_zaak_not_from_the_stored_url()
+    {
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
+        var referenced = await ZakenSeed.SeedZaakAsync(Factory);
+        var referencing = await ZakenSeed.SeedZaakAsync(Factory);
+        await ZakenSeed.AddRelevanteAndereZaakAsync(
+            Factory,
+            referencing.Id,
+            referenced.Id,
+            storedUrl: $"https://stale-host.test/zaken/api/v1/zaken/{referenced.Id}"
+        );
+
+        var read = await SendAsync(HttpMethod.Get, V1Routes.Zaken.Get, referencing.Id, clientId, referencing.Rsin);
+
+        var body = JObject.Parse(await read.Content.ReadAsStringAsync());
+        Assert.Equal([referenced.Url], body["relevanteAndereZaken"]!.Select(r => r.Value<string>("url")).ToArray());
+    }
+
+    [Fact]
+    public async Task A_relevanteAndereZaak_without_a_stored_url_is_returned_with_the_url_of_the_referenced_zaak()
+    {
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
+        var referenced = await ZakenSeed.SeedZaakAsync(Factory);
+        var referencing = await ZakenSeed.SeedZaakAsync(Factory);
+        await ZakenSeed.AddRelevanteAndereZaakAsync(Factory, referencing.Id, referenced.Id, withoutUrl: true);
+
+        var read = await SendAsync(HttpMethod.Get, V1Routes.Zaken.Get, referencing.Id, clientId, referencing.Rsin);
+
+        var body = JObject.Parse(await read.Content.ReadAsStringAsync());
+        Assert.Equal([referenced.Url], body["relevanteAndereZaken"]!.Select(r => r.Value<string>("url")).ToArray());
+        // Note: a PATCH/PUT/POST that keeps a relevanteAndereZaak cannot be exercised here: the test host does not answer the zaken service agent
+        // that validates the referenced zaak.
+    }
+
+    [Fact]
+    public async Task Patching_another_field_of_a_zaak_keeps_its_relevanteAndereZaken_without_validating_them_again()
+    {
+        var clientId = ZrcClients.WithAllAuthorizations(Factory);
+        var referenced = await ZakenSeed.SeedZaakAsync(Factory);
+        var referencing = await ZakenSeed.SeedZaakAsync(Factory);
+        await ZakenSeed.AddRelevanteAndereZaakAsync(Factory, referencing.Id, referenced.Id, withoutUrl: true);
+
+        var patch = await SendAsync(
+            HttpMethod.Patch,
+            V1Routes.Zaken.Update,
+            referencing.Id,
+            clientId,
+            referencing.Rsin,
+            new { omschrijving = "Bijgewerkt" }
+        );
+        Assert.True(patch.IsSuccessStatusCode, await ZakenEndpointRequests.DescribeAsync(patch));
+
+        var read = await SendAsync(HttpMethod.Get, V1Routes.Zaken.Get, referencing.Id, clientId, referencing.Rsin);
+        var body = JObject.Parse(await read.Content.ReadAsStringAsync());
+        Assert.Equal([referenced.Url], body["relevanteAndereZaken"]!.Select(r => r.Value<string>("url")).ToArray());
+
+        // The relation is kept by the id of the referenced zaak only: the patch (which rewrites the relations) did not bring a url back
+        using var scope = Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ZrcDbContext>();
+        var relation = await context.RelevanteAndereZaken.SingleAsync(r => r.ZaakId == referencing.Id);
+        Assert.Equal(referenced.Id, relation.GerelateerdeZaakId);
+#pragma warning disable CS0618 // Url is obsolete: it must not be written any more
+        Assert.Null(relation.Url);
+#pragma warning restore CS0618
+    }
+
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string route, Guid zaakId, string clientId, string rsin, object body = null)
     {
         var request = ZakenEndpointRequests.Create(

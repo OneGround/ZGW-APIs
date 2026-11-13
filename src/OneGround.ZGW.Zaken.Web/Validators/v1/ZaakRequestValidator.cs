@@ -49,7 +49,7 @@ public class ZaakRequestValidator : ZGWValidator<ZaakRequestDto>
         CascadeRuleForEach(z => z.RelevanteAndereZaken)
             .ChildRules(v =>
             {
-                v.CascadeRuleFor(r => r.Url).NotNull().NotEmpty().IsUri().MaximumLength(1000);
+                v.CascadeRuleFor(r => r.Url).NotNull().NotEmpty().IsUri().MaximumLength(1000).ContainsZaakId();
                 v.CascadeRuleFor(r => r.AardRelatie).NotNull().NotEmpty().IsEnumName(typeof(AardRelatie));
             });
         CascadeRuleForEach(z => z.Kenmerken)

@@ -6,6 +6,7 @@ using OneGround.ZGW.Catalogi.Contracts.v1;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
+using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 using OneGround.ZGW.Zaken.Web.Services.BronDate;
@@ -19,15 +20,18 @@ public class BronDateServiceFactory : IBronDateServiceFactory
     private readonly ICatalogiServiceAgent _catalogiServiceAgent;
     private readonly IMapper _mapper;
     private readonly ZrcDbContext _context;
+    private readonly IEntityUriService _uriService;
 
     public BronDateServiceFactory(
         IBesluitenServiceAgent besluitenServiceAgent,
         IZakenServiceAgent zakenServiceAgent,
         ICatalogiServiceAgent catalogiServiceAgent,
         IMapper mapper,
-        ZrcDbContext context
+        ZrcDbContext context,
+        IEntityUriService uriService
     )
     {
+        _uriService = uriService;
         _besluitenServiceAgent = besluitenServiceAgent;
         _zakenServiceAgent = zakenServiceAgent;
         _catalogiServiceAgent = catalogiServiceAgent;
@@ -55,7 +59,7 @@ public class BronDateServiceFactory : IBronDateServiceFactory
             case Afleidingswijze.eigenschap:
                 return new EigenschapBronDate(datumKenmerk, _context, _catalogiServiceAgent);
             case Afleidingswijze.gerelateerde_zaak:
-                return new GerelateerdeZaakBronDate(_zakenServiceAgent, _context);
+                return new GerelateerdeZaakBronDate(_zakenServiceAgent, _context, _uriService);
             case Afleidingswijze.ingangsdatum_besluit:
                 return new IngangsdatumBesluitBronDate(_besluitenServiceAgent, _context);
             case Afleidingswijze.termijn:
