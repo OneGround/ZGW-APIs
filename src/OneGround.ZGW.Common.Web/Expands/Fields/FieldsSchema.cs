@@ -89,11 +89,14 @@ public sealed class FieldsSchema
     {
         var prop = parent
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(p =>
+            .Where(p =>
             {
                 var attr = p.GetCustomAttribute<JsonPropertyAttribute>();
                 return attr is not null && JsonPropertyNames.Resolve(attr, p) == name;
-            });
+            })
+            // A derived DTO can hide a member of its base (`new`): the most derived one wins, whatever order reflection returns them in.
+            .OrderByDescending(p => DepthOf(p.DeclaringType))
+            .FirstOrDefault();
         if (prop is null)
             return Array.Empty<Type>();
 
@@ -121,6 +124,14 @@ public sealed class FieldsSchema
         }
 
         return type;
+    }
+
+    private static int DepthOf(Type type)
+    {
+        var depth = 0;
+        for (var t = type; t?.BaseType is not null; t = t.BaseType)
+            depth++;
+        return depth;
     }
 
     private static HashSet<string> Reflect(Type type) =>

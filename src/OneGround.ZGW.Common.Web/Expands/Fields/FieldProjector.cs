@@ -34,7 +34,13 @@ public static class FieldProjector
                 continue;
             }
 
-            scalarLookup[JsonPropertyNames.Resolve(jsonAttr, prop)] = prop;
+            // A derived DTO can hide a member of its base (`new`), after which reflection returns both under the same JSON name: the most derived one wins,
+            // whatever order reflection returns them in.
+            var jsonName = JsonPropertyNames.Resolve(jsonAttr, prop);
+            if (scalarLookup.TryGetValue(jsonName, out var existing) && !prop.DeclaringType!.IsSubclassOf(existing.DeclaringType!))
+                continue;
+
+            scalarLookup[jsonName] = prop;
         }
 
         if (selection.IncludeAllScalars)

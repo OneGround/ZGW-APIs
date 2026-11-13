@@ -39,7 +39,7 @@ public class ZaakType_GerelateerdeZaakTypenResolverTests : ChildTypenResolverTes
         new()
         {
             GerelateerdeZaakTypen = urls
-                ?.Select(url => new Catalogi.Contracts.v1.GerelateerdeZaaktypeDto
+                ?.Select(url => new V4.GerelateerdeZaaktypeResponseDto
                 {
                     ZaakType = url,
                     AardRelatie = "vervolg",
