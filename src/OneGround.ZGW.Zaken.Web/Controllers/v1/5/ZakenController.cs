@@ -30,6 +30,7 @@ using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.Web.Authorization;
 using OneGround.ZGW.Zaken.Web.Configuration;
 using OneGround.ZGW.Zaken.Web.Contracts.v1._5;
+using OneGround.ZGW.Zaken.Web.Extensions;
 using OneGround.ZGW.Zaken.Web.Handlers.v1._5;
 using OneGround.ZGW.Zaken.Web.Models.v1._5;
 using OneGround.ZGW.Zaken.Web.Validators.v1._5;
@@ -242,7 +243,7 @@ public class ZakenController : ZGWControllerBase
             {
                 Zaak = zaak,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
-                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken.GetUrls(),
                 SRID = srid,
             }
         );
@@ -394,7 +395,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = zaakRequest.Hoofdzaak,
-                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
+                RelevanteAndereZaakUrls = zaakRequest.RelevanteAndereZaken.GetUrls(),
                 SRID = srid,
             }
         );
@@ -476,7 +477,7 @@ public class ZakenController : ZGWControllerBase
                 OriginalZaak = resultGet.Result,
                 Id = id,
                 HoofdzaakUrl = mergedZaakRequest.Hoofdzaak,
-                RelevanteAndereZaakUrls = mergedZaakRequest.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [],
+                RelevanteAndereZaakUrls = mergedZaakRequest.RelevanteAndereZaken.GetUrls(),
                 IsPartialUpdate = true,
                 SRID = mergedZaakRequest.Zaakgeometrie != null ? srid.Value : null,
             }

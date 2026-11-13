@@ -200,7 +200,7 @@ class UpdateZaakCommand : IRequest<CommandResult<Zaak>>
     public Zaak OriginalZaak { get; internal set; }
     public Guid Id { get; internal set; }
     public string HoofdzaakUrl { get; internal set; }
-    public IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; } = [];
+    public required IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; }
     public bool IsPartialUpdate { get; internal set; }
     public int? SRID { get; internal set; }
 }

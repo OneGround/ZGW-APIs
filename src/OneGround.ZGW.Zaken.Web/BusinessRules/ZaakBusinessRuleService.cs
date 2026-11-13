@@ -194,8 +194,20 @@ public class ZaakBusinessRuleService : IZaakBusinessRuleService
         }
 
         // zrc-011: Valideren relevanteAndereZaken op de Zaak-resource
+        // Note: a relation the zaak already has was validated when it was added. On an update (PUT/PATCH) its url is rebuilt from the stored id on the
+        // address of the current request, which the service agent does not necessarily accept, so only new relations are validated.
+        var existingZaakIds = zaakExisting?.RelevanteAndereZaken?.Select(r => r.GerelateerdeZaakId).ToHashSet() ?? [];
         foreach (var (url, index) in (relevanteAndereZaakUrls ?? []).WithIndex())
         {
+            if (
+                !string.IsNullOrEmpty(url)
+                && OneGround.ZGW.Common.Web.Helpers.UriHelper.TryGetResourceId(url, "zaken") is { } zaakId
+                && existingZaakIds.Contains(zaakId)
+            )
+            {
+                continue;
+            }
+
             await ValidateRelevanteAndereZaak(url, index, errors);
         }
 

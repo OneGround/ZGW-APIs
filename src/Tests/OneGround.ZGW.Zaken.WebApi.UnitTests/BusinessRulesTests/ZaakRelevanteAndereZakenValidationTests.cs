@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1;
@@ -24,6 +25,8 @@ namespace OneGround.ZGW.Zaken.WebApi.UnitTests.BusinessRulesTests;
 public class ZaakRelevanteAndereZakenValidationTests : IDisposable
 {
     private const string ZaakUrl = "http://zaken.local/api/v1/zaken/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+    private static readonly Guid ZaakId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    private const string RequestHostUrl = "https://request-host.test/zaken/api/v1/zaken/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
 
     private readonly ZrcDbContext _context = CreateDbContext();
     private readonly Mock<IZakenServiceAgent> _zakenServiceAgent = new();
@@ -88,10 +91,60 @@ public class ZaakRelevanteAndereZakenValidationTests : IDisposable
         _zakenServiceAgent.Verify(a => a.GetZaakByUrlAsync(It.IsAny<string>()), Times.Never);
     }
 
+    [Fact]
+    public async Task A_relation_the_zaak_already_has_is_not_validated_again_whatever_the_address_of_its_url()
+    {
+        // On an update the url of an existing relation is rebuilt from the stored id on the address of the request; the service agent would reject it
+        var notAccepted = new ErrorResponse
+        {
+            Code = "bad-url",
+            Title = "De URL is van een externe Zaken API",
+            Status = 400,
+        };
+        _zakenServiceAgent.Setup(a => a.GetZaakByUrlAsync(It.IsAny<string>())).ReturnsAsync(new ServiceAgentResponse<ZaakResponseDto>(notAccepted));
+        var errors = new List<ValidationError>();
+
+        var valid = await Validate([RequestHostUrl], errors, ZaakId);
+
+        Assert.True(valid);
+        Assert.Empty(errors);
+        _zakenServiceAgent.Verify(a => a.GetZaakByUrlAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task A_new_relation_is_validated_next_to_an_existing_one()
+    {
+        const string newZaakUrl = "http://zaken.local/api/v1/zaken/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+        var notFound = new ErrorResponse
+        {
+            Code = "not-found",
+            Title = "Niet gevonden",
+            Status = 404,
+        };
+        _zakenServiceAgent.Setup(a => a.GetZaakByUrlAsync(newZaakUrl)).ReturnsAsync(new ServiceAgentResponse<ZaakResponseDto>(notFound));
+        var errors = new List<ValidationError>();
+
+        var valid = await Validate([RequestHostUrl, newZaakUrl], errors, ZaakId);
+
+        Assert.False(valid);
+        var error = Assert.Single(errors);
+        Assert.Equal("relevanteAndereZaken.1.url", error.Name);
+        Assert.Equal("not-found", error.Code);
+        _zakenServiceAgent.Verify(a => a.GetZaakByUrlAsync(RequestHostUrl), Times.Never);
+    }
+
     // Archiefstatus is set explicitly: any other value makes the rule load the (unseeded) existing zaak.
-    private Task<bool> Validate(IEnumerable<string> relevanteAndereZaakUrls, List<ValidationError> errors)
+    private Task<bool> Validate(IEnumerable<string> relevanteAndereZaakUrls, List<ValidationError> errors, params Guid[] existingRelatedZaakIds)
     {
         var existing = NewZaak(CurrentTenant, ZaakTypeA);
+        existing.RelevanteAndereZaken = existingRelatedZaakIds
+            .Select(id => new RelevanteAndereZaak
+            {
+                Id = Guid.NewGuid(),
+                GerelateerdeZaakId = id,
+                AardRelatie = "vervolg",
+            })
+            .ToList();
         var update = new Zaak
         {
             Zaaktype = ZaakTypeA,

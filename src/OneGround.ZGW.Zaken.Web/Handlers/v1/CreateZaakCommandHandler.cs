@@ -182,6 +182,6 @@ class CreateZaakCommand : IRequest<CommandResult<Zaak>>
 {
     public Zaak Zaak { get; internal set; }
     public string HoofdzaakUrl { get; internal set; }
-    public IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; } = [];
+    public required IReadOnlyCollection<string> RelevanteAndereZaakUrls { get; internal set; }
     public int? SRID { get; internal set; }
 }

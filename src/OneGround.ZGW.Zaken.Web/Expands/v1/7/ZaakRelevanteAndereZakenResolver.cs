@@ -10,6 +10,7 @@ using OneGround.ZGW.Common.Web.Expands;
 using OneGround.ZGW.Common.Web.Helpers;
 using OneGround.ZGW.Common.Web.Models;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using OneGround.ZGW.Zaken.Web.Extensions;
 
 namespace OneGround.ZGW.Zaken.Web.Expands.v1._7;
 
@@ -52,7 +53,7 @@ public class ZaakRelevanteAndereZakenResolver : IExpandResolver<ZaakResponseDto>
 
     public async Task<object> ResolveAsync(ZaakResponseDto entity, IReadOnlyDictionary<string, object> resolved, IReadOnlySet<string> requestedPaths)
     {
-        var relevanteAndereZaakUrls = entity.RelevanteAndereZaken?.Select(r => r.Url).ToList() ?? [];
+        var relevanteAndereZaakUrls = entity.RelevanteAndereZaken.GetUrls();
         if (relevanteAndereZaakUrls.Count == 0)
         {
             return new List<ZaakResponseDto>();

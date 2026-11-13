@@ -92,6 +92,7 @@ public class UpdateZaakHoofdzaakOwnerTests : IDisposable
                     OriginalZaak = original,
                     Zaak = new Zaak { Zaaktype = ZaakTypeA },
                     HoofdzaakUrl = HoofdzaakUrl,
+                    RelevanteAndereZaakUrls = [],
                 },
                 CancellationToken.None
             ),
@@ -114,6 +115,7 @@ public class UpdateZaakHoofdzaakOwnerTests : IDisposable
                     OriginalZaak = original,
                     Zaak = new Zaak { Zaaktype = ZaakTypeA },
                     HoofdzaakUrl = HoofdzaakUrl,
+                    RelevanteAndereZaakUrls = [],
                     SRID = 28992,
                 },
                 CancellationToken.None
