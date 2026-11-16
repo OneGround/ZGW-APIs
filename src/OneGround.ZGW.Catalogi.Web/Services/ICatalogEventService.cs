@@ -7,4 +7,5 @@ namespace OneGround.ZGW.Catalogi.Web.Services;
 public interface ICatalogEventService
 {
     Task OnCatalogCreatedAsync(Catalogus catalogus, CancellationToken cancellationToken);
+    Task OnCatalogUpdatedAsync(string oldDomein, Catalogus catalogus, CancellationToken cancellationToken);
 }

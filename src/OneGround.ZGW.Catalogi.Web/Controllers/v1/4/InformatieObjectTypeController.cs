@@ -11,7 +11,7 @@ using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
-using OneGround.ZGW.Catalogi.Web.Contracts.v1._3;
+using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Catalogi.Web.Models.v1;
 using OneGround.ZGW.Common.Contracts.v1;

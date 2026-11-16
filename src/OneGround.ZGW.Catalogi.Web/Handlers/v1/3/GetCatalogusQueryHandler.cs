@@ -37,14 +37,14 @@ class GetCatalogusQueryHandler : CatalogiBaseHandler<GetCatalogusQueryHandler>, 
 
         var rsinFilter = GetRsinFilterPredicate<Catalogus>(b => b.Owner == _rsin);
 
-        var catalogus = await _context
-            .Catalogussen.AsNoTracking()
-            .AsSplitQuery()
-            .Where(rsinFilter)
-            .Include(c => c.ZaakTypes)
-            .Include(c => c.BesluitTypes)
-            .Include(c => c.InformatieObjectTypes)
-            .SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
+        var query = _context.Catalogussen.AsNoTracking().AsSplitQuery().Where(rsinFilter);
+
+        if (request.IncludeTypes)
+        {
+            query = query.Include(c => c.ZaakTypes).Include(c => c.BesluitTypes).Include(c => c.InformatieObjectTypes);
+        }
+
+        var catalogus = await query.SingleOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
 
         if (catalogus == null)
         {
@@ -58,4 +58,10 @@ class GetCatalogusQueryHandler : CatalogiBaseHandler<GetCatalogusQueryHandler>, 
 class GetCatalogusQuery : IRequest<QueryResult<Catalogus>>
 {
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Load the zaaktypen, besluittypen and informatieobjecttypen of the catalogus (the response lists them). False when only the catalogus itself
+    /// is needed, as for the merge of a partial update, since a catalogus can hold a lot of types.
+    /// </summary>
+    public bool IncludeTypes { get; set; } = true;
 }

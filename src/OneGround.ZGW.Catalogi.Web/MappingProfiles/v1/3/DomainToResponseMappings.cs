@@ -284,6 +284,11 @@ internal static class DomainToResponseMappings
             .Map(dest => dest.InformatieObjectTypen, src => MapsterUrlResolver.ResolveUrls(src.InformatieObjectTypes))
             .Map(dest => dest.BegindatumVersie, src => ProfileHelper.StringDateFromDate(src.BegindatumVersie));
 
+        // Note: This map is used to merge an existing CATALOGUS with the PATCH operation
+        config
+            .NewConfig<Catalogus, CatalogusRequestDto>()
+            .Map(dest => dest.BegindatumVersie, src => ProfileHelper.StringDateFromDate(src.BegindatumVersie));
+
         config
             .NewConfig<InformatieObjectType, InformatieObjectTypeResponseDto>()
             .Map(dest => dest.Url, src => MapsterUrlResolver.ResolveUrl(src))
