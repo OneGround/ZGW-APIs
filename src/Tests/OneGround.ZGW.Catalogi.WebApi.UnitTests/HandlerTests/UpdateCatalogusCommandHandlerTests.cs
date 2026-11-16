@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.InMemory.Infrastructure.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -28,7 +30,10 @@ public class UpdateCatalogusCommandHandlerTests
 
     private static (UpdateCatalogusCommandHandler Handler, UnitTestZtcDbContext Context, Mock<ICatalogEventService> EventService) CreateHandler()
     {
-        var options = new DbContextOptionsBuilder<ZtcDbContext>().UseInMemoryDatabase(databaseName: $"ztc-{Guid.NewGuid()}").Options;
+        var options = new DbContextOptionsBuilder<ZtcDbContext>()
+            .UseInMemoryDatabase(databaseName: $"ztc-{Guid.NewGuid()}")
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
         var context = new UnitTestZtcDbContext(options);
 
         var authorizationContextAccessor = new Mock<IAuthorizationContextAccessor>();
@@ -154,6 +159,24 @@ public class UpdateCatalogusCommandHandlerTests
 
         Assert.Equal(CommandStatus.OK, result.Status);
         eventService.Verify(e => e.OnCatalogUpdatedAsync("TST", It.Is<Catalogus>(c => c.Domein == "TST"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_EventServiceThrows_PropagatesTheExceptionSoTheTransactionIsNotCommitted()
+    {
+        var (handler, context, eventService) = CreateHandler();
+        var existing = ExistingCatalogus();
+        context.Catalogussen.Add(existing);
+        await context.SaveChangesAsync();
+
+        eventService
+            .Setup(e => e.OnCatalogUpdatedAsync(It.IsAny<string>(), It.IsAny<Catalogus>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("external store unavailable"));
+
+        // The handler must not swallow it: the commit is after the event, so the database changes are rolled back by disposing the transaction
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.Handle(new UpdateCatalogusCommand { Id = existing.Id, Catalogus = Update(domein: "NEW") }, CancellationToken.None)
+        );
     }
 
     [Fact]

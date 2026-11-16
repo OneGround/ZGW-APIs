@@ -82,6 +82,10 @@ class UpdateCatalogusCommandHandler
 
         string oldDomein = catalogus.Domein;
 
+        // The changes and the event of the host (e.g. a setting in an external store) share a database transaction: when the event throws the database
+        // changes are rolled back (what the host already did outside the database is not)
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
         using (var audittrail = _auditTrailFactory.Create(AuditTrailOptions, legacy: false))
         {
             audittrail.SetOld<CatalogusResponseDto>(catalogus);
@@ -123,6 +127,8 @@ class UpdateCatalogusCommandHandler
 
         // Let the host react on the update, e.g. to keep external settings that are keyed on the domein in sync (it knows the old and new domein)
         await _catalogEventService.OnCatalogUpdatedAsync(oldDomein, catalogus, cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         return new CommandResult<Catalogus>(refreshed, CommandStatus.OK);
     }
