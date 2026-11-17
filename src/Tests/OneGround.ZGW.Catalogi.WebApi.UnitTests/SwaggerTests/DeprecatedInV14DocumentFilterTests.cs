@@ -66,7 +66,7 @@ public class DeprecatedInV14DocumentFilterTests
     {
         var document = CreateDocument();
 
-        Apply(document, "v1.4");
+        Apply(document, "1.4.0");
 
         foreach (var property in new[] { "beginGeldigheid", "beginObject", "resultaattypen", "statustypen", "resultaattypeOmschrijving" })
         {
@@ -83,7 +83,7 @@ public class DeprecatedInV14DocumentFilterTests
     {
         var document = CreateDocument();
 
-        Apply(document, "v1.4");
+        Apply(document, "1.4.0");
 
         var parameters = document.Paths["/zaakobjecttypen"].Operations[HttpMethod.Get].Parameters.Cast<OpenApiParameter>().ToDictionary(p => p.Name);
         Assert.True(parameters["datumBeginGeldigheid"].Deprecated);
@@ -92,9 +92,9 @@ public class DeprecatedInV14DocumentFilterTests
     }
 
     [Theory]
-    [InlineData("v1")]
-    [InlineData("v1.2")]
-    [InlineData("v1.3")]
+    [InlineData("1.0.0")]
+    [InlineData("1.2.0")]
+    [InlineData("1.3.1")]
     public void Apply_DocumentOfAnOlderVersion_ChangesNothing(string documentName)
     {
         var document = CreateDocument();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.OpenApi;
+using OneGround.ZGW.Catalogi.Web.Controllers;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace OneGround.ZGW.Catalogi.Web.Swagger;
@@ -13,8 +14,8 @@ namespace OneGround.ZGW.Catalogi.Web.Swagger;
 /// </summary>
 public class DeprecatedInV14DocumentFilter : IDocumentFilter
 {
-    // The name of the OpenAPI document of version 1.4 (group name format 'v'VVV)
-    internal const string DocumentNameV14 = "v1.4";
+    // The name of the OpenAPI document of version 1.4: the group name is the version itself (ZgwApiVersion ignores the group name format)
+    internal const string DocumentNameV14 = Api.LatestVersion_1_4;
 
     private const string Responses = "OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.";
 
