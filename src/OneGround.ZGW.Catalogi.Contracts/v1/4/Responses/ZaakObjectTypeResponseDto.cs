@@ -12,9 +12,17 @@ public class ZaakObjectTypeResponseDto : _3.Responses.ZaakObjectTypeResponseDto,
     // Order: JSON property order (Newtonsoft sorts by Order, and for equal values puts the members of the derived class before those of its base). The
     // lists below take the Order of the property that FOLLOWS their partner in the v1.3 DTOs, so they are serialized directly after it (e.g. zaaktypen,
     // zaaktypeIdentificaties). Pinned by DomainToResponseV14AdditionsTests.V1_4_additions_follow_the_property_they_belong_to.
-    /// <summary>Omschrijvingen van de RESULTAATTYPEn van dit ZAAKOBJECTTYPE. Altijd leeg zolang de relatie niet kan worden vastgelegd (zie resultaattypen).</summary>
+    /// <summary>Omschrijvingen van de RESULTAATTYPEn van dit ZAAKOBJECTTYPE. Altijd leeg zolang de relatie niet kan worden vastgelegd.</summary>
     [JsonProperty("resultaattypeOmschrijving", Order = 17)]
     public IEnumerable<string> ResultaatTypeOmschrijving { get; set; } = [];
+
+    // Note: resultaattypen and statustypen are deprecated in the 1.4 specification and were always empty (the relation is not in the data model): they are not part
+    // of the v1.4 response. The v1.3 mapping still fills the (hidden) base properties.
+    [JsonIgnore]
+    public override IEnumerable<string> ResultaatTypen { get; set; } = [];
+
+    [JsonIgnore]
+    public override IEnumerable<string> StatusTypen { get; set; } = [];
 
     [JsonProperty("_expand", NullValueHandling = NullValueHandling.Ignore, Order = ExpandConstants.OrderLast)]
     public Dictionary<string, object> Expand { get; set; }

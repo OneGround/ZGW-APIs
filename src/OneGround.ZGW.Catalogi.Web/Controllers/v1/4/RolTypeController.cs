@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
 using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
@@ -36,6 +39,8 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._4;
 public class RolTypeController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
+    private readonly IValidatorService _validatorService;
+    private readonly IRequestMerger _requestMerger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<RolTypeResponseDto> _expandValidator;
     private readonly ExpandEngine<RolTypeResponseDto> _expandEngine;
@@ -44,15 +49,19 @@ public class RolTypeController : ZGWControllerBase
         ILogger<RolTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
+        IValidatorService validatorService,
         ExpandValidator<RolTypeResponseDto> expandValidator,
         ExpandEngine<RolTypeResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
+        _validatorService = validatorService;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -182,5 +191,164 @@ public class RolTypeController : ZGWControllerBase
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, roltypenResponse, result.Result.Count);
 
         return Ok(paginationResponse);
+    }
+
+    /// <summary>
+    /// Maak een ROLTYPE aan.
+    /// </summary>
+    /// <remarks>
+    /// Maak een ROLTYPE aan. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.RolTypen.Create, Name = Operations.RolTypen.Create)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(RolTypeResponseDto))]
+    public async Task<IActionResult> AddAsync([FromBody] RolTypeRequestDto rolTypeRequest)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), rolTypeRequest);
+
+        RolType rolType = _mapper.Map<RolType>(rolTypeRequest);
+
+        var result = await _mediator.Send(new CreateRolTypeCommand { RolType = rolType, ZaakTypeUrl = rolTypeRequest.ZaakType });
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var rolTypeResponse = await GetResponseAsync(result.Result.Id);
+
+        if (rolTypeResponse == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Created(rolTypeResponse.Url, rolTypeResponse);
+    }
+
+    /// <summary>
+    /// Werk een ROLTYPE in zijn geheel bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een ROLTYPE in zijn geheel bij. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPut(ApiRoutes.RolTypen.Update, Name = Operations.RolTypen.Update)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(RolTypeResponseDto))]
+    public async Task<IActionResult> UpdateAsync([FromBody] RolTypeRequestDto resultTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), resultTypeRequest, id);
+
+        RolType resultType = _mapper.Map<RolType>(resultTypeRequest);
+
+        var result = await _mediator.Send(
+            new UpdateRolTypeCommand
+            {
+                RolType = resultType,
+                Id = id,
+                ZaakType = resultTypeRequest.ZaakType,
+                IsPartialUpdate = false,
+            }
+        );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var resultTypeResponse = await GetResponseAsync(result.Result.Id);
+
+        if (resultTypeResponse == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(resultTypeResponse);
+    }
+
+    /// <summary>
+    /// Werk een ROLTYPE deels bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een ROLTYPE deels bij. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPatch(ApiRoutes.RolTypen.Update, Name = Operations.RolTypen.PartialUpdate)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(RolTypeResponseDto))]
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialRolTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+
+        var resultGet = await _mediator.Send(new GetRolTypeQuery { Id = id });
+
+        if (resultGet.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        RolTypeRequestDto mergedRolTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<RolTypeRequestDto, RolType>(
+            resultGet.Result,
+            partialRolTypeRequest
+        );
+
+        if (!_validatorService.IsValid(mergedRolTypeRequest, out var validationResult))
+        {
+            return _errorResponseBuilder.BadRequest(validationResult);
+        }
+
+        RolType mergedRolType = _mapper.Map<RolType>(mergedRolTypeRequest);
+
+        var rolTypeUpdate = await _mediator.Send(
+            new UpdateRolTypeCommand
+            {
+                RolType = mergedRolType,
+                Id = id,
+                ZaakType = mergedRolTypeRequest.ZaakType,
+                IsPartialUpdate = true,
+            }
+        );
+
+        if (rolTypeUpdate.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(rolTypeUpdate.Errors);
+        }
+
+        var response = await GetResponseAsync(rolTypeUpdate.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    private async Task<RolTypeResponseDto> GetResponseAsync(Guid id)
+    {
+        var result = await _mediator.Send(new GetRolTypeQuery { Id = id });
+
+        // Note: Read it back through the read query, so the response is the same as of the read operations (including the lists that are new in 1.4)
+        return result.Status == QueryStatus.NotFound ? null : _mapper.Map<RolTypeResponseDto>(result.Result);
     }
 }

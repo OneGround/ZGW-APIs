@@ -19,7 +19,7 @@ public class DeprecatedInV14DocumentFilter : IDocumentFilter
 
     private const string Responses = "OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.";
 
-    // The v1.4 endpoints use the v1.3 request DTOs
+    // The v1.4 endpoints use the v1.3 request DTOs (these have no catalogus: it is taken from the zaaktype)
     private const string Requests = "OneGround.ZGW.Catalogi.Contracts.v1._3.Requests.";
 
     private static readonly string[] Geldigheid = ["beginGeldigheid", "eindeGeldigheid"];
@@ -34,14 +34,14 @@ public class DeprecatedInV14DocumentFilter : IDocumentFilter
         [Responses + "ResultaatTypeResponseDto"] = ["catalogus", .. Geldigheid, .. Object, "indicatieSpecifiek"],
         [Responses + "RolTypeResponseDto"] = ["catalogus", .. Geldigheid, .. Object],
         [Responses + "StatusTypeResponseDto"] = [.. Geldigheid, .. Object],
-        [Responses + "ZaakObjectTypeResponseDto"] = [.. Geldigheid, .. Object, "resultaattypen", "statustypen", "resultaattypeOmschrijving"],
+        [Responses + "ZaakObjectTypeResponseDto"] = [.. Geldigheid, .. Object, "resultaattypeOmschrijving"],
         [Responses + "ZaakTypeResponseDto"] = [.. Object, "versiedatum"],
         // Requests
         [Requests + "BesluitTypeRequestDto"] = [.. Object],
         [Requests + "EigenschapRequestDto"] = [.. Geldigheid, .. Object],
         [Requests + "InformatieObjectTypeRequestDto"] = [.. Object],
-        [Requests + "ResultaatTypeRequestDto"] = ["catalogus", .. Geldigheid, .. Object, "indicatieSpecifiek"],
-        [Requests + "RolTypeRequestDto"] = ["catalogus", .. Geldigheid, .. Object],
+        [Requests + "ResultaatTypeRequestDto"] = [.. Geldigheid, .. Object, "indicatieSpecifiek"],
+        [Requests + "RolTypeRequestDto"] = [.. Geldigheid, .. Object],
         [Requests + "StatusTypeRequestDto"] = [.. Geldigheid, .. Object],
         [Requests + "ZaakObjectTypeRequestDto"] = [.. Geldigheid, .. Object],
         [Requests + "ZaakTypeRequestDto"] = [.. Object, "versiedatum"],

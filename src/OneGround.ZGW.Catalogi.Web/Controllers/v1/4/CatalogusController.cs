@@ -204,6 +204,7 @@ public class CatalogusController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
     public async Task<IActionResult> AddAsync([FromBody] CatalogusRequestDto catalogusRequestDto)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Rsin}", nameof(AddAsync), catalogusRequestDto, catalogusRequestDto.Rsin);
@@ -234,6 +235,7 @@ public class CatalogusController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
     public async Task<IActionResult> UpdateAsync([FromBody] CatalogusRequestDto catalogusRequestDto, Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), catalogusRequestDto, id);
@@ -274,6 +276,7 @@ public class CatalogusController : ZGWControllerBase
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
     public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialCatalogusRequest, Guid id)
     {
         _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);

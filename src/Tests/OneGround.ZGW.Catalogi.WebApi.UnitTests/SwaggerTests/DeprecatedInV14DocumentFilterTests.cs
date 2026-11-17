@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
+using Newtonsoft.Json;
 using OneGround.ZGW.Catalogi.Web.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Xunit;
@@ -34,14 +37,7 @@ public class DeprecatedInV14DocumentFilterTests
             {
                 Schemas = new Dictionary<string, IOpenApiSchema>
                 {
-                    [ZaakObjectTypeResponse] = SchemaWith(
-                        "beginGeldigheid",
-                        "beginObject",
-                        "resultaattypen",
-                        "statustypen",
-                        "resultaattypeOmschrijving",
-                        "url"
-                    ),
+                    [ZaakObjectTypeResponse] = SchemaWith("beginGeldigheid", "beginObject", "resultaattypeOmschrijving", "url"),
                     [ZaakObjectTypeRequest] = SchemaWith("beginGeldigheid", "eindeObject", "url"),
                 },
             },
@@ -68,7 +64,7 @@ public class DeprecatedInV14DocumentFilterTests
 
         Apply(document, "1.4.0");
 
-        foreach (var property in new[] { "beginGeldigheid", "beginObject", "resultaattypen", "statustypen", "resultaattypeOmschrijving" })
+        foreach (var property in new[] { "beginGeldigheid", "beginObject", "resultaattypeOmschrijving" })
         {
             Assert.True(IsDeprecated(document, ZaakObjectTypeResponse, property), property);
         }
@@ -107,5 +103,48 @@ public class DeprecatedInV14DocumentFilterTests
             document.Paths["/zaakobjecttypen"].Operations[HttpMethod.Get].Parameters.Cast<OpenApiParameter>(),
             p => Assert.False(p.Deprecated)
         );
+    }
+
+    // The filter silently skips names that do not exist, so pin that every name in its tables is a real member of the contract
+    private static readonly Assembly ContractsAssembly = typeof(OneGround.ZGW.Catalogi.Contracts.v1._4.Responses.ZaakTypeResponseDto).Assembly;
+
+    [Fact]
+    public void DeprecatedProperties_Should_AllExistInTheirContract()
+    {
+        var missing = new List<string>();
+        foreach (var (typeName, names) in DeprecatedInV14DocumentFilter.DeprecatedProperties)
+        {
+            var type = ContractsAssembly.GetType(typeName);
+            Assert.True(type != null, $"Contract {typeName} does not exist");
+
+            var jsonNames = type.GetProperties()
+                .Select(p => p.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName)
+                .Where(n => n != null)
+                .ToHashSet();
+            missing.AddRange(names.Where(n => !jsonNames.Contains(n)).Select(n => $"{typeName}.{n}"));
+        }
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
+    public void DeprecatedQueryParameters_Should_AllExistInTheirQueryParameters()
+    {
+        // Path suffix -> the v1.4 query parameters class of that list
+        var queryTypes = new Dictionary<string, string>
+        {
+            ["/zaakobjecttypen"] = "OneGround.ZGW.Catalogi.Contracts.v1._4.Queries.GetAllZaakObjectTypenQueryParameters",
+        };
+
+        foreach (var (pathSuffix, names) in DeprecatedInV14DocumentFilter.DeprecatedQueryParameters)
+        {
+            Assert.True(queryTypes.ContainsKey(pathSuffix), $"Add the query parameters class of {pathSuffix} to this test");
+
+            var type = ContractsAssembly.GetType(queryTypes[pathSuffix]);
+            Assert.True(type != null, $"Contract {queryTypes[pathSuffix]} does not exist");
+
+            var queryNames = type.GetProperties().Select(p => p.GetCustomAttribute<FromQueryAttribute>()?.Name).Where(n => n != null).ToHashSet();
+            Assert.All(names, n => Assert.Contains(n, queryNames));
+        }
     }
 }

@@ -153,7 +153,6 @@ public class ZaakTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ZaakTypen.Create, Name = Operations.ZaakTypen.Create)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(ZaakTypeResponseDto))]
@@ -196,7 +195,6 @@ public class ZaakTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.ZaakTypen.Update, Name = Operations.ZaakTypen.Update)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeResponseDto))]
@@ -246,7 +244,6 @@ public class ZaakTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.ZaakTypen.Update, Name = Operations.ZaakTypen.PartialUpdate)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeResponseDto))]
@@ -344,7 +341,6 @@ public class ZaakTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.ZaakTypen.Publish, Name = Operations.ZaakTypen.Publish)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(ZaakTypeResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]

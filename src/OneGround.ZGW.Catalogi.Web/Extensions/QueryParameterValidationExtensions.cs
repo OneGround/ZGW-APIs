@@ -56,5 +56,8 @@ public static class QueryParameterValidationExtensions
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetBesluitTypeQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetInformatieObjectTypeQueryParameters>>();
         services.AddScoped<ValidateQueryParametersFilter<Catalogi.Contracts.v1._4.Queries.GetZaakTypeQueryParameters>>();
+
+        // Body parameter validation of the v1.4 catalogus write endpoints (unknown properties give a 400)
+        services.AddScoped<ValidateBodyParametersFilter<Catalogi.Contracts.v1._3.Requests.CatalogusRequestDto>>();
     }
 }

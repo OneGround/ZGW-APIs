@@ -116,7 +116,6 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.BesluitTypen.Create, Name = Operations.BesluitTypen.Create)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(BesluitTypeResponseDto))]
@@ -195,7 +194,6 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.Update)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
@@ -245,7 +243,6 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.PartialUpdate)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
@@ -343,7 +340,6 @@ public class BesluitTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.BesluitTypen.Publish, Name = Operations.BesluitTypen.Publish)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]

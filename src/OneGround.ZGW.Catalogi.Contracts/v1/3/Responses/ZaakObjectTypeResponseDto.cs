@@ -13,10 +13,10 @@ public class ZaakObjectTypeResponseDto : ZaakObjectTypeDto
 
     // Note: Empty and not null: the mapping has no source for these lists yet (see the v1.3 mapping), so they stay at this default
     [JsonProperty("resultaattypen", Order = 16)]
-    public IEnumerable<string> ResultaatTypen { get; set; } = [];
+    public virtual IEnumerable<string> ResultaatTypen { get; set; } = [];
 
     [JsonProperty("statustypen", Order = 17)]
-    public IEnumerable<string> StatusTypen { get; set; } = [];
+    public virtual IEnumerable<string> StatusTypen { get; set; } = [];
 
     [JsonProperty("catalogus", Order = 18)]
     public string Catalogus { get; set; }

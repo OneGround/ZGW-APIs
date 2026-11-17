@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
 using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
@@ -36,6 +39,8 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._4;
 public class InformatieObjectTypeController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
+    private readonly IValidatorService _validatorService;
+    private readonly IRequestMerger _requestMerger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<InformatieObjectTypeResponseDto> _expandValidator;
     private readonly ExpandEngine<InformatieObjectTypeResponseDto> _expandEngine;
@@ -44,15 +49,19 @@ public class InformatieObjectTypeController : ZGWControllerBase
         ILogger<InformatieObjectTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IPaginationHelper paginationHelper,
+        IValidatorService validatorService,
         IErrorResponseBuilder errorResponseBuilder,
         ExpandValidator<InformatieObjectTypeResponseDto> expandValidator,
         ExpandEngine<InformatieObjectTypeResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
+        _validatorService = validatorService;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -188,5 +197,202 @@ public class InformatieObjectTypeController : ZGWControllerBase
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetInformatieObjectTypeQueryParameters queryParameters)
     {
         return GetAsync(id, queryParameters);
+    }
+
+    /// <summary>
+    /// Create INFORMATIEOBJECTTYPE.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.InformatieObjectTypen.Create, Name = Operations.InformatieObjectTypen.Create)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(InformatieObjectTypeResponseDto))]
+    public async Task<IActionResult> AddAsync([FromBody] InformatieObjectTypeRequestDto informatieObjectTypeRequest)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), informatieObjectTypeRequest);
+
+        InformatieObjectType informatieObjectType = _mapper.Map<InformatieObjectType>(informatieObjectTypeRequest);
+
+        var result = await _mediator.Send(
+            new CreateInformatieObjectTypeCommand()
+            {
+                InformatieObjectType = informatieObjectType,
+                CatalogusUrl = informatieObjectTypeRequest.Catalogus,
+            }
+        );
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Created(response.Url, response);
+    }
+
+    /// <summary>
+    /// Update INFORMATIEOBJECTTYPE.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPut(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.Update)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
+    public async Task<IActionResult> UpdateAsync([FromBody] InformatieObjectTypeRequestDto informatieObjectTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), informatieObjectTypeRequest, id);
+
+        InformatieObjectType informatieObjectType = _mapper.Map<InformatieObjectType>(informatieObjectTypeRequest);
+
+        var result = await _mediator.Send(
+            new UpdateInformatieObjectTypeCommand
+            {
+                Catalogus = informatieObjectTypeRequest.Catalogus,
+                Id = id,
+                InformatieObjectType = informatieObjectType,
+                IsPartialUpdate = false,
+            }
+        );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var informatieObjectTypeResponseDto = await GetResponseAsync(result.Result.Id);
+
+        if (informatieObjectTypeResponseDto == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(informatieObjectTypeResponseDto);
+    }
+
+    /// <summary>
+    /// Partially update INFORMATIEOBJECTTYPE.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPatch(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.PartialUpdate)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialInformatieObjectTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+
+        var resultGet = await _mediator.Send(new GetInformatieObjectTypeQuery() { Id = id });
+
+        if (resultGet.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        InformatieObjectTypeRequestDto mergedInformatieObjectTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<
+            InformatieObjectTypeRequestDto,
+            InformatieObjectType
+        >(resultGet.Result, partialInformatieObjectTypeRequest);
+
+        if (!_validatorService.IsValid(mergedInformatieObjectTypeRequest, out var validationResult))
+        {
+            return _errorResponseBuilder.BadRequest(validationResult);
+        }
+
+        InformatieObjectType mergedInformatieObjectType = _mapper.Map<InformatieObjectType>(mergedInformatieObjectTypeRequest);
+
+        var resultUpd = await _mediator.Send(
+            new UpdateInformatieObjectTypeCommand()
+            {
+                InformatieObjectType = mergedInformatieObjectType,
+                Id = id,
+                Catalogus = mergedInformatieObjectTypeRequest.Catalogus,
+                IsPartialUpdate = true,
+            }
+        );
+
+        if (resultUpd.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+        }
+
+        var informatieObjectTypeResponseDto = await GetResponseAsync(resultUpd.Result.Id);
+
+        if (informatieObjectTypeResponseDto == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(informatieObjectTypeResponseDto);
+    }
+
+    /// <summary>
+    /// Opvragen en bewerken van INFORMATIEOBJECTTYPEn nodig voor INFORMATIEOBJECTen in de Documenten API.
+    /// </summary>
+    /// <remarks>
+    /// Een INFORMATIEOBJECTTYPE beschijft de karakteristieken van een document of ander object dat informatie bevat.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.InformatieObjectTypen.Publish, Name = Operations.InformatieObjectTypen.Publish)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> PublishAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PublishAsync), id);
+
+        var result = await _mediator.Send(new PublishInformatieObjectTypeCommand() { Id = id });
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    private async Task<InformatieObjectTypeResponseDto> GetResponseAsync(Guid id)
+    {
+        var result = await _mediator.Send(new GetInformatieObjectTypeQuery { Id = id });
+
+        // Note: Read it back through the read query, so the response is the same as of the read operations (including the lists that are new in 1.4)
+        return result.Status == QueryStatus.NotFound ? null : _mapper.Map<InformatieObjectTypeResponseDto>(result.Result);
     }
 }

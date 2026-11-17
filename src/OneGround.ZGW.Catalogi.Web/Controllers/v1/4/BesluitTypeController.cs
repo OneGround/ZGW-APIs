@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
 using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
@@ -36,6 +39,8 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._4;
 public class BesluitTypeController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
+    private readonly IValidatorService _validatorService;
+    private readonly IRequestMerger _requestMerger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<BesluitTypeResponseDto> _expandValidator;
     private readonly ExpandEngine<BesluitTypeResponseDto> _expandEngine;
@@ -44,15 +49,19 @@ public class BesluitTypeController : ZGWControllerBase
         ILogger<BesluitTypeController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
+        IValidatorService validatorService,
         ExpandValidator<BesluitTypeResponseDto> expandValidator,
         ExpandEngine<BesluitTypeResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
+        _validatorService = validatorService;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -182,5 +191,214 @@ public class BesluitTypeController : ZGWControllerBase
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, statustypenResponse, result.Result.Count);
 
         return Ok(paginationResponse);
+    }
+
+    /// <summary>
+    /// Maak een BESLUITTYPE aan.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.BesluitTypen.Create, Name = Operations.BesluitTypen.Create)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(BesluitTypeResponseDto))]
+    public async Task<IActionResult> AddAsync([FromBody] BesluitTypeRequestDto besluitTypeRequest)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), besluitTypeRequest);
+
+        var besluitType = _mapper.Map<BesluitType>(besluitTypeRequest);
+
+        var result = await _mediator.Send(
+            new CreateBesluitTypeCommand
+            {
+                BesluitType = besluitType,
+                Catalogus = besluitTypeRequest.Catalogus,
+                ZaakTypen = besluitTypeRequest.ZaakTypen,
+                InformatieObjectTypen = besluitTypeRequest.InformatieObjectTypen,
+            }
+        );
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Created(response.Url, response);
+    }
+
+    /// <summary>
+    /// Werk een BESLUITTYPE in zijn geheel bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een BESLUITTYPE in zijn geheel bij. Dit kan alleen als het een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPut(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.Update)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
+    public async Task<IActionResult> UpdateAsync([FromBody] BesluitTypeRequestDto besluitTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), besluitTypeRequest, id);
+
+        BesluitType besluitType = _mapper.Map<BesluitType>(besluitTypeRequest);
+
+        var result = await _mediator.Send(
+            new UpdateBesluitTypeCommand
+            {
+                BesluitType = besluitType,
+                Id = id,
+                Catalogus = besluitTypeRequest.Catalogus,
+                ZaakTypen = besluitTypeRequest.ZaakTypen,
+                InformatieObjectTypen = besluitTypeRequest.InformatieObjectTypen,
+                IsPartialUpdate = false,
+            }
+        );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var resultTypeResponse = await GetResponseAsync(result.Result.Id);
+
+        if (resultTypeResponse == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(resultTypeResponse);
+    }
+
+    /// <summary>
+    /// Werk een BESLUITTYPE deels bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een BESLUITTYPE deels bij. Dit kan alleen als het een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPatch(ApiRoutes.BesluitTypen.Update, Name = Operations.BesluitTypen.PartialUpdate)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialBesluitTypeRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+
+        var resultGet = await _mediator.Send(new GetBesluitTypeQuery { Id = id, IncludeSoftRelations = false });
+
+        if (resultGet.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        BesluitTypeRequestDto mergedBesluitTypeRequest = _requestMerger.MergePartialUpdateToObjectRequest<BesluitTypeRequestDto, BesluitType>(
+            resultGet.Result,
+            partialBesluitTypeRequest
+        );
+
+        if (!_validatorService.IsValid(mergedBesluitTypeRequest, out var validationResult))
+        {
+            return _errorResponseBuilder.BadRequest(validationResult);
+        }
+
+        BesluitType mergedBesluitType = _mapper.Map<BesluitType>(mergedBesluitTypeRequest);
+
+        var besluitTypeUpdate = await _mediator.Send(
+            new UpdateBesluitTypeCommand
+            {
+                BesluitType = mergedBesluitType,
+                Id = id,
+                Catalogus = mergedBesluitTypeRequest.Catalogus,
+                ZaakTypen = mergedBesluitTypeRequest.ZaakTypen,
+                InformatieObjectTypen = mergedBesluitTypeRequest.InformatieObjectTypen,
+                IsPartialUpdate = true,
+            }
+        );
+
+        if (besluitTypeUpdate.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(besluitTypeUpdate.Errors);
+        }
+
+        var response = await GetResponseAsync(besluitTypeUpdate.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Opvragen en bewerken van BESLUITTYPEn nodig voor BESLUITEN in de Besluiten API.
+    /// </summary>
+    /// <remarks>
+    /// Alle BESLUITTYPEn van de besluiten die het resultaat kunnen zijn van het zaakgericht werken van de behandelende organisatie(s).
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.BesluitTypen.Publish, Name = Operations.BesluitTypen.Publish)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(BesluitTypeResponseDto))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> PublishAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PublishAsync), id);
+
+        var result = await _mediator.Send(new PublishBesluitTypeCommand { Id = id });
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    private async Task<BesluitTypeResponseDto> GetResponseAsync(Guid id)
+    {
+        var result = await _mediator.Send(new GetBesluitTypeQuery { Id = id });
+
+        // Note: Read it back through the read query, so the response is the same as of the read operations (including the lists that are new in 1.4)
+        return result.Status == QueryStatus.NotFound ? null : _mapper.Map<BesluitTypeResponseDto>(result.Result);
     }
 }
