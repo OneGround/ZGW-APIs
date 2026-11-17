@@ -128,7 +128,7 @@ class CreateZaakTypeInformatieObjectTypenCommandHandler
                 var error = new ValidationError(
                     "statusType",
                     ErrorCode.Invalid,
-                    $"StatusType '{request.StatusType}' belongs not to the specified zaaktype of the request."
+                    $"StatusType '{request.StatusType}' hoort niet bij het opgegeven zaaktype van het verzoek."
                 );
 
                 errors.Add(error);

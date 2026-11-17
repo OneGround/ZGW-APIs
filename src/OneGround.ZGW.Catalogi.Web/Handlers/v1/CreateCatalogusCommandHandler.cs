@@ -53,7 +53,7 @@ class CreateCatalogusCommandHandler
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Invalid,
-                $"The Rsin from client_id '{_rsin}' differs from the Rsin in request '{request.Catalogus.Rsin}'."
+                $"De Rsin van client_id '{_rsin}' wijkt af van de Rsin in het verzoek '{request.Catalogus.Rsin}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
@@ -64,7 +64,7 @@ class CreateCatalogusCommandHandler
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Unique,
-                $"Catalogus does already exist with the same Rsin '{_rsin}' and Domein '{request.Catalogus.Domein}'."
+                $"Er bestaat al een catalogus met dezelfde Rsin '{_rsin}' en Domein '{request.Catalogus.Domein}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
