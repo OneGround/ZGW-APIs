@@ -13,6 +13,7 @@ using OneGround.ZGW.Catalogi.Web.Expands.v1._4;
 using OneGround.ZGW.Catalogi.Web.Extensions;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Catalogi.Web.Services;
+using OneGround.ZGW.Catalogi.Web.Swagger;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
@@ -70,6 +71,7 @@ public class Startup
                     o.OperationFilter<IfNoneMatchHeaderOperationFilter>();
                     o.OperationFilter<RemoveApiVersionHeaderOperationFilter>();
                     o.OperationFilter<ExpandQueryOperationFilter>();
+                    o.DocumentFilter<DeprecatedInV14DocumentFilter>();
                 };
 
                 c.ApiServiceSettings.RegisterSharedAudittrailHandlers = true;
