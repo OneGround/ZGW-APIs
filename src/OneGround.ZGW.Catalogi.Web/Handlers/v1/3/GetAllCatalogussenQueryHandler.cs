@@ -53,6 +53,7 @@ class GetAllCatalogussenQueryHandler
             .Include(c => c.BesluitTypes)
             .Include(c => c.InformatieObjectTypes)
             .OrderBy(c => c.CreationTime)
+            .ThenBy(c => c.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .ToListAsync(cancellationToken);

@@ -57,6 +57,7 @@ class InformatieObjectTypeDataService : ZGWBaseHandler, IInformatieObjectTypeDat
             .AsSplitQuery()
             .Include(s => s.Catalogus)
             .OrderBy(s => s.CreationTime)
+            .ThenBy(s => s.Id)
             .Skip(size * (page - 1))
             .Take(size)
             .ToListAsync(cancellationToken);
