@@ -58,6 +58,7 @@ class GetAllZaakTypenQueryHandler
             .Include(c => c.ZaakTypeGerelateerdeZaakTypen)
             .Include(z => z.ZaakTypeBesluitTypen)
             .OrderBy(z => z.CreationTime)
+            .ThenBy(z => z.Id)
             .Skip(request.Pagination.Size * (request.Pagination.Page - 1))
             .Take(request.Pagination.Size)
             .ToListAsync(cancellationToken);
