@@ -37,7 +37,14 @@ public class DeprecatedInV14DocumentFilterTests
             {
                 Schemas = new Dictionary<string, IOpenApiSchema>
                 {
-                    [ZaakObjectTypeResponse] = SchemaWith("beginGeldigheid", "beginObject", "resultaattypeOmschrijving", "url"),
+                    [ZaakObjectTypeResponse] = SchemaWith(
+                        "beginGeldigheid",
+                        "beginObject",
+                        "resultaattypen",
+                        "statustypen",
+                        "resultaattypeOmschrijving",
+                        "url"
+                    ),
                     [ZaakObjectTypeRequest] = SchemaWith("beginGeldigheid", "eindeObject", "url"),
                 },
             },
@@ -64,7 +71,7 @@ public class DeprecatedInV14DocumentFilterTests
 
         Apply(document, "1.4.0");
 
-        foreach (var property in new[] { "beginGeldigheid", "beginObject", "resultaattypeOmschrijving" })
+        foreach (var property in new[] { "beginGeldigheid", "beginObject", "resultaattypen", "statustypen", "resultaattypeOmschrijving" })
         {
             Assert.True(IsDeprecated(document, ZaakObjectTypeResponse, property), property);
         }

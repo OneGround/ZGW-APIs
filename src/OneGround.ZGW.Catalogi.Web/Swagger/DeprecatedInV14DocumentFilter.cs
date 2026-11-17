@@ -34,7 +34,7 @@ public class DeprecatedInV14DocumentFilter : IDocumentFilter
         [Responses + "ResultaatTypeResponseDto"] = ["catalogus", .. Geldigheid, .. Object, "indicatieSpecifiek"],
         [Responses + "RolTypeResponseDto"] = ["catalogus", .. Geldigheid, .. Object],
         [Responses + "StatusTypeResponseDto"] = [.. Geldigheid, .. Object],
-        [Responses + "ZaakObjectTypeResponseDto"] = [.. Geldigheid, .. Object, "resultaattypeOmschrijving"],
+        [Responses + "ZaakObjectTypeResponseDto"] = [.. Geldigheid, .. Object, "resultaattypen", "statustypen", "resultaattypeOmschrijving"],
         [Responses + "ZaakTypeResponseDto"] = [.. Object, "versiedatum"],
         // Requests
         [Requests + "BesluitTypeRequestDto"] = [.. Object],

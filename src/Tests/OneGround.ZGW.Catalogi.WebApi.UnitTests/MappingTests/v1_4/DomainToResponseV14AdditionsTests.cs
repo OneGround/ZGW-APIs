@@ -423,7 +423,6 @@ public class DomainToResponseV14AdditionsTests : IDisposable
                 }
             )
         );
-        // The deprecated resultaattypen and statustypen are not part of the v1.4 response
-        AssertFollows(zaakObjectType, "zaaktypeIdentificatie", "resultaattypeOmschrijving");
+        AssertFollows(zaakObjectType, "resultaattypen", "resultaattypeOmschrijving");
     }
 }

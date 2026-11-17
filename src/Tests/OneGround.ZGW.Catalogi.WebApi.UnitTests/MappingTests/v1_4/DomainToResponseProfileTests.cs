@@ -294,15 +294,11 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Null(result.Expand);
         Assert.Equal("2020-01-02", result.BeginGeldigheid);
         Assert.Equal(ZtcMapperTestHost.Resolved(zaakType), result.ZaakType);
-        // v1.4 leaves out the deprecated resultaattypen and statustypen
-        var expected = JObject.Parse(Json(Mapper.Map<V13.ZaakObjectTypeResponseDto>(source)));
-        expected.Remove("resultaattypen");
-        expected.Remove("statustypen");
-        Assert.Equal(expected.ToString(Formatting.None), Json(result));
+        Assert.Equal(Json(Mapper.Map<V13.ZaakObjectTypeResponseDto>(source)), Json(result));
     }
 
     [Fact]
-    public void ZaakObjectType_resultaattypen_and_statustypen_are_empty_lists_in_v1_3_and_not_in_v1_4()
+    public void ZaakObjectType_resultaattypen_and_statustypen_are_empty_lists_not_null_in_v1_3_and_v1_4()
     {
         // Note: the mapping has no source for these lists yet (pending the question to VNG), so they stay at the empty default of the response
         var source = new ZaakObjectType
@@ -322,10 +318,12 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Empty(v13.ResultaatTypen);
         Assert.NotNull(v13.StatusTypen);
         Assert.Empty(v13.StatusTypen);
-        Assert.Contains("\"resultaattypen\":[]", Json(v13));
-        Assert.Contains("\"statustypen\":[]", Json(v13));
-        Assert.DoesNotContain("\"resultaattypen\"", Json(v14));
-        Assert.DoesNotContain("\"statustypen\"", Json(v14));
+        Assert.NotNull(v14.ResultaatTypen);
+        Assert.Empty(v14.ResultaatTypen);
+        Assert.NotNull(v14.StatusTypen);
+        Assert.Empty(v14.StatusTypen);
+        Assert.Contains("\"resultaattypen\":[]", Json(v14));
+        Assert.Contains("\"statustypen\":[]", Json(v14));
     }
 
     [Fact]
