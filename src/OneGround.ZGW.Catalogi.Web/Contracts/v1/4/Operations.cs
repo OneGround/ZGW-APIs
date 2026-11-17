@@ -93,6 +93,7 @@ public class Operations
         public const string Create = "catalogus_create";
         public const string Update = "catalogus_update";
         public const string PartialUpdate = "catalogus_partial_update";
+        public const string Delete = "catalogus_destroy";
     }
 
     public static class InformatieObjectTypen

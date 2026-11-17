@@ -79,6 +79,7 @@ public class ApiRoutes
         public const string Get = Base + CatalogussenBase + "/{id}";
         public const string Create = Base + CatalogussenBase;
         public const string Update = Base + CatalogussenBase + "/{id}";
+        public const string Delete = Base + CatalogussenBase + "/{id}";
     }
 
     public static class InformatieObjectTypen

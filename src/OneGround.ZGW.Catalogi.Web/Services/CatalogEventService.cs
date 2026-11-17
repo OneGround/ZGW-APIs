@@ -11,6 +11,11 @@ public class CatalogEventService : ICatalogEventService
         return Task.CompletedTask;
     }
 
+    public Task OnCatalogDeletedAsync(Catalogus catalogus, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
     public Task OnCatalogUpdatedAsync(string oldDomein, Catalogus catalogus, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;

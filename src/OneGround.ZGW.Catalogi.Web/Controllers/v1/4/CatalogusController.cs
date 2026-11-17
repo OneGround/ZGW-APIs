@@ -313,4 +313,38 @@ public class CatalogusController : ZGWControllerBase
 
         return Ok(_mapper.Map<CatalogusResponseDto>(result.Result));
     }
+
+    /// <summary>
+    /// Verwijder een CATALOGUS.
+    /// </summary>
+    /// <remarks>De CATALOGUS mag alleen verwijderd worden als er geen ZAAKTYPEN, INFORMATIEOBJECTTYPEN en BESLUITTYPEN in zitten.</remarks>
+    /// <response code="204">No content</response>
+    /// <response code="400">Bad request: the CATALOGUS still contains ZAAKTYPEN, BESLUITTYPEN or INFORMATIEOBJECTTYPEN</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpDelete(ApiRoutes.Catalogussen.Delete, Name = Operations.Catalogussen.Delete)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
+
+        var result = await _mediator.Send(new DeleteCatalogusCommand { Id = id });
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        return NoContent();
+    }
 }
