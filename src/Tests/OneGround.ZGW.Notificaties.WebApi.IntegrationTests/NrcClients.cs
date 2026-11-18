@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.IntegrationTests.Common.Authorization;
 using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Notificaties.WebApi.IntegrationTests;
@@ -12,11 +12,6 @@ namespace OneGround.ZGW.Notificaties.WebApi.IntegrationTests;
 internal static class NrcClients
 {
     /// <summary>
-    /// Every scope a Notificaties API action can ask for.
-    /// </summary>
-    public static readonly string[] AllScopes = [AuthorizationScopes.Notificaties.Consume, AuthorizationScopes.Notificaties.Produce];
-
-    /// <summary>
     /// A client whose only authorization is one <c>nrc</c> authorization with the given scopes.
     /// </summary>
     public static string Authorized(NotificatiesWebApplicationFactory factory, params string[] scopes)
@@ -25,11 +20,11 @@ internal static class NrcClients
     }
 
     /// <summary>
-    /// A client authorized like <see cref="Authorized"/>, holding every scope in <see cref="AllScopes"/> except <paramref name="excluded"/>.
+    /// A client authorized like <see cref="Authorized"/>, holding every scope in <see cref="ScopeMatrix.AllScopes"/> except <paramref name="excluded"/>.
     /// </summary>
     public static string AuthorizedForAllScopesExcept(NotificatiesWebApplicationFactory factory, IEnumerable<string> excluded)
     {
-        var scopes = AllScopes.Except(excluded).ToArray();
+        var scopes = ScopeMatrix.AllScopes.Except(excluded).ToArray();
         if (scopes.Length == 0)
             throw new ArgumentException("Excluding every scope leaves a client without authorizations.", nameof(excluded));
 
@@ -41,30 +36,18 @@ internal static class NrcClients
     /// </summary>
     public static string AuthorizedOnAnotherComponent(NotificatiesWebApplicationFactory factory)
     {
-        return Grant(factory, "zrc", AllScopes);
+        return Grant(factory, "zrc", ScopeMatrix.AllScopes);
     }
 
-    public static string WithAllAuthorizations(NotificatiesWebApplicationFactory factory)
-    {
-        var clientId = NewClientId();
-        factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
+    public static string WithAllAuthorizations(NotificatiesWebApplicationFactory factory) => factory.AutorisatiesApi.WithAllAuthorizations();
 
-        return clientId;
-    }
+    public static string WithoutAuthorizations(NotificatiesWebApplicationFactory factory) => factory.AutorisatiesApi.WithoutAuthorizations();
 
-    public static string WithoutAuthorizations(NotificatiesWebApplicationFactory factory)
-    {
-        var clientId = NewClientId();
-        factory.AutorisatiesApi.GrantNoAuthorizations(clientId);
-
-        return clientId;
-    }
-
-    public static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
+    public static string NewClientId() => StubAutorisatiesApi.NewClientId();
 
     private static string Grant(NotificatiesWebApplicationFactory factory, string component, string[] scopes)
     {
-        var clientId = NewClientId();
+        var clientId = StubAutorisatiesApi.NewClientId();
 
         factory.AutorisatiesApi.Grant(clientId, new AutorisatieResponseDto { Component = component, Scopes = scopes });
 

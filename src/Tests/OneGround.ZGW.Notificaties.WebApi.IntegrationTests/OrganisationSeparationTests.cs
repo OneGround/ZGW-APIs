@@ -101,7 +101,6 @@ public class OrganisationSeparationTests
         var stored = Assert.Single(await NotificatiesSeed.FindAbonnementenByAuthAsync(_factory, auth));
         Assert.Equal(OwnRsin, stored.Owner);
 
-        // The same client under a token of another organisation does not see it
         var seenByOther = await ListIdsAsync(clientId, OtherRsin);
         Assert.DoesNotContain(stored.Id, seenByOther);
     }

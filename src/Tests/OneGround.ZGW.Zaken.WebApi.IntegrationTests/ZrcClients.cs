@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.IntegrationTests.Common.Authorization;
 using AutorisatieResponseDto = OneGround.ZGW.Autorisaties.Contracts.v1.Responses.AutorisatieResponseDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.IntegrationTests;
@@ -32,7 +33,7 @@ internal static class ZrcClients
     /// </summary>
     public static string Authorized(ZakenWebApplicationFactory factory, string zaakType, VertrouwelijkheidAanduiding maximum, params string[] scopes)
     {
-        var clientId = NewClientId();
+        var clientId = StubAutorisatiesApi.NewClientId();
 
         factory.AutorisatiesApi.Grant(
             clientId,
@@ -65,13 +66,7 @@ internal static class ZrcClients
         return Authorized(factory, zaakType, maximum, scopes);
     }
 
-    public static string WithAllAuthorizations(ZakenWebApplicationFactory factory)
-    {
-        var clientId = NewClientId();
-        factory.AutorisatiesApi.GrantAllAuthorizations(clientId);
+    public static string WithAllAuthorizations(ZakenWebApplicationFactory factory) => factory.AutorisatiesApi.WithAllAuthorizations();
 
-        return clientId;
-    }
-
-    public static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
+    public static string NewClientId() => StubAutorisatiesApi.NewClientId();
 }

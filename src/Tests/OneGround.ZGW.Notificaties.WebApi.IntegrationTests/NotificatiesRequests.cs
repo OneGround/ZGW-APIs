@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OneGround.ZGW.IntegrationTests.Common.Authentication;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Web.Controllers;
+using OneGround.ZGW.Notificaties.Web.Controllers.v1;
 
 namespace OneGround.ZGW.Notificaties.WebApi.IntegrationTests;
 
@@ -15,19 +16,23 @@ namespace OneGround.ZGW.Notificaties.WebApi.IntegrationTests;
 internal static class NotificatiesRequests
 {
     /// <summary>
-    /// The request <paramref name="row"/> describes. <paramref name="resourceId"/> fills its <c>{id}</c> segment, and
-    /// <paramref name="kanaalNaam"/> names the kanaal a body refers to.
+    /// The request <paramref name="row"/> describes, with <paramref name="resourceId"/> in its <c>{id}</c> segment and <paramref name="kanaalNaam"/> as the kanaal its body names.
     /// </summary>
     public static HttpRequestMessage For(ScopeMatrixRow row, Guid resourceId, string kanaalNaam, string clientId, string rsin)
     {
-        var path = "/" + row.Route.Replace("{id}", resourceId.ToString());
+        var path = Path(row.Route, resourceId);
 
         object body = row.Name switch
         {
-            "KanaalController.CreateAsync" => NewKanaalBody(),
-            "AbonnementController.CreateAsync" or "AbonnementController.UpdateAsync" => AbonnementBody(kanaalNaam),
-            "AbonnementController.PartialUpdateAsync" => new { callbackUrl = NotificatiesSeed.CallbackUrl },
-            "NotificatiesController.NotificeerAsync" => NotificatieBody(kanaalNaam),
+            var n when n == NameOf<KanaalController>(nameof(KanaalController.CreateAsync)) => NewKanaalBody(),
+            var n
+                when n == NameOf<AbonnementController>(nameof(AbonnementController.CreateAsync))
+                    || n == NameOf<AbonnementController>(nameof(AbonnementController.UpdateAsync)) => AbonnementBody(kanaalNaam),
+            var n when n == NameOf<AbonnementController>(nameof(AbonnementController.PartialUpdateAsync)) => new
+            {
+                callbackUrl = NotificatiesSeed.CallbackUrl,
+            },
+            var n when n == NameOf<NotificatiesController>(nameof(NotificatiesController.NotificeerAsync)) => NotificatieBody(kanaalNaam),
             _ => null,
         };
 
@@ -38,25 +43,25 @@ internal static class NotificatiesRequests
         Create(HttpMethod.Get, "/" + ApiRoutes.Abonnement.GetAll, clientId, rsin);
 
     public static HttpRequestMessage GetAbonnement(Guid id, string clientId, string rsin) =>
-        Create(HttpMethod.Get, "/" + ApiRoutes.Abonnement.Get.Replace("{id}", id.ToString()), clientId, rsin);
+        Create(HttpMethod.Get, Path(ApiRoutes.Abonnement.Get, id), clientId, rsin);
 
     public static HttpRequestMessage CreateAbonnement(string kanaalNaam, string auth, string clientId, string rsin) =>
         Create(HttpMethod.Post, "/" + ApiRoutes.Abonnement.Create, clientId, rsin, AbonnementBody(kanaalNaam, auth));
 
     public static HttpRequestMessage UpdateAbonnement(Guid id, string kanaalNaam, string auth, string clientId, string rsin) =>
-        Create(HttpMethod.Put, "/" + ApiRoutes.Abonnement.Update.Replace("{id}", id.ToString()), clientId, rsin, AbonnementBody(kanaalNaam, auth));
+        Create(HttpMethod.Put, Path(ApiRoutes.Abonnement.Update, id), clientId, rsin, AbonnementBody(kanaalNaam, auth));
 
     public static HttpRequestMessage PartialUpdateAbonnement(Guid id, string auth, string clientId, string rsin) =>
-        Create(HttpMethod.Patch, "/" + ApiRoutes.Abonnement.Update.Replace("{id}", id.ToString()), clientId, rsin, new { auth });
+        Create(HttpMethod.Patch, Path(ApiRoutes.Abonnement.Update, id), clientId, rsin, new { auth });
 
     public static HttpRequestMessage DeleteAbonnement(Guid id, string clientId, string rsin) =>
-        Create(HttpMethod.Delete, "/" + ApiRoutes.Abonnement.Delete.Replace("{id}", id.ToString()), clientId, rsin);
+        Create(HttpMethod.Delete, Path(ApiRoutes.Abonnement.Delete, id), clientId, rsin);
 
     public static HttpRequestMessage GetAllKanalen(string clientId, string rsin) =>
         Create(HttpMethod.Get, "/" + ApiRoutes.Kanaal.GetAll, clientId, rsin);
 
     public static HttpRequestMessage GetKanaal(Guid id, string clientId, string rsin) =>
-        Create(HttpMethod.Get, "/" + ApiRoutes.Kanaal.Get.Replace("{id}", id.ToString()), clientId, rsin);
+        Create(HttpMethod.Get, Path(ApiRoutes.Kanaal.Get, id), clientId, rsin);
 
     public static HttpRequestMessage CreateKanaal(string naam, string clientId, string rsin) =>
         Create(HttpMethod.Post, "/" + ApiRoutes.Kanaal.Create, clientId, rsin, NewKanaalBody(naam));
@@ -68,6 +73,10 @@ internal static class NotificatiesRequests
     {
         return $"{(int)response.StatusCode} {response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
     }
+
+    private static string NameOf<TController>(string action) => ScopeMatrixRow.NameOf(typeof(TController), action);
+
+    private static string Path(string route, Guid id) => "/" + route.Replace("{id}", id.ToString());
 
     private static object NewKanaalBody(string naam = null)
     {

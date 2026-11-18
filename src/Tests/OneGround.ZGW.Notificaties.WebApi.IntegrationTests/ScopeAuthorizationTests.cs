@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.IntegrationTests.Common;
 using Xunit;
 
@@ -118,8 +119,8 @@ public class ScopeAuthorizationTests
     {
         var kanaal = await NotificatiesSeed.KanaalAsync(_factory, "bron");
         var abonnement = await NotificatiesSeed.AbonnementAsync(_factory, Rsin, kanaal);
-        var consumeOnly = NrcClients.Authorized(_factory, OneGround.ZGW.Common.Web.Authorization.AuthorizationScopes.Notificaties.Consume);
-        var produceOnly = NrcClients.Authorized(_factory, OneGround.ZGW.Common.Web.Authorization.AuthorizationScopes.Notificaties.Produce);
+        var consumeOnly = NrcClients.Authorized(_factory, AuthorizationScopes.Notificaties.Consume);
+        var produceOnly = NrcClients.Authorized(_factory, AuthorizationScopes.Notificaties.Produce);
         var newKanaalNaam = NotificatiesSeed.NewKanaalNaam();
         var newAuth = NotificatiesSeed.NewAuth();
         var changedAuth = NotificatiesSeed.NewAuth();

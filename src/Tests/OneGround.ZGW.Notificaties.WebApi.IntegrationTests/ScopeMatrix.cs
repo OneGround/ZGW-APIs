@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Notificaties.Contracts.v1;
 using OneGround.ZGW.Notificaties.Web.Controllers.v1;
@@ -91,12 +90,17 @@ internal static class ScopeMatrix
         ),
     ];
 
+    /// <summary>
+    /// Every scope a Notificaties API action can ask for.
+    /// </summary>
+    public static readonly string[] AllScopes = [Consume, Produce];
+
     public static ScopeMatrixRow Named(string name) => Rows.Single(r => r.Name == name);
 
     /// <summary>
-    /// The rows whose action accepts only some of <see cref="NrcClients.AllScopes"/>, so a client holding the rest is denied.
+    /// The rows whose action accepts only some of <see cref="AllScopes"/>, so a client holding the rest is denied.
     /// </summary>
-    public static IEnumerable<ScopeMatrixRow> RowsDeniedBySomeScope => Rows.Where(r => NrcClients.AllScopes.Except(r.Scopes).Any());
+    public static IEnumerable<ScopeMatrixRow> RowsDeniedBySomeScope => Rows.Where(r => AllScopes.Except(r.Scopes).Any());
 
     private static ScopeMatrixRow Row<TController>(string action, HttpMethod method, string route, NrcResource needs, params string[] scopes)
     {

@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
-using OneGround.ZGW.Common.Web.Authorization;
+using OneGround.ZGW.IntegrationTests.Common.Authorization;
 using Xunit;
 using AnchorController = OneGround.ZGW.Notificaties.Web.Controllers.v1.NotificatiesController;
 
@@ -19,7 +18,7 @@ public class ScopeMatrixCompletenessTests
     [Fact]
     public void Every_scoped_action_has_exactly_one_matrix_row()
     {
-        var actions = ScopedActions();
+        var actions = ScopeReflection.ScopedActions(typeof(AnchorController).Assembly, ScopeMatrixRow.NameOf);
 
         // Guards a vacuous pass: reflection finding no scoped actions would leave both lists empty too.
         Assert.Equal(10, actions.Count);
@@ -39,14 +38,14 @@ public class ScopeMatrixCompletenessTests
     [Fact]
     public void Every_matrix_row_names_the_scopes_and_route_of_its_action()
     {
-        var actions = ScopedActions();
+        var actions = ScopeReflection.ScopedActions(typeof(AnchorController).Assembly, ScopeMatrixRow.NameOf);
         var mismatches = new List<string>();
 
         foreach (var row in ScopeMatrix.Rows.Where(r => actions.ContainsKey(r.Name)))
         {
-            var action = actions[row.Name];
+            var (_, action) = actions[row.Name];
 
-            var scopes = ScopesOf(action);
+            var scopes = ScopeReflection.ScopesOf(action);
             if (!scopes.ToHashSet().SetEquals(row.Scopes) || scopes.Length != row.Scopes.Length)
             {
                 mismatches.Add($"{row.Name}: the row has scopes [{string.Join(", ", row.Scopes)}], the attribute [{string.Join(", ", scopes)}]");
@@ -67,28 +66,4 @@ public class ScopeMatrixCompletenessTests
             $"{mismatches.Count} matrix row(s) differ from their action:{Environment.NewLine}{string.Join(Environment.NewLine, mismatches)}"
         );
     }
-
-    private static Dictionary<string, MethodInfo> ScopedActions()
-    {
-        return typeof(AnchorController)
-            .Assembly.GetTypes()
-            .Where(t => t.IsPublic && !t.IsAbstract && typeof(ControllerBase).IsAssignableFrom(t))
-            .SelectMany(t =>
-                t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                    .Where(m => m.GetCustomAttributes<BaseScopeAttribute>(inherit: true).Any())
-                    .Select(m => (Controller: t, Action: m))
-            )
-            .ToDictionary(a => ScopeMatrixRow.NameOf(a.Controller, a.Action.Name), a => a.Action);
-    }
-
-    // The scopes are a constructor argument the attribute keeps private, so they are read from its metadata.
-    private static string[] ScopesOf(MethodInfo action)
-    {
-        var attribute = Assert.Single(action.GetCustomAttributesData(), IsScope);
-        var scopes = (ReadOnlyCollection<CustomAttributeTypedArgument>)Assert.Single(attribute.ConstructorArguments).Value!;
-
-        return scopes.Select(s => (string)s.Value).ToArray();
-    }
-
-    private static bool IsScope(CustomAttributeData attribute) => typeof(BaseScopeAttribute).IsAssignableFrom(attribute.AttributeType);
 }
