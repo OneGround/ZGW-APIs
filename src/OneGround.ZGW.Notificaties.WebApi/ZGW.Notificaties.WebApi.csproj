@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneGround.ZGW.Notificaties.Web\ZGW.Notificaties.Web.csproj" />
+    <InternalsVisibleTo Include="OneGround.ZGW.Notificaties.WebApi.IntegrationTests" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

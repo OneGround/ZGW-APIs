@@ -18,7 +18,7 @@ internal static class ZaakSelfReferenceExpandPaths
             ($"{rootPath}.zaaktype.catalogus", $"{rootPath}.zaaktype"),
             ($"{rootPath}.zaaktype.resultaattypen", $"{rootPath}.zaaktype"),
             ($"{rootPath}.zaaktype.statustypen", $"{rootPath}.zaaktype"),
-            ($"{rootPath}.zaaktype.selectielijstprocestype", $"{rootPath}.zaaktype"),
+            ($"{rootPath}.zaaktype.selectielijstProcestype", $"{rootPath}.zaaktype"),
             ($"{rootPath}.status", rootPath),
             ($"{rootPath}.status.statustype", $"{rootPath}.status"),
             ($"{rootPath}.resultaat", rootPath),

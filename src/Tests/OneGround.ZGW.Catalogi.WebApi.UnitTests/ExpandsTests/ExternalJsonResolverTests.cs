@@ -36,7 +36,7 @@ public class ExternalJsonResolverTests
         var result = await resolver.ResolveAsync(
             new ZaakTypeResponseDto { SelectielijstProcestype = ProcestypeUrl },
             new Dictionary<string, object>(),
-            new HashSet<string> { "selectielijstprocestype" }
+            new HashSet<string> { "selectielijstProcestype" }
         );
 
         Assert.Same(json, result);
@@ -105,7 +105,7 @@ public class ExternalJsonResolverTests
     {
         var client = Mock.Of<IExternalJsonClient>();
 
-        Assert.Equal("selectielijstprocestype", new ZaakType_SelectielijstProcestype_Resolver(client).Path);
+        Assert.Equal("selectielijstProcestype", new ZaakType_SelectielijstProcestype_Resolver(client).Path);
         Assert.Equal("resultaattypeomschrijving", new ResultaatType_ResultaatTypeOmschrijving_Resolver(client).Path);
         Assert.Equal("selectielijstklasse", new ResultaatType_SelectielijstKlasse_Resolver(client).Path);
         Assert.Null(new ZaakType_SelectielijstProcestype_Resolver(client).Parent);
