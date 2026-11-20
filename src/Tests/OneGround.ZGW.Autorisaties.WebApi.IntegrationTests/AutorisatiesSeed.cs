@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OneGround.ZGW.Autorisaties.DataModel;
+using OneGround.ZGW.IntegrationTests.Common.Authorization;
 using Xunit;
 
 namespace OneGround.ZGW.Autorisaties.WebApi.IntegrationTests;
@@ -14,7 +15,7 @@ namespace OneGround.ZGW.Autorisaties.WebApi.IntegrationTests;
 /// </summary>
 internal static class AutorisatiesSeed
 {
-    public static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
+    public static string NewClientId() => StubAutorisatiesApi.NewClientId();
 
     public static string NewLabel() => $"integration-test-{Guid.NewGuid():N}";
 

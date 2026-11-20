@@ -5,6 +5,7 @@
       "Tests\\OneGround.ZGW.Autorisaties.WebApi.IntegrationTests\\ZGW.Autorisaties.WebApi.IntegrationTests.csproj",
       "Tests\\OneGround.ZGW.Documenten.WebApi.IntegrationTests\\ZGW.Documenten.WebApi.IntegrationTests.csproj",
       "Tests\\OneGround.ZGW.IntegrationTests.Common\\ZGW.IntegrationTests.Common.csproj",
+      "Tests\\OneGround.ZGW.Notificaties.WebApi.IntegrationTests\\ZGW.Notificaties.WebApi.IntegrationTests.csproj",
       "Tests\\OneGround.ZGW.Zaken.WebApi.IntegrationTests\\ZGW.Zaken.WebApi.IntegrationTests.csproj"
     ]
   }

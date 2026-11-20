@@ -24,6 +24,33 @@ public sealed class StubAutorisatiesApi
         _consumerEndpoint = baseUrl.TrimEnd('/') + "/applicaties/consumer";
     }
 
+    /// <summary>
+    /// A client id no other test uses, so no cached authorization carries over.
+    /// </summary>
+    public static string NewClientId() => $"integration-test-{Guid.NewGuid():N}";
+
+    /// <summary>
+    /// Registers a new client id holding every authorization.
+    /// </summary>
+    public string WithAllAuthorizations()
+    {
+        var clientId = NewClientId();
+        GrantAllAuthorizations(clientId);
+
+        return clientId;
+    }
+
+    /// <summary>
+    /// Registers a new client id holding no authorization.
+    /// </summary>
+    public string WithoutAuthorizations()
+    {
+        var clientId = NewClientId();
+        GrantNoAuthorizations(clientId);
+
+        return clientId;
+    }
+
     public void GrantNoAuthorizations(string clientId)
     {
         Set(clientId, heeftAlleAutorisaties: false, []);
