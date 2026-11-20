@@ -111,7 +111,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddExternalJsonClient(Configuration.GetSection("Application:ExternalJson")); // Note: For the "selectielijstprocestype"/"resultaattypeomschrijving"/"selectielijstklasse" expands
+        services.AddExternalJsonClient(Configuration.GetSection("Application:ExternalJson")); // Note: For the "selectielijstProcestype"/"resultaattypeomschrijving"/"selectielijstklasse" expands
         services.AddCatalogiAPIExpands(); // New Expand Engine (v1.4)
 
         services.AddNotificatiesService(Configuration);
