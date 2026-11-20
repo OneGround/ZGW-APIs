@@ -21,7 +21,7 @@ public static class ZaakFieldsSchema
             .Entity<ZaakTypeResponseDto, ResultaatTypeResponseDto>("resultaattypen")
             .Entity<ZaakTypeResponseDto, StatusTypeResponseDto>("statustypen")
             // Note: the content of these external documents is unknown to us (see ExternalJsonResolver), so they can only be requested as a whole
-            .OpaqueEntity<ZaakTypeResponseDto>("selectielijstprocestype")
+            .OpaqueEntity<ZaakTypeResponseDto>("selectielijstProcestype")
             .Entity<ZaakResponseDto, StatusResponseDto>("status")
             .Entity<StatusResponseDto, StatusTypeResponseDto>("statustype")
             .Entity<ZaakResponseDto, ResultaatResponseDto>("resultaat")

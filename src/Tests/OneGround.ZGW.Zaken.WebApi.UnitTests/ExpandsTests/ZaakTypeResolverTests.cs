@@ -113,12 +113,12 @@ public class ZaakTypeResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_SelectielijstprocestypeRequested_PassesExpandSelectielijstprocestypeToServiceAgent()
+    public async Task ResolveAsync_SelectielijstProcestypeRequested_PassesExpandSelectielijstProcestypeToServiceAgent()
     {
         var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
         var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
         serviceAgentMock
-            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "selectielijstprocestype"))
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "selectielijstProcestype"))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
 
         var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
@@ -126,11 +126,11 @@ public class ZaakTypeResolverTests
         var result = await resolver.ResolveAsync(
             new ZaakResponseDto { Zaaktype = ZaakTypeUrl },
             new Dictionary<string, object>(),
-            new HashSet<string> { "zaaktype", "zaaktype.selectielijstprocestype" }
+            new HashSet<string> { "zaaktype", "zaaktype.selectielijstProcestype" }
         );
 
         Assert.Same(zaaktype, result);
-        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "selectielijstprocestype"), Times.Once);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, "selectielijstProcestype"), Times.Once);
     }
 
     [Fact]

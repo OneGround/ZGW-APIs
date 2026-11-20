@@ -110,7 +110,7 @@ public class CatalogiExpandRegistrationTests
                 "informatieobjecttypen",
                 "resultaattypen",
                 "roltypen",
-                "selectielijstprocestype",
+                "selectielijstProcestype",
                 "statustypen",
                 "zaakobjecttypen",
             ],

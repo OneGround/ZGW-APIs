@@ -14,12 +14,12 @@ public class ZaakTypeSelectielijstProcestypeResolverTests
     public async Task ResolveAsync_ParentAlreadyHasTheDocumentExpanded_ReadsItFromParent()
     {
         var json = new JObject { ["naam"] = "document" };
-        var parent = new ZaakTypeResponseDto { Expand = new Dictionary<string, object> { ["selectielijstprocestype"] = json } };
+        var parent = new ZaakTypeResponseDto { Expand = new Dictionary<string, object> { ["selectielijstProcestype"] = json } };
 
         var resolver = new ZaakTypeSelectielijstProcestypeResolver();
         var resolved = new Dictionary<string, object> { ["zaaktype"] = parent };
 
-        var result = await resolver.ResolveAsync(new ZaakResponseDto(), resolved, new HashSet<string> { "zaaktype.selectielijstprocestype" });
+        var result = await resolver.ResolveAsync(new ZaakResponseDto(), resolved, new HashSet<string> { "zaaktype.selectielijstProcestype" });
 
         Assert.Same(json, result);
     }
@@ -32,7 +32,7 @@ public class ZaakTypeSelectielijstProcestypeResolverTests
         var result = await resolver.ResolveAsync(
             new ZaakResponseDto(),
             new Dictionary<string, object>(),
-            new HashSet<string> { "zaaktype.selectielijstprocestype" }
+            new HashSet<string> { "zaaktype.selectielijstProcestype" }
         );
 
         Assert.Null(result);
@@ -43,7 +43,7 @@ public class ZaakTypeSelectielijstProcestypeResolverTests
     {
         var resolver = new ZaakTypeSelectielijstProcestypeResolver();
 
-        Assert.Equal("zaaktype.selectielijstprocestype", resolver.Path);
+        Assert.Equal("zaaktype.selectielijstProcestype", resolver.Path);
         Assert.Equal("zaaktype", resolver.Parent);
     }
 }
