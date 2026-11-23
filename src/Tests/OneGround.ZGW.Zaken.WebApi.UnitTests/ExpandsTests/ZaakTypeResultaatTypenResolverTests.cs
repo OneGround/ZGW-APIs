@@ -50,4 +50,18 @@ public class ZaakTypeResultaatTypenResolverTests
         Assert.Equal("zaaktype.resultaattypen", resolver.Path);
         Assert.Equal("zaaktype", resolver.Parent);
     }
+
+    [Fact]
+    public void AdditionalPaths_AreTheChildPathsOfResultaattypenWithResultaattypenAsParent()
+    {
+        var paths = new ZaakTypeResultaatTypenResolver().AdditionalPaths.ToList();
+
+        Assert.Equal(
+            [
+                ("zaaktype.resultaattypen.selectielijstklasse", "zaaktype.resultaattypen"),
+                ("zaaktype.resultaattypen.resultaattypeomschrijving", "zaaktype.resultaattypen"),
+            ],
+            paths
+        );
+    }
 }

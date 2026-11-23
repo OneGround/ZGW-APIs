@@ -48,8 +48,9 @@ public abstract class Types_ResolverBase<TParent, TEntity, TResponseDto> : IExpa
     {
         // Note: The cache belongs to the request (the scope of this resolver, not the scope that is made below for the queries) and is shared by all resolvers
         // of the same response type: a type that several parents in a list refer to is only queried once.
-        // That DTO then appears in several parents. This is safe as long as the embedded types are not expanded themselves (the engine would
-        // otherwise write an _expand into the shared object): for nested paths the DTO must therefore be copied first.
+        // That DTO then appears in several parents. This is safe as long as everything that is written into a shared DTO (its _expand) is the same
+        // for all parents: the requested paths are the same for a whole request, see ZaakType_ResultaatTypen_Resolver. A path that would write
+        // something different per parent must copy the DTO first.
         var cache = _serviceProvider.GetRequiredService<IGenericCache<TResponseDto>>();
 
         // Note: A scope of its own (so a DbContext of its own) per call, which is only made when a type is not in the cache yet. The types are
