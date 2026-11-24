@@ -19,7 +19,7 @@ public class ResultatenDataTests
         using var reader = new StreamReader(stream);
         var resultaten = JsonConvert.DeserializeObject<IList<Resultaat>>(reader.ReadToEnd());
 
-        // Empty means "no procestermijn" (maps to null); every other value must exist in the Procestermijn enum.
+        // Empty means "no procestermijn"; every other value must exist in the Procestermijn enum (the Catalogi business rule parses it).
         var unknown = resultaten
             .Select(r => r.Procestermijn)
             .Where(v => !string.IsNullOrEmpty(v) && !Enum.IsDefined(typeof(Procestermijn), v))

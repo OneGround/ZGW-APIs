@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;
-using OneGround.ZGW.Referentielijsten.Contracts.v1;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.Web.MappingProfiles.v1;
 using OneGround.ZGW.Referentielijsten.Web.Models;
@@ -97,7 +96,6 @@ public class DomainToResponseProfileTests : IDisposable
             .Build<Resultaat>()
             .With(x => x.Url, "http://upstream/api/v1/resultaten/x")
             .With(x => x.ProcesType, "http://upstream/api/v1/procestypen/y")
-            .With(x => x.Procestermijn, nameof(Procestermijn.vast_te_leggen_datum))
             .Create();
 
         var result = _mapper.Map<ResultaatResponseDto>(value);
@@ -107,7 +105,7 @@ public class DomainToResponseProfileTests : IDisposable
         Assert.Equal("https://api.example.test:8443/api/v1/procestypen/y", result.ProcesType);
 
         // The 5 casing-mismatched members map only because of the seam's global IgnoreCase.
-        Assert.Equal(Procestermijn.vast_te_leggen_datum, result.ProcesTermijn);
+        Assert.Equal(value.Procestermijn, result.ProcesTermijn);
         Assert.Equal(value.ProcestermijnWeergave, result.ProcesTermijnWeergave);
         Assert.Equal(value.Bewaartermijn, result.BewaarTermijn);
         Assert.Equal(value.Burgerzaken, result.BurgerZaken);
@@ -118,32 +116,19 @@ public class DomainToResponseProfileTests : IDisposable
     }
 
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
-    public void Resultaat_With_Empty_Procestermijn_Maps_To_Null(string procestermijn)
+    [InlineData("nihil")]
+    [InlineData("na_afhandeling")]
+    [InlineData("ander_kenmerk_procesobject")]
+    [InlineData("na_einde_procesobject")]
+    public void Resultaat_Procestermijn_Is_Passed_Through_Unchanged_And_Serialized_As_String(string procestermijn)
     {
         var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, procestermijn).Create();
 
         var result = _mapper.Map<ResultaatResponseDto>(value);
 
-        Assert.Null(result.ProcesTermijn);
-    }
-
-    [Fact]
-    public void Resultaat_With_Unknown_Procestermijn_Fails()
-    {
-        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, "foo").Create();
-
-        Assert.ThrowsAny<System.Exception>(() => _mapper.Map<ResultaatResponseDto>(value));
-    }
-
-    [Fact]
-    public void Procestermijn_Is_Serialized_As_String_And_Deserialized_From_String_Or_Empty()
-    {
-        var json = JsonConvert.SerializeObject(new ResultaatResponseDto { ProcesTermijn = Procestermijn.ingeschatte_bestaansduur_procesobject });
-        Assert.Contains("\"procestermijn\":\"ingeschatte_bestaansduur_procesobject\"", json);
-
-        Assert.Equal(Procestermijn.nihil, JsonConvert.DeserializeObject<ResultaatResponseDto>("{\"procestermijn\":\"nihil\"}").ProcesTermijn);
-        Assert.Null(JsonConvert.DeserializeObject<ResultaatResponseDto>("{\"procestermijn\":\"\"}").ProcesTermijn);
+        // An empty procestermijn stays an empty string (not null) in the API output.
+        Assert.Equal(procestermijn, result.ProcesTermijn);
+        Assert.Contains($"\"procestermijn\":\"{procestermijn}\"", JsonConvert.SerializeObject(result));
     }
 }

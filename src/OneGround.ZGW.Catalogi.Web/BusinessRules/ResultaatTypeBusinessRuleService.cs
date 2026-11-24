@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -25,13 +25,33 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
 
         // if process term is empty value, then all values ​​for the derivation mode (Afleidingswijze)
         // MUST be possible - no need to validate further
-        if (!resultaat.ProcesTermijn.HasValue)
+        if (resultaat.ProcesTermijn == string.Empty)
         {
             return Task.FromResult(errors.Count != 0);
         }
 
         // ztc-003
-        if (resultaat.ProcesTermijn == Procestermijn.nihil)
+        // The DTO keeps procestermijn as a string (VNG contract); parse it here for typed comparison.
+        // A non-empty value that is not a known procestermijn means the selectielijst data is inconsistent: report it.
+        Procestermijn? procesTermijn = null;
+        if (resultaat.ProcesTermijn != null)
+        {
+            if (!Enum.IsDefined(typeof(Procestermijn), resultaat.ProcesTermijn))
+            {
+                errors.Add(
+                    new ValidationError(
+                        "nonFieldErrors",
+                        ErrorCode.Invalid,
+                        $"Onbekende procestermijn '{resultaat.ProcesTermijn}' in de selectielijstklasse."
+                    )
+                );
+                return Task.FromResult(true);
+            }
+
+            procesTermijn = Enum.Parse<Procestermijn>(resultaat.ProcesTermijn);
+        }
+
+        if (procesTermijn == Procestermijn.nihil)
         {
             if (resultType.BronDatumArchiefProcedure == null || resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.afgehandeld)
             {
@@ -43,7 +63,7 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
                 errors.Add(error);
             }
         }
-        else if (resultaat.ProcesTermijn == Procestermijn.ingeschatte_bestaansduur_procesobject)
+        else if (procesTermijn == Procestermijn.ingeschatte_bestaansduur_procesobject)
         {
             if (resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.termijn)
             {

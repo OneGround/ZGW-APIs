@@ -21,10 +21,9 @@ public class ResultaatTypeBusinessRuleServiceTests
 
     private static ZaakType CreateZaakType() => new() { SelectielijstProcestype = ProcesType };
 
-    private static ResultaatResponseDto CreateResultaat(Procestermijn? procesTermijn) =>
-        new() { ProcesType = ProcesType, ProcesTermijn = procesTermijn };
+    private static ResultaatResponseDto CreateResultaat(string procesTermijn) => new() { ProcesType = ProcesType, ProcesTermijn = procesTermijn };
 
-    private async Task<(bool hasErrors, List<ValidationError> errors)> ValidateAsync(Afleidingswijze afleidingswijze, Procestermijn? procesTermijn)
+    private async Task<(bool hasErrors, List<ValidationError> errors)> ValidateAsync(Afleidingswijze afleidingswijze, string procesTermijn)
     {
         var errors = new List<ValidationError>();
         var hasErrors = await _service.ValidateAsync(CreateResultaatType(afleidingswijze), CreateZaakType(), CreateResultaat(procesTermijn), errors);
@@ -35,18 +34,41 @@ public class ResultaatTypeBusinessRuleServiceTests
     [InlineData(Afleidingswijze.afgehandeld)]
     [InlineData(Afleidingswijze.termijn)]
     [InlineData(Afleidingswijze.gerelateerde_zaak)]
-    public async Task NoProcesTermijn_AcceptsAnyAfleidingswijze(Afleidingswijze afleidingswijze)
+    public async Task EmptyProcesTermijn_AcceptsAnyAfleidingswijze(Afleidingswijze afleidingswijze)
     {
-        var (hasErrors, errors) = await ValidateAsync(afleidingswijze, null);
+        var (hasErrors, errors) = await ValidateAsync(afleidingswijze, string.Empty);
 
         Assert.False(hasErrors);
         Assert.Empty(errors);
     }
 
+    [Theory]
+    [InlineData("foo")]
+    [InlineData("1")]
+    [InlineData("NIHIL")]
+    public async Task UnknownProcesTermijn_ReturnsValidationError(string procesTermijn)
+    {
+        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, procesTermijn);
+
+        Assert.True(hasErrors);
+        var error = Assert.Single(errors);
+        Assert.Equal("nonFieldErrors", error.Name);
+        Assert.Equal(ErrorCode.Invalid, error.Code);
+        Assert.Contains(procesTermijn, error.Reason);
+    }
+
+    [Fact]
+    public async Task NullProcesTermijn_DoesNotAddProcesTermijnErrors()
+    {
+        var (_, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, null);
+
+        Assert.DoesNotContain(errors, e => e.Code == ErrorCode.InvalidAfleidingswijzeForProcesTermijn || e.Code == ErrorCode.Invalid);
+    }
+
     [Fact]
     public async Task Nihil_WithAfleidingswijzeAfgehandeld_IsValid()
     {
-        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, Procestermijn.nihil);
+        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, nameof(Procestermijn.nihil));
 
         Assert.False(hasErrors);
         Assert.Empty(errors);
@@ -55,7 +77,7 @@ public class ResultaatTypeBusinessRuleServiceTests
     [Fact]
     public async Task Nihil_WithOtherAfleidingswijze_ReturnsValidationError()
     {
-        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.termijn, Procestermijn.nihil);
+        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.termijn, nameof(Procestermijn.nihil));
 
         Assert.True(hasErrors);
         Assert.Contains(errors, e => e.Code == ErrorCode.InvalidAfleidingswijzeForProcesTermijn);
@@ -64,16 +86,22 @@ public class ResultaatTypeBusinessRuleServiceTests
     [Fact]
     public async Task IngeschatteBestaansduur_WithOtherAfleidingswijze_ReturnsValidationError()
     {
-        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, Procestermijn.ingeschatte_bestaansduur_procesobject);
+        var (hasErrors, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, nameof(Procestermijn.ingeschatte_bestaansduur_procesobject));
 
         Assert.True(hasErrors);
         Assert.Contains(errors, e => e.Code == ErrorCode.InvalidAfleidingswijzeForProcesTermijn);
     }
 
-    [Fact]
-    public async Task OtherKnownProcesTermijn_DoesNotAddProcesTermijnErrors()
+    [Theory]
+    [InlineData(Procestermijn.bestaansduur_procesobject)]
+    [InlineData(Procestermijn.vast_te_leggen_datum)]
+    [InlineData(Procestermijn.samengevoegd_met_bewaartermijn)]
+    [InlineData(Procestermijn.na_afhandeling)]
+    [InlineData(Procestermijn.ander_kenmerk_procesobject)]
+    [InlineData(Procestermijn.na_einde_procesobject)]
+    public async Task OtherProcesTermijn_DoesNotAddProcesTermijnErrors(Procestermijn procesTermijn)
     {
-        var (_, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, Procestermijn.vast_te_leggen_datum);
+        var (_, errors) = await ValidateAsync(Afleidingswijze.afgehandeld, procesTermijn.ToString());
 
         Assert.DoesNotContain(errors, e => e.Code == ErrorCode.InvalidAfleidingswijzeForProcesTermijn || e.Code == ErrorCode.Invalid);
     }
