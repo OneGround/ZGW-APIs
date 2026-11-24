@@ -91,7 +91,8 @@ public class ReferentielijstenDataService
         {
             throw new InvalidOperationException(
                 $"Resultaten_data.json contains {invalid.Count} invalid value(s): {string.Join(", ", invalid)}. "
-                    + $"Allowed procestermijn values: {string.Join(", ", Enum.GetNames<Procestermijn>())}; allowed waardering values: {string.Join(", ", Enum.GetNames<Waardering>())}."
+                    + $"Allowed procestermijn values: {ReferentielijstEnum.AllowedValues<Procestermijn>()}; "
+                    + $"allowed waardering values: {ReferentielijstEnum.AllowedValues<Waardering>()}."
             );
         }
     }

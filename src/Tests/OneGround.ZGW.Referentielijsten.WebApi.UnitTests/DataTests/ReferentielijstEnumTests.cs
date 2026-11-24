@@ -66,4 +66,22 @@ public class ReferentielijstEnumTests
         Assert.NotNull(converter);
         Assert.Equal(typeof(StringEnumConverter), converter.ConverterType);
     }
+
+    [Theory]
+    [InlineData("Nihil")]
+    [InlineData("NIHIL")]
+    public void TryParse_IsCaseSensitive(string value)
+    {
+        Assert.False(ReferentielijstEnum.TryParse<Procestermijn>(value, out _));
+    }
+
+    [Fact]
+    public void AllowedValues_UsesTheApiValues_NotTheMemberName()
+    {
+        var allowed = ReferentielijstEnum.AllowedValues<Procestermijn>();
+
+        Assert.Contains("(empty)", allowed);
+        Assert.Contains("nihil", allowed);
+        Assert.DoesNotContain("leeg", allowed);
+    }
 }

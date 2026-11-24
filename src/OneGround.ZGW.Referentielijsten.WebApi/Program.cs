@@ -20,11 +20,10 @@ try
 }
 catch (Exception ex)
 {
-    // Fail fast, but make sure the reason ends up in the log (e.g. invalid reference data) instead of only as an unhandled exception.
+    // Fail fast, but make sure the reason ends up in the log (e.g. invalid reference data); the exception is rethrown so hosts and tests still see it.
     app.Logger.LogCritical(ex, "The application failed to start: {Message}", ex.Message);
     await app.DisposeAsync(); // flushes the loggers
-    return 1;
+    throw;
 }
 
 app.Run();
-return 0;

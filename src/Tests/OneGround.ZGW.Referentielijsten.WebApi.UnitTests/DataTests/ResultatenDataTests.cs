@@ -36,6 +36,8 @@ public class ResultatenDataTests
         Assert.Contains("procestermijn 'foo' (https://example.test/resultaten/3)", ex.Message);
         Assert.DoesNotContain("resultaten/1", ex.Message);
         Assert.Contains("na_einde_procesobject", ex.Message);
+        Assert.DoesNotContain("leeg", ex.Message);
+        Assert.Contains("(empty)", ex.Message);
     }
 
     [Fact]
