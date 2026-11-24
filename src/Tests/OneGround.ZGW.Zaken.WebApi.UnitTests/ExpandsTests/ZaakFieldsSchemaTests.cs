@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Common.Web.Expands.Fields;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -14,6 +16,8 @@ public class ZaakFieldsSchemaTests
             "zaaktype",
             "zaaktype.catalogus",
             "zaaktype.resultaattypen",
+            "zaaktype.resultaattypen.selectielijstklasse",
+            "zaaktype.resultaattypen.resultaattypeomschrijving",
             "zaaktype.statustypen",
             "zaaktype.selectielijstProcestype",
             "status",
@@ -121,6 +125,46 @@ public class ZaakFieldsSchemaTests
         var (selection, _, _) = FieldsParser.ParseAndValidate(fields);
 
         Assert.Equal([$"{name} (veldselectie wordt niet ondersteund)"], _validator.Validate(selection));
+    }
+
+    [Fact]
+    public void Validate_ResultaattypenExternalJsonExpandsWithoutFieldSelection_AreValid()
+    {
+        var fields = JArray.Parse(
+            """
+            ["uuid", { "zaaktype": ["url", { "resultaattypen": ["url", { "selectielijstklasse": [], "resultaattypeomschrijving": [] }] }] }]
+            """
+        );
+
+        var (selection, expandPaths, error) = FieldsParser.ParseAndValidate(fields);
+
+        Assert.Null(error);
+        Assert.Empty(_validator.Validate(selection));
+        Assert.Contains("zaaktype.resultaattypen.selectielijstklasse", expandPaths);
+        Assert.Contains("zaaktype.resultaattypen.resultaattypeomschrijving", expandPaths);
+    }
+
+    [Theory]
+    [InlineData("selectielijstklasse")]
+    [InlineData("resultaattypeomschrijving")]
+    public void Validate_ResultaattypenExternalJsonExpandWithFieldSelection_IsInvalid(string name)
+    {
+        var fields = JArray.Parse($$"""[{ "zaaktype": [{ "resultaattypen": [{ "{{name}}": ["naam"] }] }] }]""");
+
+        var (selection, _, _) = FieldsParser.ParseAndValidate(fields);
+
+        Assert.Equal([$"zaaktype.resultaattypen.{name} (veldselectie wordt niet ondersteund)"], _validator.Validate(selection));
+    }
+
+    [Theory]
+    [InlineData("hoofdzaak")]
+    [InlineData("deelzaken")]
+    public void SelfReferenceExpandPaths_DoNotIncludeThePathsBelowResultaattypen(string rootPath)
+    {
+        // Note: they would be a 4th nesting level, exceeding the VNG expand cap
+        var paths = ZaakSelfReferenceExpandPaths.Build(rootPath).Select(p => p.Path).ToList();
+
+        Assert.DoesNotContain(paths, p => p.Contains("resultaattypen.", StringComparison.Ordinal));
     }
 
     [Fact]

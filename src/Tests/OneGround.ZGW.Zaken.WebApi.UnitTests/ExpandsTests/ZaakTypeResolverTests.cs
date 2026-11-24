@@ -92,6 +92,34 @@ public class ZaakTypeResolverTests
     }
 
     [Fact]
+    public async Task ResolveAsync_PathsBelowResultaattypenRequested_PassesThemToServiceAgentInAFixedOrder()
+    {
+        const string expected = "resultaattypen,resultaattypen.selectielijstklasse,resultaattypen.resultaattypeomschrijving";
+        var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
+        var serviceAgentMock = new Mock<ICatalogiServiceAgentDecorator>();
+        serviceAgentMock
+            .Setup(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, expected))
+            .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(zaaktype));
+
+        var resolver = new ZaakTypeResolver(serviceAgentMock.Object, new GenericCache<ZaakTypeResponseDto>());
+
+        var result = await resolver.ResolveAsync(
+            new ZaakResponseDto { Zaaktype = ZaakTypeUrl },
+            new Dictionary<string, object>(),
+            new HashSet<string>
+            {
+                "zaaktype",
+                "zaaktype.resultaattypen.resultaattypeomschrijving",
+                "zaaktype.resultaattypen.selectielijstklasse",
+                "zaaktype.resultaattypen",
+            }
+        );
+
+        Assert.Same(zaaktype, result);
+        serviceAgentMock.Verify(a => a.GetZaakTypeByUrlAsync(ZaakTypeUrl, expected), Times.Once);
+    }
+
+    [Fact]
     public async Task ResolveAsync_StatustypenRequested_PassesExpandStatustypenToServiceAgent()
     {
         var zaaktype = new ZaakTypeResponseDto { Url = ZaakTypeUrl };
