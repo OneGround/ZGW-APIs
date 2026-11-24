@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
-using OneGround.ZGW.Referentielijsten.Contracts.v1;
 using OneGround.ZGW.Referentielijsten.Web.Models;
+using OneGround.ZGW.Referentielijsten.Web.Services;
 using Xunit;
 
 namespace OneGround.ZGW.Referentielijsten.WebApi.UnitTests.DataTests;
@@ -12,23 +11,43 @@ namespace OneGround.ZGW.Referentielijsten.WebApi.UnitTests.DataTests;
 public class ResultatenDataTests
 {
     [Fact]
-    public void EveryProcestermijnInTheData_IsAKnownProcestermijn()
+    public void TheResultatenData_HasOnlyValidEnumValues()
     {
         using var stream = typeof(Resultaat).Assembly.GetManifestResourceStream("OneGround.ZGW.Referentielijsten.Web.Data.Resultaten_data.json");
         Assert.NotNull(stream);
         using var reader = new StreamReader(stream);
         var resultaten = JsonConvert.DeserializeObject<IList<Resultaat>>(reader.ReadToEnd());
 
-        // Empty means "no procestermijn"; every other value must exist in the Procestermijn enum (the Catalogi business rule parses it).
-        var unknown = resultaten
-            .Select(r => r.Procestermijn)
-            .Where(v => !string.IsNullOrEmpty(v) && !Enum.IsDefined(typeof(Procestermijn), v))
-            .Distinct()
-            .ToList();
+        ReferentielijstenDataService.ValidateEnums(resultaten);
+    }
 
-        Assert.True(
-            unknown.Count == 0,
-            $"Procestermijn value(s) in Resultaten_data.json missing from the Procestermijn enum: {string.Join(", ", unknown)}"
-        );
+    [Fact]
+    public void ValidateEnums_WithUnknownProcestermijn_ThrowsDescriptiveError()
+    {
+        var resultaten = new[]
+        {
+            new Resultaat { Url = "https://example.test/resultaten/1", Procestermijn = "nihil" },
+            new Resultaat { Url = "https://example.test/resultaten/2", Procestermijn = "" },
+            new Resultaat { Url = "https://example.test/resultaten/3", Procestermijn = "foo" },
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => ReferentielijstenDataService.ValidateEnums(resultaten));
+
+        Assert.Contains("procestermijn 'foo' (https://example.test/resultaten/3)", ex.Message);
+        Assert.DoesNotContain("resultaten/1", ex.Message);
+        Assert.Contains("na_einde_procesobject", ex.Message);
+    }
+
+    [Fact]
+    public void ValidateEnums_WithKnownEmptyOrNullProcestermijn_DoesNotThrow()
+    {
+        var resultaten = new[]
+        {
+            new Resultaat { Url = "https://example.test/resultaten/1", Procestermijn = "nihil" },
+            new Resultaat { Url = "https://example.test/resultaten/2", Procestermijn = "" },
+            new Resultaat { Url = "https://example.test/resultaten/3", Procestermijn = null },
+        };
+
+        ReferentielijstenDataService.ValidateEnums(resultaten);
     }
 }
