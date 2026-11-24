@@ -49,7 +49,7 @@ public class Startup
             }
         );
 
-        services.AddOneGroundHealthChecks().AddRedisCheck();
+        services.AddOneGroundHealthChecks();
 
         services
             .AddOptions<ApplicationConfiguration>()
