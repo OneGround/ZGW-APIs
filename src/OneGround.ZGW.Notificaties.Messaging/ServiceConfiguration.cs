@@ -57,6 +57,7 @@ public class ServiceConfiguration
         services.AddOneGroundHealthChecks();
 
         services.AddTransient<IAbonnementService, AbonnementService>();
+        services.AddRedisCache();
         services.AddCircuitBreaker(_configuration);
 
         const string serviceName = "NotificatiesSender";
