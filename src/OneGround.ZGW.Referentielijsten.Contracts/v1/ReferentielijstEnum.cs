@@ -41,8 +41,26 @@ public static class ReferentielijstEnum
     private static class EnumValues<TEnum>
         where TEnum : struct, Enum
     {
-        public static readonly IReadOnlyDictionary<string, TEnum> ByApiValue = typeof(TEnum)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .ToDictionary(f => f.GetCustomAttribute<EnumMemberAttribute>()?.Value ?? f.Name, f => (TEnum)f.GetValue(null)!);
+        public static readonly IReadOnlyDictionary<string, TEnum> ByApiValue = BuildLookup();
+
+        private static Dictionary<string, TEnum> BuildLookup()
+        {
+            var lookup = new Dictionary<string, TEnum>();
+
+            foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                lookup.Add(GetApiValue(field), (TEnum)field.GetValue(null)!);
+            }
+
+            return lookup;
+        }
+
+        // The value used in the API: the EnumMember value when present (it can be the empty string), otherwise the member name.
+        private static string GetApiValue(FieldInfo field)
+        {
+            var enumMember = field.GetCustomAttribute<EnumMemberAttribute>();
+
+            return enumMember?.Value ?? field.Name;
+        }
     }
 }
