@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -31,27 +31,7 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
         }
 
         // ztc-003
-        // The DTO keeps procestermijn as a string (VNG contract); parse it here for typed comparison.
-        // A non-empty value that is not a known procestermijn means the selectielijst data is inconsistent: report it.
-        Procestermijn? procesTermijn = null;
-        if (resultaat.ProcesTermijn != null)
-        {
-            if (!Enum.IsDefined(typeof(Procestermijn), resultaat.ProcesTermijn))
-            {
-                errors.Add(
-                    new ValidationError(
-                        "nonFieldErrors",
-                        ErrorCode.Invalid,
-                        $"Onbekende procestermijn '{resultaat.ProcesTermijn}' in de selectielijstklasse."
-                    )
-                );
-                return Task.FromResult(true);
-            }
-
-            procesTermijn = Enum.Parse<Procestermijn>(resultaat.ProcesTermijn);
-        }
-
-        if (procesTermijn == Procestermijn.nihil)
+        if (resultaat.ProcesTermijn == "nihil")
         {
             if (resultType.BronDatumArchiefProcedure == null || resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.afgehandeld)
             {
@@ -63,7 +43,7 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
                 errors.Add(error);
             }
         }
-        else if (procesTermijn == Procestermijn.ingeschatte_bestaansduur_procesobject)
+        else if (resultaat.ProcesTermijn == "ingeschatte_bestaansduur_procesobject")
         {
             if (resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.termijn)
             {
