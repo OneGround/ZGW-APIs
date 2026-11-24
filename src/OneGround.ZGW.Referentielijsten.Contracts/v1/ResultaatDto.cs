@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace OneGround.ZGW.Referentielijsten.Contracts.v1;
 
@@ -35,7 +36,8 @@ public abstract class ResultaatDto
     public string Waardering { get; set; }
 
     [JsonProperty("procestermijn")]
-    public string ProcesTermijn { get; set; }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public Procestermijn? ProcesTermijn { get; set; }
 
     [JsonProperty("procestermijnWeergave")]
     public string ProcesTermijnWeergave { get; set; }

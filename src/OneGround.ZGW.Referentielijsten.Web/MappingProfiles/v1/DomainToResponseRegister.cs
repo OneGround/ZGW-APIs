@@ -1,4 +1,6 @@
+using System;
 using Mapster;
+using OneGround.ZGW.Referentielijsten.Contracts.v1;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.Web.MappingProfiles;
 using OneGround.ZGW.Referentielijsten.Web.Models;
@@ -20,6 +22,11 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<Resultaat, ResultaatResponseDto>()
             .Map(dest => dest.Url, src => AdjustUrlMapster.Adjust(src.Url))
-            .Map(dest => dest.ProcesType, src => AdjustUrlMapster.Adjust(src.ProcesType));
+            .Map(dest => dest.ProcesType, src => AdjustUrlMapster.Adjust(src.ProcesType))
+            // Empty means "no procestermijn" (null); an unknown value is a data error and fails loudly.
+            .Map(
+                dest => dest.ProcesTermijn,
+                src => string.IsNullOrEmpty(src.Procestermijn) ? (Procestermijn?)null : Enum.Parse<Procestermijn>(src.Procestermijn)
+            );
     }
 }
