@@ -47,4 +47,23 @@ public class ReferentielijstEnumTests
         Assert.NotNull(converter);
         Assert.Equal(typeof(StringEnumConverter), converter.ConverterType);
     }
+
+    [Theory]
+    [InlineData(null, Waardering.leeg)]
+    [InlineData("", Waardering.leeg)]
+    [InlineData("blijvend_bewaren", Waardering.blijvend_bewaren)]
+    [InlineData("vernietigen", Waardering.vernietigen)]
+    public void Parse_KnownWaardering_ReturnsMember(string value, Waardering expected)
+    {
+        Assert.Equal(expected, ReferentielijstEnum.Parse<Waardering>(value));
+    }
+
+    [Fact]
+    public void Waardering_HasTheStringEnumConverterOnTheType_SoSwaggerShowsStrings()
+    {
+        var converter = typeof(Waardering).GetCustomAttribute<JsonConverterAttribute>();
+
+        Assert.NotNull(converter);
+        Assert.Equal(typeof(StringEnumConverter), converter.ConverterType);
+    }
 }

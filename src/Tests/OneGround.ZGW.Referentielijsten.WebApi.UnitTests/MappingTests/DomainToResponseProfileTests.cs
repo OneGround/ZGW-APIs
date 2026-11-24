@@ -98,6 +98,7 @@ public class DomainToResponseProfileTests : IDisposable
             .With(x => x.Url, "http://upstream/api/v1/resultaten/x")
             .With(x => x.ProcesType, "http://upstream/api/v1/procestypen/y")
             .With(x => x.Procestermijn, "vast_te_leggen_datum")
+            .With(x => x.Waardering, "vernietigen")
             .Create();
 
         var result = _mapper.Map<ResultaatResponseDto>(value);
@@ -105,6 +106,8 @@ public class DomainToResponseProfileTests : IDisposable
         // Both URL string members are host-rewritten.
         Assert.Equal("https://api.example.test:8443/api/v1/resultaten/x", result.Url);
         Assert.Equal("https://api.example.test:8443/api/v1/procestypen/y", result.ProcesType);
+
+        Assert.Equal(Waardering.vernietigen, result.Waardering);
 
         // The 5 casing-mismatched members map only because of the seam's global IgnoreCase.
         Assert.Equal(Procestermijn.vast_te_leggen_datum, result.ProcesTermijn);
@@ -126,7 +129,7 @@ public class DomainToResponseProfileTests : IDisposable
     [InlineData("na_einde_procesobject", Procestermijn.na_einde_procesobject)]
     public void Resultaat_Procestermijn_Maps_To_Enum_And_Is_Serialized_As_String(string procestermijn, Procestermijn expected)
     {
-        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, procestermijn).Create();
+        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, procestermijn).With(x => x.Waardering, "vernietigen").Create();
 
         var result = _mapper.Map<ResultaatResponseDto>(value);
 
@@ -135,6 +138,30 @@ public class DomainToResponseProfileTests : IDisposable
         // The API output is the string form; the empty procestermijn is an empty string (not null).
         Assert.Contains($"\"procestermijn\":\"{procestermijn}\"", JsonConvert.SerializeObject(result));
         Assert.Equal(expected, JsonConvert.DeserializeObject<ResultaatResponseDto>(JsonConvert.SerializeObject(result)).ProcesTermijn);
+    }
+
+    [Theory]
+    [InlineData(null, Waardering.leeg)]
+    [InlineData("", Waardering.leeg)]
+    [InlineData("blijvend_bewaren", Waardering.blijvend_bewaren)]
+    [InlineData("vernietigen", Waardering.vernietigen)]
+    public void Resultaat_Waardering_Maps_To_Enum_And_Is_Serialized_As_String(string waardering, Waardering expected)
+    {
+        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, "nihil").With(x => x.Waardering, waardering).Create();
+
+        var result = _mapper.Map<ResultaatResponseDto>(value);
+
+        Assert.Equal(expected, result.Waardering);
+        Assert.Contains($"\"waardering\":\"{waardering}\"", JsonConvert.SerializeObject(result));
+        Assert.Equal(expected, JsonConvert.DeserializeObject<ResultaatResponseDto>(JsonConvert.SerializeObject(result)).Waardering);
+    }
+
+    [Fact]
+    public void Resultaat_With_Unknown_Waardering_Fails_To_Map()
+    {
+        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, "nihil").With(x => x.Waardering, "foo").Create();
+
+        Assert.ThrowsAny<Exception>(() => _mapper.Map<ResultaatResponseDto>(value));
     }
 
     [Fact]
@@ -146,7 +173,7 @@ public class DomainToResponseProfileTests : IDisposable
     [Fact]
     public void Resultaat_With_Unknown_Procestermijn_Fails_To_Map()
     {
-        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, "foo").Create();
+        var value = _fixture.Build<Resultaat>().With(x => x.Procestermijn, "foo").With(x => x.Waardering, "vernietigen").Create();
 
         Assert.ThrowsAny<Exception>(() => _mapper.Map<ResultaatResponseDto>(value));
     }

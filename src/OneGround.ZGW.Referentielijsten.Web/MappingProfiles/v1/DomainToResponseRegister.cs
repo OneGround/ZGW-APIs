@@ -22,6 +22,7 @@ public class DomainToResponseRegister : IRegister
             .NewConfig<Resultaat, ResultaatResponseDto>()
             .Map(dest => dest.Url, src => AdjustUrlMapster.Adjust(src.Url))
             .Map(dest => dest.ProcesType, src => AdjustUrlMapster.Adjust(src.ProcesType))
-            .Map(dest => dest.ProcesTermijn, src => ReferentielijstEnum.Parse<Procestermijn>(src.Procestermijn));
+            .Map(dest => dest.ProcesTermijn, src => ReferentielijstEnum.Parse<Procestermijn>(src.Procestermijn))
+            .Map(dest => dest.Waardering, src => ReferentielijstEnum.Parse<Waardering>(src.Waardering));
     }
 }

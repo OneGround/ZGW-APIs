@@ -50,4 +50,29 @@ public class ResultatenDataTests
 
         ReferentielijstenDataService.ValidateEnums(resultaten);
     }
+
+    [Fact]
+    public void ValidateEnums_WithUnknownWaardering_ThrowsDescriptiveError()
+    {
+        var resultaten = new[]
+        {
+            new Resultaat
+            {
+                Url = "https://example.test/resultaten/1",
+                Procestermijn = "nihil",
+                Waardering = "vernietigen",
+            },
+            new Resultaat
+            {
+                Url = "https://example.test/resultaten/2",
+                Procestermijn = "",
+                Waardering = "bewaren",
+            },
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => ReferentielijstenDataService.ValidateEnums(resultaten));
+
+        Assert.Contains("waardering 'bewaren' (https://example.test/resultaten/2)", ex.Message);
+        Assert.DoesNotContain("resultaten/1", ex.Message);
+    }
 }

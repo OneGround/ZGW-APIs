@@ -80,13 +80,18 @@ public class ReferentielijstenDataService
             {
                 invalid.Add($"procestermijn '{r.Procestermijn}' ({r.Url})");
             }
+
+            if (!ReferentielijstEnum.TryParse<Waardering>(r.Waardering, out _))
+            {
+                invalid.Add($"waardering '{r.Waardering}' ({r.Url})");
+            }
         }
 
         if (invalid.Count > 0)
         {
             throw new InvalidOperationException(
                 $"Resultaten_data.json contains {invalid.Count} invalid value(s): {string.Join(", ", invalid)}. "
-                    + $"Allowed procestermijn values: {string.Join(", ", Enum.GetNames<Procestermijn>())}."
+                    + $"Allowed procestermijn values: {string.Join(", ", Enum.GetNames<Procestermijn>())}; allowed waardering values: {string.Join(", ", Enum.GetNames<Waardering>())}."
             );
         }
     }
