@@ -120,7 +120,7 @@ public class UpdateResultaatTypeCommandHandler
 
         if (!resultType.ArchiefNominatie.HasValue)
         {
-            if (Enum.TryParse<ArchiefNominatie>(resultaat.Response.Waardering, out var archiefNominatie))
+            if (Enum.TryParse<ArchiefNominatie>(resultaat.Response.Waardering.ToString(), out var archiefNominatie))
             {
                 resultType.ArchiefNominatie = archiefNominatie;
             }
