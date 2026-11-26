@@ -1,524 +1,803 @@
 [
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/aa8aa2fd-b9c6-4e34-9a6c-58a677f60ea0",
-    "nummer": 1,
-    "jaar": 2020,
-    "naam": "Instellen en inrichten organisatie",
-    "omschrijving": "Instellen en inrichten organisatie",
-    "toelichting": "Dit procestype betreft het instellen van een nieuw organisatieonderdeel of een nieuwe orgaan waar het orgaan in deelneemt. Dit procestype betreft eveneens het inrichten van het eigen orgaan. Dit kan kleinschalig plaatsvinden bijvoorbeeld het wijzigen van de uitvoering van een wettelijke taak of grootschalig wanneer er een organisatiewijziging wordt doorgevoerd.",
-    "procesobject": "De vastgestelde organisatie inrichting"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/e1b73b12-b2f6-4c4e-8929-94f84dd2a57d",
-    "nummer": 1,
-    "jaar": 2017,
-    "naam": "Instellen en inrichten organisatie",
-    "omschrijving": "Instellen en inrichten organisatie",
-    "toelichting": "Dit procestype betreft het instellen van een nieuw organisatieonderdeel of een nieuwe orgaan waar het orgaan in deelneemt. Dit procestype betreft eveneens het inrichten van het eigen orgaan. Dit kan kleinschalig plaatsvinden bijvoorbeeld het wijzigen van de uitvoering van een wettelijke taak of grootschalig wanneer er een organisatiewijziging wordt doorgevoerd.",
-    "procesobject": "De vastgestelde organisatie inrichting"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/8c160b66-2247-43f3-9afc-e5e48aefa41c",
-    "nummer": 2,
-    "jaar": 2020,
-    "naam": "Beleid en regelgeving opstellen",
-    "omschrijving": "Opstellen en vaststellen van algemene (wettelijke) kaders voor het functioneren van de instelling.",
-    "toelichting": "Wanneer een beleidsstuk betrekking heeft op een bepaalde afgebakende periode vormt het een beleidsplan en valt het onder het procestype 'Plan opstellen'. In een beleidsregel geeft een orgaan aan hoe een bepaalde bevoegdheid zal worden uitgevoerd. Bij het nemen van veel voorkomende beslissingen hoeft het orgaan niet telkens haar beleid of haar uitvoering van hogere wet- en regelgeving uit te leggen, maar kan zij verwijzen naar de bekendgemaakte beleidsregel. Deze vorm van regelgeving valt wel onder dit procestype. ",
-    "procesobject": "Het beleid of regelgeving"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/96eae691-077f-4fd6-ad66-950b9b714880",
-    "nummer": 2,
-    "jaar": 2017,
-    "naam": "Beleid en regelgeving opstellen",
-    "omschrijving": "Opstellen en vaststellen van algemene (wettelijke) kaders voor het functioneren van de instelling.",
-    "toelichting": "Wanneer een beleidsstuk betrekking heeft op een bepaalde afgebakende periode vormt het een beleidsplan en valt het onder het procestype 'Plan opstellen'. In een beleidsregel geeft een orgaan aan hoe een bepaalde bevoegdheid zal worden uitgevoerd. Bij het nemen van veel voorkomende beslissingen hoeft het orgaan niet telkens haar beleid of haar uitvoering van hogere wet- en regelgeving uit te leggen, maar kan zij verwijzen naar de bekendgemaakte beleidsregel. Deze vorm van regelgeving valt wel onder dit procestype. ",
-    "procesobject": "Het beleid of regelgeving"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/2692b18e-f86c-4e15-b68d-e9e50d241db3",
-    "nummer": 3,
-    "jaar": 2020,
-    "naam": "Plannen opstellen",
-    "omschrijving": "Opstellen van plannen voor een in het plan afgebakende periode die richting geeft voor wat er in die periode moet gebeuren / verwacht wordt dat er gaat gebeuren.",
-    "toelichting": "Dit procestype heeft betrekking op het concreet invullen van algemene kaders die in beleidsstukken worden geschetst voor een afgebakende periode. Het orgaan stelt hiervoor een plan op. ",
-    "procesobject": "Het plan"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/cdb46f05-0750-4d83-8025-31e20408ed21",
-    "nummer": 3,
-    "jaar": 2017,
-    "naam": "Plannen opstellen",
-    "omschrijving": "Opstellen van plannen voor een in het plan afgebakende periode die richting geeft voor wat er in die periode moet gebeuren / verwacht wordt dat er gaat gebeuren.",
-    "toelichting": "Dit procestype heeft betrekking op het concreet invullen van algemene kaders die in beleidsstukken worden geschetst voor een afgebakende periode. Het orgaan stelt hiervoor een plan op. ",
-    "procesobject": "Het plan"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/6a439f39-927e-4306-a44a-080b0e09fb53",
-    "nummer": 4,
-    "jaar": 2020,
-    "naam": "Evaluatie uitvoeren",
-    "omschrijving": "Het controleren, evalueren, rapporten en verantwoorden over het handelen van het orgaan",
-    "toelichting": "Dit evalueren kan zowel betrekking hebben op de evaluatie van beleid, als op de uitvoering van beleid en het functioneren van het eigen orgaan.",
-    "procesobject": "Het object waar de evaluatie betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/d6c58b4f-7e88-4227-977c-cb2fb22c5eed",
-    "nummer": 4,
-    "jaar": 2017,
-    "naam": "Evaluatie uitvoeren",
-    "omschrijving": "Het controleren, evalueren, rapporten en verantwoorden over het handelen van het orgaan",
-    "toelichting": "Dit evalueren kan zowel betrekking hebben op de evaluatie van beleid, als op de uitvoering van beleid en het functioneren van het eigen orgaan.",
-    "procesobject": "Het object waar de evaluatie betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/07c3c06a-2049-4e9e-82c5-7c1ff703c642",
-    "nummer": 5,
-    "jaar": 2017,
-    "naam": "Producten en diensten leveren",
-    "omschrijving": "Het door het orgaan leveren van (publieke) producten of diensten",
-    "toelichting": "Voor het verstrekken van een product of dienst hoeft de aanvrager niet aan een bepaalde situatie te voldoen, want in dat geval is het procestype 'Voorzieningen verstrekken' van toepassing. Het product of de dienst houdt niet het doen of laten van het orgaan in, want in dat geval valt het onder het procestype 'Verzoeken behandelen'.",
-    "procesobject": "Het geleverde product of de geleverde dienst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/0f86ece3-f863-4c67-928e-cc71ad0e2318",
-    "nummer": 5,
-    "jaar": 2020,
-    "naam": "Producten en diensten leveren",
-    "omschrijving": "Het door het orgaan leveren van (publieke) producten of diensten",
-    "toelichting": "Voor het verstrekken van een product of dienst hoeft de aanvrager niet aan een bepaalde situatie te voldoen, want in dat geval is het procestype 'Voorzieningen verstrekken' van toepassing. Het product of de dienst houdt niet het doen of laten van het orgaan in, want in dat geval valt het onder het procestype 'Verzoeken behandelen'.",
-    "procesobject": "Het geleverde product of de geleverde dienst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/838e405a-9b12-43c4-a985-d7a7490d422e",
-    "nummer": 6,
-    "jaar": 2020,
-    "naam": "Verzoeken behandelen",
-    "omschrijving": "Het behandelen van een verzoek  tot het doen of laten van het orgaan",
-    "toelichting": "Wanneer een aanvrager een aanvraag voor een bepaalde voorziening indient, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer het om een product of dienst gaat dat niet een doen of juist laten van het orgaan inhoudt, is het procestype 'Producten en diensten leveren' van toepassing.",
-    "procesobject": "Het handelen van het orgaan op basis van het verzoek"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/3030daa1-d516-4cd9-8276-ef0977e32b20",
-    "nummer": 6,
-    "jaar": 2017,
-    "naam": "Verzoeken behandelen",
-    "omschrijving": "Het behandelen van een verzoek  tot het doen of laten van het orgaan",
-    "toelichting": "Wanneer een aanvrager een aanvraag voor een bepaalde voorziening indient, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer het om een product of dienst gaat dat niet een doen of juist laten van het orgaan inhoudt, is het procestype 'Producten en diensten leveren' van toepassing.",
-    "procesobject": "Het handelen van het orgaan op basis van het verzoek"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/39a1711c-f94b-4282-8ac3-7c545d8ecb04",
-    "nummer": 7,
-    "jaar": 2017,
-    "naam": "Aangiften behandelen",
-    "omschrijving": "Het behandelen van een aangifte van een bepaald feit, situatie of voornemen waar een inwoner op basis van wet- en regelgeving toe verplicht is.",
-    "toelichting": "Niet alleen de aangiften van inwoners zijn onder dit procestype geschaard, maar ook de kennisgevingen over een bepaald feit waar ketenpartners toe verplicht zijn en die het orgaan in de BRP dient te verwerken.",
-    "procesobject": "De aangifte"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/1ade83bf-5f13-4c00-9361-ec723c2b14a6",
-    "nummer": 7,
-    "jaar": 2020,
-    "naam": "Aangiften behandelen",
-    "omschrijving": "Het behandelen van een aangifte van een bepaald feit, situatie of voornemen waar een inwoner op basis van wet- en regelgeving toe verplicht is.",
-    "toelichting": "Niet alleen de aangiften van inwoners zijn onder dit procestype geschaard, maar ook de kennisgevingen over een bepaald feit waar ketenpartners toe verplicht zijn en die het orgaan in de BRP dient te verwerken.",
-    "procesobject": "De aangifte"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/f4603775-5a08-4829-85c8-28017dfeee1f",
-    "nummer": 8,
-    "jaar": 2020,
-    "naam": "Voorzieningen verstrekken",
-    "omschrijving": "Het verstekken van een (financiële) voorziening, al dan niet na een bepaalde vorm van toetsing, waarvoor een inwoner van het orgaan op basis van zijn of haar situatie in aanmerking komt.",
-    "toelichting": "Indien de aanvrager zich niet in een bepaalde situatie hoeft te bevinden en wanneer het orgaan wordt verzocht om iets te doen of te laten, is het procestype 'Verzoek behandelen' van toepassing. Indien beiden niet van toepassing zijn, is het procestype 'Producten en diensten leveren' van toepassing.",
-    "procesobject": "De voorziening"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/9be366e2-f63c-494a-8a77-62446251b006",
-    "nummer": 8,
-    "jaar": 2017,
-    "naam": "Voorzieningen verstrekken",
-    "omschrijving": "Het verstekken van een (financiële) voorziening, al dan niet na een bepaalde vorm van toetsing, waarvoor een inwoner van het orgaan op basis van zijn of haar situatie in aanmerking komt.",
-    "toelichting": "Indien de aanvrager zich niet in een bepaalde situatie hoeft te bevinden en wanneer het orgaan wordt verzocht om iets te doen of te laten, is het procestype 'Verzoek behandelen' van toepassing. Indien beiden niet van toepassing zijn, is het procestype 'Producten en diensten leveren' van toepassing.",
-    "procesobject": "De voorziening"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/bb2109bd-795d-47a8-b7a8-4e4269505054",
-    "nummer": 9,
-    "jaar": 2020,
-    "naam": "Status toekennen",
-    "omschrijving": "Het toepassen van de publieke bevoegdheden als overheidsorgaan om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
-    "toelichting": "Het orgaan kan een gebied een status toekennen, om de bestemming of het gebruik van dit gebied te wijzigen. Door een persoon (een externe of een personeelslid) in een speciale functie te benoemen of door hem te mandateren, wordt hem een speciale bevoegdheden toegekend.",
-    "procesobject": "De status"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/941de99f-b702-4b3e-9df4-db370f457bea",
-    "nummer": 9,
-    "jaar": 2017,
-    "naam": "Status toekennen",
-    "omschrijving": "Het toepassen van de publieke bevoegdheden als overheidsorgaan om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
-    "toelichting": "Het orgaan kan een gebied een status toekennen, om de bestemming of het gebruik van dit gebied te wijzigen. Door een persoon (een externe of een personeelslid) in een speciale functie te benoemen of door hem te mandateren, wordt hem een speciale bevoegdheden toegekend.",
-    "procesobject": "De status"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/7356c948-d18d-4b38-b5ad-bf303c18c550",
-    "nummer": 10,
-    "jaar": 2020,
-    "naam": "Heffen",
-    "omschrijving": "Het opleggen van een financiële verplichting aan derden op basis van de publiekrechtelijke bevoegdheden als overheidsorgaan",
-    "toelichting": "",
-    "procesobject": "De heffing"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/9c051de9-988c-42fd-ba00-2eeb6f0ac423",
-    "nummer": 10,
-    "jaar": 2017,
-    "naam": "Heffen",
-    "omschrijving": "Het opleggen van een financiële verplichting aan derden op basis van de publiekrechtelijke bevoegdheden als overheidsorgaan",
-    "toelichting": "",
-    "procesobject": "De heffing"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/7ff2b005-4d84-47fe-983a-732bfa958ff5",
-    "nummer": 11,
-    "jaar": 2020,
-    "naam": "Toestemming verlenen",
-    "omschrijving": "Het door het orgaan behandelen van een aanvraag, melding of verzoek om toestemming voor het doen of laten van een derde waar het orgaan bevoegd is om over te beslissen",
-    "toelichting": "",
-    "procesobject": "De verleende toestemming"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/035d5ce8-d4f8-4f23-a386-fe2ea136d9e3",
-    "nummer": 11,
-    "jaar": 2017,
-    "naam": "Toestemming verlenen",
-    "omschrijving": "Het door het orgaan behandelen van een aanvraag, melding of verzoek om toestemming voor het doen of laten van een derde waar het orgaan bevoegd is om over te beslissen",
-    "toelichting": "",
-    "procesobject": "De verleende toestemming"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/c844637e-6393-4202-b030-e1bffb08a9b0",
-    "nummer": 12,
-    "jaar": 2020,
-    "naam": "Toezien en handhaven",
-    "omschrijving": "Het vanuit een bevoegdheid, afspraak of overeenkomst inspecteren, controleren en toezien met als doel te controleren of personen of partijen voldoen aan geldende afspraken, wet- of regelgeving en het wanneer nodig corrigerend ingrijpen of opleggen van een sanctie.",
-    "toelichting": "Het kan hierbij gaan om landelijke wet- en regelgeving, door het orgaan vastgestelde regelgeving en om vastgelegde afspraken.",
-    "procesobject": "Het vastgelegde eindresultaat van het proces"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/75ae016a-4b09-440f-b95e-0de747b88c05",
-    "nummer": 12,
-    "jaar": 2017,
-    "naam": "Toezien en handhaven",
-    "omschrijving": "Het vanuit een bevoegdheid, afspraak of overeenkomst inspecteren, controleren en toezien met als doel te controleren of personen of partijen voldoen aan geldende afspraken, wet- of regelgeving en het wanneer nodig corrigerend ingrijpen of opleggen van een sanctie.",
-    "toelichting": "Het kan hierbij gaan om landelijke wet- en regelgeving, door het orgaan vastgestelde regelgeving en om vastgelegde afspraken.",
-    "procesobject": "Het vastgelegde eindresultaat van het proces"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/9ac48c4c-9225-4d89-a85c-178d479224c0",
-    "nummer": 13,
-    "jaar": 2017,
-    "naam": "Geschillen behandelen",
-    "omschrijving": "Het afhandelen van een geschil dat door een derde aanhangig wordt gemaakt omdat deze een (vermeend) nadeel heeft ondervonden door het (niet) handelen van de instelling",
-    "toelichting": "Indien een derde of een personeelslid het niet eens is met het al of niet handelen van het orgaan, kan hij om compensatie verzoeken of een bezwaar aantekenen of een beroep indienen.",
-    "procesobject": "Het object waar het geschil betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/1e12ad30-b900-4e7f-b3b7-569673cee0b0",
-    "nummer": 13,
-    "jaar": 2020,
-    "naam": "Geschillen behandelen",
-    "omschrijving": "Het afhandelen van een geschil dat door een derde aanhangig wordt gemaakt omdat deze een (vermeend) nadeel heeft ondervonden door het (niet) handelen van de instelling",
-    "toelichting": "Indien een derde of een personeelslid het niet eens is met het al of niet handelen van het orgaan, kan hij om compensatie verzoeken of een bezwaar aantekenen of een beroep indienen.",
-    "procesobject": "Het object waar het geschil betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/e69b104d-0b23-4265-9bfe-7a58e84cfd22",
-    "nummer": 14,
-    "jaar": 2020,
-    "naam": "Openbare ruimte inrichten",
-    "omschrijving": "Het inrichten, herstructureren, aanleggen of ontwikkelen van alle openbare of private gebieden of objecten die het orgaan onder haar beheer heeft.",
-    "toelichting": "",
-    "procesobject": "De voorziening in de openbare ruimte"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/a6f9ac8e-52bb-4b06-aaab-6d0628982356",
-    "nummer": 14,
-    "jaar": 2017,
-    "naam": "Openbare ruimte inrichten",
-    "omschrijving": "Het inrichten, herstructureren, aanleggen of ontwikkelen van alle openbare of private gebieden of objecten die het orgaan onder haar beheer heeft.",
-    "toelichting": "",
-    "procesobject": "De voorziening in de openbare ruimte"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/2f296607-9faa-41e1-800f-e8fcaf55b9c8",
-    "nummer": 15,
-    "jaar": 2017,
-    "naam": "Onderhouden en repareren",
-    "omschrijving": "Het planmatig onderhoud of naar aanleiding van een constatering repareren van objecten waarvoor het orgaan een beheerverantwoordelijkheid heeft.",
-    "toelichting": "",
-    "procesobject": "Het object waarop het onderhoud of de reparatie wordt uitgevoerd"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/d5f61062-8493-47b5-a8e3-b74f66c298e8",
-    "nummer": 15,
-    "jaar": 2020,
-    "naam": "Onderhouden en repareren",
-    "omschrijving": "Het planmatig onderhoud of naar aanleiding van een constatering repareren van objecten waarvoor het orgaan een beheerverantwoordelijkheid heeft.",
-    "toelichting": "",
-    "procesobject": "Het object waarop het onderhoud of de reparatie wordt uitgevoerd"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/fb12e5db-24ad-46cb-bd66-350c4c97e4aa",
-    "nummer": 16,
-    "jaar": 2020,
-    "naam": "Overeenkomsten aangaan",
-    "omschrijving": "Het aangaan van een overeenkomst met een persoon of organisatie",
-    "toelichting": "Door overeenkomsten te sluiten kan het orgaan zorgen voor de uitvoering van haar taken, het voorzien in haar behoeften en voor het zekerstellen van haar positie.",
-    "procesobject": "De overeenkomst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/f9a7f23b-a326-4f28-8edb-4028273ad32c",
-    "nummer": 16,
-    "jaar": 2017,
-    "naam": "Overeenkomsten aangaan",
-    "omschrijving": "Het aangaan van een overeenkomst met een persoon of organisatie",
-    "toelichting": "Door overeenkomsten te sluiten kan het orgaan zorgen voor de uitvoering van haar taken, het voorzien in haar behoeften en voor het zekerstellen van haar positie.",
-    "procesobject": "De overeenkomst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/d1e536dd-baed-4c5a-a862-f9ca92227d8e",
-    "nummer": 17,
-    "jaar": 2017,
-    "naam": "Personen aanstellen",
-    "omschrijving": "Het aannemen van personen in een bepaalde functie",
-    "toelichting": "Het kan hierbij zowel om het aanstellen van een eigen personeelslid gaan, als om het benoemen van een persoon in een onafhankelijke commissie of het bestuur van het orgaan. ",
-    "procesobject": "Het dienstverband"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/6ffb906f-2966-4e67-b1ec-a746f2e7ceaa",
-    "nummer": 17,
-    "jaar": 2020,
-    "naam": "Personen aanstellen",
-    "omschrijving": "Het aannemen van personen in een bepaalde functie",
-    "toelichting": "Het kan hierbij zowel om het aanstellen van een eigen personeelslid gaan, als om het benoemen van een persoon in een onafhankelijke commissie of het bestuur van het orgaan. ",
-    "procesobject": "Het dienstverband"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/7716119a-6af9-408e-929a-503c8c2a5939",
-    "nummer": 18,
-    "jaar": 2020,
-    "naam": "Betalen en innen",
-    "omschrijving": "Het op basis van een aangegane of opgelegde verplichting of heffing innen of betalen van geldbedragen",
-    "toelichting": "",
-    "procesobject": "De vordering of schuld"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/32a6fdb6-e894-4011-a594-9ba9f92f150a",
-    "nummer": 18,
-    "jaar": 2017,
-    "naam": "Betalen en innen",
-    "omschrijving": "Het op basis van een aangegane of opgelegde verplichting of heffing innen of betalen van geldbedragen",
-    "toelichting": "",
-    "procesobject": "De vordering of schuld"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/87804ff2-4ae3-4700-b1d4-a49ca3fcd2d0",
-    "nummer": 19,
-    "jaar": 2017,
-    "naam": "Secretariaat voeren en gegevens administreren / verwerken ",
-    "omschrijving": "Het door het orgaan in een van haar administraties verwerken van aangeleverde, gemelde of geconstateerde gegevens, zonder dat hier een inhoudelijke toetsing bij plaatsvindt",
-    "toelichting": "Dit procestype geldt eveneens voor de verslaglegging van overleg op verschillende niveaus. Zie bijlage 4 voor een overzicht van blijvend te bewaren registers waarvoor het orgaan verantwoordelijk is.",
-    "procesobject": "De verwerkte gegevens"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/66b82ebc-25c0-4a15-9323-11def942a374",
-    "nummer": 19,
-    "jaar": 2020,
-    "naam": "Secretariaat voeren en gegevens administreren / verwerken ",
-    "omschrijving": "Het door het orgaan in een van haar administraties verwerken van aangeleverde, gemelde of geconstateerde gegevens, zonder dat hier een inhoudelijke toetsing bij plaatsvindt",
-    "toelichting": "Dit procestype geldt eveneens voor de verslaglegging van overleg op verschillende niveaus. Zie bijlage 4 voor een overzicht van blijvend te bewaren registers waarvoor het orgaan verantwoordelijk is.",
-    "procesobject": "De verwerkte gegevens"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/b7759b9f-797c-40ac-9cbe-b82299a6d81b",
-    "nummer": 20,
-    "jaar": 2017,
-    "naam": "Informeren",
-    "omschrijving": "Het op initiatief van het orgaan samenstellen en verspreiden van informatie over zaken van het orgaan die interne of externe derden aangaan",
-    "toelichting": "",
-    "procesobject": "De verstrekte of gepubliceerde informatie"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/ff86b958-f934-43f7-825d-2cbc8b975394",
-    "nummer": 20,
-    "jaar": 2020,
-    "naam": "Informeren",
-    "omschrijving": "Het op initiatief van het orgaan samenstellen en verspreiden van informatie over zaken van het orgaan die interne of externe derden aangaan",
-    "toelichting": "",
-    "procesobject": "De verstrekte of gepubliceerde informatie"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/74fedf07-50ca-42e3-85fe-994873bada7e",
-    "nummer": 21,
-    "jaar": 2017,
-    "naam": "Adviseren",
-    "omschrijving": "Het op eigen initiatief of op verzoek geven van een advies over een bepaalde situatie of voornemen",
-    "toelichting": "",
-    "procesobject": "Het advies"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/25a67e51-05ba-4dfc-b230-f606525c31a0",
-    "nummer": 21,
-    "jaar": 2020,
-    "naam": "Adviseren",
-    "omschrijving": "Het op eigen initiatief of op verzoek geven van een advies over een bepaalde situatie of voornemen",
-    "toelichting": "",
-    "procesobject": "Het advies"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/8d522ad8-4365-4ae9-a74e-220f56048b54",
-    "nummer": 22,
-    "jaar": 2020,
-    "naam": "Gebeurtenis organiseren",
-    "omschrijving": "Het organiseren van een intern of externe gebeurtenis ",
-    "toelichting": "Het orgaan organiseert evenementen of gebeurtenissen vanuit haar wettelijke taak of ter promotie",
-    "procesobject": "De gebeurtenis"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/a26cc03a-e414-4ee7-9d9b-0c507d2f3963",
-    "nummer": 22,
-    "jaar": 2017,
-    "naam": "Gebeurtenis organiseren",
-    "omschrijving": "Het organiseren van een intern of externe gebeurtenis ",
-    "toelichting": "Het orgaan organiseert evenementen of gebeurtenissen vanuit haar wettelijke taak of ter promotie",
-    "procesobject": "De gebeurtenis"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/849d8c36-6d99-460a-b049-1cfe4ea74216",
-    "nummer": 23,
-    "jaar": 2017,
-    "naam": "Voorziening aanvragen",
-    "omschrijving": "Het op initiatief van het orgaan bij een derde vragen van een voorziening waar het orgaan aanspraak op kan maken op basis van wet- en regelgeving of gemaakte afspraken.",
-    "toelichting": "",
-    "procesobject": "De voorziening"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/01a07fa2-9817-4b6f-bc99-2640a8ee08f8",
-    "nummer": 23,
-    "jaar": 2020,
-    "naam": "Voorziening aanvragen",
-    "omschrijving": "Het op initiatief van het orgaan bij een derde vragen van een voorziening waar het orgaan aanspraak op kan maken op basis van wet- en regelgeving of gemaakte afspraken.",
-    "toelichting": "",
-    "procesobject": "De voorziening"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/b2e68320-529d-4fad-8ee7-bfac3e79fdd1",
-    "nummer": 24,
-    "jaar": 2020,
-    "naam": "Toestemming vragen",
-    "omschrijving": "Het op initiatief van het orgaan bij derden vragen van een toestemming op basis van een geldende verplichting hiertoe",
-    "toelichting": "",
-    "procesobject": "De verkregen toestemming"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/bcef2e85-fd7b-4ce8-acf9-175ab377af66",
-    "nummer": 24,
-    "jaar": 2017,
-    "naam": "Toestemming vragen",
-    "omschrijving": "Het op initiatief van het orgaan bij derden vragen van een toestemming op basis van een geldende verplichting hiertoe",
-    "toelichting": "",
-    "procesobject": "De verkregen toestemming"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/de205198-47f8-4b5d-858a-bd6dd4b8b042",
-    "nummer": 25,
-    "jaar": 2017,
-    "naam": "Toezicht en handhaving ondergaan",
-    "omschrijving": "Het ondergaan van toezicht en handhaving uitgevoerd door een ander orgaan",
-    "toelichting": "",
-    "procesobject": "Het object waarop het toezicht of de handhaving betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/d19d0b40-7d6b-4ee1-aa40-a0bdb2edff79",
-    "nummer": 25,
-    "jaar": 2020,
-    "naam": "Toezicht en handhaving ondergaan",
-    "omschrijving": "Het ondergaan van toezicht en handhaving uitgevoerd door een ander orgaan",
-    "toelichting": "",
-    "procesobject": "Het object waarop het toezicht of de handhaving betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/a4634ece-c1fb-4664-b9f9-968e6953c27e",
-    "nummer": 26,
-    "jaar": 2020,
-    "naam": "Betwisten",
-    "omschrijving": "Het op initiatief van het orgaan bij een derde inbrengen van een geschil wanneer het orgaan door het (niet) handelen van een derde nadeel heeft ondervonden of dreigt te gaan ondervinden",
-    "toelichting": "Indien een orgaan het niet eens is met het al of niet handelen van een derde, kan het orgaan om compensatie vragen of bezwaar en/of beroep indienen bij de daartoe aangewezen organisaties.",
-    "procesobject": "Het object waar het geschil betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/ab806bcb-4123-4eb9-b9cc-26370abc06dd",
-    "nummer": 26,
-    "jaar": 2017,
-    "naam": "Betwisten",
-    "omschrijving": "Het op initiatief van het orgaan bij een derde inbrengen van een geschil wanneer het orgaan door het (niet) handelen van een derde nadeel heeft ondervonden of dreigt te gaan ondervinden",
-    "toelichting": "Indien een orgaan het niet eens is met het al of niet handelen van een derde, kan het orgaan om compensatie vragen of bezwaar en/of beroep indienen bij de daartoe aangewezen organisaties.",
-    "procesobject": "Het object waar het geschil betrekking op heeft"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/a80a028d-12d1-41ae-b1ec-48c3347301b2",
-    "nummer": 27,
-    "jaar": 2017,
-    "naam": "Status aanvragen",
-    "omschrijving": "Het op initiatief van het orgaan bij een ander overheidsorgaan verzoeken om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
-    "toelichting": "Het orgaan kan een andere organisatie verzoeken om aan een persoon, een object of een bepaald gebied een status toe te kennen.",
-    "procesobject": "De status"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/cf8ff03a-50ab-4ec7-bd71-a69cffd63b72",
-    "nummer": 27,
-    "jaar": 2020,
-    "naam": "Status aanvragen",
-    "omschrijving": "Het op initiatief van het orgaan bij een ander overheidsorgaan verzoeken om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
-    "toelichting": "Het orgaan kan een andere organisatie verzoeken om aan een persoon, een object of een bepaald gebied een status toe te kennen.",
-    "procesobject": "De status"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/3874e4e3-39ff-48af-af6b-da82131661c0",
-    "nummer": 28,
-    "jaar": 2020,
-    "naam": "Product of dienst aanvragen",
-    "omschrijving": "Het door het orgaan aanvragen van (publieke) producten of diensten",
-    "toelichting": "Het orgaan kan bij een andere organisatie vragen om een product of dienst zonder dat daar een overeenkomst voor hoeft worden gesloten.",
-    "procesobject": "Product of dienst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/32978765-f83c-4966-8d15-380d75685ad8",
-    "nummer": 28,
-    "jaar": 2017,
-    "naam": "Product of dienst aanvragen",
-    "omschrijving": "Het door het orgaan aanvragen van (publieke) producten of diensten",
-    "toelichting": "Het orgaan kan bij een andere organisatie vragen om een product of dienst zonder dat daar een overeenkomst voor hoeft worden gesloten.",
-    "procesobject": "Product of dienst"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/1a8aa9b8-73e0-4a71-8c9e-3d314db95518",
-    "nummer": 29,
-    "jaar": 2017,
-    "naam": "Aangifte doen",
-    "omschrijving": "Het doen van aangifte van een bepaald feit, situatie of voornemen waar een ander overheidsorgaan op basis van wet- en regelgeving hier een administratie van voert.",
-    "toelichting": "",
-    "procesobject": "De aangifte"
-  },
-  {
-    "url": "https://referentielijsten.oneground.local/api/v1/procestypen/1d49c68f-33da-4774-bc33-46d460bdd8b5",
-    "nummer": 29,
-    "jaar": 2020,
-    "naam": "Aangifte doen",
-    "omschrijving": "Het doen van aangifte van een bepaald feit, situatie of voornemen waar een ander overheidsorgaan op basis van wet- en regelgeving hier een administratie van voert.",
-    "toelichting": "",
-    "procesobject": "De aangifte"
-  }
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/aa8aa2fd-b9c6-4e34-9a6c-58a677f60ea0",
+		"nummer": 1,
+		"jaar": 2020,
+		"naam": "Instellen en inrichten organisatie",
+		"omschrijving": "Instellen en inrichten organisatie",
+		"toelichting": "Dit procestype betreft het instellen van een nieuw organisatieonderdeel of een nieuwe orgaan waar het orgaan in deelneemt. Dit procestype betreft eveneens het inrichten van het eigen orgaan. Dit kan kleinschalig plaatsvinden bijvoorbeeld het wijzigen van de uitvoering van een wettelijke taak of grootschalig wanneer er een organisatiewijziging wordt doorgevoerd.",
+		"procesobject": "De vastgestelde organisatie inrichting"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/e1b73b12-b2f6-4c4e-8929-94f84dd2a57d",
+		"nummer": 1,
+		"jaar": 2017,
+		"naam": "Instellen en inrichten organisatie",
+		"omschrijving": "Instellen en inrichten organisatie",
+		"toelichting": "Dit procestype betreft het instellen van een nieuw organisatieonderdeel of een nieuwe orgaan waar het orgaan in deelneemt. Dit procestype betreft eveneens het inrichten van het eigen orgaan. Dit kan kleinschalig plaatsvinden bijvoorbeeld het wijzigen van de uitvoering van een wettelijke taak of grootschalig wanneer er een organisatiewijziging wordt doorgevoerd.",
+		"procesobject": "De vastgestelde organisatie inrichting"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/8c160b66-2247-43f3-9afc-e5e48aefa41c",
+		"nummer": 2,
+		"jaar": 2020,
+		"naam": "Beleid en regelgeving opstellen",
+		"omschrijving": "Opstellen en vaststellen van algemene (wettelijke) kaders voor het functioneren van de instelling.",
+		"toelichting": "Wanneer een beleidsstuk betrekking heeft op een bepaalde afgebakende periode vormt het een beleidsplan en valt het onder het procestype 'Plan opstellen'. In een beleidsregel geeft een orgaan aan hoe een bepaalde bevoegdheid zal worden uitgevoerd. Bij het nemen van veel voorkomende beslissingen hoeft het orgaan niet telkens haar beleid of haar uitvoering van hogere wet- en regelgeving uit te leggen, maar kan zij verwijzen naar de bekendgemaakte beleidsregel. Deze vorm van regelgeving valt wel onder dit procestype. ",
+		"procesobject": "Het beleid of regelgeving"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/96eae691-077f-4fd6-ad66-950b9b714880",
+		"nummer": 2,
+		"jaar": 2017,
+		"naam": "Beleid en regelgeving opstellen",
+		"omschrijving": "Opstellen en vaststellen van algemene (wettelijke) kaders voor het functioneren van de instelling.",
+		"toelichting": "Wanneer een beleidsstuk betrekking heeft op een bepaalde afgebakende periode vormt het een beleidsplan en valt het onder het procestype 'Plan opstellen'. In een beleidsregel geeft een orgaan aan hoe een bepaalde bevoegdheid zal worden uitgevoerd. Bij het nemen van veel voorkomende beslissingen hoeft het orgaan niet telkens haar beleid of haar uitvoering van hogere wet- en regelgeving uit te leggen, maar kan zij verwijzen naar de bekendgemaakte beleidsregel. Deze vorm van regelgeving valt wel onder dit procestype. ",
+		"procesobject": "Het beleid of regelgeving"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/2692b18e-f86c-4e15-b68d-e9e50d241db3",
+		"nummer": 3,
+		"jaar": 2020,
+		"naam": "Plannen opstellen",
+		"omschrijving": "Opstellen van plannen voor een in het plan afgebakende periode die richting geeft voor wat er in die periode moet gebeuren / verwacht wordt dat er gaat gebeuren.",
+		"toelichting": "Dit procestype heeft betrekking op het concreet invullen van algemene kaders die in beleidsstukken worden geschetst voor een afgebakende periode. Het orgaan stelt hiervoor een plan op. ",
+		"procesobject": "Het plan"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/cdb46f05-0750-4d83-8025-31e20408ed21",
+		"nummer": 3,
+		"jaar": 2017,
+		"naam": "Plannen opstellen",
+		"omschrijving": "Opstellen van plannen voor een in het plan afgebakende periode die richting geeft voor wat er in die periode moet gebeuren / verwacht wordt dat er gaat gebeuren.",
+		"toelichting": "Dit procestype heeft betrekking op het concreet invullen van algemene kaders die in beleidsstukken worden geschetst voor een afgebakende periode. Het orgaan stelt hiervoor een plan op. ",
+		"procesobject": "Het plan"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/6a439f39-927e-4306-a44a-080b0e09fb53",
+		"nummer": 4,
+		"jaar": 2020,
+		"naam": "Evaluatie uitvoeren",
+		"omschrijving": "Het controleren, evalueren, rapporten en verantwoorden over het handelen van het orgaan",
+		"toelichting": "Dit evalueren kan zowel betrekking hebben op de evaluatie van beleid, als op de uitvoering van beleid en het functioneren van het eigen orgaan.",
+		"procesobject": "Het object waar de evaluatie betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/d6c58b4f-7e88-4227-977c-cb2fb22c5eed",
+		"nummer": 4,
+		"jaar": 2017,
+		"naam": "Evaluatie uitvoeren",
+		"omschrijving": "Het controleren, evalueren, rapporten en verantwoorden over het handelen van het orgaan",
+		"toelichting": "Dit evalueren kan zowel betrekking hebben op de evaluatie van beleid, als op de uitvoering van beleid en het functioneren van het eigen orgaan.",
+		"procesobject": "Het object waar de evaluatie betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/07c3c06a-2049-4e9e-82c5-7c1ff703c642",
+		"nummer": 5,
+		"jaar": 2017,
+		"naam": "Producten en diensten leveren",
+		"omschrijving": "Het door het orgaan leveren van (publieke) producten of diensten",
+		"toelichting": "Voor het verstrekken van een product of dienst hoeft de aanvrager niet aan een bepaalde situatie te voldoen, want in dat geval is het procestype 'Voorzieningen verstrekken' van toepassing. Het product of de dienst houdt niet het doen of laten van het orgaan in, want in dat geval valt het onder het procestype 'Verzoeken behandelen'.",
+		"procesobject": "Het geleverde product of de geleverde dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/0f86ece3-f863-4c67-928e-cc71ad0e2318",
+		"nummer": 5,
+		"jaar": 2020,
+		"naam": "Producten en diensten leveren",
+		"omschrijving": "Het door het orgaan leveren van (publieke) producten of diensten",
+		"toelichting": "Voor het verstrekken van een product of dienst hoeft de aanvrager niet aan een bepaalde situatie te voldoen, want in dat geval is het procestype 'Voorzieningen verstrekken' van toepassing. Het product of de dienst houdt niet het doen of laten van het orgaan in, want in dat geval valt het onder het procestype 'Verzoeken behandelen'.",
+		"procesobject": "Het geleverde product of de geleverde dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/838e405a-9b12-43c4-a985-d7a7490d422e",
+		"nummer": 6,
+		"jaar": 2020,
+		"naam": "Verzoeken behandelen",
+		"omschrijving": "Het behandelen van een verzoek  tot het doen of laten van het orgaan",
+		"toelichting": "Wanneer een aanvrager een aanvraag voor een bepaalde voorziening indient, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer het om een product of dienst gaat dat niet een doen of juist laten van het orgaan inhoudt, is het procestype 'Producten en diensten leveren' van toepassing.",
+		"procesobject": "Het handelen van het orgaan op basis van het verzoek"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/3030daa1-d516-4cd9-8276-ef0977e32b20",
+		"nummer": 6,
+		"jaar": 2017,
+		"naam": "Verzoeken behandelen",
+		"omschrijving": "Het behandelen van een verzoek  tot het doen of laten van het orgaan",
+		"toelichting": "Wanneer een aanvrager een aanvraag voor een bepaalde voorziening indient, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer het om een product of dienst gaat dat niet een doen of juist laten van het orgaan inhoudt, is het procestype 'Producten en diensten leveren' van toepassing.",
+		"procesobject": "Het handelen van het orgaan op basis van het verzoek"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/39a1711c-f94b-4282-8ac3-7c545d8ecb04",
+		"nummer": 7,
+		"jaar": 2017,
+		"naam": "Aangiften behandelen",
+		"omschrijving": "Het behandelen van een aangifte van een bepaald feit, situatie of voornemen waar een inwoner op basis van wet- en regelgeving toe verplicht is.",
+		"toelichting": "Niet alleen de aangiften van inwoners zijn onder dit procestype geschaard, maar ook de kennisgevingen over een bepaald feit waar ketenpartners toe verplicht zijn en die het orgaan in de BRP dient te verwerken.",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/1ade83bf-5f13-4c00-9361-ec723c2b14a6",
+		"nummer": 7,
+		"jaar": 2020,
+		"naam": "Aangiften behandelen",
+		"omschrijving": "Het behandelen van een aangifte van een bepaald feit, situatie of voornemen waar een inwoner op basis van wet- en regelgeving toe verplicht is.",
+		"toelichting": "Niet alleen de aangiften van inwoners zijn onder dit procestype geschaard, maar ook de kennisgevingen over een bepaald feit waar ketenpartners toe verplicht zijn en die het orgaan in de BRP dient te verwerken.",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/f4603775-5a08-4829-85c8-28017dfeee1f",
+		"nummer": 8,
+		"jaar": 2020,
+		"naam": "Voorzieningen verstrekken",
+		"omschrijving": "Het verstekken van een (financiële) voorziening, al dan niet na een bepaalde vorm van toetsing, waarvoor een inwoner van het orgaan op basis van zijn of haar situatie in aanmerking komt.",
+		"toelichting": "Indien de aanvrager zich niet in een bepaalde situatie hoeft te bevinden en wanneer het orgaan wordt verzocht om iets te doen of te laten, is het procestype 'Verzoek behandelen' van toepassing. Indien beiden niet van toepassing zijn, is het procestype 'Producten en diensten leveren' van toepassing.",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/9be366e2-f63c-494a-8a77-62446251b006",
+		"nummer": 8,
+		"jaar": 2017,
+		"naam": "Voorzieningen verstrekken",
+		"omschrijving": "Het verstekken van een (financiële) voorziening, al dan niet na een bepaalde vorm van toetsing, waarvoor een inwoner van het orgaan op basis van zijn of haar situatie in aanmerking komt.",
+		"toelichting": "Indien de aanvrager zich niet in een bepaalde situatie hoeft te bevinden en wanneer het orgaan wordt verzocht om iets te doen of te laten, is het procestype 'Verzoek behandelen' van toepassing. Indien beiden niet van toepassing zijn, is het procestype 'Producten en diensten leveren' van toepassing.",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/bb2109bd-795d-47a8-b7a8-4e4269505054",
+		"nummer": 9,
+		"jaar": 2020,
+		"naam": "Status toekennen",
+		"omschrijving": "Het toepassen van de publieke bevoegdheden als overheidsorgaan om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
+		"toelichting": "Het orgaan kan een gebied een status toekennen, om de bestemming of het gebruik van dit gebied te wijzigen. Door een persoon (een externe of een personeelslid) in een speciale functie te benoemen of door hem te mandateren, wordt hem een speciale bevoegdheden toegekend.",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/941de99f-b702-4b3e-9df4-db370f457bea",
+		"nummer": 9,
+		"jaar": 2017,
+		"naam": "Status toekennen",
+		"omschrijving": "Het toepassen van de publieke bevoegdheden als overheidsorgaan om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
+		"toelichting": "Het orgaan kan een gebied een status toekennen, om de bestemming of het gebruik van dit gebied te wijzigen. Door een persoon (een externe of een personeelslid) in een speciale functie te benoemen of door hem te mandateren, wordt hem een speciale bevoegdheden toegekend.",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/7356c948-d18d-4b38-b5ad-bf303c18c550",
+		"nummer": 10,
+		"jaar": 2020,
+		"naam": "Heffen",
+		"omschrijving": "Het opleggen van een financiële verplichting aan derden op basis van de publiekrechtelijke bevoegdheden als overheidsorgaan",
+		"toelichting": "",
+		"procesobject": "De heffing"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/9c051de9-988c-42fd-ba00-2eeb6f0ac423",
+		"nummer": 10,
+		"jaar": 2017,
+		"naam": "Heffen",
+		"omschrijving": "Het opleggen van een financiële verplichting aan derden op basis van de publiekrechtelijke bevoegdheden als overheidsorgaan",
+		"toelichting": "",
+		"procesobject": "De heffing"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/7ff2b005-4d84-47fe-983a-732bfa958ff5",
+		"nummer": 11,
+		"jaar": 2020,
+		"naam": "Toestemming verlenen",
+		"omschrijving": "Het door het orgaan behandelen van een aanvraag, melding of verzoek om toestemming voor het doen of laten van een derde waar het orgaan bevoegd is om over te beslissen",
+		"toelichting": "",
+		"procesobject": "De verleende toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/035d5ce8-d4f8-4f23-a386-fe2ea136d9e3",
+		"nummer": 11,
+		"jaar": 2017,
+		"naam": "Toestemming verlenen",
+		"omschrijving": "Het door het orgaan behandelen van een aanvraag, melding of verzoek om toestemming voor het doen of laten van een derde waar het orgaan bevoegd is om over te beslissen",
+		"toelichting": "",
+		"procesobject": "De verleende toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/c844637e-6393-4202-b030-e1bffb08a9b0",
+		"nummer": 12,
+		"jaar": 2020,
+		"naam": "Toezien en handhaven",
+		"omschrijving": "Het vanuit een bevoegdheid, afspraak of overeenkomst inspecteren, controleren en toezien met als doel te controleren of personen of partijen voldoen aan geldende afspraken, wet- of regelgeving en het wanneer nodig corrigerend ingrijpen of opleggen van een sanctie.",
+		"toelichting": "Het kan hierbij gaan om landelijke wet- en regelgeving, door het orgaan vastgestelde regelgeving en om vastgelegde afspraken.",
+		"procesobject": "Het vastgelegde eindresultaat van het proces"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/75ae016a-4b09-440f-b95e-0de747b88c05",
+		"nummer": 12,
+		"jaar": 2017,
+		"naam": "Toezien en handhaven",
+		"omschrijving": "Het vanuit een bevoegdheid, afspraak of overeenkomst inspecteren, controleren en toezien met als doel te controleren of personen of partijen voldoen aan geldende afspraken, wet- of regelgeving en het wanneer nodig corrigerend ingrijpen of opleggen van een sanctie.",
+		"toelichting": "Het kan hierbij gaan om landelijke wet- en regelgeving, door het orgaan vastgestelde regelgeving en om vastgelegde afspraken.",
+		"procesobject": "Het vastgelegde eindresultaat van het proces"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/9ac48c4c-9225-4d89-a85c-178d479224c0",
+		"nummer": 13,
+		"jaar": 2017,
+		"naam": "Geschillen behandelen",
+		"omschrijving": "Het afhandelen van een geschil dat door een derde aanhangig wordt gemaakt omdat deze een (vermeend) nadeel heeft ondervonden door het (niet) handelen van de instelling",
+		"toelichting": "Indien een derde of een personeelslid het niet eens is met het al of niet handelen van het orgaan, kan hij om compensatie verzoeken of een bezwaar aantekenen of een beroep indienen.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/1e12ad30-b900-4e7f-b3b7-569673cee0b0",
+		"nummer": 13,
+		"jaar": 2020,
+		"naam": "Geschillen behandelen",
+		"omschrijving": "Het afhandelen van een geschil dat door een derde aanhangig wordt gemaakt omdat deze een (vermeend) nadeel heeft ondervonden door het (niet) handelen van de instelling",
+		"toelichting": "Indien een derde of een personeelslid het niet eens is met het al of niet handelen van het orgaan, kan hij om compensatie verzoeken of een bezwaar aantekenen of een beroep indienen.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/e69b104d-0b23-4265-9bfe-7a58e84cfd22",
+		"nummer": 14,
+		"jaar": 2020,
+		"naam": "Openbare ruimte inrichten",
+		"omschrijving": "Het inrichten, herstructureren, aanleggen of ontwikkelen van alle openbare of private gebieden of objecten die het orgaan onder haar beheer heeft.",
+		"toelichting": "",
+		"procesobject": "De voorziening in de openbare ruimte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a6f9ac8e-52bb-4b06-aaab-6d0628982356",
+		"nummer": 14,
+		"jaar": 2017,
+		"naam": "Openbare ruimte inrichten",
+		"omschrijving": "Het inrichten, herstructureren, aanleggen of ontwikkelen van alle openbare of private gebieden of objecten die het orgaan onder haar beheer heeft.",
+		"toelichting": "",
+		"procesobject": "De voorziening in de openbare ruimte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/2f296607-9faa-41e1-800f-e8fcaf55b9c8",
+		"nummer": 15,
+		"jaar": 2017,
+		"naam": "Onderhouden en repareren",
+		"omschrijving": "Het planmatig onderhoud of naar aanleiding van een constatering repareren van objecten waarvoor het orgaan een beheerverantwoordelijkheid heeft.",
+		"toelichting": "",
+		"procesobject": "Het object waarop het onderhoud of de reparatie wordt uitgevoerd"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/d5f61062-8493-47b5-a8e3-b74f66c298e8",
+		"nummer": 15,
+		"jaar": 2020,
+		"naam": "Onderhouden en repareren",
+		"omschrijving": "Het planmatig onderhoud of naar aanleiding van een constatering repareren van objecten waarvoor het orgaan een beheerverantwoordelijkheid heeft.",
+		"toelichting": "",
+		"procesobject": "Het object waarop het onderhoud of de reparatie wordt uitgevoerd"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/fb12e5db-24ad-46cb-bd66-350c4c97e4aa",
+		"nummer": 16,
+		"jaar": 2020,
+		"naam": "Overeenkomsten aangaan",
+		"omschrijving": "Het aangaan van een overeenkomst met een persoon of organisatie",
+		"toelichting": "Door overeenkomsten te sluiten kan het orgaan zorgen voor de uitvoering van haar taken, het voorzien in haar behoeften en voor het zekerstellen van haar positie.",
+		"procesobject": "De overeenkomst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/f9a7f23b-a326-4f28-8edb-4028273ad32c",
+		"nummer": 16,
+		"jaar": 2017,
+		"naam": "Overeenkomsten aangaan",
+		"omschrijving": "Het aangaan van een overeenkomst met een persoon of organisatie",
+		"toelichting": "Door overeenkomsten te sluiten kan het orgaan zorgen voor de uitvoering van haar taken, het voorzien in haar behoeften en voor het zekerstellen van haar positie.",
+		"procesobject": "De overeenkomst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/d1e536dd-baed-4c5a-a862-f9ca92227d8e",
+		"nummer": 17,
+		"jaar": 2017,
+		"naam": "Personen aanstellen",
+		"omschrijving": "Het aannemen van personen in een bepaalde functie",
+		"toelichting": "Het kan hierbij zowel om het aanstellen van een eigen personeelslid gaan, als om het benoemen van een persoon in een onafhankelijke commissie of het bestuur van het orgaan. ",
+		"procesobject": "Het dienstverband"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/6ffb906f-2966-4e67-b1ec-a746f2e7ceaa",
+		"nummer": 17,
+		"jaar": 2020,
+		"naam": "Personen aanstellen",
+		"omschrijving": "Het aannemen van personen in een bepaalde functie",
+		"toelichting": "Het kan hierbij zowel om het aanstellen van een eigen personeelslid gaan, als om het benoemen van een persoon in een onafhankelijke commissie of het bestuur van het orgaan. ",
+		"procesobject": "Het dienstverband"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/7716119a-6af9-408e-929a-503c8c2a5939",
+		"nummer": 18,
+		"jaar": 2020,
+		"naam": "Betalen en innen",
+		"omschrijving": "Het op basis van een aangegane of opgelegde verplichting of heffing innen of betalen van geldbedragen",
+		"toelichting": "",
+		"procesobject": "De vordering of schuld"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/32a6fdb6-e894-4011-a594-9ba9f92f150a",
+		"nummer": 18,
+		"jaar": 2017,
+		"naam": "Betalen en innen",
+		"omschrijving": "Het op basis van een aangegane of opgelegde verplichting of heffing innen of betalen van geldbedragen",
+		"toelichting": "",
+		"procesobject": "De vordering of schuld"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/87804ff2-4ae3-4700-b1d4-a49ca3fcd2d0",
+		"nummer": 19,
+		"jaar": 2017,
+		"naam": "Secretariaat voeren en gegevens administreren / verwerken ",
+		"omschrijving": "Het door het orgaan in een van haar administraties verwerken van aangeleverde, gemelde of geconstateerde gegevens, zonder dat hier een inhoudelijke toetsing bij plaatsvindt",
+		"toelichting": "Dit procestype geldt eveneens voor de verslaglegging van overleg op verschillende niveaus. Zie bijlage 4 voor een overzicht van blijvend te bewaren registers waarvoor het orgaan verantwoordelijk is.",
+		"procesobject": "De verwerkte gegevens"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/66b82ebc-25c0-4a15-9323-11def942a374",
+		"nummer": 19,
+		"jaar": 2020,
+		"naam": "Secretariaat voeren en gegevens administreren / verwerken ",
+		"omschrijving": "Het door het orgaan in een van haar administraties verwerken van aangeleverde, gemelde of geconstateerde gegevens, zonder dat hier een inhoudelijke toetsing bij plaatsvindt",
+		"toelichting": "Dit procestype geldt eveneens voor de verslaglegging van overleg op verschillende niveaus. Zie bijlage 4 voor een overzicht van blijvend te bewaren registers waarvoor het orgaan verantwoordelijk is.",
+		"procesobject": "De verwerkte gegevens"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/b7759b9f-797c-40ac-9cbe-b82299a6d81b",
+		"nummer": 20,
+		"jaar": 2017,
+		"naam": "Informeren",
+		"omschrijving": "Het op initiatief van het orgaan samenstellen en verspreiden van informatie over zaken van het orgaan die interne of externe derden aangaan",
+		"toelichting": "",
+		"procesobject": "De verstrekte of gepubliceerde informatie"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/ff86b958-f934-43f7-825d-2cbc8b975394",
+		"nummer": 20,
+		"jaar": 2020,
+		"naam": "Informeren",
+		"omschrijving": "Het op initiatief van het orgaan samenstellen en verspreiden van informatie over zaken van het orgaan die interne of externe derden aangaan",
+		"toelichting": "",
+		"procesobject": "De verstrekte of gepubliceerde informatie"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/74fedf07-50ca-42e3-85fe-994873bada7e",
+		"nummer": 21,
+		"jaar": 2017,
+		"naam": "Adviseren",
+		"omschrijving": "Het op eigen initiatief of op verzoek geven van een advies over een bepaalde situatie of voornemen",
+		"toelichting": "",
+		"procesobject": "Het advies"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/25a67e51-05ba-4dfc-b230-f606525c31a0",
+		"nummer": 21,
+		"jaar": 2020,
+		"naam": "Adviseren",
+		"omschrijving": "Het op eigen initiatief of op verzoek geven van een advies over een bepaalde situatie of voornemen",
+		"toelichting": "",
+		"procesobject": "Het advies"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/8d522ad8-4365-4ae9-a74e-220f56048b54",
+		"nummer": 22,
+		"jaar": 2020,
+		"naam": "Gebeurtenis organiseren",
+		"omschrijving": "Het organiseren van een intern of externe gebeurtenis ",
+		"toelichting": "Het orgaan organiseert evenementen of gebeurtenissen vanuit haar wettelijke taak of ter promotie",
+		"procesobject": "De gebeurtenis"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a26cc03a-e414-4ee7-9d9b-0c507d2f3963",
+		"nummer": 22,
+		"jaar": 2017,
+		"naam": "Gebeurtenis organiseren",
+		"omschrijving": "Het organiseren van een intern of externe gebeurtenis ",
+		"toelichting": "Het orgaan organiseert evenementen of gebeurtenissen vanuit haar wettelijke taak of ter promotie",
+		"procesobject": "De gebeurtenis"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/849d8c36-6d99-460a-b049-1cfe4ea74216",
+		"nummer": 23,
+		"jaar": 2017,
+		"naam": "Voorziening aanvragen",
+		"omschrijving": "Het op initiatief van het orgaan bij een derde vragen van een voorziening waar het orgaan aanspraak op kan maken op basis van wet- en regelgeving of gemaakte afspraken.",
+		"toelichting": "",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/01a07fa2-9817-4b6f-bc99-2640a8ee08f8",
+		"nummer": 23,
+		"jaar": 2020,
+		"naam": "Voorziening aanvragen",
+		"omschrijving": "Het op initiatief van het orgaan bij een derde vragen van een voorziening waar het orgaan aanspraak op kan maken op basis van wet- en regelgeving of gemaakte afspraken.",
+		"toelichting": "",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/b2e68320-529d-4fad-8ee7-bfac3e79fdd1",
+		"nummer": 24,
+		"jaar": 2020,
+		"naam": "Toestemming vragen",
+		"omschrijving": "Het op initiatief van het orgaan bij derden vragen van een toestemming op basis van een geldende verplichting hiertoe",
+		"toelichting": "",
+		"procesobject": "De verkregen toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/bcef2e85-fd7b-4ce8-acf9-175ab377af66",
+		"nummer": 24,
+		"jaar": 2017,
+		"naam": "Toestemming vragen",
+		"omschrijving": "Het op initiatief van het orgaan bij derden vragen van een toestemming op basis van een geldende verplichting hiertoe",
+		"toelichting": "",
+		"procesobject": "De verkregen toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/de205198-47f8-4b5d-858a-bd6dd4b8b042",
+		"nummer": 25,
+		"jaar": 2017,
+		"naam": "Toezicht en handhaving ondergaan",
+		"omschrijving": "Het ondergaan van toezicht en handhaving uitgevoerd door een ander orgaan",
+		"toelichting": "",
+		"procesobject": "Het object waarop het toezicht of de handhaving betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/d19d0b40-7d6b-4ee1-aa40-a0bdb2edff79",
+		"nummer": 25,
+		"jaar": 2020,
+		"naam": "Toezicht en handhaving ondergaan",
+		"omschrijving": "Het ondergaan van toezicht en handhaving uitgevoerd door een ander orgaan",
+		"toelichting": "",
+		"procesobject": "Het object waarop het toezicht of de handhaving betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a4634ece-c1fb-4664-b9f9-968e6953c27e",
+		"nummer": 26,
+		"jaar": 2020,
+		"naam": "Betwisten",
+		"omschrijving": "Het op initiatief van het orgaan bij een derde inbrengen van een geschil wanneer het orgaan door het (niet) handelen van een derde nadeel heeft ondervonden of dreigt te gaan ondervinden",
+		"toelichting": "Indien een orgaan het niet eens is met het al of niet handelen van een derde, kan het orgaan om compensatie vragen of bezwaar en/of beroep indienen bij de daartoe aangewezen organisaties.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/ab806bcb-4123-4eb9-b9cc-26370abc06dd",
+		"nummer": 26,
+		"jaar": 2017,
+		"naam": "Betwisten",
+		"omschrijving": "Het op initiatief van het orgaan bij een derde inbrengen van een geschil wanneer het orgaan door het (niet) handelen van een derde nadeel heeft ondervonden of dreigt te gaan ondervinden",
+		"toelichting": "Indien een orgaan het niet eens is met het al of niet handelen van een derde, kan het orgaan om compensatie vragen of bezwaar en/of beroep indienen bij de daartoe aangewezen organisaties.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a80a028d-12d1-41ae-b1ec-48c3347301b2",
+		"nummer": 27,
+		"jaar": 2017,
+		"naam": "Status aanvragen",
+		"omschrijving": "Het op initiatief van het orgaan bij een ander overheidsorgaan verzoeken om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
+		"toelichting": "Het orgaan kan een andere organisatie verzoeken om aan een persoon, een object of een bepaald gebied een status toe te kennen.",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/cf8ff03a-50ab-4ec7-bd71-a69cffd63b72",
+		"nummer": 27,
+		"jaar": 2020,
+		"naam": "Status aanvragen",
+		"omschrijving": "Het op initiatief van het orgaan bij een ander overheidsorgaan verzoeken om personen, objecten of immateriële zaken een bepaalde status toe te kennen.",
+		"toelichting": "Het orgaan kan een andere organisatie verzoeken om aan een persoon, een object of een bepaald gebied een status toe te kennen.",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/3874e4e3-39ff-48af-af6b-da82131661c0",
+		"nummer": 28,
+		"jaar": 2020,
+		"naam": "Product of dienst aanvragen",
+		"omschrijving": "Het door het orgaan aanvragen van (publieke) producten of diensten",
+		"toelichting": "Het orgaan kan bij een andere organisatie vragen om een product of dienst zonder dat daar een overeenkomst voor hoeft worden gesloten.",
+		"procesobject": "Product of dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/32978765-f83c-4966-8d15-380d75685ad8",
+		"nummer": 28,
+		"jaar": 2017,
+		"naam": "Product of dienst aanvragen",
+		"omschrijving": "Het door het orgaan aanvragen van (publieke) producten of diensten",
+		"toelichting": "Het orgaan kan bij een andere organisatie vragen om een product of dienst zonder dat daar een overeenkomst voor hoeft worden gesloten.",
+		"procesobject": "Product of dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/1a8aa9b8-73e0-4a71-8c9e-3d314db95518",
+		"nummer": 29,
+		"jaar": 2017,
+		"naam": "Aangifte doen",
+		"omschrijving": "Het doen van aangifte van een bepaald feit, situatie of voornemen waar een ander overheidsorgaan op basis van wet- en regelgeving hier een administratie van voert.",
+		"toelichting": "",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/1d49c68f-33da-4774-bc33-46d460bdd8b5",
+		"nummer": 29,
+		"jaar": 2020,
+		"naam": "Aangifte doen",
+		"omschrijving": "Het doen van aangifte van een bepaald feit, situatie of voornemen waar een ander overheidsorgaan op basis van wet- en regelgeving hier een administratie van voert.",
+		"toelichting": "",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/2de3f819-effa-5751-a8d1-c638f6230cc0",
+		"nummer": 1,
+		"jaar": 2027,
+		"naam": "Organisatie instellen en inrichten",
+		"omschrijving": "Het instellen, wijzigen en inrichten van een organisatie of - van door de organisatie uitgevoerde processen.",
+		"toelichting": "Dit procestype omvat het instellen van een nieuw organisatieonderdeel of van een nieuwe organisatie waaraan deelgenomen wordt. Dit procestype omvat ook het inrichten en wijzigen van de eigen organisatie.",
+		"procesobject": "De vastgestelde organisatie inrichting"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/cc8d3bc7-9458-5dc3-aa4e-fad4d510a2f7",
+		"nummer": 2,
+		"jaar": 2027,
+		"naam": "Beleid en regelgeving opstellen",
+		"omschrijving": "Het opstellen en vaststellen van (wettelijke) kaders voor het functioneren van de organisatie of de samenleving.",
+		"toelichting": "Dit procestype omvat zowel interne kaders voor het functioneren van de organisatie als de kaders met externe werking die de organisatie op basis van haar bevoegdheden opstelt. Er is een raakvlak met het procestype Plan opstellen. Documenten over de manier waarop de gestelde kaders worden gerealiseerd in een afgebakende periode vallen onder dat procestype.",
+		"procesobject": "Het beleid of regelgeving"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/d9a50bb0-7875-56bf-803c-fd253d79b8f4",
+		"nummer": 3,
+		"jaar": 2027,
+		"naam": "Plan opstellen",
+		"omschrijving": "Het opstellen van plannen die invulling geven aan het handelen van de organisatie en/of derden,  binnen een door het plan afgebakende periode of onder de in het plan gedefinieerde omstandigheden",
+		"toelichting": "Dit procestype omvat het opstellen van plannen waarmee de - voor de organisatie van toepassing zijnde - kaders, doelen of evaluaties (door de organisatie zelf opgesteld of voortvloeiend uit wet- en regelgeving van derden), worden vertaald naar handelen gedurende een afgebakende periode of binnen bepaalde omstandigheden.",
+		"procesobject": "Het plan"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/9b3450a2-fe50-5ee0-b7f2-6613daf7e3de",
+		"nummer": 4,
+		"jaar": 2027,
+		"naam": "Evaluatie uitvoeren",
+		"omschrijving": "Het uitvoeren van een evaluatie over het handelen van de organisatie,  - de door haar opgestelde kaders, of het evalueren van situaties en gebeurtenissen in de samenleving die een relatie hebben met de organisatie of haar taken.",
+		"toelichting": "Dit procestype omvat de informatieverzameling, controle, beoordeling,  rapportage en bespreking die in het kader van een evaluatie plaatsvindt. Het onderwerp van de evaluatie kan betrekking hebben op een situatie of  het handelen binnen of buiten de organisatie op een gebied waarvoor de organisatie verantwoordelijkheid draagt. Voor uitvoeren van onderzoeken op anticiperend op toekomstige ontwikkeling of verwachting is het procestype 'Analyse of onderzoek uitvoeren' van toepassing.",
+		"procesobject": "Het object waar de evaluatie betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a7bb755a-0edc-5aef-817e-1d5960d84822",
+		"nummer": 5,
+		"jaar": 2027,
+		"naam": "Product of dienst leveren",
+		"omschrijving": "Het door de organisatie op verzoek of uit initiatief leveren van (publieke) producten of diensten",
+		"toelichting": "Dit procestype omvat het extern of intern leveren van een product of dienst. Veelal zijn de beschikbare producten en diensten van de organisatie als zodanig gecommuniceerd. Kenmerkend hierbij is dat de aanvrager niet aan bepaalde voorwaarden hoeft te voldoen om in aanmerking te komen voor afname van het product of de dienst, anders dan het eventueel betalen van een financiële vergoeding. Wanneer de aanvrager wel aan een bepaalde voorwaarde moet voldoen om aanspraak te kunnen maken op het product of dienst, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer als onderdeel van het proces er een inhoudelijk beoordeling plaatsvindt op basis waarvan bepaald wordt of het verzoek ingewilligd wordt is het procestype 'Verzoek behandelen' van toepassing. Wanneer het product of de dienst door de organisatie aangevraagd wordt bij een derde  is het procestype 'Product of dienst bij derde' aanvragen van toepassing.",
+		"procesobject": "Het geleverde product of de geleverde dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/4a52294a-3e0d-5fad-a6d2-37b6fb62f735",
+		"nummer": 6,
+		"jaar": 2027,
+		"naam": "Verzoek behandelen",
+		"omschrijving": "Het behandelen van een verzoek gericht aan de organisatie",
+		"toelichting": "Dit procestype omvat het reageren op een intern - of extern verzoek gericht aan de organisatie. Kenmerkend hierbij is dat er een inhoudelijke beoordeling van het verzoek plaatsvindt, die bepalend is voor het handelen - of niet handelen van de organisatie. Wanneer het gaat om een verzoek dat alleen voor aanvragers beschikbaar is die zich in een bepaalde situatie bevinden, is het procestype 'Voorzieningen verstrekken' van toepassing. Wanneer er geen inhoudelijke toetsing plaatsvindt van het verzoek  is  het procestype 'Producten en diensten leveren' van toepassing.",
+		"procesobject": "Het handelen van het orgaan op basis van het verzoek"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/2df67b86-deaa-5ca1-9705-8c21ca3a7b5b",
+		"nummer": 7,
+		"jaar": 2027,
+		"naam": "Aangifte behandelen",
+		"omschrijving": "Het behandelen van een aangifte van een bepaald feit, situatie of voornemen waar een inwoner, bedrijf of organisatie op basis van wet- en regelgeving toe verplicht is.",
+		"toelichting": "Dit procestype omvat het verwerken van alle, via wet- en regelgeving gereguleerde, informatie waar de organisatie van in kennis wordt gesteld. De aangifte kan leiden tot handelen van de organisatie en dat valt onder te brengen onder één van de andere procestypen. Niet alleen de aangiften van inwoners, bedrijven en organisaties zijn onder dit procestype geschaard, maar ook de kennisgevingen over een bepaald feit waar ketenpartners toe verplicht zijn. Voor aangiften die door de organisatie bij een derde worden gedaan is het procestype 'Aangifte bij derde doen' van toepassing.",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/81751d0c-0ca4-5570-8e8a-2bc29e65b351",
+		"nummer": 8,
+		"jaar": 2027,
+		"naam": "Voorziening verstrekken",
+		"omschrijving": "Het verstekken van een (financiële) voorziening waarvoor een aanvrager op basis van zijn of haar situatie in aanmerking komt.",
+		"toelichting": "Dit procestype omvat het verstrekken van producten en diensten die de organisatie levert ter ondersteuning van de aanvrager, waar de aanvrager enkel aanspraak op kan maken wanneer deze voldoet aan een voor de voorziening gedefinieerde situatie. Wanneer deze situatie niet van toepassing is en er een andere inhoudelijke toetsing plaatsvindt, is het procestype 'Verzoek behandelen' van toepassing. Wanneer het product of de dienst algemeen toegankelijk is, zonder ook een inhoudelijke toetsing, is het procestype 'Producten en diensten leveren' van toepassing. Aanvragen die de organisatie zelf doet voor een voorziening vallen onder het procestype 'Voorziening bij derde aanvragen'.",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/3b4b3795-217d-5368-8a97-8a100821f185",
+		"nummer": 9,
+		"jaar": 2027,
+		"naam": "Status toekennen",
+		"omschrijving": "Het gebruik maken van de op basis van wet- en regelgeving aanwezige bevoegdheid als organisatie om aan een persoon of object een bepaalde status toe te kennen.",
+		"toelichting": "Dit procestype omvat het toekennen van een status aan personen of objecten. De  rechten en verplichtingen die horen bij de status zijn vastgelegd in beleid, wet- of regelgeving, of kunnen als onderdeel van de status toekenning worden gedefinieerd. Het initiatief tot het toekennen van de status kan zowel bij de organisatie, als bij een derde, die hiertoe een verzoek doet, liggen. Dit volgt uit beleid, wet- en regelgeving. Voor situaties waarin een derde een status toekent aan een persoon of object is het procestype 'Status bij derde aanvragen' van toepassing.",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/ec3ea1c1-8d01-575c-a523-de331ade405c",
+		"nummer": 10,
+		"jaar": 2027,
+		"naam": "Belasting heffen",
+		"omschrijving": "Het aan derden opleggen van een verplichting tot betaling, op basis van de publiekrechtelijke bevoegdheden als overheidsorgaan",
+		"toelichting": "Dit procestype omvat het uitvoeren van de bevoegdheid die het overheidsorgaan op basis van wet- en regelgeving heeft om aan derden (personen, organisaties) een verplichting tot betaling op te leggen, zonder dat hier een individuele tegenprestatie tegenover staat.",
+		"procesobject": "De heffing"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/ab9345da-bcbd-5388-9eee-1ec40ac81b14",
+		"nummer": 11,
+		"jaar": 2027,
+		"naam": "Toestemming verlenen",
+		"omschrijving": "Het door het orgaan behandelen van een aanvraag voor toestemming tot het doen of laten van een derde, waarvoor het orgaan bevoegd is om over te beslissen.",
+		"toelichting": "Dit procestype omvat de beoordeling van  verzoeken of meldingen over een - door een derde - gewenst toekomstig of bestaand handelen, waarover het overheidsorgaan op basis van wet- en regelgeving bevoegd is om over te beslissen. Wet en regelgeving bepalen de vereisten met betrekking tot het verzoek of de melding. De organisatie voert een inhoudelijke toets uit en kent - bij instemming op het verzoek - daarmee een status toe aan de activiteiten of situatie die door de derde zijn aangevraagd of gemeld, voorzien van voorwaarden over de inhoud, periode en omstandigheden. Voor situaties waarbij de organisatie toestemming aan een derde vraagt, is het procestype 'Toestemming bij derde aanvragen' van toepassing.",
+		"procesobject": "De verleende toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/0db3f4fa-b6c9-501e-8320-f1601011393b",
+		"nummer": 12,
+		"jaar": 2027,
+		"naam": "Toezicht en handhaving  uitvoeren",
+		"omschrijving": "Het uitvoeren van toezicht op een situatie of activiteit, met als doel te controleren of deze in overeenstemming is met wet- en regelgeving, eerder gemaakte afspraken, of verleende toestemmingen en zo nodig via handhaving de verantwoordelijke daar toe te dwingen.",
+		"toelichting": "Dit procestype omvat het intern en extern uitvoeren van toezicht. Het overheidsorgaan kan dit uitvoeren op grond van haar publiekrechtelijke taken en bevoegdheden, zoals die rechtstreeks in een wet gedefinieerd zijn, of op basis van individuele toestemmingen  die op basis van een vergunningsstelsel zijn verleend. Het is ook mogelijk dat er toezicht plaatsvindt op basis van privaatrechtelijke afspraken die gemaakt zijn met derden of bijvoorbeeld medewerkers. Handhaven in de vorm van sancties of corrigerend optreden vloeit direct voort uit het uitvoeren van toezicht en valt ook binnen dit procestype. Het initiatief voor het uitvoeren van toezicht ligt bij het overheidsorgaan, al kunnen bijvoorbeeld verzoeken hiertoe (procestype 'Verzoek behandelen') of klachten en meldingen (procestype 'Secretariaat voeren en gegevens administreren / verwerken') hiertoe een directe aanleiding vormen. Bij het ondergaan door de organisatie van toezicht door derden is het procestype 'Toezicht door derde ondergaan' van toepassing.",
+		"procesobject": "Het vastgelegde eindresultaat van het proces"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/5df62c75-87f3-5b72-82b6-a57614cb73b9",
+		"nummer": 13,
+		"jaar": 2027,
+		"naam": "Geschil behandelen",
+		"omschrijving": "Het afhandelen van een geschil dat tussen de organisatie en een derde bestaat over een situatie of over handelen waar de organisatie voor verantwoordelijk is.",
+		"toelichting": "Dit procestype omvat zowel interne (met bijvoorbeeld personeelsleden) als externe conflicten en meningsverschillen die er kunnen bestaan over situaties waar de organisatie voor verantwoordelijk is, of over het handelen van de organisatie of een van haar functionarissen. De manier van afhandelen van het geschil is in veel gevallen gereguleerd door middel van wet- en regelgeving, zoals in het privaatrecht, de algemene wet bestuursrecht of bijvoorbeeld een klachtenregeling. Voor gevallen waarbij het overheidsorgaan zelf een geschil aanhangig maakt bij een derde is het procestype 'Situatie bij derde betwisten' van toepassing.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/0c78bb42-9599-552a-a53a-cd71b9343c33",
+		"nummer": 14,
+		"jaar": 2027,
+		"naam": "Beheerobject realiseren",
+		"omschrijving": "Het inrichten, herstructureren, aanleggen of ontwikkelen van een bedrijfsobject, waarover de organisatie beheer gaat uitvoeren",
+		"toelichting": "Dit procestype omvat alle activiteiten die nodig zijn om een bedrijfsobject te realiseren. Kenmerkend hierbij is dat het gaat om bedrijfsobjecten die na de realisatie beheerd gaan worden door de organisatie. Het bedrijfsobject heeft dus een bepaalde levensduur en vraagt om verder beheer om gedurende die levensduur op correcte wijze te kunnen blijven functioneren. Het type bedrijfsobject is daarmee divers, waarbij het bijvoorbeeld zowel om infrastructurele werken als om een informatiesysteem kan gaan.",
+		"procesobject": "De voorziening in de openbare ruimte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/149fe9ea-3365-5c9e-b056-c4a4847fa86a",
+		"nummer": 15,
+		"jaar": 2027,
+		"naam": "Beheerobject onderhouden, repareren en bedienen",
+		"omschrijving": "Het onderhouden, repareren of bedienen van een bedrijfsobject waarvoor de organisatie een beheerverantwoordelijkheid heeft.",
+		"toelichting": "Dit procestype omvat alle activiteiten die nodig zijn om het bedrijfsobject correct te laten functioneren. De werkzaamheden kunnen zowel incidenteel, op basis van de monitoring van het object, als planmatig van aard zijn.",
+		"procesobject": "Het object waarop het onderhoud of de reparatie wordt uitgevoerd"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/8ae01e02-6107-563d-a532-1c224c173bc6",
+		"nummer": 16,
+		"jaar": 2027,
+		"naam": "Overeenkomst aangaan",
+		"omschrijving": "Het aangaan van een overeenkomst met een persoon of organisatie",
+		"toelichting": "Dit procestype omvat alle typen van overeenkomsten - behalve arbeidsovereenkomsten met personeelsleden -  die de organisatie intern of extern met personen of organisaties kan sluiten. Door overeenkomsten te sluiten kan het orgaan zorgen voor de uitvoering van haar taken, het voorzien in haar behoeften en voor het zekerstellen van haar positie.",
+		"procesobject": "De overeenkomst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/57fbbd7e-0783-5339-be99-77c03cae4452",
+		"nummer": 17,
+		"jaar": 2027,
+		"naam": "Persoon aanstellen",
+		"omschrijving": "Het aanstellen van een persoon in een functie",
+		"toelichting": "Dit procestype omvat zowel de aanstelling van personen binnen de eigen ambtelijke of bestuurlijke organisatie, als de aanstelling in organen en gremia waarvoor de organisatie de bevoegdheid heeft om er personen in aan te stellen,  zoals het benoemen van een persoon in een onafhankelijke commissie.",
+		"procesobject": "Het dienstverband"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/f795ce54-4216-511f-8f1b-bbc63dc72c11",
+		"nummer": 18,
+		"jaar": 2027,
+		"naam": "Geld betalen en innen",
+		"omschrijving": "Het op basis van een overeenkomst, verplichting of belasting innen of betalen van geldbedragen",
+		"toelichting": "Dit procestype omvat alle financiële inkomende en uitgaande betalingen",
+		"procesobject": "De vordering of schuld"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/79ac7264-5e52-5478-bd6f-9b0cf8a1c40d",
+		"nummer": 19,
+		"jaar": 2027,
+		"naam": "Gegevens administreren",
+		"omschrijving": "Het door de organisatie in haar informatiehuishouding verwerken van (aangeleverde) gegevens of het uitvoeren van de verslaglegging van een vergadering die binnen een gremium van de organisatie heeft plaatsgevonden.",
+		"toelichting": "Dit procestype omvat het verwerken van informatie die wordt aangeleverd (door interne en externe bronnen) en die de organisatie bijhoudt. Er vindt hierbij geen inhoudelijke toetsing plaats en de reden voor het verwerken van de informatie heeft een grondslag in de wettelijke taken van de organisatie. Daarnaast omvat het ook de verslaglegging van de vergaderingen van de diverse gremia van de organisatie.",
+		"procesobject": "De verwerkte gegevens"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/7979a3c1-922f-533e-b6d7-fda5ef288ecd",
+		"nummer": 20,
+		"jaar": 2027,
+		"naam": "Derden informeren",
+		"omschrijving": "Het door de organisatie op eigen initiatief samenstellen en verspreiden van informatie over een onderwerp dat interne - of externe derden aangaat.",
+		"toelichting": "Dit procestype omvat alle communicatie uitingen die op initiatief van de organisatie opgesteld en verspreid worden. Het kan hierbij ondermeer gaan over activiteiten van de organisatie, of gebeurtenissen en situaties die te maken hebben met de taakuitvoering van de organisatie. In de regel zal het gaan om communicatie gericht op een doelgroep bestaande uit een groter aantal personen of organisaties, al is het mogelijk dat de communicatie-uiting specifiek gericht is op één persoon of organisatie. Specifieke communicatie die in het kader van een ander procestype plaatsvindt met een externe valt onder dat betreffende procestype.",
+		"procesobject": "De verstrekte of gepubliceerde informatie"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/441193e3-81e6-56b9-a449-1bd0ab9fd366",
+		"nummer": 21,
+		"jaar": 2027,
+		"naam": "Advies geven",
+		"omschrijving": "Het door de organisatie geven van een advies over een bepaalde situatie of (voorgenomen) activiteit",
+		"toelichting": "Dit procestype omvat zowel het op eigen initiatief - als op verzoek geven van een advies over (voorgenomen) activiteiten of situaties. In veel situaties zal het verstrekken van het advies een grondslag hebben in wet- of regelgeving, maar ook ad-hoc gevraagde adviezen vallen onder dit procestype. De organisatie is zelf niet het bevoegd gezag met betrekking tot de (voorgenomen) situatie of activiteit.",
+		"procesobject": "Het advies"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/96ca2972-7c38-528a-b675-aee352c9a109",
+		"nummer": 22,
+		"jaar": 2027,
+		"naam": "Gebeurtenis organiseren",
+		"omschrijving": "Het door de organisatie organiseren van een interne - of externe gebeurtenis",
+		"toelichting": "Dit procestype omvat de verschillende typen gebeurtenissen, zoals bijvoorbeeld evenementen en bijeenkomsten, die de organisatie op eigen initiatief of als onderdeel van een wettelijke taak organiseert.",
+		"procesobject": "De gebeurtenis"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/dd46648a-3da6-52dc-a0bf-58deb0340a44",
+		"nummer": 23,
+		"jaar": 2027,
+		"naam": "Voorziening bij derde aanvragen",
+		"omschrijving": "Het door de organisatie bij een derde aanvragen van een voorziening.",
+		"toelichting": "Dit procestype omvat het aanvragen van voorzieningen bij derden waarop het orgaan aanspraak kan maken op basis van wet- en regelgeving, gemaakte afspraken, of vanwege de specifieke situatie waarin de organisatie zich bevindt. Aanvragen die bij de organisatie worden gedaan door derden vallen onder het procestype 'Voorziening verstrekken'.",
+		"procesobject": "De voorziening"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/28a6c001-3714-55c0-83c1-61663add788a",
+		"nummer": 24,
+		"jaar": 2027,
+		"naam": "Toestemming aan derde vragen",
+		"omschrijving": "Het door de organisatie bij een derde aanvragen of melden van een (voorgenomen) activiteit of situatie.",
+		"toelichting": "Dit procestype omvat de verzoeken of meldingen die de organisatie doet bij een derde voor activiteiten of situaties waarvoor - op basis van wet- en regelgeving of gemaakte afspraken - de organisatie toestemming moet vragen.",
+		"procesobject": "De verkregen toestemming"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a3b1e995-f5b5-59bd-8717-ab586c3c7921",
+		"nummer": 25,
+		"jaar": 2027,
+		"naam": "Toezicht door derde ondergaan",
+		"omschrijving": "Het door de organisatie ondergaan van toezicht en handhaving, uitgevoerd door een derde.",
+		"toelichting": "Dit procestype omvat die situaties waarbij een situatie of het handelen van de organisatie wordt getoetst door een derde. Dit kan zijn op basis van verplichtingen in wet- en regelgeving, ontvangen toestemmingen of gemaakte afspraken. Eventuele handhaving door een derde op de situatie of activiteiten van de organisatie maakt hier ook onderdeel van uit. Bij het door de organisatie zelf uitvoeren van toezicht is het procestype 'Toezicht uitvoeren' van toepassing.",
+		"procesobject": "Het object waarop het toezicht of de handhaving betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/a582e0a6-b400-537a-aa90-167ec28070d2",
+		"nummer": 26,
+		"jaar": 2027,
+		"naam": "Situatie bij derde betwisten",
+		"omschrijving": "Het door de organisatie betwisten van een situatie of activiteit van een derde, door een geschil aanhangig te maken bij de betreffende derde of een andere derde.",
+		"toelichting": "Dit procestype omvat het betwisten van situaties of activiteiten van een derde die nadelig zijn voor de organisatie, haar belangen, taken of taakuitvoering. De organisatie is initiatiefnemer om het geschil te laten behandelen. De manier van afhandelen van het geschil is in veel gevallen gereguleerd door middel van wet- en regelgeving, zoals in het privaatrecht, de algemene wet bestuursrecht of bijvoorbeeld een klachtenregeling van de derde. Voor geschillen waar de organisatie zelf verantwoordelijk voor wordt gehouden is het procestype 'Geschillen behandelen' van toepassing.",
+		"procesobject": "Het object waar het geschil betrekking op heeft"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/86719ddd-5014-5db3-84fd-1c2876b0b26a",
+		"nummer": 27,
+		"jaar": 2027,
+		"naam": "Status bij derde aanvragen",
+		"omschrijving": "Het door de organisatie bij een derde verzoeken tot de toekenning van een status aan een activiteit, persoon of object van de organisatie.",
+		"toelichting": "Dit procestype omvat verzoeken op initiatief van de organisatie tot het toekennen van een status aan een bepaald handelen, persoon, of object, dat onderdeel is van - of beheerd wordt door de organisatie. De inhoud van de status en de bijbehorende rechten en verplichtingen van de persoon of het object of die rechten en verplichtingen die gelden voor derden ten opzichte van de persoon of het object, zijn vastgelegd in beleid, wet- of regelgeving of kunnen als onderdeel van de status toekenning worden gedefinieerd. Wanneer de organisatie zelf bevoegd is om de status toe te kennen is het procestype 'Status toekenning' van toepassing",
+		"procesobject": "De status"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/04bf0b9f-2deb-54a8-8a7d-3a159e3ce94b",
+		"nummer": 28,
+		"jaar": 2027,
+		"naam": "Product of dienst bij derde aanvragen",
+		"omschrijving": "Het door de organisatie bij een derde aanvragen van een product of dienst",
+		"toelichting": "Dit procestype omvat het aanvragen van algemeen beschikbare producten of diensten bij een derde partij. De organisatie kan bij een derde vragen om een product of dienst, zonder dat daar een overeenkomst voor hoeft worden gesloten. Wanneer het product of de dienst door de organisatie zelf geleverd wordt, is het procestype 'Product of dienst leveren' van toepassing.",
+		"procesobject": "Product of dienst"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/f943ac3a-2c73-52f6-945b-22f32f1be42e",
+		"nummer": 29,
+		"jaar": 2027,
+		"naam": "Aangifte bij derde doen",
+		"omschrijving": "Het door de organisatie bij een derde doen van aangifte van een bepaald feit, situatie of voornemen, waar de organisatie op basis van wet- en regelgeving toe verplicht is.",
+		"toelichting": "Dit procestype omvat het doen van alle via wet- en regelgeving gereguleerde aangiften bij een derde. Ook kennisgevingen waarover de organisatie andere ketenpartners informeert, vallen onder dit procestype. Voor aangiften die bij de organisatie worden gedaan en door de organisatie verwerkt, is het procestype 'Aangifte verwerken' van toepassing.",
+		"procesobject": "De aangifte"
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/56545670-2705-5e12-82d0-37b956966626",
+		"nummer": 31,
+		"jaar": 2027,
+		"naam": "Analyse of onderzoek uitvoeren",
+		"omschrijving": "Het uitvoeren van een analyse of onderzoek van huidige - of toekomstige situaties, gebeurtenissen of objecten waarvoor de organisatie verantwoordelijk is, of die door haar beheerd worden.",
+		"toelichting": "Dit procestype omvat het op initiatief van de organisatie uitvoeren van onderzoeken over alle onderwerpen die de taakuitvoering van de organisatie raken. Dit onderzoek kan anticiperend zijn op toekomstige ontwikkelingen of verwachtingen. In tegenstelling tot het procestype 'Toezicht uitvoeren' is er binnen dit procestype geen derde partij die verantwoordelijkheid draagt voor het behalen van een eventuele norm die in het onderzoek is gesteld. Onderzoek naar een beheerobject valt onder het procestype 'Beheerobject monitoren'. Onderzoeken in het kader van een evaluatie valt onder het procestype 'Evaluatie uitvoeren'.",
+		"procesobject": ""
+	},
+	{
+		"url": "https://referentielijsten.oneground.local/api/v1/procestypen/40309a0d-f83a-526e-87d6-a2d0a9797b3f",
+		"nummer": 32,
+		"jaar": 2027,
+		"naam": "Beheerobject monitoren",
+		"omschrijving": "Het monitoren op het correct functioneren van een bedrijfsobject waarvoor de organisatie een beheerverantwoordelijkheid heeft.",
+		"toelichting": "Dit procestype omvat alle activiteiten die, al dan niet automatisch, uitgevoerd worden om toezicht te houden op het correct functioneren van een bedrijfsobject. Dit kan zowel gaan om het huidige functioneren, als om een inschatting over het toekomstige functioneren. Uitkomsten uit dit procestype kunnen weer aanleiding geven tot andere processen, zoals bijvoorbeeld het uitvoeren van onderhoud (procestype 'Beheerobject onderhouden, repareren en bedienen'). Gegevens die worden (her)gebruikt om een ander proces uit te voeren, krijgen de bewaartermijn van dat proces en vallen niet onder dit procestype.",
+		"procesobject": ""
+	}
 ]
