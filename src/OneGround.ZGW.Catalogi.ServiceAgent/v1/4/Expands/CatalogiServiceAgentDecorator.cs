@@ -41,9 +41,8 @@ public sealed class CatalogiServiceAgentDecorator : ICatalogiServiceAgentDecorat
         _cachedAgent = cachedAgent;
     }
 
-    public Task<ServiceAgentResponse<Contracts.v1._3.Responses.CatalogusResponseDto>> AddCatalogusAsync(
-        Contracts.v1._3.Requests.CatalogusRequestDto request
-    ) => throw new NotImplementedException();
+    public Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(Contracts.v1._3.Requests.CatalogusRequestDto request) =>
+        throw new NotImplementedException();
 
     public Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null) =>
         WrapAsync(besluitTypeUrl, agent => agent.GetBesluitTypeByUrlAsync(besluitTypeUrl, expand));
