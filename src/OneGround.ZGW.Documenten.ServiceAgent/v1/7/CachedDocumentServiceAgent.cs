@@ -33,7 +33,7 @@ class CachedDocumentServiceAgent : ICachedDocumentenServiceAgent
         return _agent.AddEnkelvoudigInformatieObjectAsync(enkelvoudigInformatieObject);
     }
 
-    public Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
+    public Task<ServiceAgentResponse<Contracts.v1.Responses.ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
         Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject
     )
     {

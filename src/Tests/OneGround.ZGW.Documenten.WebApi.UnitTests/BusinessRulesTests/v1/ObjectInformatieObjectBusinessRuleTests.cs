@@ -13,8 +13,8 @@ using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
 using OneGround.ZGW.Documenten.Web.BusinessRules.v1;
-using OneGround.ZGW.Zaken.Contracts.v1.Queries;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 using Xunit;
 

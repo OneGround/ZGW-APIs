@@ -26,10 +26,7 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         IServiceAgentResponseBuilder responseBuilder,
         IConfiguration configuration
     )
-        : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.DRC, "v1")
-    {
-        Client.DefaultRequestHeaders.Add("Api-Version", "1.7");
-    }
+        : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.DRC, "v1") { }
 
     public Task<ServiceAgentResponse<EnkelvoudigInformatieObjectCreateResponseDto>> AddEnkelvoudigInformatieObjectAsync(
         EnkelvoudigInformatieObjectCreateRequestDto enkelvoudigInformatieObject
@@ -63,7 +60,7 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
         return await GetAsync<ObjectInformatieObjectResponseDto>("/objectinformatieobjecten", parameters);
     }
 
-    public Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
+    public Task<ServiceAgentResponse<Contracts.v1.Responses.ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
         Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject
     )
     {
@@ -73,7 +70,10 @@ public class DocumentenServiceAgent : ZGWServiceAgent<DocumentenServiceAgent>, I
 
         var url = new Uri("/objectinformatieobjecten", UriKind.Relative);
 
-        return PostAsync<Contracts.v1.Requests.ObjectInformatieObjectRequestDto, ObjectInformatieObjectResponseDto>(url, objectInformatieObject);
+        return PostAsync<Contracts.v1.Requests.ObjectInformatieObjectRequestDto, Contracts.v1.Responses.ObjectInformatieObjectResponseDto>(
+            url,
+            objectInformatieObject
+        );
     }
 
     public async Task<ServiceAgentResponse<EnkelvoudigInformatieObjectResponseDto>> GetEnkelvoudigInformatieObjectByUrlAsync(

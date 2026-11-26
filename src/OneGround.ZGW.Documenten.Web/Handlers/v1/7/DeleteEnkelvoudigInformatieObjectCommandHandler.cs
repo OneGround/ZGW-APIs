@@ -22,7 +22,7 @@ using OneGround.ZGW.Documenten.Services;
 using OneGround.ZGW.Documenten.Web.Authorization;
 using OneGround.ZGW.Documenten.Web.Concurrency;
 using OneGround.ZGW.Documenten.Web.Notificaties;
-using OneGround.ZGW.Zaken.Contracts.v1.Queries;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 
 namespace OneGround.ZGW.Documenten.Web.Handlers.v1._7;
