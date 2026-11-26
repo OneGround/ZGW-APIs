@@ -26,7 +26,8 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     )
         : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.ZTC, "v1")
     {
-        Client.DefaultRequestHeaders.Add("Api-Version", "1.4"); // TODO: Remove this when the Catalogi service is upgraded to v1.4 / See default in Startup class (working in progress)
+        // TODO: Remove this when the Catalogi service is upgraded to v1.4 / See default in Startup class (working in progress)
+        Client.DefaultRequestHeaders.Add("Api-Version", "1.4");
     }
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(Guid catalogusId)

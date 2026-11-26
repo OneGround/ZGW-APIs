@@ -1,3 +1,5 @@
+using System;
+using System.Xml.Linq;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,6 +34,7 @@ using OneGround.ZGW.Common.Web.Swagger;
 using OneGround.ZGW.DataAccess;
 using OneGround.ZGW.Notificaties.ServiceAgent.Extensions;
 using OneGround.ZGW.Referentielijsten.ServiceAgent.Extensions;
+using static MassTransit.Util.ChartTable;
 
 namespace OneGround.ZGW.Catalogi.Web;
 
@@ -58,7 +61,8 @@ public class Startup
             "Catalogi",
             Configuration,
             Api.LatestVersion_1_3,
-            //Api.LatestVersion_1_4, TODO: Uncomment this line (and remove the old 1.3 line) when the API is ready for version 1.4.0
+            // TODO: Uncomment this line(and remove the old 1.3 line) when the API is ready for version 1.4.0
+            //Api.LatestVersion_1_4, 
             c =>
             {
                 c.MvcOptions = o =>
