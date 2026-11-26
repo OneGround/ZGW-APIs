@@ -18,6 +18,7 @@ using OneGround.ZGW.Common.Web;
 using OneGround.ZGW.Common.Web.Authorization;
 using OneGround.ZGW.Common.Web.Services.AuditTrail;
 using OneGround.ZGW.Common.Web.Services.UriServices;
+using OneGround.ZGW.Referentielijsten.Contracts.v1;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.ServiceAgent;
 using Xunit;
@@ -94,7 +95,9 @@ public class UpdateResultaatTypeCommandHandlerTests
         var referentielijstenServiceAgentMock = new Mock<IReferentielijstenServiceAgent>();
         referentielijstenServiceAgentMock
             .Setup(m => m.GetResultaatByUrl(It.IsAny<string>()))
-            .ReturnsAsync(new ServiceAgentResponse<ResultaatResponseDto>(new ResultaatResponseDto { Waardering = null, BewaarTermijn = null }));
+            .ReturnsAsync(
+                new ServiceAgentResponse<ResultaatResponseDto>(new ResultaatResponseDto { Waardering = Waardering.leeg, BewaarTermijn = null })
+            );
         referentielijstenServiceAgentMock
             .Setup(m => m.GetResultaatTypeOmschrijvingByUrlAsync(It.IsAny<string>()))
             .ReturnsAsync(
@@ -225,7 +228,9 @@ public class UpdateResultaatTypeCommandHandlerTests
         var referentielijstenServiceAgentMock = new Mock<IReferentielijstenServiceAgent>();
         referentielijstenServiceAgentMock
             .Setup(m => m.GetResultaatByUrl(It.IsAny<string>()))
-            .ReturnsAsync(new ServiceAgentResponse<ResultaatResponseDto>(new ResultaatResponseDto { Waardering = null, BewaarTermijn = null }));
+            .ReturnsAsync(
+                new ServiceAgentResponse<ResultaatResponseDto>(new ResultaatResponseDto { Waardering = Waardering.leeg, BewaarTermijn = null })
+            );
         referentielijstenServiceAgentMock
             .Setup(m => m.GetResultaatTypeOmschrijvingByUrlAsync(It.IsAny<string>()))
             .ReturnsAsync(

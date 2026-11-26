@@ -25,13 +25,13 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
 
         // if process term is empty value, then all values ​​for the derivation mode (Afleidingswijze)
         // MUST be possible - no need to validate further
-        if (resultaat.ProcesTermijn == string.Empty)
+        if (resultaat.ProcesTermijn == Procestermijn.leeg)
         {
             return Task.FromResult(errors.Count != 0);
         }
 
         // ztc-003
-        if (resultaat.ProcesTermijn == "nihil")
+        if (resultaat.ProcesTermijn == Procestermijn.nihil)
         {
             if (resultType.BronDatumArchiefProcedure == null || resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.afgehandeld)
             {
@@ -43,7 +43,7 @@ public class ResultaatTypeBusinessRuleService : IResultaatTypeBusinessRuleServic
                 errors.Add(error);
             }
         }
-        else if (resultaat.ProcesTermijn == "ingeschatte_bestaansduur_procesobject")
+        else if (resultaat.ProcesTermijn == Procestermijn.ingeschatte_bestaansduur_procesobject)
         {
             if (resultType.BronDatumArchiefProcedure.Afleidingswijze != Afleidingswijze.termijn)
             {

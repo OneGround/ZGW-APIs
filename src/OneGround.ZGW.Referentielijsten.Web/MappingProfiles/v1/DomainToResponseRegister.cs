@@ -1,4 +1,5 @@
 using Mapster;
+using OneGround.ZGW.Referentielijsten.Contracts.v1;
 using OneGround.ZGW.Referentielijsten.Contracts.v1.Responses;
 using OneGround.ZGW.Referentielijsten.Web.MappingProfiles;
 using OneGround.ZGW.Referentielijsten.Web.Models;
@@ -20,6 +21,8 @@ public class DomainToResponseRegister : IRegister
         config
             .NewConfig<Resultaat, ResultaatResponseDto>()
             .Map(dest => dest.Url, src => AdjustUrlMapster.Adjust(src.Url))
-            .Map(dest => dest.ProcesType, src => AdjustUrlMapster.Adjust(src.ProcesType));
+            .Map(dest => dest.ProcesType, src => AdjustUrlMapster.Adjust(src.ProcesType))
+            .Map(dest => dest.ProcesTermijn, src => ReferentielijstEnum.Parse<Procestermijn>(src.Procestermijn))
+            .Map(dest => dest.Waardering, src => ReferentielijstEnum.Parse<Waardering>(src.Waardering));
     }
 }

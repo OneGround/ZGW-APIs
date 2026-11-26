@@ -32,10 +32,10 @@ public abstract class ResultaatDto
     public string Herkomst { get; set; }
 
     [JsonProperty("waardering")]
-    public string Waardering { get; set; }
+    public Waardering Waardering { get; set; }
 
     [JsonProperty("procestermijn")]
-    public string ProcesTermijn { get; set; }
+    public Procestermijn ProcesTermijn { get; set; }
 
     [JsonProperty("procestermijnWeergave")]
     public string ProcesTermijnWeergave { get; set; }

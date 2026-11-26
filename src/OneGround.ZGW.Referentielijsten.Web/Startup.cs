@@ -49,7 +49,7 @@ public class Startup
             }
         );
 
-        services.AddOneGroundHealthChecks().AddRedisCheck();
+        services.AddOneGroundHealthChecks();
 
         services
             .AddOptions<ApplicationConfiguration>()
@@ -75,6 +75,9 @@ public class Startup
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public static void Configure(WebApplication app, IWebHostEnvironment env)
     {
+        // Load the reference data at startup, so invalid data fails the start with a clear message instead of the first request.
+        app.Services.GetRequiredService<ReferentielijstenDataService>();
+
         app.UseCorrelationId();
         app.UseBatchId();
 
