@@ -13,7 +13,9 @@ public interface ICatalogiServiceAgent
     Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(string catalogusUrl);
     Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(Guid catalogusId);
     Task<ServiceAgentResponse<PagedResponse<CatalogusResponseDto>>> GetCatalogussenAsync(GetAllCatalogussenQueryParameters parameters, int page = 1);
-    Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(Contracts.v1._3.Requests.CatalogusRequestDto request);
+    Task<ServiceAgentResponse<Contracts.v1._3.Responses.CatalogusResponseDto>> AddCatalogusAsync(
+        Contracts.v1._3.Requests.CatalogusRequestDto request
+    );
 
     // BesluitType
     Task<ServiceAgentResponse<BesluitTypeResponseDto>> GetBesluitTypeByUrlAsync(string besluitTypeUrl, string expand = null);

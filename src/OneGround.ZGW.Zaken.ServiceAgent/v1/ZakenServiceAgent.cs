@@ -10,11 +10,10 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Contracts.v1.AuditTrail;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Services;
-using OneGround.ZGW.Zaken.Contracts.v1.Queries;
-using OneGround.ZGW.Zaken.Contracts.v1.Requests;
-using OneGround.ZGW.Zaken.Contracts.v1.Requests.ZaakRol;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakRol;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
+using V10 = OneGround.ZGW.Zaken.Contracts.v1;
+using V15 = OneGround.ZGW.Zaken.Contracts.v1._5;
 
 namespace OneGround.ZGW.Zaken.ServiceAgent.v1;
 
@@ -29,29 +28,31 @@ public class ZakenServiceAgent : ZGWServiceAgent<ZakenServiceAgent>, IZakenServi
     )
         : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.ZRC) { }
 
-    public async Task<ServiceAgentResponse<ZaakResponseDto>> AddZaakAsync(ZaakRequestDto request)
+    public async Task<ServiceAgentResponse<ZaakResponseDto>> AddZaakAsync(V15.Requests.ZaakRequestDto request)
     {
         var url = new Uri("/zaken", UriKind.Relative);
 
-        return await PostAsync<ZaakRequestDto, ZaakResponseDto>(url, request, ("Accept-Crs", "EPSG:4326"), ("Content-Crs", "EPSG:4326"));
+        return await PostAsync<V15.Requests.ZaakRequestDto, ZaakResponseDto>(url, request, ("Accept-Crs", "EPSG:4326"), ("Content-Crs", "EPSG:4326"));
     }
 
-    public async Task<ServiceAgentResponse<ZaakBesluitResponseDto>> AddZaakBesluitByUrlAsync(Guid zaakId, string besluitUrl)
+    public async Task<ServiceAgentResponse<V10.Responses.ZaakBesluitResponseDto>> AddZaakBesluitByUrlAsync(Guid zaakId, string besluitUrl)
     {
         var url = new Uri($"/zaken/{zaakId}/besluiten", UriKind.Relative);
 
         Logger.LogDebug("Besluiten bevragen op '{url}'....", url);
 
-        var request = new ZaakBesluitRequestDto { Besluit = besluitUrl };
+        var request = new V10.Requests.ZaakBesluitRequestDto { Besluit = besluitUrl };
 
-        return await PostAsync<ZaakBesluitRequestDto, ZaakBesluitResponseDto>(url, request);
+        return await PostAsync<V10.Requests.ZaakBesluitRequestDto, V10.Responses.ZaakBesluitResponseDto>(url, request);
     }
 
-    public async Task<ServiceAgentResponse<ZaakInformatieObjectResponseDto>> AddZaakInformatieObjectAsync(ZaakInformatieObjectRequestDto request)
+    public async Task<ServiceAgentResponse<V15.Responses.ZaakInformatieObjectResponseDto>> AddZaakInformatieObjectAsync(
+        V15.Requests.ZaakInformatieObjectRequestDto request
+    )
     {
         var url = new Uri("/zaakinformatieobjecten", UriKind.Relative);
 
-        return await PostAsync<ZaakInformatieObjectRequestDto, ZaakInformatieObjectResponseDto>(url, request);
+        return await PostAsync<V15.Requests.ZaakInformatieObjectRequestDto, V15.Responses.ZaakInformatieObjectResponseDto>(url, request);
     }
 
     public async Task<ServiceAgentResponse> DeleteZaakBesluitByUrlAsync(string zaakBesluitUrl)
@@ -100,20 +101,20 @@ public class ZakenServiceAgent : ZGWServiceAgent<ZakenServiceAgent>, IZakenServi
         return await GetPagedResponseAsync<JObjectZaakObjectResponseDto>("/zaakobjecten", queryParameters, page);
     }
 
-    public async Task<ServiceAgentResponse<ZaakStatusResponseDto>> GetZaakStatusByUrlAsync(string zaakStatusUri)
+    public async Task<ServiceAgentResponse<StatusResponseDto>> GetZaakStatusByUrlAsync(string zaakStatusUri)
     {
         if (!EnsureValidResource(ServiceRoleName.ZRC, zaakStatusUri, "statussen", out var errorResponse))
-            return new ServiceAgentResponse<ZaakStatusResponseDto>(errorResponse);
+            return new ServiceAgentResponse<StatusResponseDto>(errorResponse);
 
-        return await GetAsync<ZaakStatusResponseDto>(new Uri(zaakStatusUri));
+        return await GetAsync<StatusResponseDto>(new Uri(zaakStatusUri));
     }
 
-    public async Task<ServiceAgentResponse<ZaakResultaatResponseDto>> GetZaakResultaatByUrlAsync(string zaakResultaatUri)
+    public async Task<ServiceAgentResponse<ResultaatResponseDto>> GetZaakResultaatByUrlAsync(string zaakResultaatUri)
     {
         if (!EnsureValidResource(ServiceRoleName.ZRC, zaakResultaatUri, "resultaten", out var errorResponse))
-            return new ServiceAgentResponse<ZaakResultaatResponseDto>(errorResponse);
+            return new ServiceAgentResponse<ResultaatResponseDto>(errorResponse);
 
-        return await GetAsync<ZaakResultaatResponseDto>(new Uri(zaakResultaatUri));
+        return await GetAsync<ResultaatResponseDto>(new Uri(zaakResultaatUri));
     }
 
     public async Task<ServiceAgentResponse<ZaakResponseDto>> PatchZaakByUrlAsync(string zaakUrl, JObject zaakPatchRequest)
@@ -144,10 +145,10 @@ public class ZakenServiceAgent : ZGWServiceAgent<ZakenServiceAgent>, IZakenServi
         return await GetAsync<IEnumerable<AuditTrailRegelDto>>(url);
     }
 
-    public async Task<ServiceAgentResponse<ZaakRolResponseDto>> AddZaakRolAsync(ZaakRolRequestDto request)
+    public async Task<ServiceAgentResponse<V15.Responses.ZaakRol.ZaakRolResponseDto>> AddZaakRolAsync(V15.Requests.ZaakRol.ZaakRolRequestDto request)
     {
         var url = new Uri("/rollen", UriKind.Relative);
 
-        return await PostAsync<ZaakRolRequestDto, ZaakRolResponseDto>(url, request);
+        return await PostAsync<V15.Requests.ZaakRol.ZaakRolRequestDto, V15.Responses.ZaakRol.ZaakRolResponseDto>(url, request);
     }
 }

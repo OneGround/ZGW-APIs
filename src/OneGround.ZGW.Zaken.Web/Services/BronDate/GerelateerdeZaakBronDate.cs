@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services.UriServices;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 

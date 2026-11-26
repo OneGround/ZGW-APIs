@@ -26,7 +26,7 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
     )
         : base(client, logger, serviceDiscovery, configuration, responseBuilder, ServiceRoleName.ZTC, "v1")
     {
-        Client.DefaultRequestHeaders.Add("Api-Version", "1.4");
+        Client.DefaultRequestHeaders.Add("Api-Version", "1.4"); // TODO: Remove this when the Catalogi service is upgraded to v1.4 / See default in Startup class (working in progress)
     }
 
     public Task<ServiceAgentResponse<CatalogusResponseDto>> GetCatalogusAsync(Guid catalogusId)
@@ -59,11 +59,13 @@ public class CatalogiServiceAgent : ZGWServiceAgent<CatalogiServiceAgent>, ICata
         return GetPagedResponseAsync<CatalogusResponseDto>($"/{CatalogussenBasePath}", parameters, page);
     }
 
-    public async Task<ServiceAgentResponse<CatalogusResponseDto>> AddCatalogusAsync(Contracts.v1._3.Requests.CatalogusRequestDto request)
+    public async Task<ServiceAgentResponse<Contracts.v1._3.Responses.CatalogusResponseDto>> AddCatalogusAsync(
+        Contracts.v1._3.Requests.CatalogusRequestDto request
+    )
     {
         var url = new Uri($"/{CatalogussenBasePath}", UriKind.Relative);
 
-        return await PostAsync<Contracts.v1._3.Requests.CatalogusRequestDto, CatalogusResponseDto>(url, request);
+        return await PostAsync<Contracts.v1._3.Requests.CatalogusRequestDto, Contracts.v1._3.Responses.CatalogusResponseDto>(url, request);
     }
 
     public Task<ServiceAgentResponse<PagedResponse<ZaakTypeResponseDto>>> GetZaakTypenAsync(GetAllZaakTypenQueryParameters parameters, int page = 1)

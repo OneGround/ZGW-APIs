@@ -1,10 +1,10 @@
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Zaken.Contracts.v1;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakRol;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakRol;
 
 namespace OneGround.ZGW.Zaken.ServiceAgent.v1;
 
-public class JObjectZaakRolResponseDto : ZaakRolResponseDto, IRelatieZaakRolDto<JObject>
+public class JObjectZaakRolResponseDto : RolResponseDto, IRelatieZaakRolDto<JObject>
 {
     public JObject BetrokkeneIdentificatie { get; set; }
 

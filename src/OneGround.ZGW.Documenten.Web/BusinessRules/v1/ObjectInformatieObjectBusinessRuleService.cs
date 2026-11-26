@@ -8,7 +8,7 @@ using OneGround.ZGW.Besluiten.ServiceAgent.v1;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.Documenten.DataModel;
-using OneGround.ZGW.Zaken.Contracts.v1.Queries;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Queries;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 
 namespace OneGround.ZGW.Documenten.Web.BusinessRules.v1;
