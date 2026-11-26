@@ -8,7 +8,7 @@ using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Common.Web.Services.UriServices;
 using OneGround.ZGW.DataAccess;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
 using OneGround.ZGW.Zaken.DataModel;
 using OneGround.ZGW.Zaken.ServiceAgent.v1;
 using OneGround.ZGW.Zaken.Web.Services;

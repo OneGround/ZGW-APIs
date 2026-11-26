@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Zaken.Contracts.v1;
-using OneGround.ZGW.Zaken.Contracts.v1.Responses.ZaakObject;
+using OneGround.ZGW.Zaken.Contracts.v1._7.Responses.ZaakObject;
 
 namespace OneGround.ZGW.Zaken.ServiceAgent.v1;
 

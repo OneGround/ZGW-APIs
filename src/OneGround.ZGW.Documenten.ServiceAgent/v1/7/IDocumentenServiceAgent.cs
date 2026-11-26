@@ -37,7 +37,10 @@ public interface IDocumentenServiceAgent
     Task<ServiceAgentResponse<IEnumerable<ObjectInformatieObjectResponseDto>>> GetObjectInformatieObjectenAsync(
         GetAllObjectInformatieObjectenQueryParameters parameters
     );
-    Task<ServiceAgentResponse<ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
+
+    // Note: POST objectinformatieobjecten only exists in the v1.0 controller (there is no 1.7 variant), so request and response are the v1.0 DTOs,
+    // unlike the GET calls above which return the 1.7 response DTO.
+    Task<ServiceAgentResponse<Contracts.v1.Responses.ObjectInformatieObjectResponseDto>> AddObjectInformatieObjectAsync(
         Contracts.v1.Requests.ObjectInformatieObjectRequestDto objectInformatieObject
     );
     Task<ServiceAgentResponse> DeleteObjectInformatieObjectByUrlAsync(string objectInformatieObjectUrl);
