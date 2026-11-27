@@ -10,7 +10,6 @@ using OneGround.ZGW.Besluiten.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Expands;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Extensions;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.Caching;
 using OneGround.ZGW.Common.CorrelationId;
@@ -101,7 +100,6 @@ public class Startup
 
         services.AddZGWAuditTrail<ZrcDbContext>();
 
-        services.AddCatalogiServiceAgent(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddCatalogiServiceAgent_v1_4(Configuration); // For ZRC/DRC v1.7 expands (ZTC 1.4)
         services.AddUserAuthCatalogiServiceAgent_v1_4(Configuration); // For ZRC v1.7 expands (evaluated by ZTC as the calling client)

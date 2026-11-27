@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts;
 using OneGround.ZGW.Common.Contracts.v1;

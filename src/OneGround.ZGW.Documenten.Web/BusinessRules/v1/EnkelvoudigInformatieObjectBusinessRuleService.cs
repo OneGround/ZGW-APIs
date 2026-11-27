@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Exceptions;
 using OneGround.ZGW.Documenten.DataModel;

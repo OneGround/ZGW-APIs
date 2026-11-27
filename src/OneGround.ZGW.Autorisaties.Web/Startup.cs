@@ -11,7 +11,7 @@ using OneGround.ZGW.Autorisaties.Web.Controllers;
 using OneGround.ZGW.Autorisaties.Web.Extensions;
 using OneGround.ZGW.Autorisaties.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Autorisaties.Web.Services;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Extensions;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
@@ -99,7 +99,7 @@ public class Startup
 
         services.AddCommonServices();
 
-        services.AddCatalogiServiceAgent(Configuration);
+        services.AddCatalogiServiceAgent_v1_4(Configuration);
 
         services.AddSingleton<IApiMetaData, ApiMetaData>();
 

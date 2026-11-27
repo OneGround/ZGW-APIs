@@ -7,7 +7,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Constants;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
@@ -151,7 +151,7 @@ class UpdateZaakEigenschapCommandHandler
         return new CommandResult<ZaakEigenschap>(zaakEigenschap, CommandStatus.OK) { Warnings = warnings };
     }
 
-    private async Task<Catalogi.Contracts.v1.Responses.EigenschapResponseDto> GetEigenschapAsync(
+    private async Task<Catalogi.Contracts.v1._4.Responses.EigenschapResponseDto> GetEigenschapAsync(
         ZaakEigenschap eigenschap,
         List<ValidationError> errors
     )

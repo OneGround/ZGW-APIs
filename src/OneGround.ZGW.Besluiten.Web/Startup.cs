@@ -16,7 +16,7 @@ using OneGround.ZGW.Besluiten.Web.Handlers;
 using OneGround.ZGW.Besluiten.Web.Handlers.v1.EntityUpdaters;
 using OneGround.ZGW.Besluiten.Web.Services;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._3.Extensions;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1.Extensions;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4.Extensions;
 using OneGround.ZGW.Common.Batching;
 using OneGround.ZGW.Common.CorrelationId;
 using OneGround.ZGW.Common.Extensions;
@@ -86,7 +86,7 @@ public class Startup
         services.AddAutorisatiesServiceAgent(Configuration);
         services.AddZakenServiceAgent(Configuration);
         services.AddBesluitenServiceAgent(Configuration);
-        services.AddCatalogiServiceAgent(Configuration);
+        services.AddCatalogiServiceAgent_v1_4(Configuration);
         services.AddCatalogiServiceAgent_v1_3(Configuration);
         services.AddDocumentenServiceAgent_v1_7(Configuration);
         services.AddUserAuthDocumentenServiceAgent_v1_5(Configuration); // For ZRC/BRC v1.5 expands only
