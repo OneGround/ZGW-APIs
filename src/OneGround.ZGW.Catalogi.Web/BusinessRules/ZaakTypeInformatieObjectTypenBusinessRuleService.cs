@@ -132,7 +132,7 @@ public class ZaakTypeInformatieObjectTypenBusinessRuleService : IZaakTypeInforma
                 var error = new ValidationError(
                     "nonFieldErrors",
                     ErrorCode.RelationsIncorrectCatalogus,
-                    "The zaaktype has catalogus different from informatieobjecttype."
+                    "Het zaaktype en het informatieobjecttype horen niet bij dezelfde catalogus."
                 );
                 errors.Add(error);
             }
@@ -170,7 +170,7 @@ public class ZaakTypeInformatieObjectTypenBusinessRuleService : IZaakTypeInforma
                     var error = new ValidationError(
                         "statusType",
                         ErrorCode.Invalid,
-                        $"StatusType '{statusTypeUrl}' belongs not to the specified zaaktype of the request."
+                        $"StatusType '{statusTypeUrl}' hoort niet bij het opgegeven zaaktype van het verzoek."
                     );
 
                     errors.Add(error);

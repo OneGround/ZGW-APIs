@@ -119,7 +119,6 @@ public class EigenschapController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.Eigenschappen.Create, Name = Operations.Eigenschappen.Create)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(EigenschapResponseDto))]
@@ -197,7 +196,6 @@ public class EigenschapController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.Eigenschappen.Update, Name = Operations.Eigenschappen.Update)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EigenschapResponseDto))]
@@ -246,7 +244,6 @@ public class EigenschapController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.Eigenschappen.Update, Name = Operations.Eigenschappen.PartialUpdate)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EigenschapResponseDto))]

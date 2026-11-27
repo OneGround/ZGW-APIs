@@ -7,11 +7,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
-using OneGround.ZGW.Catalogi.Web.Contracts.v1._3;
+using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
 using OneGround.ZGW.Catalogi.Web.Models.v1._3;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -36,6 +39,8 @@ namespace OneGround.ZGW.Catalogi.Web.Controllers.v1._4;
 public class EigenschapController : ZGWControllerBase
 {
     private readonly IPaginationHelper _paginationHelper;
+    private readonly IValidatorService _validatorService;
+    private readonly IRequestMerger _requestMerger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly ExpandValidator<EigenschapResponseDto> _expandValidator;
     private readonly ExpandEngine<EigenschapResponseDto> _expandEngine;
@@ -44,15 +49,19 @@ public class EigenschapController : ZGWControllerBase
         ILogger<EigenschapController> logger,
         IMediator mediator,
         MapsterMapper.IMapper mapper,
+        IRequestMerger requestMerger,
         IConfiguration configuration,
         IErrorResponseBuilder errorResponseBuilder,
         IPaginationHelper paginationHelper,
+        IValidatorService validatorService,
         ExpandValidator<EigenschapResponseDto> expandValidator,
         ExpandEngine<EigenschapResponseDto> expandEngine
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
+        _requestMerger = requestMerger;
         _paginationHelper = paginationHelper;
+        _validatorService = validatorService;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
         _applicationConfiguration = configuration.GetSection("Application").Get<ApplicationConfiguration>();
@@ -182,5 +191,173 @@ public class EigenschapController : ZGWControllerBase
         var paginationResponse = _paginationHelper.CreatePaginatedResponse(queryParameters, pagination, eigenschappenResponse, result.Result.Count);
 
         return Ok(paginationResponse);
+    }
+
+    /// <summary>
+    /// Maak een EIGENSCHAP aan.
+    /// </summary>
+    /// <remarks>
+    /// Maak een EIGENSCHAP aan. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.Eigenschappen.Create, Name = Operations.Eigenschappen.Create)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(EigenschapResponseDto))]
+    public async Task<IActionResult> AddAsync([FromBody] EigenschapRequestDto eigenschapRequest)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}", nameof(AddAsync), eigenschapRequest);
+
+        Eigenschap eigenschap = _mapper.Map<Eigenschap>(eigenschapRequest);
+
+        var result = await _mediator.Send(
+            new CreateEigenschapCommand
+            {
+                Eigenschap = eigenschap,
+                ZaakType = eigenschapRequest.ZaakType,
+                StatusType = eigenschapRequest.StatusType,
+            }
+        );
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Created(response.Url, response);
+    }
+
+    /// <summary>
+    /// Werk een EIGENSCHAP in zijn geheel bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een EIGENSCHAP in zijn geheel bij. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPut(ApiRoutes.Eigenschappen.Update, Name = Operations.Eigenschappen.Update)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EigenschapResponseDto))]
+    public async Task<IActionResult> UpdateAsync([FromBody] EigenschapRequestDto eigenschapRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), eigenschapRequest, id);
+
+        Eigenschap eigenschap = _mapper.Map<Eigenschap>(eigenschapRequest);
+
+        var result = await _mediator.Send(
+            new UpdateEigenschapCommand
+            {
+                Eigenschap = eigenschap,
+                Id = id,
+                ZaakType = eigenschapRequest.ZaakType,
+                StatusType = eigenschapRequest.StatusType,
+                IsPartialUpdate = false,
+            }
+        );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = await GetResponseAsync(result.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Werk een EIGENSCHAP deels bij.
+    /// </summary>
+    /// <remarks>
+    /// Werk een EIGENSCHAP deels bij. Dit kan alleen als het bijbehorende ZAAKTYPE een concept betreft.
+    /// </remarks>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPatch(ApiRoutes.Eigenschappen.Update, Name = Operations.Eigenschappen.PartialUpdate)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(EigenschapResponseDto))]
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialEigenschapRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+
+        var resultGet = await _mediator.Send(new GetEigenschapQuery { Id = id });
+
+        if (resultGet.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        EigenschapRequestDto mergedEigenschapRequest = _requestMerger.MergePartialUpdateToObjectRequest<EigenschapRequestDto, Eigenschap>(
+            resultGet.Result,
+            partialEigenschapRequest
+        );
+
+        if (!_validatorService.IsValid(mergedEigenschapRequest, out var validationResult))
+        {
+            return _errorResponseBuilder.BadRequest(validationResult);
+        }
+
+        Eigenschap mergedEigenschap = _mapper.Map<Eigenschap>(mergedEigenschapRequest);
+
+        var resultUpd = await _mediator.Send(
+            new UpdateEigenschapCommand
+            {
+                Eigenschap = mergedEigenschap,
+                Id = id,
+                ZaakType = mergedEigenschapRequest.ZaakType,
+                StatusType = mergedEigenschapRequest.StatusType,
+                IsPartialUpdate = true,
+            }
+        );
+
+        if (resultUpd.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(resultUpd.Errors);
+        }
+
+        var response = await GetResponseAsync(resultUpd.Result.Id);
+
+        if (response == null)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        return Ok(response);
+    }
+
+    private async Task<EigenschapResponseDto> GetResponseAsync(Guid id)
+    {
+        var result = await _mediator.Send(new GetEigenschapQuery { Id = id });
+
+        // Note: Read it back through the read query, so the response is the same as of the read operations (including the lists that are new in 1.4)
+        return result.Status == QueryStatus.NotFound ? null : _mapper.Map<EigenschapResponseDto>(result.Result);
     }
 }

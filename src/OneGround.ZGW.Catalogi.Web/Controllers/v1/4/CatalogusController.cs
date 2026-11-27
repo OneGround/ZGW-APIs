@@ -8,12 +8,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using OneGround.ZGW.Catalogi.Contracts.v1._3.Requests;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Queries;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.DataModel;
 using OneGround.ZGW.Catalogi.Web.Authorization;
 using OneGround.ZGW.Catalogi.Web.Configuration;
-using OneGround.ZGW.Catalogi.Web.Contracts.v1._3;
+using OneGround.ZGW.Catalogi.Web.Contracts.v1._4;
 using OneGround.ZGW.Catalogi.Web.Handlers.v1._3;
+using OneGround.ZGW.Catalogi.Web.Handlers.v1._4;
 using OneGround.ZGW.Catalogi.Web.Models.v1;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.Handlers;
@@ -40,6 +44,8 @@ public class CatalogusController : ZGWControllerBase
     private readonly IPaginationHelper _paginationHelper;
     private readonly ExpandValidator<CatalogusResponseDto> _expandValidator;
     private readonly ExpandEngine<CatalogusResponseDto> _expandEngine;
+    private readonly IRequestMerger _requestMerger;
+    private readonly IValidatorService _validatorService;
 
     public CatalogusController(
         ILogger<CatalogusController> logger,
@@ -49,7 +55,9 @@ public class CatalogusController : ZGWControllerBase
         IPaginationHelper paginationHelper,
         IErrorResponseBuilder errorResponseBuilder,
         ExpandValidator<CatalogusResponseDto> expandValidator,
-        ExpandEngine<CatalogusResponseDto> expandEngine
+        ExpandEngine<CatalogusResponseDto> expandEngine,
+        IRequestMerger requestMerger,
+        IValidatorService validatorService
     )
         : base(logger, mediator, mapper, errorResponseBuilder)
     {
@@ -57,6 +65,8 @@ public class CatalogusController : ZGWControllerBase
         _paginationHelper = paginationHelper;
         _expandValidator = expandValidator;
         _expandEngine = expandEngine;
+        _requestMerger = requestMerger;
+        _validatorService = validatorService;
     }
 
     /// <summary>
@@ -181,5 +191,163 @@ public class CatalogusController : ZGWControllerBase
     public Task<IActionResult> HeadAsync(Guid id, [FromQuery] GetCatalogusQueryParameters queryParameters)
     {
         return GetAsync(id, queryParameters);
+    }
+
+    /// <summary>
+    /// Maak een CATALOGUS aan.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPost(ApiRoutes.Catalogussen.Create, Name = Operations.Catalogussen.Create)]
+    [Scope(AuthorizationScopes.Catalogi.Write)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
+    public async Task<IActionResult> AddAsync([FromBody] CatalogusRequestDto catalogusRequestDto)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Rsin}", nameof(AddAsync), catalogusRequestDto, catalogusRequestDto.Rsin);
+
+        Catalogus catalogus = _mapper.Map<Catalogus>(catalogusRequestDto);
+
+        var result = await _mediator.Send(new CreateCatalogusCommand { Catalogus = catalogus });
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        var response = _mapper.Map<CatalogusResponseDto>(result.Result);
+
+        return Created(response.Url, response);
+    }
+
+    /// <summary>
+    /// Werk een CATALOGUS in zijn geheel bij.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPut(ApiRoutes.Catalogussen.Update, Name = Operations.Catalogussen.Update)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
+    public async Task<IActionResult> UpdateAsync([FromBody] CatalogusRequestDto catalogusRequestDto, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {@FromBody}, {Uuid}", nameof(UpdateAsync), catalogusRequestDto, id);
+
+        Catalogus catalogus = _mapper.Map<Catalogus>(catalogusRequestDto);
+
+        var result = await _mediator.Send(
+            new UpdateCatalogusCommand
+            {
+                Id = id,
+                Catalogus = catalogus,
+                IsPartialUpdate = false,
+            }
+        );
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        return Ok(_mapper.Map<CatalogusResponseDto>(result.Result));
+    }
+
+    /// <summary>
+    /// Werk een CATALOGUS deels bij.
+    /// </summary>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpPatch(ApiRoutes.Catalogussen.Update, Name = Operations.Catalogussen.PartialUpdate)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(CatalogusResponseDto))]
+    [ServiceFilter(typeof(ValidateBodyParametersFilter<CatalogusRequestDto>))]
+    public async Task<IActionResult> PartialUpdateAsync([FromBody] JObject partialCatalogusRequest, Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(PartialUpdateAsync), id);
+
+        var resultGet = await _mediator.Send(new GetCatalogusQuery { Id = id, IncludeTypes = false });
+
+        if (resultGet.Status == QueryStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        CatalogusRequestDto mergedCatalogusRequest = _requestMerger.MergePartialUpdateToObjectRequest<CatalogusRequestDto, Catalogus>(
+            resultGet.Result,
+            partialCatalogusRequest
+        );
+
+        if (!_validatorService.IsValid(mergedCatalogusRequest, out var validationResult))
+        {
+            return _errorResponseBuilder.BadRequest(validationResult);
+        }
+
+        Catalogus mergedCatalogus = _mapper.Map<Catalogus>(mergedCatalogusRequest);
+
+        var result = await _mediator.Send(
+            new UpdateCatalogusCommand
+            {
+                Id = id,
+                Catalogus = mergedCatalogus,
+                IsPartialUpdate = true,
+            }
+        );
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        return Ok(_mapper.Map<CatalogusResponseDto>(result.Result));
+    }
+
+    /// <summary>
+    /// Verwijder een CATALOGUS.
+    /// </summary>
+    /// <remarks>De CATALOGUS mag alleen verwijderd worden als er geen ZAAKTYPEN, INFORMATIEOBJECTTYPEN en BESLUITTYPEN in zitten.</remarks>
+    /// <response code="204">No content</response>
+    /// <response code="400">Bad request: the CATALOGUS still contains ZAAKTYPEN, BESLUITTYPEN or INFORMATIEOBJECTTYPEN</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not found</response>
+    /// <response code="429">Too Many Requests</response>
+    /// <response code="500">Internal Server Error</response>
+    [HttpDelete(ApiRoutes.Catalogussen.Delete, Name = Operations.Catalogussen.Delete)]
+    [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedDelete)]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [SwaggerResponse(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteAsync(Guid id)
+    {
+        _logger.LogDebug("{ControllerMethod} called with {Uuid}", nameof(DeleteAsync), id);
+
+        var result = await _mediator.Send(new DeleteCatalogusCommand { Id = id });
+
+        if (result.Status == CommandStatus.NotFound)
+        {
+            return _errorResponseBuilder.NotFound();
+        }
+
+        if (result.Status == CommandStatus.ValidationError)
+        {
+            return _errorResponseBuilder.BadRequest(result.Errors);
+        }
+
+        return NoContent();
     }
 }

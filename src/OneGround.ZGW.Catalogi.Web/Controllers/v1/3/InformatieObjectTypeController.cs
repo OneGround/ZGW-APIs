@@ -159,7 +159,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.InformatieObjectTypen.Create, Name = Operations.InformatieObjectTypen.Create)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status201Created, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -197,7 +196,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPut(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.Update)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -242,7 +240,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPatch(ApiRoutes.InformatieObjectTypen.Update, Name = Operations.InformatieObjectTypen.PartialUpdate)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write, AuthorizationScopes.Catalogi.ForcedUpdate)]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
@@ -335,7 +332,6 @@ public class InformatieObjectTypeController : ZGWControllerBase
     /// <response code="500">Internal Server Error</response>
     [HttpPost(ApiRoutes.InformatieObjectTypen.Publish, Name = Operations.InformatieObjectTypen.Publish)]
     [ZgwApiVersion(Api.LatestVersion_1_3)]
-    [ZgwApiVersion(Api.LatestVersion_1_4)]
     [Scope(AuthorizationScopes.Catalogi.Write)]
     [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(InformatieObjectTypeResponseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]

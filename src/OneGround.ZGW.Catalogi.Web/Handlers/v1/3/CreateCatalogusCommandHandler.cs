@@ -53,7 +53,7 @@ class CreateCatalogusCommandHandler
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Invalid,
-                $"The Rsin from client_id '{_rsin}' differs from the Rsin in request '{request.Catalogus.Rsin}'."
+                $"De Rsin van client_id '{_rsin}' wijkt af van de Rsin in het verzoek '{request.Catalogus.Rsin}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
@@ -64,11 +64,15 @@ class CreateCatalogusCommandHandler
             var error = new ValidationError(
                 "nonFieldErrors",
                 ErrorCode.Unique,
-                $"Catalogus does already exist with the same Rsin '{_rsin}' and Domein '{request.Catalogus.Domein}'."
+                $"Er bestaat al een catalogus met dezelfde Rsin '{_rsin}' en Domein '{request.Catalogus.Domein}'."
             );
 
             return new CommandResult<Catalogus>(null, CommandStatus.ValidationError, error);
         }
+
+        // The changes and the event of the host (e.g. a setting in an external store) share a database transaction: when the event throws the database
+        // changes are rolled back (what the host already did outside the database is not)
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
         await _context.Catalogussen.AddAsync(catalogus, cancellationToken);
 
@@ -86,6 +90,8 @@ class CreateCatalogusCommandHandler
         _logger.LogDebug("Catalogus successfully created. Id={Id}", catalogus.Id);
 
         await _catalogEventService.OnCatalogCreatedAsync(catalogus, cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         return new CommandResult<Catalogus>(catalogus, CommandStatus.OK);
     }

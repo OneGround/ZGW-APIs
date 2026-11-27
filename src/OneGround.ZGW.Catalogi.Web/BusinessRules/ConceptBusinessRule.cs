@@ -48,7 +48,7 @@ public class ConceptBusinessRule : IConceptBusinessRule
     {
         if (entity.Concept)
         {
-            errors.Add(new ValidationError("nonFieldErrors", ErrorCode.ConceptRelation, "All related resources should be published"));
+            errors.Add(new ValidationError("nonFieldErrors", ErrorCode.ConceptRelation, "Alle gerelateerde resources moeten gepubliceerd zijn."));
         }
 
         return errors.Count == 0;

@@ -1,6 +1,7 @@
 using System;
 using MapsterMapper;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneGround.ZGW.Catalogi.DataModel;
 using Xunit;
 using V13 = OneGround.ZGW.Catalogi.Contracts.v1._3.Responses;
@@ -19,7 +20,30 @@ public class DomainToResponseProfileTests : IDisposable
 
     public void Dispose() => _host.Dispose();
 
-    private static string Json(object value) => JsonConvert.SerializeObject(value);
+    // The v1.4 additions that v1.3 does not have (see DomainToResponseV14AdditionsTests); stripped so that these tests keep pinning the rest.
+    private static readonly string[] V14Additions =
+    [
+        "besluittypeOmschrijving",
+        "informatieobjecttypeOmschrijving",
+        "informatieobjecttypeOmschrijvingen",
+        "zaaktypeIdentificaties",
+        "deelzaaktypeIdentificaties",
+        "resultaattypeOmschrijving",
+    ];
+
+    private static string Json(object value)
+    {
+        var json = JObject.FromObject(value);
+        // ZaakType.besluittypeOmschrijving etc. are v1.4-only, but ResultaatType already has these names in v1.3: only strip when the source is not that.
+        if (value is not V13.ResultaatTypeResponseDto)
+        {
+            foreach (var name in V14Additions)
+            {
+                json.Remove(name);
+            }
+        }
+        return json.ToString(Formatting.None);
+    }
 
     [Fact]
     public void Catalogus_maps_like_v1_3_without_expand()
