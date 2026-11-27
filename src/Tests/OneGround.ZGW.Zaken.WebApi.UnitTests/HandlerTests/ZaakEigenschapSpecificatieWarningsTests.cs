@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1;
-using OneGround.ZGW.Catalogi.Contracts.v1._3;
 using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
 using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
@@ -28,6 +26,7 @@ using OneGround.ZGW.Zaken.Web.Handlers.v1._2;
 using OneGround.ZGW.Zaken.Web.Notificaties;
 using OneGround.ZGW.Zaken.Web.Validators.v1;
 using Xunit;
+using EigenschapSpecificatieDto = OneGround.ZGW.Catalogi.Contracts.v1.EigenschapSpecificatieDto;
 
 namespace OneGround.ZGW.Zaken.WebApi.UnitTests.HandlerTests;
 
