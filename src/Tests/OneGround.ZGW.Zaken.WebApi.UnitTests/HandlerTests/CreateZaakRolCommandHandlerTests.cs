@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
@@ -104,7 +104,7 @@ public class CreateZaakRolCommandHandlerTests : IAsyncLifetime
             );
 
         _catalogiServiceAgentMock
-            .Setup(m => m.GetZaakTypeByUrlAsync(TestZaakTypeUrl))
+            .Setup(m => m.GetZaakTypeByUrlAsync(TestZaakTypeUrl, null))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { RolTypen = new[] { TestRolTypeUrl } }));
 
         // BusinessRule: closed zaak check passes

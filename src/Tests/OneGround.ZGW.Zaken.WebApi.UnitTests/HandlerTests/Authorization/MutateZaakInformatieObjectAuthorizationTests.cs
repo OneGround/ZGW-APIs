@@ -5,8 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.DataModel;
 using OneGround.ZGW.Common.Handlers;
@@ -210,7 +210,7 @@ public class MutateZaakInformatieObjectAuthorizationTests : IDisposable
         uriService.Setup(s => s.GetId(statusUrl)).Returns(statusId);
         var catalogi = new Mock<ICatalogiServiceAgent>();
         catalogi
-            .Setup(a => a.GetZaakTypeByUrlAsync(It.IsAny<string>()))
+            .Setup(a => a.GetZaakTypeByUrlAsync(It.IsAny<string>(), null))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { InformatieObjectTypen = [informatieObjectType] }));
         var documenten = new Mock<ICachedDocumentenServiceAgent>();
         documenten

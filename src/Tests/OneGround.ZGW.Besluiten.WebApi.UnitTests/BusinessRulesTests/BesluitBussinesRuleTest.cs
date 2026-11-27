@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using OneGround.ZGW.Besluiten.DataModel;
 using OneGround.ZGW.Besluiten.Web.BusinessRules;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Zaken.Contracts.v1._7.Responses;
@@ -192,7 +192,7 @@ public class BesluitBusinessRuleTest
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
         mockCatalogiServiceAgent
-            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"))
+            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/47078cf1-5614-430f-ab84-127d7ad1ff0c", null))
             .Returns(Task.FromResult(new ServiceAgentResponse<BesluitTypeResponseDto>(response: new BesluitTypeResponseDto { Concept = true })));
 
         var mockZakenServiceAgent = new Mock<IZakenServiceAgent>();
@@ -225,7 +225,7 @@ public class BesluitBusinessRuleTest
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
         mockCatalogiServiceAgent
-            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/99999999-5614-430f-ab84-127d7ad1ff0c"))
+            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/99999999-5614-430f-ab84-127d7ad1ff0c", null))
             .Returns(
                 Task.FromResult(
                     new ServiceAgentResponse<BesluitTypeResponseDto>(
@@ -269,7 +269,7 @@ public class BesluitBusinessRuleTest
         var mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
 
         mockCatalogiServiceAgent
-            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"))
+            .Setup(m => m.GetBesluitTypeByUrlAsync("http://catalogi.user.local:5011/api/v1/besluittypen/47078cf1-5614-430f-ab84-127d7ad1ff0c", null))
             .Returns(Task.FromResult(new ServiceAgentResponse<BesluitTypeResponseDto>(response: new BesluitTypeResponseDto { Concept = false })));
 
         var mockZakenServiceAgent = new Mock<IZakenServiceAgent>();
@@ -344,7 +344,7 @@ public class BesluitBusinessRuleTest
         var mockZakenServiceAgent = new Mock<IZakenServiceAgent>();
 
         mockCatalogiServiceAgent
-            .Setup(m => m.GetZaakTypeByUrlAsync(It.IsAny<string>()))
+            .Setup(m => m.GetZaakTypeByUrlAsync(It.IsAny<string>(), null))
             .Returns(
                 Task.FromResult(new ServiceAgentResponse<ZaakTypeResponseDto>(response: new ZaakTypeResponseDto { BesluitTypen = ["MyZaakType"] }))
             );
@@ -381,7 +381,7 @@ public class BesluitBusinessRuleTest
         var mockZakenServiceAgent = new Mock<IZakenServiceAgent>();
 
         mockCatalogiServiceAgent
-            .Setup(m => m.GetZaakTypeByUrlAsync(It.IsAny<string>()))
+            .Setup(m => m.GetZaakTypeByUrlAsync(It.IsAny<string>(), null))
             .Returns(
                 Task.FromResult(new ServiceAgentResponse<ZaakTypeResponseDto>(response: new ZaakTypeResponseDto { BesluitTypen = ["MyZaakType"] }))
             );

@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using OneGround.ZGW.Catalogi.Contracts.v1.Responses;
-using OneGround.ZGW.Catalogi.ServiceAgent.v1;
+using OneGround.ZGW.Catalogi.Contracts.v1._4.Responses;
+using OneGround.ZGW.Catalogi.ServiceAgent.v1._4;
 using OneGround.ZGW.Common.Contracts.v1;
 using OneGround.ZGW.Common.ServiceAgent;
 using OneGround.ZGW.Documenten.DataModel;
@@ -496,7 +496,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -552,7 +553,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -608,7 +610,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -657,7 +660,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -710,7 +714,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
