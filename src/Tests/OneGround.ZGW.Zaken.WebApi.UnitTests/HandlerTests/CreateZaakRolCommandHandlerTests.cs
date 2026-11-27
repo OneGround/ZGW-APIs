@@ -104,7 +104,7 @@ public class CreateZaakRolCommandHandlerTests : IAsyncLifetime
             );
 
         _catalogiServiceAgentMock
-            .Setup(m => m.GetZaakTypeByUrlAsync(TestZaakTypeUrl))
+            .Setup(m => m.GetZaakTypeByUrlAsync(TestZaakTypeUrl, null))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { RolTypen = new[] { TestRolTypeUrl } }));
 
         // BusinessRule: closed zaak check passes

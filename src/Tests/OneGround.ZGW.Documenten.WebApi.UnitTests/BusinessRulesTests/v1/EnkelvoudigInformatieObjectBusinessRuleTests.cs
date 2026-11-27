@@ -496,7 +496,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -552,7 +553,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -608,7 +610,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -657,7 +660,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(
@@ -710,7 +714,8 @@ public class EnkelvoudigInformatieObjectBusinessRuleTests
         mockCatalogiServiceAgent
             .Setup(m =>
                 m.GetInformatieObjectTypeByUrlAsync(
-                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c"
+                    "http://catalogi.user.local:5011/api/v1/informatieobjecttypen/47078cf1-5614-430f-ab84-127d7ad1ff0c",
+                    null
                 )
             )
             .Returns(

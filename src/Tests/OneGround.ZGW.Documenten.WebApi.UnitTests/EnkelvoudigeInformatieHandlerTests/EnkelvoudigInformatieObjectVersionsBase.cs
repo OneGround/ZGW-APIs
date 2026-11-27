@@ -130,7 +130,7 @@ public abstract class EnkelvoudigInformatieObjectVersionsBase<THandler> : IClass
         // 10. Catalogi Service Agent
         _mockCatalogiServiceAgent = new Mock<ICatalogiServiceAgent>();
         _mockCatalogiServiceAgent
-            .Setup(m => m.GetInformatieObjectTypeByUrlAsync(It.IsAny<string>()))
+            .Setup(m => m.GetInformatieObjectTypeByUrlAsync(It.IsAny<string>(), null))
             .ReturnsAsync(new ServiceAgentResponse<InformatieObjectTypeResponseDto>(new InformatieObjectTypeResponseDto()));
 
         // 11. Audit Trail Service

@@ -210,7 +210,7 @@ public class MutateZaakInformatieObjectAuthorizationTests : IDisposable
         uriService.Setup(s => s.GetId(statusUrl)).Returns(statusId);
         var catalogi = new Mock<ICatalogiServiceAgent>();
         catalogi
-            .Setup(a => a.GetZaakTypeByUrlAsync(It.IsAny<string>()))
+            .Setup(a => a.GetZaakTypeByUrlAsync(It.IsAny<string>(), null))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { InformatieObjectTypen = [informatieObjectType] }));
         var documenten = new Mock<ICachedDocumentenServiceAgent>();
         documenten

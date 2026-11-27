@@ -106,7 +106,7 @@ public class ZaakEigenschapSpecificatieWarningsTests : IAsyncLifetime
             .ReturnsAsync(new Dictionary<string, string>());
 
         _catalogiServiceAgentMock
-            .Setup(m => m.GetZaakTypeByUrlAsync(ZaakTypeUrl))
+            .Setup(m => m.GetZaakTypeByUrlAsync(ZaakTypeUrl, null))
             .ReturnsAsync(new ServiceAgentResponse<ZaakTypeResponseDto>(new ZaakTypeResponseDto { Eigenschappen = [EigenschapUrl] }));
     }
 
