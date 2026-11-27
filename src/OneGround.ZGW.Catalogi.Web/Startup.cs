@@ -62,7 +62,7 @@ public class Startup
             Configuration,
             Api.LatestVersion_1_3,
             // TODO: Uncomment this line(and remove the old 1.3 line) when the API is ready for version 1.4.0
-            //Api.LatestVersion_1_4, 
+            //Api.LatestVersion_1_4,
             c =>
             {
                 c.MvcOptions = o =>
